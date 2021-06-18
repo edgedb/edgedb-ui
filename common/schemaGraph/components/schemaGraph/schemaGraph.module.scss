@@ -1,0 +1,228 @@
+.schemaGraph {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+  background-color: var(--schemagraph-background);
+
+  cursor: grab;
+
+  svg {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.transformContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.grid_background {
+  background-size: 24px 24px;
+  background-image: linear-gradient(to right, #444 1px, transparent 1px),
+    linear-gradient(to bottom, #444 1px, transparent 1px);
+}
+
+.debug_boundingboxes {
+  fill: none;
+  stroke: blue;
+
+  &_outer {
+    fill: none;
+    stroke: red;
+  }
+}
+
+.node {
+  position: absolute;
+  margin: 12px;
+  pointer-events: none;
+  transition: transform 0.2s cubic-bezier(0.39, 0.07, 0.46, 1.33);
+  cursor: default;
+
+  &.isDragging {
+    transition: none;
+    z-index: 100;
+  }
+
+  &.enterActive,
+  &.exitActive,
+  .disableTransitions & {
+    transition: none;
+  }
+}
+
+.object {
+  background: var(--schemagraph-object-background);
+  width: 240px;
+  border-radius: 4px;
+  font-family: "Roboto Mono";
+  overflow: hidden;
+  color: var(--schemagraph-object-colour);
+  padding-bottom: 8px;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.2s, transform 0.3s;
+
+  .hidden & {
+    opacity: 0;
+    transform: scale(0.3);
+    pointer-events: none;
+  }
+
+  .header {
+    background: var(--schemagraph-object-header-background);
+    height: 32px;
+    text-align: center;
+    line-height: 32px;
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--schemagraph-object-header-colour);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+    margin-bottom: 8px;
+
+    .moduleName {
+      opacity: 0.5;
+    }
+  }
+
+  &.selectedNode {
+    box-shadow: 0 0 0 2px var(--schemagraph-object-selected-highlight);
+
+    .header {
+      background: var(--schemagraph-object-selected-highlight);
+    }
+  }
+
+  &.abstract .header {
+    background: var(--schemagraph-object-abstract-header-background);
+    font-style: italic;
+  }
+
+  .links {
+    background: var(--schemagraph-object-links-background);
+    margin-bottom: -8px;
+    padding-bottom: 8px;
+    margin-top: 4px;
+
+    .row {
+      &:hover {
+        background-color: var(--schemagraph-object-links-hover-background);
+      }
+
+      &.selectedLink {
+        background-color: var(--schemagraph-object-links-selected-background);
+      }
+    }
+  }
+
+  .linkheader {
+    opacity: 0.4;
+    font-style: italic;
+    font-size: 12px;
+    line-height: 24px;
+    text-align: center;
+    height: 20px;
+  }
+}
+
+.linkprops {
+  background: var(--schemagraph-linkprop-background);
+  width: 216px;
+  border-radius: 4px;
+  font-family: "Roboto Mono";
+  overflow: hidden;
+  color: var(--schemagraph-object-colour);
+  padding: 10px 0;
+  border: 2px solid var(--schemagraph-link-stroke);
+  border-width: 2px 8px;
+  box-sizing: border-box;
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
+
+  &.selected {
+    border-color: var(--schemagraph-link-selected-stroke);
+  }
+}
+
+.row {
+  height: 24px;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  font-weight: 500;
+  font-size: 12px;
+  justify-content: space-between;
+  padding: 0 6px;
+
+  .targettype {
+    opacity: 0.4;
+  }
+
+  > div {
+    margin: 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.link {
+  fill: none;
+  stroke: var(--schemagraph-link-stroke);
+  stroke-width: 2;
+  opacity: 0.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.1s;
+  pointer-events: none;
+
+  &.inherit {
+    stroke: var(--schemagraph-link-inherit-stroke);
+    opacity: 1;
+  }
+
+  &.hideAll {
+    opacity: 0;
+  }
+
+  &.selected {
+    stroke-width: 3px;
+    stroke: var(--schemagraph-link-selected-stroke);
+  }
+
+  &.visible {
+    pointer-events: none;
+  }
+}
+
+.linkClickTarget {
+  stroke-width: 10px;
+  stroke: transparent;
+  pointer-events: auto;
+}
+
+.visible {
+  opacity: 1;
+  pointer-events: auto;
+}

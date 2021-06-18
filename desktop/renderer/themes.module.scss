@@ -1,0 +1,253 @@
+:global(.dark-theme) {
+  --appBackgroundRGB: 20, 20, 20;
+  --appBackground: rgb(var(--appBackgroundRGB));
+  --cardBackground: #242424;
+
+  --buttonGrey: rgba(255, 255, 255, 0.12);
+  --buttonGreen: #057d52;
+  --buttonRed: #783333;
+  --buttonColour: var(--buttonGrey);
+
+  // Tabs
+  --tabbar-background: #000000;
+  --tabbar-icon: #c4c4c4;
+  --tab-background: #191919;
+  --tab-colour: #c4c4c4;
+  --tab-close-icon: #808080;
+
+  // View Header
+  --viewheader-background: #191919;
+
+  // Resizer
+  --resizer-flip-icon: #057d52;
+
+  // Segmented Buttons
+  --segmented-background: #595959;
+  --segmented-colour: #000000;
+  --segmented-selected-background: #8c8c8c;
+  --segmented-selected-colour: #000000;
+  --segmented-disabled-outline: #333333;
+  --segmented-disabled-colour: #333333;
+
+  // Header Buttons
+  --header-button-background: #056bca;
+  --header-button-colour: #000000;
+  --header-button-green-background: #057d52;
+
+  // Schema Graph
+  --schemagraph-background: #1f1f1f;
+  --schemagraph-object-background: #313131;
+  --schemagraph-object-colour: #c4c4c4;
+  --schemagraph-object-header-background: #1b4584;
+  --schemagraph-object-header-colour: #c4c4c4;
+  --schemagraph-object-abstract-header-background: #4d4d4d;
+  --schemagraph-object-selected-highlight: #056bca;
+  --schemagraph-object-links-background: #2b2b2b;
+  --schemagraph-object-links-selected-background: #543758;
+  --schemagraph-object-links-hover-background: rgba(84, 55, 88, 0.4);
+  --schemagraph-linkprop-background: #272727;
+  --schemagraph-link-stroke: #734b79;
+  --schemagraph-link-selected-stroke: #ac75b5;
+  --schemagraph-link-inherit-stroke: #474747;
+
+  // Schema Sidepanel
+  --schemasidepanel-background: #272727;
+  --schemasidepanel-colour: #c4c4c4;
+
+  --schemasidepanel-tabs-background: #141414;
+  --schemasidepanel-tabs-border: #1e1e1e;
+  --schemasidepanel-tab-selected-background: #272727;
+  --schemasidepanel-tab-colour: #8c8c8c;
+  --schemasidepanel-tab-icon-background: #666666;
+  --schemasidepanel-tab-icon-colour: #000000;
+
+  --schemasidepanel-tag-background: #4d4d4d;
+  --schemasidepanel-tag-color: #141414;
+
+  --schemasidepanel-filter-background: #141414;
+  --schemasidepanel-filter-colour: #bfbfbf;
+  --schemasidepanel-filter-icon: #656565;
+  --schemasidepanel-filter-icon-active: #056bca;
+  --schemasidepanel-filter-match: #5a532e;
+
+  --schemasidepanel-subheading: #6b6b6b;
+  --schemasidepanel-separator: #404040;
+  --schemasidepanel-block-separator: #1e1e1e;
+  --schemasidepanel-icon: #8f8f8f;
+  --schemasidepanel-codeblock-background: #191919;
+  --schemasidepanel-link: #255fb7;
+
+  --schemaminimap-background: #1f1f1f;
+  --schemaminimap-object: #1b4584;
+  --schemaminimap-abstract: #4e4e4e;
+  --schemaminimap-viewport: rgba(106, 106, 106, 0.2);
+  --schemaminimap-colour: #4c4c4c;
+  --schemaminimap-button-background: #191919;
+
+  // Repl
+  --repl-history-background: #242424;
+  --repl-history-collapse-background: #1c1c1c;
+  --repl-history-collapse-icon: #808080;
+  --repl-history-input-background: #333333;
+  --repl-history-output-background: #2e2e2e;
+  --repl-history-block-label: #808080;
+  --repl-history-info-label: #cccccc;
+  --repl-history-query-colour: #bfbfbf;
+  --repl-history-button-background: #1f1f1f;
+  --repl-history-button-colour: #8b8b8f;
+  --repl-inspector-colour: #bfbfbf;
+
+  --transaction-query-colour: #191919;
+  --transaction-status-colour: #bfbfbf;
+  --transaction-active: #5f74c0;
+  --transaction-active-dark: #4f5f98;
+  --transaction-error: #ac4343;
+  --transaction-error-dark: #893a3a;
+  --transaction-savepoint: #978837;
+  --transaction-savepoint-dark: #796e31;
+  --transaction-committed: #057d52;
+  --transaction-committed-dark: #0c6645;
+
+  // Connection screen
+  --connection-background: #272727;
+  --connection-logo: #dadada;
+  --connection-label-colour: #8f8f8f;
+  --connection-input-background: #191919;
+  --connection-input-colour: #8f8f8f;
+  --connection-colourpicker-selected: rgba(255, 255, 255, 0.8);
+  --connection-heading-colour: #b3b3b3;
+  --connection-connect-button-background: #057d52;
+  --connection-connect-button-colour: #191919;
+  --connection-error-colour: #983f54;
+  --connection-separator: #444444;
+  --connection-history-background: #191919;
+  --connection-history-colour: #b3b3b3;
+  --connection-history-icon: #666666;
+  --connection-history-icon-delete: #852e2e;
+  --connection-history-row-highlight: #242424;
+  --connection-history-bottom-background: #080808;
+  --connection-history-create-colour: #057d52;
+}
+
+:global(.light-theme) {
+  // Tabs
+  --tabbar-background: #4c4c4c;
+  --tabbar-icon: #ececec;
+  --tab-background: #ececec;
+  --tab-colour: #333333;
+  --tab-close-icon: #585858;
+
+  // View Header
+  --viewheader-background: #ececec;
+
+  // Resizer
+  --resizer-flip-icon: #fafafa;
+  --resizer-flip-background: #4ca887;
+
+  // Segmented Buttons
+  --segmented-background: #d4d4d4;
+  --segmented-colour: #595959;
+  --segmented-selected-background: #737373;
+  --segmented-selected-colour: #fafafa;
+  --segmented-disabled-outline: #bbbbbb;
+  --segmented-disabled-colour: #aeaeae;
+
+  // Header Buttons
+  --header-button-background: #1f8aed;
+  --header-button-colour: #fafafa;
+  --header-button-green-background: #4ca887;
+
+  // Schema Graph
+  --schemagraph-background: #e5e5e5;
+  --schemagraph-object-background: #ffffff;
+  --schemagraph-object-colour: #333333;
+  --schemagraph-object-header-background: #716fe1;
+  --schemagraph-object-header-colour: #ffffff;
+  --schemagraph-object-abstract-header-background: #999999;
+  --schemagraph-object-selected-highlight: #047cff;
+  --schemagraph-object-links-background: #f5f5f5;
+  --schemagraph-object-links-selected-background: #f3c8d7;
+  --schemagraph-object-links-hover-background: rgba(243, 200, 215, 0.4);
+  --schemagraph-linkprop-background: #ededed;
+  --schemagraph-link-stroke: #d685a2;
+  --schemagraph-link-selected-stroke: #d685a2;
+  --schemagraph-link-inherit-stroke: #9a9a9a;
+
+  // Schema Sidepanel
+  --schemasidepanel-background: #f0f0f0;
+  --schemasidepanel-colour: #444444;
+
+  --schemasidepanel-tabs-background: #d4d4d4;
+  --schemasidepanel-tabs-border: #e5e5e5;
+  --schemasidepanel-tab-selected-background: #f0f0f0;
+  --schemasidepanel-tab-colour: #333333;
+  --schemasidepanel-tab-icon-background: #8c8c8c;
+  --schemasidepanel-tab-icon-colour: #fafafa;
+
+  --schemasidepanel-tag-background: #d4d4d4;
+  --schemasidepanel-tag-color: #333333;
+
+  --schemasidepanel-filter-background: #737373;
+  --schemasidepanel-filter-colour: #f0f0f0;
+  --schemasidepanel-filter-icon: #f0f0f0;
+  --schemasidepanel-filter-icon-active: #4ca7fb;
+  --schemasidepanel-filter-match: #edde91;
+
+  --schemasidepanel-subheading: #999999;
+  --schemasidepanel-separator: #cdcdcd;
+  --schemasidepanel-block-separator: #e5e5e5;
+  --schemasidepanel-icon: #8f8f8f;
+  --schemasidepanel-codeblock-background: #e6e6e6;
+  --schemasidepanel-link: #1f8aed;
+
+  --schemaminimap-background: #e5e5e5;
+  --schemaminimap-object: #1f8aed;
+  --schemaminimap-abstract: #cccccc;
+  --schemaminimap-viewport: rgba(255, 255, 255, 0.45);
+  --schemaminimap-colour: #4c4c4c;
+  --schemaminimap-button-background: #d4d4d4;
+
+  // Repl
+  --repl-history-background: #f7f7f7;
+  --repl-history-collapse-background: #e3e3e3;
+  --repl-history-collapse-icon: #7f7f7f;
+  --repl-history-input-background: #ffffff;
+  --repl-history-output-background: #f0f0f0;
+  --repl-history-block-label: #808080;
+  --repl-history-info-label: #7f7f7f;
+  --repl-history-query-colour: #595959;
+  --repl-history-button-background: #e3e3e3;
+  --repl-history-button-colour: #7f7f7f;
+  --repl-inspector-colour: #595959;
+
+  --transaction-query-colour: #333333;
+  --transaction-status-colour: #bfbfbf;
+  --transaction-active: #a5b4ea;
+  --transaction-active-dark: #97a5d6;
+  --transaction-error: #eb9292;
+  --transaction-error-dark: #d78686;
+  --transaction-savepoint: #e9da8a;
+  --transaction-savepoint-dark: #d5c77f;
+  --transaction-committed: #80bea8;
+  --transaction-committed-dark: #76ae9a;
+
+  // Connection screen
+  --connection-background: #f7f7f7;
+  --connection-logo: #444444;
+  --connection-label-colour: #444444;
+  --connection-input-background: #e5e5e5;
+  --connection-input-colour: #444444;
+  --connection-colourpicker-selected: rgba(0, 0, 0, 0.7);
+  --connection-heading-colour: #b3b3b3;
+  --connection-connect-button-background: #4ca887;
+  --connection-connect-button-colour: #f7f7f7;
+  --connection-error-colour: #ac1a1a;
+  --connection-separator: #dadada;
+  --connection-history-background: #e5e5e5;
+  --connection-history-colour: #444444;
+  --connection-history-icon: #666666;
+  --connection-history-icon-delete: #c55d5d;
+  --connection-history-row-highlight: #dadada;
+  --connection-history-bottom-background: #dadada;
+  --connection-history-create-colour: #4ca887;
+}

@@ -1,0 +1,60 @@
+.errorMessage {
+  position: relative;
+  box-sizing: border-box;
+  background: #8e3535;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 1rem 2rem;
+  border-radius: 3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: max-content;
+  z-index: 1;
+
+  span {
+    font-family: Roboto Mono;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  &.overflowing {
+    padding-right: 7rem;
+  }
+
+  &.expanded {
+    border-radius: 1rem;
+    padding: 0;
+    padding-top: 3rem;
+
+    span {
+      display: block;
+      padding: 1rem 2rem;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+
+    &.expandUp {
+      padding-top: 0;
+      padding-bottom: 3rem;
+
+      .expand {
+        top: unset;
+        bottom: 0;
+      }
+    }
+  }
+}
+
+.expand {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 1rem 1.5rem;
+  opacity: 0.7;
+  font-size: 12px;
+  line-height: 16px;
+  text-transform: uppercase;
+  font-weight: 400;
+  cursor: pointer;
+}

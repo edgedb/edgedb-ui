@@ -1,0 +1,2 @@
+# EdgeDB Studio
+

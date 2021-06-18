@@ -1,0 +1,15 @@
+node_modules
+
+/.vscode
+
+yarn-error.log
+
+/.yarn/*
+!/.yarn/releases
+!/.yarn/plugins
+
+.env*.local
+
+.env
+.vscode
+.DS_Store

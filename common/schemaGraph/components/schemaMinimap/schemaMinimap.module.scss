@@ -1,0 +1,72 @@
+.minimap {
+  padding: 40px 24px 20px 24px;
+  border-bottom: 2px solid var(--schemasidepanel-block-separator);
+  font-weight: 500;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.map {
+  background: var(--schemaminimap-background);
+  border-radius: 2px;
+  max-height: 120px;
+
+  rect {
+    fill: var(--schemaminimap-object);
+
+    &.abstractObject {
+      fill: var(--schemaminimap-abstract);
+    }
+
+    &.viewport {
+      fill: var(--schemaminimap-viewport);
+    }
+  }
+}
+
+.controls {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--schemaminimap-colour);
+
+  button {
+    background: var(--schemaminimap-button-background);
+    border: none;
+    border-radius: 2px;
+    padding: var(--schemaminimap-button-padding, 4px 5px);
+
+    font-family: inherit;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 12px;
+
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+
+    color: var(--schemaminimap-colour);
+
+    outline: none;
+    cursor: pointer;
+
+    svg {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2px;
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+}

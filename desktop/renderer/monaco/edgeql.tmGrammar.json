@@ -1,0 +1,877 @@
+{
+  "name": "EdgeQL",
+  "scopeName": "source.edgeql",
+  "fileTypes": ["edgeql", "esdl"],
+  "uuid": "a560aad6-9c13-49c5-a369-5fb272c8ec1a",
+  "patterns": [
+    {
+      "include": "#all"
+    }
+  ],
+  "repository": {
+    "all": {
+      "patterns": [
+        {
+          "include": "#fnstatement"
+        },
+        {
+          "include": "#expressions"
+        },
+        {
+          "name": "punctuation.statement.delimiter.edgeql",
+          "match": "(;)"
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#code"
+        },
+        {
+          "include": "#keywords"
+        },
+        {
+          "include": "#fncalls"
+        },
+        {
+          "include": "#operators"
+        },
+        {
+          "include": "#builtins"
+        },
+        {
+          "include": "#types"
+        },
+        {
+          "include": "#quoted-name"
+        },
+        {
+          "include": "#values"
+        },
+        {
+          "include": "#link-properties"
+        },
+        {
+          "include": "#variables"
+        },
+        {
+          "include": "#parentheses"
+        },
+        {
+          "include": "#squarebraces"
+        },
+        {
+          "include": "#curlybraces"
+        },
+        {
+          "include": "#casts"
+        }
+      ]
+    },
+    "code": {
+      "patterns": [
+        {
+          "match": "(?xi)\r\n  \\b(FROM) \\s+ (EDGEQL | SQL) \\s+ (EXPRESSION)\r\n",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.edgeql"
+            },
+            "3": {
+              "name": "keyword.declaration.edgeql"
+            }
+          }
+        },
+        {
+          "begin": "(?xi)\r\n  \\b(FROM) \\s+\r\n  (SQL) \\s+\r\n  (\\$\\w?\\$)\r\n",
+          "end": "(\\3)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.declaration.edgeql"
+            },
+            "3": {
+              "name": "string.quoted.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "string.quoted.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
+          "begin": "(?xi)\r\n  \\b(FROM) \\s+\r\n  (EDGEQL) \\s+\r\n  (\\$\\w?\\$)\r\n",
+          "end": "(\\3)",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.declaration.edgeql"
+            },
+            "3": {
+              "name": "string.quoted.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "string.quoted.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.edgeql"
+            }
+          ]
+        }
+      ]
+    },
+    "fnstatement": {
+      "begin": "(?ix) \\b(?<![:\\.])(FUNCTION|AGGREGATE|ABSTRACT CONSTRAINT)\\b",
+      "end": "(?=[^\\s\\w:]|\\bEXTENDING\\b|$)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.declaration.edgeql"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#builtins"
+        },
+        {
+          "include": "#identifier"
+        },
+        {
+          "name": "keyword.operator.namespace.edgeql",
+          "match": "(::)"
+        }
+      ]
+    },
+    "fncallargs": {
+      "patterns": [
+        {
+          "include": "#definition"
+        },
+        {
+          "include": "#expressions"
+        },
+        {
+          "name": "punctuation.separator.arguments.edgeql",
+          "match": "(,)"
+        },
+        {
+          "name": "invalid.illegal.delimiter.edgeql",
+          "match": "(;)"
+        }
+      ]
+    },
+    "definition": {
+      "match": "(?x)\r\n  (?:\r\n    ([[:alpha:]_][[:alnum:]_]*)\r\n    |\r\n    ([\\.\\d]\\S*?)\r\n  ) (?=\\s*:=)\r\n",
+      "captures": {
+        "1": {
+          "name": "variable.parameter.definition.edgeql"
+        },
+        "2": {
+          "name": "invalid.illegal.definition.edgeql"
+        }
+      }
+    },
+    "parencommon": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.element.edgeql",
+          "match": "(,)"
+        },
+        {
+          "name": "invalid.illegal.delimiter.edgeql",
+          "match": "(;)"
+        }
+      ]
+    },
+    "parentheses": {
+      "begin": "(\\()",
+      "end": "(\\))",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.begin.edgeql"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.end.edgeql"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expressions"
+        },
+        {
+          "include": "#parencommon"
+        }
+      ]
+    },
+    "squarebraces": {
+      "begin": "(\\[)",
+      "end": "(\\])",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.begin.edgeql"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.end.edgeql"
+        }
+      },
+      "patterns": [
+        {
+          "name": "keyword.operator.edgeql",
+          "match": "(^|\\b|\\s)(->)($|\\b|\\s)"
+        },
+        {
+          "include": "#expressions"
+        },
+        {
+          "include": "#parencommon"
+        }
+      ]
+    },
+    "curlybraces": {
+      "begin": "(\\{)",
+      "end": "(\\})",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.begin.edgeql"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.end.edgeql"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#commandblock"
+        },
+        {
+          "include": "#shape"
+        }
+      ]
+    },
+    "commandblock": {
+      "begin": "(?=SET|CREATE|ALTER|DROP|RENAME|FROM)",
+      "end": "(?=\\})",
+      "patterns": [
+        {
+          "include": "#all"
+        }
+      ]
+    },
+    "shape": {
+      "begin": "(?=\\S)",
+      "end": "(?=\\})",
+      "patterns": [
+        {
+          "name": "punctuation.statement.delimiter.edgeql",
+          "match": "(;)"
+        },
+        {
+          "include": "#expressions"
+        },
+        {
+          "include": "#parencommon"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.edgeql",
+          "match": "(#)\\s*((BUG|FIXME|TODO|XXX)).*$\\n?",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.edgeql"
+            },
+            "2": {
+              "name": "comment.line.note.notation.edgeql"
+            },
+            "3": {
+              "name": "comment.line.note.edgeql"
+            }
+          }
+        },
+        {
+          "name": "comment.line.number-sign.edgeql",
+          "match": "(#).*$\\n?",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.edgeql"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.true.edgeql",
+          "match": "(?i)\\b(TRUE)\\b"
+        },
+        {
+          "name": "constant.language.boolean.false.edgeql",
+          "match": "(?i)\\b(FALSE)\\b"
+        },
+        {
+          "name": "constant.language.empty.edgeql",
+          "match": "(?i)\\b(EMPTY)\\b"
+        },
+        {
+          "name": "keyword.declaration.edgeql",
+          "match": "(?i)\\b(?<!::|\\.|\\.<|\\.>)(CONSTRAINT)\\b(?!=\\s+\\()"
+        },
+        {
+          "name": "keyword.declaration.edgeql",
+          "match": "(?ix) \\b(?<!::|\\.|\\.<|\\.>)(\r\n  (?# special case)\r\n  (named \\s+ only)\r\n  |\r\n  (as \\s+ text)\r\n  |\r\n\r\n  (?# unreserved)\r\n  abstract | after | alias | all | allow |\r\n  annotation | as | asc | assignment | before |\r\n  by | cardinality | cast | config | conflict |\r\n  current | database | ddl | default | deferrable |\r\n  deferred | delegated | desc | emit | explicit |\r\n  final | first | from | function | implicit |\r\n  index | infix | inheritable | into | isolation |\r\n  last | link | migration | multi | object |\r\n  of | oids | on | only | onto |\r\n  operator | overloaded | owned | postfix | prefix |\r\n  property | proposed | pseudo | read | reject |\r\n  rename | repeatable | required | restrict | role |\r\n  roles | savepoint | scalar | schema | sdl |\r\n  serializable | session | single | source | superuser |\r\n  system | target | ternary | then | to |\r\n  transaction | type | unless | using | verbose |\r\n  view | write\r\n  |\r\n  (?# reserved)\r\n  abort | alter | analyze | and | anyarray |\r\n  anytuple | begin | case | check | commit |\r\n  configure | create | deallocate | declare | delete |\r\n  describe | detached | discard | distinct | do |\r\n  drop | else | empty | end | execute |\r\n  exists | explain | extending | fetch | filter |\r\n  for | get | global | grant | group |\r\n  if | ilike | import | in | insert |\r\n  introspect | is | like | limit | listen |\r\n  load | lock | match | module | move |\r\n  not | notify | offset | optional | or |\r\n  order | over | partition | policy | populate |\r\n  prepare | raise | refresh | reindex | release |\r\n  reset | revoke | rollback | select | set |\r\n  start | typeof | union | update | variadic |\r\n  when | window | with\r\n)\\b\r\n"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.navigation.edgeql",
+          "match": "(\\.[<>])"
+        },
+        {
+          "name": "keyword.operator.namespace.edgeql",
+          "match": "(::)"
+        },
+        {
+          "name": "keyword.declaration.edgeql",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.edgeql",
+          "match": "(?x)\r\n  \\?\\!\\= | \\?\\? | \\?\\= | \\>\\= | \\<\\= | \\:\\= | \\/\\/ | \\+\\+ |\r\n  \\!\\= | \\^ | \\> | \\= | \\< | \\/ | \\- | \\+ |\r\n  \\* | \\%\r\n"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "begin": "\\b(?<!::|\\.)(tuple)\\s*(<)",
+          "end": "(>)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.edgeql"
+            },
+            "2": {
+              "name": "storage.type.placeholder.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "storage.type.placeholder.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#types"
+            },
+            {
+              "name": "punctuation.separator.type.edgeql",
+              "match": "(,)"
+            },
+            {
+              "match": "(:)"
+            },
+            {
+              "include": "#types-common"
+            }
+          ]
+        },
+        {
+          "begin": "\\b(?<!::|\\.)(array)\\s*(<)",
+          "end": "(>)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.edgeql"
+            },
+            "2": {
+              "name": "storage.type.placeholder.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "storage.type.placeholder.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "name": "invalid.illegal.type.edgeql",
+              "match": "array"
+            },
+            {
+              "include": "#types"
+            },
+            {
+              "include": "#array-dimensions"
+            },
+            {
+              "include": "#types-common"
+            }
+          ]
+        },
+        {
+          "name": "storage.type.edgeql",
+          "match": "(?x) \\b(?<!::|\\.)(\r\n  array | tuple\r\n)\\b\r\n"
+        },
+        {
+          "include": "#builtin-modules"
+        },
+        {
+          "include": "#builtin-types"
+        }
+      ]
+    },
+    "types-common": {
+      "patterns": [
+        {
+          "include": "#identifier"
+        },
+        {
+          "name": "keyword.operator.namespace.edgeql",
+          "match": "(::)"
+        }
+      ]
+    },
+    "array-dimensions": {
+      "begin": "(\\[)",
+      "end": "(\\])",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.begin.edgeql"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.parenthesis.end.edgeql"
+        }
+      },
+      "patterns": [
+        {
+          "name": "constant.numeric.edgeql",
+          "match": "(\\d+)"
+        },
+        {
+          "name": "invalid.illegal.type.edgeql",
+          "match": "\\S+"
+        }
+      ]
+    },
+    "variables": {
+      "name": "constant.language.variable.edgeql",
+      "begin": "(\\$)(?=[[:alnum:]_]|`)",
+      "end": "(?<=[[:alnum:]_`])",
+      "patterns": [
+        {
+          "include": "#identifier"
+        },
+        {
+          "include": "#quoted-name"
+        },
+        {
+          "match": "(\\d)+"
+        }
+      ]
+    },
+    "link-properties": {
+      "name": "support.other.linkproperty.edgeql",
+      "begin": "(\\@)",
+      "end": "(?<=[[:alnum:]_`])",
+      "patterns": [
+        {
+          "include": "#identifier"
+        },
+        {
+          "include": "#quoted-name"
+        }
+      ]
+    },
+    "identifier": {
+      "match": "([[:alpha:]_][[:alnum:]_]*)"
+    },
+    "quoted-name": {
+      "name": "string.interpolated.edgeql",
+      "match": "(`.*?`)"
+    },
+    "values": {
+      "patterns": [
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#bytes"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "number": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.edgeql",
+          "match": "(?x)\r\n  (?:\r\n    #decimal part\r\n    \\.(_*)(?:[0-9](?:[0-9_]*[0-9])?)\r\n    |\r\n    # integer part\r\n    \\b(?: [1-9](?: [0-9_]*[0-9] )? | 0 )\r\n      (?:\\.(_*)[0-9](?:[0-9_]*[0-9])?)\r\n  )\r\n  ((_*)([eE][\\+\\-]?)(_*)[0-9](?:[0-9_]*[0-9])?)?\r\n\r\n  (_*)\r\n  \\b\r\n",
+          "captures": {
+            "1": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "2": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "4": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "5": {
+              "name": "storage.type.number.edgeql"
+            },
+            "6": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "7": {
+              "name": "invalid.illegal.dec.edgeql"
+            }
+          }
+        },
+        {
+          "name": "constant.numeric.float.edgeql",
+          "match": "(?x)\r\n  (?:\r\n    # integer part\r\n    \\b(?:[1-9](?:[0-9_]*[0-9])?|0)\r\n  )\r\n  ((_*)([eE][\\+\\-]?)(_*)[0-9](?:[0-9_]*[0-9])?)\r\n\r\n  (_*)\r\n  \\b\r\n",
+          "captures": {
+            "2": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "3": {
+              "name": "storage.type.number.edgeql"
+            },
+            "4": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "5": {
+              "name": "invalid.illegal.dec.edgeql"
+            }
+          }
+        },
+        {
+          "name": "constant.numeric.decimal.edgeql",
+          "match": "(?x)\r\n  (?:\r\n    #decimal part\r\n    \\.(_*)(?:[0-9](?:[0-9_]*[0-9])?)\r\n    |\r\n    # integer part\r\n    \\b(?:[1-9](?:[0-9_]*[0-9])?|0)\r\n      (?:\\.(_*)[0-9](?:[0-9_]*[0-9])?)?\r\n  )\r\n  ((_*)([eE][\\+\\-]?)(_*)[0-9](?:[0-9_]*[0-9])?)?\r\n\r\n  (_*)\r\n  (n)\r\n",
+          "captures": {
+            "1": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "2": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "4": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "5": {
+              "name": "storage.type.number.edgeql"
+            },
+            "6": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "7": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "8": {
+              "name": "storage.type.number.edgeql"
+            }
+          }
+        },
+        {
+          "name": "constant.numeric.integer.edgeql",
+          "match": "(?x)\r\n  (?:\r\n    # integer part\r\n    \\b(?:[1-9](?:[0-9_]*[0-9])?|0)\r\n  )\r\n  (_*)\r\n  \\b\r\n",
+          "captures": {
+            "1": {
+              "name": "invalid.illegal.dec.edgeql"
+            },
+            "2": {
+              "name": "invalid.illegal.dec.edgeql"
+            }
+          }
+        }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "name": "string.quoted.raw.edgeql",
+          "begin": "(r)(['\"])",
+          "end": "(\\2)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.string.edgeql"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.edgeql"
+            }
+          }
+        },
+        {
+          "name": "string.quoted.edgeql",
+          "begin": "(['\"])",
+          "end": "(\\1)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#string-escapes"
+            },
+            {
+              "include": "#string-invalid-escapes"
+            }
+          ]
+        },
+        {
+          "name": "string.dollar.edgeql",
+          "begin": "(\\$([[:alpha:]_][[:alnum:]]*)*\\$)",
+          "end": "(\\1)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.edgeql"
+            }
+          }
+        }
+      ]
+    },
+    "string-escapes": {
+      "name": "constant.character.escape.edgeql",
+      "match": "(?x)\r\n  (\r\n    \\\\(?=\\s*\\n) |\r\n    \\\\[\\\\'\"bfnrt] |\r\n    \\\\x[0-7][0-9a-fA-F] |\r\n    \\\\u[0-9a-fA-F]{4} |\r\n    \\\\U[0-9a-fA-F]{8}\r\n  )\r\n"
+    },
+    "string-invalid-escapes": {
+      "name": "invalid.illegal.escapes.edgeql",
+      "match": "(\\\\.)"
+    },
+    "bytes": {
+      "patterns": [
+        {
+          "name": "string.quoted.bytes.edgeql",
+          "begin": "(b)(')",
+          "end": "(\\2)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.string.edgeql"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#bytes-escapes"
+            },
+            {
+              "match": "([\\n -&(-\\[\\]-~])+"
+            },
+            {
+              "name": "invalid.illegal.bytes.edgeql",
+              "match": "(\\\\x.{1,2})|(\\\\.)|(.)"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.bytes.edgeql",
+          "begin": "(b)(\")",
+          "end": "(\\2)",
+          "beginCaptures": {
+            "1": {
+              "name": "storage.type.string.edgeql"
+            },
+            "2": {
+              "name": "punctuation.definition.string.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#bytes-escapes"
+            },
+            {
+              "match": "([\\n -!#-\\[\\]-~])+"
+            },
+            {
+              "name": "invalid.illegal.bytes.edgeql",
+              "match": "(\\\\x.{1,2})|(\\\\.)|(.)"
+            }
+          ]
+        }
+      ]
+    },
+    "bytes-escapes": {
+      "name": "constant.character.escape.edgeql",
+      "match": "(?x)\r\n  (\r\n    \\\\[\\\\'\"bfnrt] |\r\n    \\\\x[0-9a-fA-F]{2}\r\n  )\r\n"
+    },
+    "casts": {
+      "begin": "(?xi)\r\n  (?:\r\n    (?<= ^ | [@~+\\-*/%^<>=?,:(\\[{])\r\n    |\r\n    (?<=\r\n      AND | OR | NOT | LIKE | ILIKE | IS | IN | IF | ELSE |\r\n      UNION | ALL | EXISTS |\r\n\r\n      SELECT | GROUP | UPDATE | BY | THEN | LIMIT |\r\n      # there are some ligature-related issues with \"fi\" and \"ff\"\r\n      F[Ii]LTER | OF[Ff]SET\r\n    )\r\n  ) \\s* (\\<)\r\n",
+      "end": "(\\>)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.operator.cast.begin.edgeql"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.cast.end.edgeql"
+        }
+      },
+      "contentName": "meta.typecast.edgeql",
+      "patterns": [
+        {
+          "include": "#types"
+        },
+        {
+          "include": "#types-common"
+        }
+      ]
+    },
+    "fncalls": {
+      "patterns": [
+        {
+          "name": "meta.function-call.edgeql",
+          "begin": "(?x)\r\n  \\b(?<!\\.|\\.<|\\.>)\r\n  # function name\r\n  (?:\r\n    (\r\n      # functions\r\n      abs | advisory_lock | advisory_unlock |\r\n      advisory_unlock_all | all | any |\r\n      array_agg | array_get | array_join |\r\n      array_unpack | bytes_get_bit | ceil |\r\n      contains | count | date_get |\r\n      datetime_current | datetime_get | datetime_of_statement |\r\n      datetime_of_transaction | datetime_truncate | duration_to_seconds |\r\n      duration_truncate | enumerate | find |\r\n      floor | get_current_database | get_transaction_isolation |\r\n      get_version | get_version_as_str | json_array_unpack |\r\n      json_get | json_object_unpack | json_typeof |\r\n      len | lg | ln |\r\n      log | max | mean |\r\n      min | random | re_match |\r\n      re_match_all | re_replace | re_test |\r\n      round | sleep | stddev |\r\n      stddev_pop | str_lower | str_lpad |\r\n      str_ltrim | str_pad_end | str_pad_start |\r\n      str_repeat | str_rpad | str_rtrim |\r\n      str_split | str_title | str_trim |\r\n      str_trim_end | str_trim_start | str_upper |\r\n      sum | time_get | to_bigint |\r\n      to_datetime | to_decimal | to_duration |\r\n      to_float32 | to_float64 | to_int16 |\r\n      to_int32 | to_int64 | to_json |\r\n      to_local_date | to_local_datetime | to_local_time |\r\n      to_str | uuid_generate_v1mc | var |\r\n      var_pop\r\n    |\r\n      # constraints\r\n      constraint | exclusive | expression |\r\n      len_value | max_ex_value | max_len_value |\r\n      max_value | min_ex_value | min_len_value |\r\n      min_value | one_of | regexp\r\n    )\r\n    |\r\n    ([[:alpha:]_][[:alnum:]_]*)\r\n    |\r\n    (`.*?`)\r\n  ) \\s*(\\()\r\n",
+          "end": "(\\))",
+          "beginCaptures": {
+            "1": {
+              "name": "support.function.builtin.edgeql"
+            },
+            "2": {
+              "name": "entity.name.function.edgeql"
+            },
+            "3": {
+              "name": "string.interpolated.edgeql"
+            },
+            "4": {
+              "name": "punctuation.definition.arguments.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.arguments.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#fncallargs"
+            }
+          ]
+        },
+        {
+          "name": "meta.function-call.edgeql",
+          "begin": "(?x)\r\n  \\b(?<!\\.|\\.<|\\.>)\r\n  # module\r\n  (?:\r\n    (\r\n      cal | cfg | math |\r\n      schema | std | stdgraphql |\r\n      sys\r\n    )\r\n    |\r\n    (?# masking built-ins in odd ways)\r\n    (\r\n      #functions\r\n      abs | advisory_lock | advisory_unlock |\r\n      advisory_unlock_all | all | any |\r\n      array_agg | array_get | array_join |\r\n      array_unpack | bytes_get_bit | ceil |\r\n      contains | count | date_get |\r\n      datetime_current | datetime_get | datetime_of_statement |\r\n      datetime_of_transaction | datetime_truncate | duration_to_seconds |\r\n      duration_truncate | enumerate | find |\r\n      floor | get_current_database | get_transaction_isolation |\r\n      get_version | get_version_as_str | json_array_unpack |\r\n      json_get | json_object_unpack | json_typeof |\r\n      len | lg | ln |\r\n      log | max | mean |\r\n      min | random | re_match |\r\n      re_match_all | re_replace | re_test |\r\n      round | sleep | stddev |\r\n      stddev_pop | str_lower | str_lpad |\r\n      str_ltrim | str_pad_end | str_pad_start |\r\n      str_repeat | str_rpad | str_rtrim |\r\n      str_split | str_title | str_trim |\r\n      str_trim_end | str_trim_start | str_upper |\r\n      sum | time_get | to_bigint |\r\n      to_datetime | to_decimal | to_duration |\r\n      to_float32 | to_float64 | to_int16 |\r\n      to_int32 | to_int64 | to_json |\r\n      to_local_date | to_local_datetime | to_local_time |\r\n      to_str | uuid_generate_v1mc | var |\r\n      var_pop\r\n      |\r\n      #constraints\r\n      constraint | exclusive | expression |\r\n      len_value | max_ex_value | max_len_value |\r\n      max_value | min_ex_value | min_len_value |\r\n      min_value | one_of | regexp\r\n    )\r\n    |\r\n    ([[:alpha:]_][[:alnum:]_]*)\r\n    |\r\n    (`.*?`)\r\n  )\r\n\r\n  \\s*(::)\\s*\r\n\r\n  # function name\r\n  (?:\r\n    (\r\n      #functions\r\n      abs | advisory_lock | advisory_unlock |\r\n      advisory_unlock_all | all | any |\r\n      array_agg | array_get | array_join |\r\n      array_unpack | bytes_get_bit | ceil |\r\n      contains | count | date_get |\r\n      datetime_current | datetime_get | datetime_of_statement |\r\n      datetime_of_transaction | datetime_truncate | duration_to_seconds |\r\n      duration_truncate | enumerate | find |\r\n      floor | get_current_database | get_transaction_isolation |\r\n      get_version | get_version_as_str | json_array_unpack |\r\n      json_get | json_object_unpack | json_typeof |\r\n      len | lg | ln |\r\n      log | max | mean |\r\n      min | random | re_match |\r\n      re_match_all | re_replace | re_test |\r\n      round | sleep | stddev |\r\n      stddev_pop | str_lower | str_lpad |\r\n      str_ltrim | str_pad_end | str_pad_start |\r\n      str_repeat | str_rpad | str_rtrim |\r\n      str_split | str_title | str_trim |\r\n      str_trim_end | str_trim_start | str_upper |\r\n      sum | time_get | to_bigint |\r\n      to_datetime | to_decimal | to_duration |\r\n      to_float32 | to_float64 | to_int16 |\r\n      to_int32 | to_int64 | to_json |\r\n      to_local_date | to_local_datetime | to_local_time |\r\n      to_str | uuid_generate_v1mc | var |\r\n      var_pop\r\n      |\r\n      #constraints\r\n      constraint | exclusive | expression |\r\n      len_value | max_ex_value | max_len_value |\r\n      max_value | min_ex_value | min_len_value |\r\n      min_value | one_of | regexp\r\n    )\r\n    |\r\n    ([[:alpha:]_][[:alnum:]_]*)\r\n    |\r\n    (`.*?`)\r\n  ) \\s*(\\()\r\n",
+          "end": "(\\))",
+          "beginCaptures": {
+            "1": {
+              "name": "support.other.module.builtin.edgeql"
+            },
+            "2": {
+              "name": "support.function.builtin.edgeql"
+            },
+            "3": {
+              "name": "entity.name.function.edgeql"
+            },
+            "4": {
+              "name": "string.interpolated.edgeql"
+            },
+            "5": {
+              "name": "keyword.operator.namespace.edgeql"
+            },
+            "6": {
+              "name": "support.function.builtin.edgeql"
+            },
+            "7": {
+              "name": "entity.name.function.edgeql"
+            },
+            "8": {
+              "name": "string.interpolated.edgeql"
+            },
+            "9": {
+              "name": "punctuation.definition.arguments.begin.edgeql"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.arguments.end.edgeql"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#fncallargs"
+            }
+          ]
+        }
+      ]
+    },
+    "builtin-modules": {
+      "name": "support.other.module.builtin.edgeql",
+      "match": "(?x) \\b(?<!::|\\.|\\.<|\\.>)(\r\n  cal | cfg | math | schema |\r\n  std | stdgraphql | sys\r\n)\\b\r\n"
+    },
+    "builtin-types": {
+      "name": "support.type.builtin.edgeql",
+      "match": "(?x) \\b(?<!\\.|\\.<|\\.>) (\r\n  BaseObject | Object | anyenum | anyfloat |\r\n  anyint | anynumeric | anyreal | anyscalar |\r\n  anytype | array | bigint | bool |\r\n  bytes | datetime | decimal | duration |\r\n  enum | float32 | float64 | int16 |\r\n  int32 | int64 | json | local_date |\r\n  local_datetime | local_time | sequence | str |\r\n  tuple | uuid\r\n)\\b\r\n"
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.edgeql",
+          "match": "(?x) \\b(?<!\\.|\\.<|\\.>) (\r\n  abs | advisory_lock | advisory_unlock |\r\n  advisory_unlock_all | all | any |\r\n  array_agg | array_get | array_join |\r\n  array_unpack | bytes_get_bit | ceil |\r\n  contains | count | date_get |\r\n  datetime_current | datetime_get | datetime_of_statement |\r\n  datetime_of_transaction | datetime_truncate | duration_to_seconds |\r\n  duration_truncate | enumerate | find |\r\n  floor | get_current_database | get_transaction_isolation |\r\n  get_version | get_version_as_str | json_array_unpack |\r\n  json_get | json_object_unpack | json_typeof |\r\n  len | lg | ln |\r\n  log | max | mean |\r\n  min | random | re_match |\r\n  re_match_all | re_replace | re_test |\r\n  round | sleep | stddev |\r\n  stddev_pop | str_lower | str_lpad |\r\n  str_ltrim | str_pad_end | str_pad_start |\r\n  str_repeat | str_rpad | str_rtrim |\r\n  str_split | str_title | str_trim |\r\n  str_trim_end | str_trim_start | str_upper |\r\n  sum | time_get | to_bigint |\r\n  to_datetime | to_decimal | to_duration |\r\n  to_float32 | to_float64 | to_int16 |\r\n  to_int32 | to_int64 | to_json |\r\n  to_local_date | to_local_datetime | to_local_time |\r\n  to_str | uuid_generate_v1mc | var |\r\n  var_pop\r\n)(?=\\s*\\()\\b\r\n"
+        },
+        {
+          "name": "support.function.constraint.builtin.edgeql",
+          "match": "(?x) \\b(?<!\\.|\\.<|\\.>) (\r\n  constraint | exclusive | expression |\r\n  len_value | max_ex_value | max_len_value |\r\n  max_value | min_ex_value | min_len_value |\r\n  min_value | one_of | regexp\r\n)\\b\r\n"
+        },
+        {
+          "include": "#builtin-modules"
+        },
+        {
+          "name": "support.other.link.builtin.edgeql",
+          "match": "(?x) \\b(\r\n  __source__ | __std__ | __subject__ |\r\n  __type__\r\n)\\b\r\n"
+        }
+      ]
+    }
+  }
+}
