@@ -28,6 +28,7 @@ export type Item = {
   codec: _ICodec;
   label?: JSX.Element;
   body: JSX.Element;
+  fieldName?: string;
 } & (
   | {
       type:
@@ -37,6 +38,7 @@ export type Item = {
         | ItemType.NamedTuple;
       data: any[];
       closingBracket: Item;
+      expectedCount?: number;
     }
   | {
       type: ItemType.Object;
@@ -51,7 +53,8 @@ export type Item = {
 export function expandItem(
   item: Item,
   expanded: Set<string>,
-  expandLevels?: number
+  expandLevels: number | undefined,
+  countPrefix: string | null
 ): Item[] {
   if (item.type !== ItemType.Scalar && item.type !== ItemType.Other) {
     expanded.add(item.id);
@@ -65,33 +68,55 @@ export function expandItem(
       case ItemType.Set:
       case ItemType.Array:
       case ItemType.Tuple:
-        childItems = item.data.flatMap((data, i) => {
-          const subCodec =
-            item.level === 0
-              ? item.codec
-              : item.codec.getKind() === "tuple"
-              ? item.codec.getSubcodecs()[i]
-              : item.codec.getSubcodecs()[0];
+        {
+          childItems = (item.data ?? []).flatMap((data, i) => {
+            const subCodec =
+              item.level === 0
+                ? item.codec
+                : item.codec.getKind() === "tuple"
+                ? item.codec.getSubcodecs()[i]
+                : item.codec.getSubcodecs()[0];
 
-          const id = `${item.id}.${i}`;
+            const id = `${item.id}.${i}`;
 
-          const childItem = buildItem(
-            {
-              id,
-              codec: subCodec,
+            const childItem = buildItem(
+              {
+                id,
+                codec: subCodec,
+                level: item.level + 1,
+              },
+              data,
+              i < item.data.length - 1
+            );
+
+            return [
+              childItem,
+              ...(shouldExpandChildren || expanded.has(id)
+                ? expandItem(childItem, expanded, expandLevels, countPrefix)
+                : []),
+            ];
+          });
+
+          if (
+            item.expectedCount !== undefined &&
+            (!item.data || item.expectedCount > item.data.length)
+          ) {
+            const more = item.expectedCount - (item.data?.length ?? 0);
+
+            childItems.push({
+              id: `${item.id}.count`,
+              type: ItemType.Other,
+              codec: item.codec,
               level: item.level + 1,
-            },
-            data,
-            i < item.data.length - 1
-          );
-
-          return [
-            childItem,
-            ...(shouldExpandChildren || expanded.has(id)
-              ? expandItem(childItem, expanded, expandLevels)
-              : []),
-          ];
-        });
+              body: (
+                <span className={styles.resultsHidden}>
+                  ...{item.data?.length ? "further " : ""}
+                  {more} result{more > 1 ? "s" : ""} hidden
+                </span>
+              ),
+            });
+          }
+        }
         break;
       case ItemType.Object:
         {
@@ -102,11 +127,20 @@ export function expandItem(
 
           let explicitFieldIndex = 1;
           childItems = fields.flatMap((field, i) => {
-            if (field.implicit && !(!explicitNum && field.name === "id")) {
+            if (
+              (field.implicit && !(!explicitNum && field.name === "id")) ||
+              (countPrefix !== null && field.name.startsWith(countPrefix))
+            ) {
               return [];
             }
 
             const id = `${item.id}.${i}`;
+
+            const expectedCount =
+              countPrefix !== null &&
+              item.data[countPrefix + field.name] !== undefined
+                ? parseInt(item.data[countPrefix + field.name], 10)
+                : undefined;
 
             const childItem = buildItem(
               {
@@ -119,6 +153,11 @@ export function expandItem(
                     <span>: </span>
                   </>
                 ),
+                fieldName: field.name,
+                expectedCount:
+                  expectedCount !== undefined && !Number.isNaN(expectedCount)
+                    ? expectedCount
+                    : undefined,
               },
               item.data[field.name],
               !!explicitNum && explicitFieldIndex++ < explicitNum
@@ -127,7 +166,7 @@ export function expandItem(
             return [
               childItem,
               ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(childItem, expanded, expandLevels)
+                ? expandItem(childItem, expanded, expandLevels, countPrefix)
                 : []),
             ];
           });
@@ -154,6 +193,7 @@ export function expandItem(
                     <span> := </span>
                   </>
                 ),
+                fieldName: field.name,
               },
               data,
               i < item.data.length - 1
@@ -162,7 +202,7 @@ export function expandItem(
             return [
               childItem,
               ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(childItem, expanded, expandLevels)
+                ? expandItem(childItem, expanded, expandLevels, countPrefix)
                 : []),
             ];
           });
@@ -189,15 +229,22 @@ const itemTypes: {
 };
 
 export function buildItem(
-  base: {id: string; level: number; codec: _ICodec; label?: JSX.Element},
+  base: {
+    id: string;
+    level: number;
+    codec: _ICodec;
+    label?: JSX.Element;
+    fieldName?: string;
+    expectedCount?: number;
+  },
   data: any,
   comma?: boolean
 ): Item {
-  if (data === null) {
+  if (data === null && !base.expectedCount) {
     return buildScalarItem(base, null, comma);
   }
 
-  const kind = _introspect(data);
+  const kind = base.expectedCount ? {kind: "set" as const} : _introspect(data);
 
   if (kind === null) {
     return buildScalarItem(base, data, comma);

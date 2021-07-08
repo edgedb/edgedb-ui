@@ -24,13 +24,22 @@ interface QueryResult {
   resultBuf: Buffer;
 }
 
-interface PendingQuery {
+interface PrepareResult {
+  outCodecBuf: Buffer;
+  duration: number;
+}
+
+type QueryKind = "query" | "prepare";
+
+type PendingQuery = {
   query: string;
   params?: QueryParams;
   silent: boolean;
-  resolve: (result: QueryResult) => void;
   reject: (error: Error) => void;
-}
+} & (
+  | {kind: "query"; resolve: (result: QueryResult) => void}
+  | {kind: "prepare"; resolve: (result: QueryResult) => void}
+);
 
 export enum TransactionState {
   Active,
@@ -86,10 +95,28 @@ export class Connection extends Model({
 
   private _queryQueue: PendingQuery[] = [];
 
-  query(queryString: string, silent: boolean = false, params?: QueryParams) {
-    return new Promise<QueryResult>((resolve, reject) => {
+  query(
+    query: string,
+    silent: boolean = false,
+    params?: QueryParams
+  ): Promise<QueryResult> {
+    return this._addQueryToQueue("query", query, silent, params);
+  }
+
+  prepare(query: string, silent: boolean = false): Promise<PrepareResult> {
+    return this._addQueryToQueue("prepare", query, silent);
+  }
+
+  _addQueryToQueue(
+    kind: QueryKind,
+    query: string,
+    silent: boolean,
+    params?: QueryParams
+  ) {
+    return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
-        query: queryString,
+        kind,
+        query,
         params,
         silent,
         resolve,
@@ -109,8 +136,12 @@ export class Connection extends Model({
       this._runningQuery = true;
       this.runningQuery = !query.silent;
       try {
-        const result = await this._query(query.query, query.params);
-        query.resolve(result);
+        const result = await this._query(
+          query.kind,
+          query.query,
+          query.params
+        );
+        query.resolve(result as any);
       } catch (e) {
         query.reject(e);
       }
@@ -122,17 +153,22 @@ export class Connection extends Model({
   }
 
   async _query(
+    kind: QueryKind,
     queryString: string,
     params?: QueryParams
-  ): Promise<QueryResult> {
-    if (params) {
+  ): Promise<QueryResult | PrepareResult> {
+    if (params || kind === "prepare") {
       const {
         inCodecBuf,
         outCodecBuf,
         duration: prepareDuration,
       } = await ipc.invoke("prepare", this.$modelId, queryString);
 
-      const encodedParamsBuf = encodeArgs(inCodecBuf, params);
+      if (kind === "prepare") {
+        return {outCodecBuf, duration: prepareDuration};
+      }
+
+      const encodedParamsBuf = encodeArgs(inCodecBuf, params!);
 
       const {resultBuf, duration: executeDuration} = await ipc.invoke(
         "execute",

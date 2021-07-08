@@ -1,4 +1,5 @@
 import {_CodecsRegistry} from "edgedb";
+import {QueryArgs} from "edgedb/dist/src/ifaces";
 import {NamedTupleCodec} from "edgedb/dist/src/codecs/namedtuple";
 import {TupleCodec} from "edgedb/dist/src/codecs/tuple";
 import {decode as _decode, EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
@@ -25,9 +26,7 @@ export function decode(
   );
 }
 
-export type QueryParams =
-  | {[key: string]: string | string[] | null}
-  | (string | string[] | null)[];
+export type QueryParams = QueryArgs;
 
 export function encodeArgs(inCodecBuf: Uint8Array, queryParams: QueryParams) {
   const inCodec = codecsRegistry.buildCodec(typedArrayToBuffer(inCodecBuf));

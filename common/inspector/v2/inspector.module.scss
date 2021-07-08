@@ -1,6 +1,4 @@
-.inspector {
-  margin: 10px 0;
-
+.inspectorTheme {
   --type-color: #888;
 
   --inspector-green: #26a073;
@@ -16,6 +14,12 @@
     --inspector-blue: #1c79de;
     --inspector-orange: #fb9256;
   }
+}
+
+.inspector {
+  margin: 10px 0;
+
+  @extend .inspectorTheme;
 
   & * {
     box-sizing: border-box;
@@ -61,6 +65,13 @@
     border-color: #636363;
     background: #3d3d3d;
   }
+}
+
+.resultsHidden {
+  font-family: Inter;
+  font-style: italic;
+  font-weight: normal;
+  opacity: 0.4;
 }
 
 // syntax highlighting

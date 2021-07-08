@@ -9,6 +9,9 @@ import React, {
 import {observer} from "mobx-react";
 import {VariableSizeList as List, ListChildComponentProps} from "react-window";
 
+import {useInitialValue} from "../../hooks/useInitialValue";
+import {useResize} from "../..//hooks/useResize";
+
 import styles from "./repl.module.scss";
 
 import {useTabState} from "../../state/providers";
@@ -21,9 +24,7 @@ import ReplHistoryCell, {ReplTransactionStatus} from "./replHistoryCell";
 const ListPadding = 24;
 
 interface ListData {
-  getItem: (
-    index: number
-  ) =>
+  getItem: (index: number) =>
     | ReplHistoryCellState
     | {
         transaction: Transaction;
@@ -51,6 +52,12 @@ export default observer(function ReplHistory() {
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useResize(containerRef, ({height}) => setContainerHeight(height));
+
+  const initialScrollOffset = useInitialValue(
+    () => replState.historyScrollPos
+  );
+
   const [transactionHeight, setTransactionHeight] = useState<number>(32);
 
   const listRef = useRef<List>(null);
@@ -71,20 +78,6 @@ export default observer(function ReplHistory() {
     [queryHistory, currentTransaction, setTransactionHeight]
   );
 
-  useLayoutEffect(() => {
-    if (containerRef.current) {
-      const observer = new ResizeObserver(([entry]) => {
-        setContainerHeight(entry.contentRect.height);
-      });
-
-      observer.observe(containerRef.current);
-
-      return () => {
-        observer.disconnect();
-      };
-    }
-  }, [containerRef]);
-
   return (
     <div ref={containerRef} className={styles.replHistory}>
       <List<ListData>
@@ -93,7 +86,7 @@ export default observer(function ReplHistory() {
         innerElementType={innerElementType}
         width={"100%"}
         height={containerHeight}
-        initialScrollOffset={replState.historyScrollPos}
+        initialScrollOffset={initialScrollOffset}
         onScroll={({scrollOffset}) =>
           replState.setHistoryScrollPos(scrollOffset)
         }

@@ -9,7 +9,7 @@ import {useResize} from "../../hooks/useResize";
 export interface QueryEditorProps {
   query: string;
   onChange: (value: string) => void;
-  onRun: () => void;
+  onRun?: () => void;
 }
 
 const QueryEditor = (props: QueryEditorProps) => {
@@ -43,7 +43,7 @@ const QueryEditor = (props: QueryEditorProps) => {
   useEffect(() => {
     editor.current?.addCommand(
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-      onRun
+      () => onRun?.()
     );
   }, [editor, onRun]);
 

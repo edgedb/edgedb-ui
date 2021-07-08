@@ -4,6 +4,7 @@ WITH MODULE schema,
 SELECT ObjectType {
   name,
   is_abstract,
+  expr,
   inherits_from := (
     SELECT .bases
     FILTER .name != 'std::Object'
@@ -27,6 +28,7 @@ SELECT ObjectType {
     name,
     targetName := .target.name,
     required,
+    expr,
     default,
     constraints: {
       name,
@@ -53,6 +55,7 @@ SELECT ObjectType {
       )
     ),
     required,
+    expr,
     default,
     constraints: {
       name,
@@ -71,6 +74,7 @@ SELECT ObjectType {
       name,
       targetName := .target.name,
       required,
+      expr,
       default,
       constraints: {
         name,

@@ -5,8 +5,6 @@ export function useResize(
   onResize: (rect: DOMRect) => void
 ): void {
   useEffect(() => {
-    // https://github.com/microsoft/TypeScript/issues/37861
-    // @ts-ignore
     const resizeObserver = new ResizeObserver((entries) => {
       if (entries[0]) {
         onResize(entries[0].contentRect);

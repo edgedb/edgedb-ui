@@ -13,6 +13,8 @@ import DisconnectedOverlay from "./disconnected";
 
 import ReplView from "../repl";
 import SchemaView from "../schema";
+import DataView from "../dataView";
+
 import {CloseIcon} from "../icons";
 
 const views: {
@@ -27,7 +29,7 @@ const views: {
   },
   [ViewType.data]: {
     label: "Data",
-    content: <div className={styles.card}>Data</div>,
+    content: <DataView />,
   },
   [ViewType.schema]: {
     label: "Schema",

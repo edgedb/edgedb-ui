@@ -21,17 +21,23 @@ export interface EdgeDBResult {
   codec: _ICodec;
 }
 
-export const resultGetterCtx = createContext<
-  (state: InspectorState) => Promise<EdgeDBResult | undefined>
->();
+export const resultGetterCtx =
+  createContext<
+    (state: InspectorState) => Promise<EdgeDBResult | undefined>
+  >();
 
 @model("edb/Inspector")
 export class InspectorState extends Model({
   expanded: prop<ArraySet<string> | undefined>(),
   scrollPos: prop<number>(0).withSetter(),
+
+  autoExpandDepth: prop<number | null>(null),
+  countPrefix: prop<string | null>(null),
 }) {
   @observable.shallow
   _items: Item[] = [];
+
+  loadingData = false;
 
   getItems() {
     if (!this._items.length) {
@@ -43,10 +49,16 @@ export class InspectorState extends Model({
 
   @modelFlow
   initData = _async(function* (this: InspectorState, result?: EdgeDBResult) {
+    if (this.loadingData) {
+      return;
+    }
+
     if (!result) {
       const resultGetter = resultGetterCtx.get(this);
       if (resultGetter) {
+        this.loadingData = true;
         result = yield* _await(resultGetter(this));
+        this.loadingData = false;
       }
     }
 
@@ -68,7 +80,10 @@ export class InspectorState extends Model({
           result.data
         ),
       ];
-      this.expandItem(0, shouldAutoExpand ? 4 : undefined);
+      this.expandItem(
+        0,
+        shouldAutoExpand ? this.autoExpandDepth ?? 4 : undefined
+      );
     }
   });
 
@@ -76,7 +91,12 @@ export class InspectorState extends Model({
   expandItem(index: number, expandLevels?: number) {
     const item = this._items[index];
 
-    const expandedItems = expandItem(item, this.expanded!, expandLevels);
+    const expandedItems = expandItem(
+      item,
+      this.expanded!,
+      expandLevels,
+      this.countPrefix
+    );
     this._items.splice(index + 1, 0, ...expandedItems);
   }
 

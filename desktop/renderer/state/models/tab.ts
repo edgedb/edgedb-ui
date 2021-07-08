@@ -28,6 +28,7 @@ import {Connection} from "./connection";
 
 import {Schema} from "./schema";
 import {Repl} from "./repl";
+import {DataView} from "./dataview";
 
 export const tabCtx = createContext<Tab>();
 
@@ -53,6 +54,7 @@ export class Tab extends Model({
 
   replView: prop(() => new Repl({})),
   schemaView: prop(() => new Schema({})),
+  dataView: prop(() => new DataView({})),
 }) {
   @observable
   schemaData: Frozen<SchemaData> | null = null;

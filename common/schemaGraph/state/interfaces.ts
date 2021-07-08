@@ -3,6 +3,7 @@ import {UUID} from "edgedb";
 export interface SchemaObject {
   name: string;
   is_abstract: boolean;
+  expr: string | null;
   inherits_from: string[];
   inherited_by: string[];
   constraints: SchemaConstraint[];
@@ -15,6 +16,7 @@ export interface SchemaProp {
   name: string;
   targetName: string;
   required: boolean;
+  expr: string | null;
   default: string;
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
@@ -24,6 +26,7 @@ export interface SchemaLink {
   name: string;
   targetNames: string[];
   required: boolean;
+  expr: string | null;
   default: string;
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];

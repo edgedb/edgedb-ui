@@ -1,0 +1,167 @@
+.dataview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dataviewCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.stackedCard {
+  position: relative;
+  height: 11px;
+  flex-shrink: 0;
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 0;
+    bottom: 0;
+    background: #272727;
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 34px;
+  background: #363636;
+  padding-left: 2rem;
+
+  .nestedView & {
+    height: 41px;
+    padding-left: 0;
+  }
+
+  select {
+    background: none;
+    border: 0;
+    outline: 0;
+    color: #adadad;
+    font-family: Roboto Mono;
+    font-size: 13px;
+    height: 100%;
+
+    option {
+      background: #363636;
+    }
+  }
+}
+
+.rowCount {
+  margin: 0 auto;
+  font-size: 13px;
+}
+
+.backButton {
+  height: 100%;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nestedPathStep {
+  font-family: Roboto Mono;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 13px;
+  line-height: 16px;
+  color: #adadad;
+  margin-right: 2rem;
+
+  .pathStepIdent {
+    font-size: 11px;
+    line-height: 13px;
+    opacity: 0.6;
+  }
+}
+
+.headerButtons {
+  margin-left: auto;
+  align-self: stretch;
+  display: flex;
+}
+
+.headerButton {
+  margin: 4px;
+  padding: 0 8px;
+  margin-bottom: 0;
+  padding-top: 2px;
+  padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 13px;
+  color: #adadad;
+  text-transform: uppercase;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+
+  svg {
+    width: 10px;
+    margin-right: 4px;
+  }
+
+  &.active {
+    background: #262626;
+
+    svg {
+      transform: scaleY(-1);
+    }
+  }
+}
+
+.filterPanel {
+  position: relative;
+  background: #262626;
+  height: 190px;
+}
+
+.filterActions {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  margin: 6px;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+
+  .filterError {
+    color: #f13f4a;
+  }
+
+  button {
+    font-family: Inter;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    color: #adadad;
+    text-transform: uppercase;
+    background: none;
+    border: 0;
+    outline: 0;
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-left: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+}
