@@ -211,7 +211,7 @@ export function buildItem(
     data,
     body: (
       <>
-        {type === ItemType.Object ? (
+        {type === ItemType.Object && data?.__tname__ !== "std::FreeObject" ? (
           <span className={styles.typeName}>
             {data.__tname__ ?? "Object"}{" "}
           </span>

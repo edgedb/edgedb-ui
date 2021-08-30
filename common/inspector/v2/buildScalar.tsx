@@ -1,6 +1,7 @@
 import React, {PropsWithChildren} from "react";
 import {_ICodec, UUID} from "edgedb";
 import {EdgeDBDateTime} from "edgedb/dist/src/datatypes/datetime";
+import {EnumCodec} from "edgedb/dist/src/codecs/enum";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -135,6 +136,17 @@ function renderValue(
     return {
       body: (
         <span className={styles.scalar_uuid}>{JSON.stringify(value)}</span>
+      ),
+    };
+  }
+
+  if (codec instanceof EnumCodec) {
+    return {
+      body: (
+        <span>
+          <span className={styles.typeName}>{mt}.</span>
+          <b>{value.toString()}</b>
+        </span>
       ),
     };
   }
