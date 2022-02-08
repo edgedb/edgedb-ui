@@ -32,6 +32,7 @@ export class InspectorState extends Model({
 }) {
   @observable.shallow
   _items: Item[] = [];
+  _jsonMode = false;
 
   getItems() {
     if (!this._items.length) {
@@ -42,7 +43,11 @@ export class InspectorState extends Model({
   }
 
   @modelFlow
-  initData = _async(function* (this: InspectorState, result?: EdgeDBResult) {
+  initData = _async(function* (
+    this: InspectorState,
+    result?: EdgeDBResult,
+    jsonMode: boolean = false
+  ) {
     if (!result) {
       const resultGetter = resultGetterCtx.get(this);
       if (resultGetter) {
@@ -65,10 +70,14 @@ export class InspectorState extends Model({
             level: 0,
             codec: result.codec,
           },
-          result.data
+          jsonMode ? `[${result.data.join(", ")}]` : result.data
         ),
       ];
-      this.expandItem(0, shouldAutoExpand ? 4 : undefined);
+      if (!jsonMode) {
+        this.expandItem(0, shouldAutoExpand ? 4 : undefined);
+      } else {
+        this._jsonMode = jsonMode;
+      }
     }
   });
 

@@ -29,6 +29,10 @@
   white-space: pre;
 
   border-radius: 4px;
+
+  .jsonMode & {
+    padding-left: 0 !important;
+  }
 }
 
 .expandArrow {
@@ -79,6 +83,15 @@
   }
   &:after {
     content: "'";
+  }
+
+  .jsonMode & {
+    color: inherit;
+    &:before,
+    &:after {
+      content: "";
+      margin-left: 0;
+    }
   }
 }
 

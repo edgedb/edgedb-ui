@@ -51,7 +51,12 @@ const RowList = observer(function RowList({
 
   if (disableVirtualisedRendering) {
     return (
-      <div className={cn(styles.inspector, className)} style={inspectorStyle}>
+      <div
+        className={cn(styles.inspector, className, {
+          [styles.jsonMode]: state._jsonMode,
+        })}
+        style={inspectorStyle}
+      >
         {items.map((_, i) => (
           <Row index={i} style={{}} data={items} key={i} />
         ))}
@@ -72,7 +77,9 @@ const RowList = observer(function RowList({
 
     return (
       <List<Item[]>
-        className={cn(styles.inspector, className)}
+        className={cn(styles.inspector, className, {
+          [styles.jsonMode]: state._jsonMode,
+        })}
         style={inspectorStyle}
         height={height}
         width={"100%"}
