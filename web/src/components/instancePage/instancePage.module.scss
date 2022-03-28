@@ -1,0 +1,32 @@
+.instancePage {
+  background: var(--app-panel-bg);
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.instanceName {
+  font-size: 28px;
+  font-weight: 500;
+  margin-top: 54px;
+}
+
+.databases {
+  display: flex;
+  margin-top: 54px;
+}
+
+.databaseCard {
+  background: var(--app-card-bg);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 8px;
+  cursor: pointer;
+  width: 170px;
+  height: 136px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

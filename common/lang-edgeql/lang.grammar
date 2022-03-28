@@ -1,0 +1,149 @@
+@top Script { Statement (";"+ Statement)* }
+
+Statement {
+  element+
+}
+
+element {
+  Name |
+  Keyword |
+  Operator |
+  String |
+  ByteString |
+  Number |
+  Bool |
+  Punctuation |
+  Cast |
+  CompoundTypeName |
+  QueryParameter |
+  Parens { "(" element* ")" } |
+  Braces { "{" (element | ";")* "}" } |
+  Brackets { "[" element* "]" }
+}
+
+commaSep<content> { content ("," content)* }
+
+castStart { @extend<operator, "<"> }
+
+arrayType {
+  BuiltinName { @specialize<shortName, "array"> } castStart (Name | tupleType) ">"
+}
+
+tupleType {
+  BuiltinName { @specialize<shortName, "tuple"> } castStart
+    commaSep<(shortName ":")? (Name | CompoundTypeName)>
+  ">"
+}
+
+CompoundTypeName { arrayType | tupleType }
+
+Cast { castStart ( Name | CompoundTypeName ) ~cast ">" }
+
+QueryParameter[@dynamicPrecedence=1] {
+  Cast { castStart Keyword? (Name | arrayType) ~cast ">"}
+  QueryParameterName
+}
+
+Keyword { reservedKeyword | unreservedKeyword }
+
+Name {
+  shortName | BuiltinName | fullyQualifiedName {
+    ModuleName {shortName "::"} (shortName | BuiltinName | unreservedKeyword)
+  }
+}
+
+Operator { operator | opHack }
+
+Number { number BigNumberPostfix? }
+
+@external specialize {shortName} specializeIdent from './tokens.js' {
+  reservedKeyword,
+  unreservedKeyword,
+  BuiltinName,
+  Bool
+}
+
+@skip {} {
+  String {
+    ('"' ( strContent | "'" | StringEscape )* '"') |
+    ("'" ( strContent | '"' | StringEscape )* "'") |
+    (RawStringPrefix '"' ( strContent | "'" | "\\" )* '"') |
+    (RawStringPrefix "'" ( strContent | '"' | "\\" )* "'") |
+    dollarString
+  }
+
+  ByteString {
+    (ByteStringPrefix '"' ( ascii | "'" | "\n" | ByteEscape )* '"') |
+    (ByteStringPrefix "'" ( ascii | '"' | "\n" | ByteEscape )* "'")
+  }
+}
+
+@external tokens strPrefix from "./tokens.js" { RawStringPrefix, ByteStringPrefix }
+
+@external tokens dollarStr from "./tokens.js" { dollarString }
+
+@external tokens operatorHacks from "./tokens.js" { opHack }
+
+@external tokens bigNumber from "./tokens.js" { BigNumberPostfix }
+
+@tokens {
+  plainIdent { $[a-zA-Z_] $[a-zA-Z_0-9]* }
+
+  quotedIdent { "`" ![`@] ![`]* "`" }
+
+  shortName { plainIdent | quotedIdent }
+
+  number { int frac? exp?  }
+  int  { '0' | $[1-9] std.digit* }
+  frac { '.' std.digit+ }
+  exp  { $[eE] $[+\-]? std.digit+ }
+
+  strContent { !["'\\] }
+  ascii { $[\u{20}\u{21}\u{23}-\u{26}\u{28}-\u{5b}\u{5d}-\u{7e}] }
+
+  ByteEscape { "\\" (
+    $["'\\bfnrt\n] |
+    "x" hex hex
+  ) }
+  StringEscape { "\\" (
+    $["'\\bfnrt\n] |
+    "x" hex hex |
+    "u" hex hex hex hex |
+    "U" hex hex hex hex hex hex hex hex
+  ) }
+  hex  { $[0-9a-fA-F] }
+
+  Punctuation { $[,.@] | ".<" | "->" | ":" }
+
+  QueryParameterName { "$" (shortName | int) }
+
+  operator {
+    "!=" |
+    "%" |
+    "*" |
+    "+" |
+    "++" |
+    "/" |
+    "//" |
+    ":=" |
+    "<" |
+    "<=" |
+    "=" |
+    ">" |
+    ">=" |
+    "?!=" |
+    "?=" |
+    "??" |
+    "^"
+  }
+
+  whitespace { $[ \n\r\t] }
+
+  Comment { "#" ![\n]* }
+
+  "{" "}" "(" ")"
+}
+
+@skip { whitespace | Comment }
+
+@detectDelim

@@ -1,0 +1,58 @@
+@import "../../mixins.scss";
+
+.schema {
+  display: flex;
+  flex-grow: 1;
+}
+
+.schemaGraphView {
+  flex-grow: 1;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+.schemaTextView {
+  flex-grow: 1;
+  overflow: auto;
+  display: flex;
+  @include customScrollbar;
+
+  pre {
+    font-family: Roboto Mono;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    margin: 0;
+    padding: 2rem 0;
+    height: max-content;
+
+    &:first-child {
+      padding-left: 2rem;
+    }
+    &:last-child {
+      padding-right: 2rem;
+    }
+  }
+
+  .lineNos {
+    color: #4e4e4e;
+    margin-right: 1rem;
+    text-align: right;
+  }
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.switcherLabel {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #6b6b6b;
+  margin-left: auto;
+  margin-right: 1.5rem;
+}

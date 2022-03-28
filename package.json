@@ -2,11 +2,11 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "desktop",
+      "web",
       "common/*"
     ]
   },
   "resolutions": {
-    "edgedb": "portal:../edgedb-js"
+    "edgedb": "portal:/home/james/dev/edgedb-js"
   }
 }

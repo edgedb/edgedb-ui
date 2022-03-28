@@ -1,0 +1,130 @@
+@import "../../../mixins.scss";
+
+.paramEditorPanel {
+  margin: 8px;
+  margin-top: 0;
+  background: #363636;
+  border-radius: 8px;
+  flex-shrink: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.header {
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 13px;
+  text-transform: uppercase;
+  color: #9b9b9b;
+  margin: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.paramsList {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  row-gap: 1.5rem;
+  column-gap: 2rem;
+  min-height: 0;
+  overflow: auto;
+  @include customScrollbar;
+}
+
+.paramEditorItem {
+  display: contents;
+}
+
+.paramDisabled {
+  .paramDetails,
+  .paramData {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.paramOptional {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.paramDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+
+  height: 32px;
+}
+
+.paramIdents {
+  display: flex;
+
+  font-family: Roboto Mono;
+  font-size: 13px;
+  line-height: 18px;
+  color: #c4c4c4;
+}
+
+.paramType {
+  color: rgba(196, 196, 196, 0.5);
+  margin-right: 1rem;
+  font-weight: 300;
+}
+
+.paramOptionalLabel {
+  font-size: 12px;
+  line-height: 14px;
+
+  color: rgba(196, 196, 196, 0.5);
+}
+
+.paramData {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  button {
+    background: #484848;
+    border: 0;
+    outline: 0;
+    color: inherit;
+    font-family: inherit;
+    line-height: 26px;
+    text-transform: uppercase;
+    font-size: 12px;
+    border-radius: 16px;
+    width: max-content;
+    padding: 0 1.5rem;
+    margin: 3px 0;
+    cursor: pointer;
+  }
+}
+
+.paramValue {
+  input {
+    font-family: Roboto Mono;
+    font-size: 14px;
+    line-height: 32px;
+    padding: 0 1rem;
+    color: #c4c4c4;
+    border: 0;
+    background: #2a2a2a;
+    border-radius: 4px;
+    outline: 0;
+  }
+
+  button {
+    margin-left: 1rem;
+  }
+}
+
+.paramError {
+  color: #eb4747;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}

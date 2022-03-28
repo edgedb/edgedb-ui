@@ -1,0 +1,24 @@
+.app {
+  position: relative;
+  height: 100vh;
+  max-height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  font-size: 16px;
+  background-color: var(--app-bg);
+  color: var(--app-text-colour);
+
+  &.globalDragCursor:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    cursor: var(--drag-cursor);
+    z-index: 999999;
+  }
+}

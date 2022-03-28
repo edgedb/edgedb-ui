@@ -1,0 +1,57 @@
+.databasePage {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.tabs {
+  flex-shrink: 0;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tab {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  & > svg {
+    fill: #999;
+  }
+
+  &.tabSelected {
+    background: var(--app-panel-bg);
+  }
+
+  &:hover {
+    background: var(--app-accent-green);
+
+    & > svg {
+      fill: var(--app-bg);
+    }
+  }
+}
+
+.settingsTab {
+  margin-top: auto;
+  margin-bottom: 10px;
+}
+
+.tabContent {
+  display: flex;
+  flex-grow: 1;
+}
+
+.card {
+  background-color: var(--app-panel-bg);
+  flex-grow: 1;
+  border-top-left-radius: 8px;
+}

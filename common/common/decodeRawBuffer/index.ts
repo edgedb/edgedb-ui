@@ -4,7 +4,7 @@ import {
   _ReadBuffer,
   _ICodec,
 } from "edgedb";
-import type {ProtocolVersion} from "edgedb/dist/src/ifaces";
+import type {ProtocolVersion} from "edgedb/dist/ifaces";
 
 export type EdgeDBSet = _EdgeDBSet & {_codec: _ICodec};
 

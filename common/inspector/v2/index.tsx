@@ -105,16 +105,43 @@ const Row = observer(function Row({
 
   const item = data[index];
 
-  const expandableItem =
-    item.type !== ItemType.Scalar && item.type !== ItemType.Other;
-
   const isExpanded = state.expanded!.has(item.id);
 
   return (
+    <InspectorRow
+      item={item}
+      style={style}
+      isExpanded={isExpanded}
+      toggleExpanded={() => {
+        isExpanded ? state.collapseItem(index) : state.expandItem(index);
+      }}
+    />
+  );
+});
+
+interface InspectorRowProps {
+  item: Item;
+  style?: React.CSSProperties;
+  className?: string;
+  isExpanded: boolean;
+  toggleExpanded: () => void;
+}
+
+export function InspectorRow({
+  item,
+  className,
+  isExpanded,
+  toggleExpanded,
+  style,
+}: InspectorRowProps) {
+  const expandableItem =
+    item.type !== ItemType.Scalar && item.type !== ItemType.Other;
+
+  return (
     <div
-      className={styles.rowItem}
+      className={cn(styles.rowItem, className)}
       style={{
-        ...(style as any),
+        ...style,
         paddingLeft: `${(item.level + 1) * 2}ch`,
       }}
     >
@@ -123,9 +150,7 @@ const Row = observer(function Row({
           className={cn(styles.expandArrow, {
             [styles.expanded]: isExpanded,
           })}
-          onClick={() =>
-            isExpanded ? state.collapseItem(index) : state.expandItem(index)
-          }
+          onClick={toggleExpanded}
         >
           <ExpandArrowIcon />
         </div>
@@ -134,10 +159,7 @@ const Row = observer(function Row({
       {item.body}
       {expandableItem && !isExpanded ? (
         <>
-          <div
-            className={styles.ellipsis}
-            onClick={() => state.expandItem(index)}
-          >
+          <div className={styles.ellipsis} onClick={toggleExpanded}>
             <EllipsisIcon />
           </div>
           {(item as any).closingBracket.body}
@@ -145,7 +167,7 @@ const Row = observer(function Row({
       ) : null}
     </div>
   );
-});
+}
 
 function ExpandArrowIcon() {
   return (

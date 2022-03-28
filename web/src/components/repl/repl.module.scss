@@ -1,0 +1,42 @@
+@import "../../mixins.scss";
+
+.repl {
+  font-family: Roboto;
+  font-style: normal;
+  min-height: 0;
+  flex-grow: 1;
+}
+
+.editorBlock {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.replEditorOverlays {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 33%;
+}
+
+.runButton {
+  --buttonBg: #49d8ad;
+  --buttonTextColour: #fff;
+  align-self: flex-start;
+  margin: 8px;
+  flex-shrink: 0;
+}
+
+.replHistory {
+  min-height: 0;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.historyList {
+  @include hideScrollbar;
+}

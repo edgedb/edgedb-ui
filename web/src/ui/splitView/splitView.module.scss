@@ -1,0 +1,126 @@
+.splitViewContainer {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+
+  &.splitVertical {
+    flex-direction: column;
+  }
+}
+
+.splitViewChild {
+  overflow: hidden;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-shrink: 0;
+  flex-grow: 0;
+  background: var(--app-panel-bg);
+
+  border-radius: 4px 4px 0 0;
+
+  &:first-child {
+    border-top-left-radius: 8px;
+  }
+  &:last-child {
+    border-top-right-radius: 0;
+  }
+
+  .splitVertical & {
+    border-radius: 4px 0 0 4px;
+
+    &:first-child {
+      border-top-left-radius: 8px;
+    }
+    &:last-child {
+      border-bottom-left-radius: 0;
+    }
+  }
+}
+
+.resizer {
+  min-width: 4px;
+  min-height: 4px;
+  background-color: var(--app-bg);
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .grabHandle {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: -3px;
+    right: -3px;
+    cursor: ew-resize;
+  }
+
+  .resizerIndicator {
+    width: 10px;
+    height: 40px;
+    flex-shrink: 0;
+    background: var(--app-bg);
+    border-radius: 5px;
+    pointer-events: none;
+
+    &:after {
+      content: "";
+      display: block;
+      width: 2px;
+      height: 32px;
+      background: var(--app-card-bg);
+      margin: 4px;
+      border-radius: 2px;
+    }
+  }
+
+  .resizerFlip {
+    min-width: 8px;
+    height: 19px;
+    border-radius: 2px;
+    background-color: var(--resizer-flip-background, var(--bgColour));
+    color: var(--resizer-flip-icon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: height 0.1s, min-width 0.1s;
+    cursor: pointer;
+    z-index: 1;
+
+    svg {
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+  }
+
+  .splitVertical > & {
+    .grabHandle {
+      cursor: ns-resize;
+    }
+
+    .resizerFlip {
+      height: 8px;
+      width: 19px;
+    }
+  }
+
+  &:hover {
+    .resizerFlip {
+      height: 19px;
+      min-width: 19px;
+      transition-delay: 0.2s;
+
+      svg {
+        opacity: 1;
+        transition-delay: 0.2s;
+      }
+    }
+  }
+}

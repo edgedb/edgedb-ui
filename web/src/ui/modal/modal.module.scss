@@ -1,0 +1,119 @@
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 300;
+  background: var(--app-modal-overlay);
+  user-select: none;
+}
+
+.modalCard {
+  position: relative;
+  background: var(--app-modal-bg);
+  box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+
+  .modalError {
+    position: absolute;
+    top: calc(100% + 3rem);
+    max-width: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.modalTitle {
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 16px;
+  color: #848484;
+}
+
+.modalClose {
+  color: #666;
+  margin: -1rem -0.5rem -1rem auto;
+  cursor: pointer;
+
+  &:hover {
+    color: #999;
+  }
+}
+
+.modalContent {
+  min-width: 40rem;
+  color: #acacac;
+  font-size: 14px;
+  line-height: 24px;
+
+  .modalField:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.modalProgressToggle {
+  text-transform: uppercase;
+  margin-top: 3rem;
+  font-size: 12px;
+  color: #858585;
+  cursor: pointer;
+}
+
+.modalProgress {
+  background: #0b0b0b;
+  border-radius: 0.5rem;
+  font-family: Roboto Mono, monospace;
+  padding: 1rem;
+  color: #a2a2a2;
+  overflow: auto;
+  max-width: 80ch;
+  max-height: 15em;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2.5rem;
+  margin-bottom: -1rem;
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+
+  span {
+    color: #6b6b6b;
+    font-size: 14px;
+    margin-bottom: 0.75rem;
+  }
+
+  input,
+  select {
+    background: var(--form-field-bg);
+    border: none;
+    outline: none;
+    height: 5rem;
+    font-family: Roboto Mono;
+    font-size: 14px;
+    color: var(--form-field-text-colour);
+    padding: 0 1.5rem;
+    border-radius: 0.5rem;
+    align-self: stretch;
+  }
+}

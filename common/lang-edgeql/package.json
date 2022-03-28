@@ -1,0 +1,21 @@
+{
+  "name": "@edgedb/lang-edgeql",
+  "private": true,
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "main": "./edgeql.ts",
+  "type": "module",
+  "scripts": {
+    "generate": "lezer-generator lang.grammar -o lang.js",
+    "debug": "node debug.js"
+  },
+  "peerDependencies": {
+    "@codemirror/highlight": "^0.19.7"
+  },
+  "dependencies": {
+    "@codemirror/language": "^0.19.8"
+  },
+  "devDependencies": {
+    "@lezer/generator": "^0.15.4"
+  }
+}

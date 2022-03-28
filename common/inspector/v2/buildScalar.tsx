@@ -1,7 +1,7 @@
 import React, {PropsWithChildren} from "react";
-import {_ICodec, UUID} from "edgedb";
-import {EdgeDBDateTime} from "edgedb/dist/src/datatypes/datetime";
-import {EnumCodec} from "edgedb/dist/src/codecs/enum";
+import {_ICodec} from "edgedb";
+import {EdgeDBDateTime} from "edgedb/dist/datatypes/datetime";
+// import {EnumCodec} from "edgedb/dist/codecs/enum";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -31,7 +31,7 @@ type TagProps = {
   name: string;
 };
 
-function Tag({name, children}: PropsWithChildren<TagProps>) {
+function ScalarTag({name, children}: PropsWithChildren<TagProps>) {
   return (
     <span className={styles.scalar_tag}>
       <span className={styles.scalar_tag_open}>{"<"}</span>
@@ -42,13 +42,18 @@ function Tag({name, children}: PropsWithChildren<TagProps>) {
   );
 }
 
-function renderValue(
+export function renderValue(
   value: any,
-  codec: _ICodec
+  codec: _ICodec,
+  showTypeTag: boolean = true
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
     return {body: <span className={styles.scalar_empty}>{"{}"}</span>};
   }
+
+  const Tag = showTypeTag
+    ? ScalarTag
+    : ({children}: PropsWithChildren<{}>) => <>{children}</>;
 
   const mt = codec.getKnownTypeName();
   switch (mt) {
@@ -132,24 +137,16 @@ function renderValue(
     };
   }
 
-  if (value instanceof UUID) {
-    return {
-      body: (
-        <span className={styles.scalar_uuid}>{JSON.stringify(value)}</span>
-      ),
-    };
-  }
-
-  if (codec instanceof EnumCodec) {
-    return {
-      body: (
-        <span>
-          <span className={styles.typeName}>{mt}.</span>
-          <b>{value.toString()}</b>
-        </span>
-      ),
-    };
-  }
+  // if (codec instanceof EnumCodec) {
+  //   return {
+  //     body: (
+  //       <span>
+  //         <span className={styles.typeName}>{mt}.</span>
+  //         <b>{value.toString()}</b>
+  //       </span>
+  //     ),
+  //   };
+  // }
 
   return {
     body: (
@@ -259,9 +256,7 @@ function edgeDBDateTimeToString(datetime: EdgeDBDateTime): string {
   const year = `${datetime.year < 0 ? "-" : ""}${Math.abs(datetime.year)
     .toString()
     .padStart(4, "0")}`;
-  return `${year}-${datetime.month
-    .toString()
-    .padStart(2, "0")}-${datetime.day
+  return `${year}-${datetime.month.toString().padStart(2, "0")}-${datetime.day
     .toString()
     .padStart(2, "0")}T${datetime.hour
     .toString()
