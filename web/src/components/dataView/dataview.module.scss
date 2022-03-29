@@ -3,6 +3,7 @@
   flex-direction: column;
   flex-grow: 1;
   min-height: 0;
+  min-width: 0;
 }
 
 .dataviewCard {
@@ -133,6 +134,7 @@
 
 .filterPanel {
   position: relative;
+  display: flex;
   background: #262626;
   height: 190px;
 }

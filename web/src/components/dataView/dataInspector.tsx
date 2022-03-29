@@ -125,7 +125,7 @@ export default observer(function DataInspectorTable({
             rowHeight={(rowIndex) =>
               state.getRowData(rowIndex).kind === RowKind.expanded ? 24 : 30
             }
-            overscanRowCount={2}
+            overscanRowCount={5}
             onItemsRendered={({
               overscanRowStartIndex,
               overscanRowStopIndex,
@@ -223,7 +223,11 @@ const FieldHeaders = observer(function FieldHeaders() {
       <div className={styles.headerFieldWrapper}>
         {[...state.subtypeFieldRanges?.entries()].map(
           ([subtypeName, {left, width}]) => (
-            <div className={styles.subtypeRangeHeader} style={{left, width}}>
+            <div
+              key={subtypeName}
+              className={styles.subtypeRangeHeader}
+              style={{left, width}}
+            >
               <div className={styles.subtypeLabel}>{subtypeName}</div>
             </div>
           )

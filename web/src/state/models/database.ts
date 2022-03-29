@@ -1,7 +1,9 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, reaction} from "mobx";
 import {
   createContext,
+  frozen,
   Frozen,
+  idProp,
   Model,
   model,
   modelAction,
@@ -49,6 +51,7 @@ export interface SchemaData {
 
 @model("DatabasePageState")
 export class DatabasePageState extends Model({
+  $modelId: idProp,
   name: prop<string>(),
 
   currentTabId: prop<DatabaseTab>(DatabaseTab.Dashboard).withSetter(),
@@ -70,21 +73,21 @@ export class DatabasePageState extends Model({
     connCtx.set(this, this.connection);
   }
 
-  // onAttachedToRootStore() {
-  //   const schemaReactionDisposer = reaction(
-  //     () => this.connection.isConnected,
-  //     (isConnected) => {
-  //       if (isConnected) {
-  //         this.fetchSchemaData();
-  //       }
-  //     },
-  //     {fireImmediately: true}
-  //   );
+  onAttachedToRootStore() {
+    const schemaReactionDisposer = reaction(
+      () => this.connection.isConnected,
+      (isConnected) => {
+        if (isConnected) {
+          this.fetchSchemaData();
+        }
+      },
+      {fireImmediately: true}
+    );
 
-  //   return () => {
-  //     schemaReactionDisposer();
-  //   };
-  // }
+    return () => {
+      schemaReactionDisposer();
+    };
+  }
 
   // private async _fetchSchemaDataFromStore() {
   //   if (!this.schemaData) {
@@ -95,67 +98,70 @@ export class DatabasePageState extends Model({
   //   }
   // }
 
-  // @modelFlow
-  // fetchSchemaData = _async(function* (this: DatabasePageState) {
-  //   const conn = this.connection;
+  @modelFlow
+  fetchSchemaData = _async(function* (this: DatabasePageState) {
+    const conn = this.connection;
 
-  //   const [migrationId] = yield* _await(
-  //     Promise.all([
-  //       conn
-  //         .query(
-  //           `SELECT (
-  //             SELECT schema::Migration {
-  //               children := .<parents[IS schema::Migration]
-  //             } FILTER NOT EXISTS .children
-  //           ).id;`,
-  //           true
-  //         )
-  //         .then(({result}) => (result?.[0] ?? null) as string | null),
-  //       this._fetchSchemaDataFromStore(),
-  //     ])
-  //   );
+    const [migrationId] = yield* _await(
+      Promise.all([
+        conn
+          .query(
+            `SELECT (
+              SELECT schema::Migration {
+                children := .<parents[IS schema::Migration]
+              } FILTER NOT EXISTS .children
+            ).id;`,
+            true
+          )
+          .then(({result}) => (result?.[0] ?? null) as string | null),
+        // this._fetchSchemaDataFromStore(),
+      ])
+    );
 
-  //   if (!this.schemaData || this.schemaData.data.migrationId !== migrationId) {
-  //     this.fetchingSchemaData = true;
+    console.log("migrationId", migrationId);
 
-  //     try {
-  //       const [sdl, objects, functions, constraints, scalars] = yield* _await(
-  //         Promise.all([
-  //           conn
-  //             .query(`describe schema as sdl`, true)
-  //             .then(({result}) => result![0] as string),
-  //           conn
-  //             .query(schemaQuery, true)
-  //             .then(({result}) => result as SchemaObject[]),
-  //           conn
-  //             .query(functionsQuery, true)
-  //             .then(({result}) => result as SchemaFunction[]),
-  //           conn
-  //             .query(constraintsQuery, true)
-  //             .then(({result}) => result as SchemaAbstractConstraint[]),
-  //           conn
-  //             .query(scalarsQuery, true)
-  //             .then(({result}) => result as SchemaScalar[]),
-  //         ])
-  //       );
+    if (!this.schemaData || this.schemaData.data.migrationId !== migrationId) {
+      this.fetchingSchemaData = true;
 
-  //       const schemaData: SchemaData = JSON.parse(
-  //         JSON.stringify({
-  //           migrationId,
-  //           sdl,
-  //           objects,
-  //           functions,
-  //           constraints,
-  //           scalars,
-  //         })
-  //       );
+      try {
+        const [sdl, objects, functions, constraints, scalars] = yield* _await(
+          Promise.all([
+            conn
+              .query(`describe schema as sdl`, true)
+              .then(({result}) => result![0] as string),
+            conn
+              .query(schemaQuery, true)
+              .then(({result}) => result as SchemaObject[]),
+            conn
+              .query(functionsQuery, true)
+              .then(({result}) => result as SchemaFunction[]),
+            conn
+              .query(constraintsQuery, true)
+              .then(({result}) => result as SchemaAbstractConstraint[]),
+            conn
+              .query(scalarsQuery, true)
+              .then(({result}) => result as SchemaScalar[]),
+          ])
+        );
 
-  //       storeSchemaData(this.$modelId, schemaData);
+        const schemaData: SchemaData = JSON.parse(
+          JSON.stringify({
+            migrationId,
+            sdl,
+            objects,
+            functions,
+            constraints,
+            scalars,
+          })
+        );
 
-  //       this.schemaData = frozen(schemaData);
-  //     } finally {
-  //       this.fetchingSchemaData = false;
-  //     }
-  //   }
-  // });
+        // storeSchemaData(this.$modelId, schemaData);
+
+        this.schemaData = frozen(schemaData);
+      } finally {
+        this.fetchingSchemaData = false;
+        console.log("fetched schema");
+      }
+    }
+  });
 }

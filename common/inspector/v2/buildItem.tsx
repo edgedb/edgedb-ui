@@ -29,17 +29,13 @@ export type Item = {
   fieldName?: string;
 } & (
   | {
-      type:
-        | ItemType.Set
-        | ItemType.Array
-        | ItemType.Tuple
-        | ItemType.NamedTuple;
+      type: ItemType.Set | ItemType.Array | ItemType.Tuple;
       data: any[];
       closingBracket: Item;
       expectedCount?: number;
     }
   | {
-      type: ItemType.Object;
+      type: ItemType.Object | ItemType.NamedTuple;
       data: {[key: string]: any};
       closingBracket: Item;
     }
@@ -174,8 +170,8 @@ export function expandItem(
           const fieldNames = (item.codec as NamedTupleCodec).getNames();
           const subCodecs = item.codec.getSubcodecs();
 
-          childItems = item.data.flatMap((data, i) => {
-            const fieldName = fieldNames[i];
+          childItems = fieldNames.flatMap((fieldName, i) => {
+            const data = item.data[fieldName];
 
             const id = `${item.id}.${i}`;
 
@@ -235,7 +231,6 @@ export function buildItem(
     fieldName?: string;
     expectedCount?: number;
   },
-  codec: _ICodec,
   data: any,
   comma?: boolean
 ): Item {
@@ -243,7 +238,8 @@ export function buildItem(
     return buildScalarItem(base, null, comma);
   }
 
-  const codecKind = base.expectedCount ? "set" : codec.getKind();
+  const codecKind =
+    base.level === 0 || base.expectedCount ? "set" : base.codec.getKind();
 
   if (codecKind === "scalar") {
     return buildScalarItem(base, data, comma);

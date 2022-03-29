@@ -2,7 +2,9 @@ import {autorun} from "mobx";
 import {model, Model, prop} from "mobx-keystone";
 
 import {Schema as SchemaState} from "@edgedb/schema-graph";
-// import {tabCtx} from "..";
+
+import {dbCtx} from "../database";
+
 import {SplitViewState} from "src/ui/splitView/model";
 
 export enum SchemaViewType {
@@ -21,15 +23,15 @@ export class Schema extends Model({
 
   onAttachedToRootStore() {
     const updateSchemaDisposer = autorun(() => {
-      // const schemaData = tabCtx.get(this)!.schemaData?.data;
-      // if (schemaData) {
-      //   this.schemaState.updateSchema(
-      //     schemaData.objects,
-      //     schemaData.functions,
-      //     schemaData.constraints,
-      //     schemaData.scalars
-      //   );
-      // }
+      const schemaData = dbCtx.get(this)!.schemaData?.data;
+      if (schemaData) {
+        this.schemaState.updateSchema(
+          schemaData.objects,
+          schemaData.functions,
+          schemaData.constraints,
+          schemaData.scalars
+        );
+      }
     });
 
     return () => {

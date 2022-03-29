@@ -6,7 +6,7 @@ import {decode as _decode, EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
 
 export type {EdgeDBSet};
 
-const codecsRegistry = new _CodecsRegistry();
+export const codecsRegistry = new _CodecsRegistry();
 
 codecsRegistry.setStringCodecs({
   decimal: true,
@@ -22,7 +22,8 @@ export function decode(
   return _decode(
     codecsRegistry,
     typedArrayToBuffer(outCodecBuf),
-    typedArrayToBuffer(resultBuf)
+    typedArrayToBuffer(resultBuf),
+    [0, 13]
   );
 }
 

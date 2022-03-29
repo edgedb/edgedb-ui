@@ -82,7 +82,6 @@ export class InspectorState extends Model({
             level: 0,
             codec: result.codec,
           },
-          result.codec,
           jsonMode ? `[${result.data.join(", ")}]` : result.data
         ),
       ];

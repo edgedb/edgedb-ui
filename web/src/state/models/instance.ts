@@ -24,10 +24,10 @@ export class InstancePageState extends Model({}) {
   }[] = [];
 
   async fetchInstanceInfo() {
-    const res = await fetch(`${serverUrl}/server-info`);
+    const res = await fetch(`${serverUrl}/admin/instance-info`);
     const data = await res.json();
 
-    console.log(data);
+    // console.log(data);
 
     runInAction(() => {
       this.instanceName = data.instance_name ?? "_localdev";

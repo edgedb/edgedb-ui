@@ -9,20 +9,20 @@ import {
   _await,
 } from "mobx-keystone";
 
-import {_createFetchClient} from "edgedb/dist/client";
+import {FetchConnection} from "edgedb/dist/fetchConn";
+import {PrepareMessageHeaders} from "edgedb/dist/ifaces";
 
 import {
   decode,
   EdgeDBSet,
   QueryParams,
   encodeArgs,
-} from "../../utils/decodeRawBuffer";
+  codecsRegistry,
+} from "src/utils/decodeRawBuffer";
 
 import {QueryDuration} from "src/interfaces/connection";
 
 export type {QueryParams};
-
-const ipc = {} as any;
 
 export const connCtx = createContext<Connection>();
 
@@ -61,6 +61,11 @@ export enum TransactionState {
   Rolledback,
 }
 
+const queryHeaders: PrepareMessageHeaders = {
+  implicitTypenames: "true",
+  implicitTypeids: "true",
+};
+
 @model("TransactionState")
 export class Transaction extends Model({
   state: prop<TransactionState>(TransactionState.Active).withSetter(),
@@ -71,7 +76,7 @@ export class Connection extends Model({
   config: prop<ConnectConfig>(),
 }) {
   @observable connecting = false;
-  @observable isConnected = false;
+  @observable isConnected = true;
   @observable errorMessage = "";
 
   @computed
@@ -80,10 +85,14 @@ export class Connection extends Model({
     // return tabCtx.get(this)?.replView.currentTransaction;
   }
 
-  client = _createFetchClient({
-    address: ["localhost", 5656],
-    database: this.config.database,
-  });
+  conn = FetchConnection.create(
+    {
+      address:
+        process.env.NODE_ENV === "development" ? ["localhost", 5656] : "",
+      database: this.config.database,
+    },
+    codecsRegistry
+  );
 
   onAttachedToRootStore() {
     return () => {
@@ -93,13 +102,11 @@ export class Connection extends Model({
 
   @modelFlow
   connect = _async(function* (this: Connection) {
-    const id = this.$modelId;
-
     this.connecting = true;
     this.errorMessage = "";
 
     try {
-      yield* _await(ipc.invoke("createConnection", id, {...this.config}));
+      // yield* _await(ipc.invoke("createConnection", id, {...this.config}));
       this.isConnected = true;
     } catch (e: any) {
       console.error(e);
@@ -176,54 +183,43 @@ export class Connection extends Model({
     queryString: string,
     params?: QueryParams
   ): Promise<QueryResult | PrepareResult> {
-    if (params || kind === "prepare") {
-      throw new Error("Not implemented");
-      const {
-        inCodecBuf,
-        outCodecBuf,
-        duration: prepareDuration,
-      } = await ipc.invoke("prepare", this.$modelId, queryString);
+    const startTime = performance.now();
 
-      if (kind === "prepare") {
-        return {outCodecBuf, duration: prepareDuration};
-      }
+    const [inCodec, outCodec, inCodecBuf, outCodecBuf, protoVer] =
+      await this.conn.rawParse(queryString, queryHeaders);
 
-      const encodedParamsBuf = encodeArgs(inCodecBuf, params!);
+    const parseEndTime = performance.now();
 
-      const {resultBuf, duration: executeDuration} = await ipc.invoke(
-        "execute",
-        this.$modelId,
-        encodedParamsBuf
-      );
-
-      return {
-        result: decode(outCodecBuf, resultBuf),
-        duration: {prepare: prepareDuration, execute: executeDuration},
-        outCodecBuf,
-        resultBuf,
-      };
-    } else {
-      // const {outCodecBuf, resultBuf, duration} = await ipc.invoke(
-      //   "query",
-      //   this.$modelId,
-      //   queryString
-      // );
-
-      const result = await this.client.query<any>(queryString);
-
-      return {
-        result, //: decode(outCodecBuf, resultBuf),
-        duration: 0,
-        outCodecBuf: Buffer.alloc(0),
-        resultBuf: Buffer.alloc(0),
-      };
+    if (kind === "prepare") {
+      return {outCodecBuf, duration: Math.round(parseEndTime - startTime)};
     }
+
+    const resultBuf = await this.conn.rawExecute(
+      queryString,
+      outCodec,
+      queryHeaders,
+      inCodec,
+      params
+    );
+
+    const executeEndTime = performance.now();
+
+    const duration = {
+      prepare: Math.round(parseEndTime - startTime),
+      execute: Math.round(executeEndTime - parseEndTime),
+    };
+
+    return {
+      result: decode(outCodecBuf, resultBuf),
+      duration,
+      outCodecBuf,
+      resultBuf,
+    };
   }
 
   @modelFlow
   close = _async(function* (this: Connection) {
-    const id = this.$modelId;
-    yield* _await(ipc.invoke("closeConnection", id));
+    // yield* _await(ipc.invoke("closeConnection", id));
     this.isConnected = false;
   });
 }

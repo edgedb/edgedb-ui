@@ -1,12 +1,7 @@
-import {
-  Set as _EdgeDBSet,
-  _CodecsRegistry,
-  _ReadBuffer,
-  _ICodec,
-} from "edgedb";
+import {_CodecsRegistry, _ReadBuffer, _ICodec} from "edgedb";
 import type {ProtocolVersion} from "edgedb/dist/ifaces";
 
-export type EdgeDBSet = _EdgeDBSet & {_codec: _ICodec};
+export type EdgeDBSet = Array<any> & {_codec: _ICodec};
 
 export function decode(
   registry: InstanceType<typeof _CodecsRegistry>,
@@ -19,7 +14,7 @@ export function decode(
   if (outCodecBuf.length) {
     const codec = registry.buildCodec(outCodecBuf, protocolVersion);
 
-    result = new _EdgeDBSet() as EdgeDBSet;
+    result = new Array() as EdgeDBSet;
 
     const buf = new _ReadBuffer(resultBuf);
     const codecReadBuf = _ReadBuffer.alloc();

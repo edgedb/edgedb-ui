@@ -1,11 +1,13 @@
+import {Fragment} from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./dataview.module.scss";
 
-import {useDatabaseState} from "../../state/providers";
-import {DataInspector as DataInspectorState} from "../../state/models/dataview";
+import {useAppState, useDatabaseState} from "src/state/providers";
+import {Theme} from "src/state/models/app";
+import {DataInspector as DataInspectorState} from "src/state/models/dataview";
 
 import {CodeEditor} from "@edgedb/code-editor";
 
@@ -17,15 +19,13 @@ import {ChevronDownIcon} from "src/ui/icons";
 export default observer(function DataView() {
   const dataviewState = useDatabaseState().dataViewState;
 
+  const stack = dataviewState.inspectorStack;
+
   return (
     <div className={styles.dataview}>
-      {dataviewState.inspectorStack.length > 1 ? (
-        <div className={styles.stackedCard} />
-      ) : null}
-      {dataviewState.inspectorStack.length ? (
-        <DataInspectorView
-          stackIndex={dataviewState.inspectorStack.length - 1}
-        />
+      {stack.length > 1 ? <div className={styles.stackedCard} /> : null}
+      {stack.length ? (
+        <DataInspectorView stackIndex={stack.length - 1} />
       ) : (
         <div className={cn(styles.dataviewCard, styles.loadingSkeleton)}>
           Loading schema...
@@ -76,8 +76,8 @@ const DataInspectorView = observer(function DataInspectorView({
             </div>
             {dataviewState.inspectorStack
               .slice(1, stackIndex + 1)
-              .map((inspector) => (
-                <>
+              .map((inspector, i) => (
+                <Fragment key={i}>
                   <div className={styles.nestedPathStep}>
                     <div className={styles.pathStepName}>
                       {inspector.parentObject?.objectType}
@@ -94,7 +94,7 @@ const DataInspectorView = observer(function DataInspectorView({
                       {inspector.objectName}
                     </div>
                   </div>
-                </>
+                </Fragment>
               ))}
           </>
         )}
@@ -136,12 +136,15 @@ interface FilterPanelProps {
 }
 
 const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
+  const appState = useAppState();
+
   return (
     <div className={styles.filterPanel}>
-      {/* <QueryEditor
-        query={state.filterEditStr}
+      <CodeEditor
+        code={state.filterEditStr}
         onChange={(value) => state.setFilterEditStr(value)}
-      /> */}
+        useDarkTheme={appState.theme === Theme.dark}
+      />
 
       <div className={styles.filterActions}>
         <div className={styles.filterError}>{state.filterError}</div>

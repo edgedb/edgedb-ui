@@ -1,7 +1,7 @@
 import React, {PropsWithChildren} from "react";
 import {_ICodec} from "edgedb";
 import {EdgeDBDateTime} from "edgedb/dist/datatypes/datetime";
-// import {EnumCodec} from "edgedb/dist/codecs/enum";
+import {EnumCodec} from "edgedb/dist/codecs/enum";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -137,16 +137,16 @@ export function renderValue(
     };
   }
 
-  // if (codec instanceof EnumCodec) {
-  //   return {
-  //     body: (
-  //       <span>
-  //         <span className={styles.typeName}>{mt}.</span>
-  //         <b>{value.toString()}</b>
-  //       </span>
-  //     ),
-  //   };
-  // }
+  if (codec instanceof EnumCodec) {
+    return {
+      body: (
+        <span>
+          <span className={styles.typeName}>{mt}.</span>
+          <b>{value.toString()}</b>
+        </span>
+      ),
+    };
+  }
 
   return {
     body: (

@@ -1,4 +1,4 @@
-import {computed, observable, action, when, reaction} from "mobx";
+import {computed, observable, action, when, reaction, autorun} from "mobx";
 import {
   model,
   Model,
@@ -9,11 +9,15 @@ import {
   _await,
   findParent,
   objectMap,
+  idProp,
 } from "mobx-keystone";
 
 import {VariableSizeGrid as Grid} from "react-window";
 
+import {Text} from "@codemirror/state";
+
 import {_ICodec} from "edgedb";
+import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {EdgeDBSet} from "../../../utils/decodeRawBuffer";
 
@@ -96,6 +100,7 @@ export type ObjectField = {
   | {type: ObjectFieldType.property}
   | {
       type: ObjectFieldType.link;
+      required: boolean;
       subFields: {
         type: ObjectFieldType;
         name: string;
@@ -110,6 +115,7 @@ interface SortBy {
 
 @model("DataInspector")
 export class DataInspector extends Model({
+  $modelId: idProp,
   objectName: prop<string>(),
   parentObject: prop<{
     objectType: string;
@@ -126,10 +132,17 @@ export class DataInspector extends Model({
 
   filter: prop<string>(""),
   filterError: prop<string>(""),
-  filterEditStr: prop<string>("FILTER ").withSetter(),
   filterPanelOpen: prop<boolean>(false).withSetter(),
 }) {
   gridRef: Grid | null = null;
+
+  @observable.ref
+  filterEditStr = Text.of(["filter "]);
+
+  @action
+  setFilterEditStr(filterStr: Text) {
+    this.filterEditStr = filterStr;
+  }
 
   onAttachedToRootStore() {
     if (!this.fields) {
@@ -147,6 +160,8 @@ export class DataInspector extends Model({
       },
       {fireImmediately: true}
     );
+
+    autorun(() => console.log(this.dataQuery));
 
     return () => {
       connWatchDisposer();
@@ -193,6 +208,7 @@ export class DataInspector extends Model({
       return {
         type,
         ...baseField,
+        required: field.required,
         subFields: (field as SchemaLink).targetNames.flatMap((targetName) => {
           const subFieldObj = schemaObjects.find(
             (obj) => obj.name === targetName
@@ -234,28 +250,22 @@ export class DataInspector extends Model({
 
         return subtypeObj && !subtypeObj.expr // skip subtype fields on aliases
           ? [
-              ...subtypeObj.properties
-                // TODO: skip computables until https://github.com/edgedb/edgedb/issues/2652 fixed
-                .filter((prop) => !prop.expr)
-                .map((prop) =>
-                  createField(
-                    ObjectFieldType.property,
-                    prop,
-                    subtypeObjName,
-                    queryNamePrefix
-                  )
-                ),
-              ...subtypeObj.links
-                // TODO: skip computables until https://github.com/edgedb/edgedb/issues/2652 fixed
-                .filter((link) => !link.expr)
-                .map((link) =>
-                  createField(
-                    ObjectFieldType.link,
-                    link,
-                    subtypeObjName,
-                    queryNamePrefix
-                  )
-                ),
+              ...subtypeObj.properties.map((prop) =>
+                createField(
+                  ObjectFieldType.property,
+                  prop,
+                  subtypeObjName,
+                  queryNamePrefix
+                )
+              ),
+              ...subtypeObj.links.map((link) =>
+                createField(
+                  ObjectFieldType.link,
+                  link,
+                  subtypeObjName,
+                  queryNamePrefix
+                )
+              ),
             ]
           : [];
       })
@@ -508,8 +518,9 @@ export class DataInspector extends Model({
     this.data.set(offset, data);
 
     if (!this.dataCodecs) {
-      const codecs = data._codec.getSubcodecs();
-      const codecNames = data._codec.getSubcodecsNames();
+      const codec = data._codec as ObjectCodec;
+      const codecs = codec.getSubcodecs();
+      const codecNames = codec.getFields().map((f) => f.name);
       this.dataCodecs =
         this.fields!.map(
           (field) => codecs[codecNames.indexOf(field.queryName)]
@@ -594,14 +605,19 @@ export class DataInspector extends Model({
             field.subtypeName ? `[IS ${field.subtypeName}]` : ""
           }.${field.name}`;
 
-          return field.type === ObjectFieldType.property
-            ? `${field.queryName} := ${
-                field.typename === "std::str"
-                  ? `${selectName}[0:100]`
-                  : selectName
-              }`
-            : `${field.queryName} := (SELECT ${selectName} LIMIT 3),
+          if (field.type === ObjectFieldType.property) {
+            return `${field.queryName} := ${
+              field.typename === "std::str"
+                ? `${selectName}[0:100]`
+                : selectName
+            }`;
+          } else {
+            const linkSelect = `(SELECT ${selectName} LIMIT 3)`;
+            return `${field.queryName} := ${
+              field.required ? `assert_exists(${linkSelect})` : linkSelect
+            },
               __count_${field.queryName} := count(${selectName})`;
+          }
         })
         .filter((line) => !!line)
         .join(",\n")}
@@ -634,12 +650,20 @@ export class DataInspector extends Model({
 
   @computed
   get filterEdited() {
-    return this.filterEditStr.replace(/^filter\s/i, "").trim() !== this.filter;
+    return (
+      this.filterEditStr
+        .toString()
+        .replace(/^filter\s/i, "")
+        .trim() !== this.filter
+    );
   }
 
   @modelFlow
   applyFilter = _async(function* (this: DataInspector) {
-    const filter = this.filterEditStr.replace(/^filter\s/i, "").trim();
+    const filter = this.filterEditStr
+      .toString()
+      .replace(/^filter\s/i, "")
+      .trim();
 
     if (!filter) {
       this.filterError = "";
@@ -674,14 +698,14 @@ export class DataInspector extends Model({
 
   @modelAction
   revertFilter() {
-    this.filterEditStr = `FILTER ${this.filter}`;
+    this.filterEditStr = Text.of([`filter ${this.filter}`]);
     this.filterError = "";
   }
 
   @modelAction
   clearFilter() {
     this.filter = "";
-    this.filterEditStr = "FILTER ";
+    this.filterEditStr = Text.of(["filter "]);
     this.filterError = "";
 
     this._refreshData(true);

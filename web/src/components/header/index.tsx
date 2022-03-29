@@ -29,14 +29,6 @@ export default observer(function Header() {
           title={appState.instanceState.instanceName ?? ""}
           icon={<HeaderInstanceIcon />}
           mainAction={() => appState.setCurrentPageId(PageType.Instance)}
-          selectedItemIndex={0}
-          dropdownList={[
-            {
-              label: appState.instanceState.instanceName ?? "",
-              action: () => appState.setCurrentPageId(PageType.Instance),
-            },
-          ]}
-          dropdownActions={[{label: "Instance Settings", action: () => {}}]}
         />
         {appState.currentPage ? (
           <>
@@ -98,11 +90,13 @@ function Tab({
   icon,
   mainAction,
   selectedItemIndex,
-  dropdownList = [],
-  dropdownActions = [],
+  dropdownList,
+  dropdownActions,
 }: TabProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const hasDropdown = !!dropdownList || !!dropdownActions;
 
   useEffect(() => {
     if (dropdownOpen) {
@@ -126,53 +120,57 @@ function Tab({
       <div className={styles.tabTitle} onClick={mainAction}>
         {title}
       </div>
-      <div
-        className={styles.tabDropdownButton}
-        onClick={() => setDropdownOpen(!dropdownOpen)}
-      >
-        <DropdownIcon />
-      </div>
-
-      <div
-        ref={dropdownRef}
-        className={cn(styles.tabDropdown, {
-          [styles.tabDropdownOpen]: dropdownOpen,
-        })}
-      >
-        {dropdownList.map((item, i) => (
+      {hasDropdown ? (
+        <>
           <div
-            key={i}
-            className={cn(styles.dropdownItem, {
-              [styles.dropdownItemSelected]: selectedItemIndex === i,
-            })}
-            onClick={() => {
-              setDropdownOpen(false);
-              item.action();
-            }}
+            className={styles.tabDropdownButton}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            {item.label}
+            <DropdownIcon />
           </div>
-        ))}
-        {/* {dropdownList.length && dropdownActions.length ? (
+
+          <div
+            ref={dropdownRef}
+            className={cn(styles.tabDropdown, {
+              [styles.tabDropdownOpen]: dropdownOpen,
+            })}
+          >
+            {dropdownList?.map((item, i) => (
+              <div
+                key={i}
+                className={cn(styles.dropdownItem, {
+                  [styles.dropdownItemSelected]: selectedItemIndex === i,
+                })}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  item.action();
+                }}
+              >
+                {item.label}
+              </div>
+            ))}
+            {/* {dropdownList.length && dropdownActions.length ? (
           <svg className={styles.dropdownItemSep}>
             <rect y="0.75" width="100%" height="1.5" rx="0.75" />
           </svg>
         ) : null} */}
-        <div className={styles.dropdownActionsGroup}>
-          {dropdownActions.map((item, i) => (
-            <div
-              key={i}
-              className={styles.dropdownItem}
-              onClick={() => {
-                setDropdownOpen(false);
-                item.action();
-              }}
-            >
-              {item.label}
+            <div className={styles.dropdownActionsGroup}>
+              {dropdownActions?.map((item, i) => (
+                <div
+                  key={i}
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    item.action();
+                  }}
+                >
+                  {item.label}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
