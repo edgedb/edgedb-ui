@@ -17,7 +17,7 @@ export enum SchemaViewType {
 export class Schema extends Model({
   viewType: prop<SchemaViewType>(SchemaViewType.TextGraph).withSetter(),
 
-  splitView: prop(() => new SplitViewState({})),
+  splitView: prop(() => new SplitViewState({sizes: [35, 65]})),
 }) {
   schemaState = SchemaState.create();
 

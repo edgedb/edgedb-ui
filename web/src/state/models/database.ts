@@ -68,6 +68,9 @@ export class DatabasePageState extends Model({
 
   connection = new Connection({config: {database: this.name}});
 
+  @observable
+  migrationId: string | null | undefined = undefined;
+
   onInit() {
     dbCtx.set(this, this);
     connCtx.set(this, this.connection);
@@ -118,7 +121,7 @@ export class DatabasePageState extends Model({
       ])
     );
 
-    console.log("migrationId", migrationId);
+    this.migrationId = migrationId;
 
     if (!this.schemaData || this.schemaData.data.migrationId !== migrationId) {
       this.fetchingSchemaData = true;

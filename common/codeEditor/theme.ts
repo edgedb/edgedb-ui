@@ -4,9 +4,12 @@ import {tags as t, HighlightStyle} from "@codemirror/highlight";
 export const darkTheme = EditorView.theme(
   {
     "&": {
-      backgroundColor: "#242424",
+      backgroundColor: "var(--code-editor-bg, #242424)",
       color: "#e5e5e5",
       width: "100%",
+    },
+    "&.cm-editor.cm-focused": {
+      outline: "none",
     },
     "& .cm-scroller": {
       fontSize: "15px",
@@ -14,7 +17,7 @@ export const darkTheme = EditorView.theme(
       overflow: "auto",
     },
     ".cm-gutters": {
-      backgroundColor: "#242424",
+      backgroundColor: "var(--code-editor-bg, #242424)",
       padding: "0 12px 0 8px",
       userSelect: "none",
     },
@@ -53,9 +56,12 @@ export const darkTheme = EditorView.theme(
 
 export const lightTheme = EditorView.theme({
   "&": {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "var(--code-editor-bg, #f5f5f5)",
     color: "#333",
     width: "100%",
+  },
+  "&.cm-editor.cm-focused": {
+    outline: "none",
   },
   "& .cm-scroller": {
     fontSize: "15px",
@@ -63,7 +69,7 @@ export const lightTheme = EditorView.theme({
     overflow: "auto",
   },
   ".cm-gutters": {
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "var(--code-editor-bg, #f5f5f5)",
     padding: "0 12px 0 8px",
     userSelect: "none",
     borderRight: "none",

@@ -161,7 +161,7 @@ export class DataInspector extends Model({
       {fireImmediately: true}
     );
 
-    autorun(() => console.log(this.dataQuery));
+    // autorun(() => console.log(this.dataQuery));
 
     return () => {
       connWatchDisposer();

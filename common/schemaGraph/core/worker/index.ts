@@ -9,15 +9,7 @@ import {
   WorkerRequestMessage,
 } from "./interfaces";
 
-let worker: Worker;
-// @ts-ignore
-if (typeof window !== "undefined" && typeof window.ipc !== "undefined") {
-  const LayoutWorker = require("./layout.worker.ts").default;
-  worker = new LayoutWorker();
-} else {
-  // @ts-ignore
-  worker = new Worker(new URL("./layout.worker", import.meta.url));
-}
+const worker = new Worker(new URL("./layout.worker", import.meta.url));
 
 const handlers = new Map<number, (returnData: any) => void>();
 

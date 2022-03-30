@@ -1,10 +1,11 @@
 import React, {useState} from "react";
 
+import cn from "@edgedb/common/utils/classNames";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
+
 import styles from "./schemaSidepanel.module.scss";
 
 import {SchemaAnnotation, SchemaConstraint} from "../../state";
-import CodeBlock from "./codeBlock";
-import cn from "@edgedb/common/utils/classNames";
 
 export function Annotation(annotation: SchemaAnnotation) {
   return (

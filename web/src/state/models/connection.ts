@@ -217,6 +217,10 @@ export class Connection extends Model({
     };
   }
 
+  async executeScript(script: string): Promise<void> {
+    await this.conn.rawExecuteScript(script);
+  }
+
   @modelFlow
   close = _async(function* (this: Connection) {
     // yield* _await(ipc.invoke("closeConnection", id));

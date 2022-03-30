@@ -12,6 +12,7 @@ module.exports = {
       ],
     },
     configure: (webpackConfig, {env, paths}) => {
+      webpackConfig.output.publicPath = "/admin/";
       const {isFound, match} = getLoader(
         webpackConfig,
         loaderByName("babel-loader")

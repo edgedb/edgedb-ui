@@ -28,7 +28,11 @@ export default observer(function Header() {
         <Tab
           title={appState.instanceState.instanceName ?? ""}
           icon={<HeaderInstanceIcon />}
-          mainAction={() => appState.setCurrentPageId(PageType.Instance)}
+          mainAction={
+            appState.currentPage
+              ? () => appState.setCurrentPageId(PageType.Instance)
+              : undefined
+          }
         />
         {appState.currentPage ? (
           <>
@@ -117,7 +121,12 @@ function Tab({
   return (
     <div className={styles.tab}>
       {icon}
-      <div className={styles.tabTitle} onClick={mainAction}>
+      <div
+        className={cn(styles.tabTitle, {
+          [styles.hasAction]: mainAction != null,
+        })}
+        onClick={mainAction}
+      >
         {title}
       </div>
       {hasDropdown ? (

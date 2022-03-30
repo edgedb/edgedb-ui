@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, when} from "mobx";
 import {
   createContext,
   Model,
@@ -8,6 +8,7 @@ import {
   prop,
 } from "mobx-keystone";
 
+import {Connection} from "./connection";
 import {InstancePageState} from "./instance";
 import {DatabasePageState} from "./database";
 
@@ -33,7 +34,20 @@ export class App extends Model({
 }) {
   onInit() {
     appCtx.set(this, this);
+
+    when(
+      () =>
+        this.defaultConnection === null &&
+        this.instanceState.databases.length > 0,
+      () => {
+        this.defaultConnection = new Connection({
+          config: {database: this.instanceState.databases[0].name},
+        });
+      }
+    );
   }
+
+  defaultConnection: Connection | null = null;
 
   @computed
   get currentPage() {

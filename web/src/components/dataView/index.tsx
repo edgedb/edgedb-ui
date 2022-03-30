@@ -44,7 +44,9 @@ const DataInspectorView = observer(function DataInspectorView({
 }: DataInspectorViewProps) {
   const dataviewState = useDatabaseState().dataViewState;
 
-  const inspectorState = dataviewState.inspectorStack[stackIndex];
+  const stack = dataviewState.inspectorStack;
+
+  const inspectorState = stack[stackIndex];
 
   return (
     <div
@@ -56,7 +58,7 @@ const DataInspectorView = observer(function DataInspectorView({
         {stackIndex === 0 ? (
           <>
             <select
-              value={dataviewState.inspectorStack[0]?.objectName}
+              value={stack[0]?.objectName}
               onChange={(e) => dataviewState.selectObject(e.target.value)}
             >
               {dataviewState.objectTypeNames.map((option) => (
@@ -74,32 +76,34 @@ const DataInspectorView = observer(function DataInspectorView({
             >
               <BackArrowIcon />
             </div>
-            {dataviewState.inspectorStack
-              .slice(1, stackIndex + 1)
-              .map((inspector, i) => (
-                <Fragment key={i}>
-                  <div className={styles.nestedPathStep}>
-                    <div className={styles.pathStepName}>
-                      {inspector.parentObject?.objectType}
-                    </div>
-                    <div className={styles.pathStepIdent}>
-                      {inspector.parentObject?.id}
-                    </div>
+            <div className={styles.nestedPathSteps}>
+              <div className={styles.nestedPathStep}>
+                <div className={styles.pathStepName}>
+                  {stack[1].parentObject?.objectType}
+                </div>
+                <div className={styles.pathStepIdent}>
+                  <span>{stack[1].parentObject?.id}</span>
+                </div>
+              </div>
+              {stack.slice(1, stackIndex + 1).map((inspector, i, arr) => (
+                <div key={i} className={styles.nestedPathStep}>
+                  <div className={styles.pathStepName}>
+                    .{inspector.parentObject?.fieldName}
                   </div>
-                  <div className={styles.nestedPathStep}>
-                    <div className={styles.pathStepName}>
-                      .{inspector.parentObject?.fieldName}
-                    </div>
-                    <div className={styles.pathStepIdent}>
-                      {inspector.objectName}
-                    </div>
+                  <div className={styles.pathStepIdent}>
+                    <span>
+                      {arr.length - 1 === i
+                        ? inspector.objectName
+                        : arr[i + 1].parentObject?.id}
+                    </span>
                   </div>
-                </Fragment>
+                </div>
               ))}
+            </div>
           </>
         )}
 
-        <div className={styles.rowCount}>{inspectorState?.rowCount} Rows</div>
+        <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
 
         <div className={styles.headerButtons}>
           <div

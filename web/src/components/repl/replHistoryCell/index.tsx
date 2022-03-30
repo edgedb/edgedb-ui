@@ -2,6 +2,7 @@ import React from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import styles from "./replHistoryCell.module.scss";
 
@@ -21,8 +22,6 @@ import {currentDate} from "../../../state/models/repl/currentDate";
 import {QueryDuration} from "src/interfaces/connection";
 
 import {formatDuration} from "src/utils/formatDuration";
-
-import CodeBlock from "src/ui/codeBlock";
 
 import Inspector from "@edgedb/inspector/v2";
 import {ChevronIcon} from "src/ui/icons";

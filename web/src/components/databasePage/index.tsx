@@ -8,6 +8,7 @@ import {DatabaseTab} from "src/state/models/database";
 import Repl from "src/components/repl";
 import Schema from "src/components/schema";
 import DataView from "src/components/dataView";
+import DatabaseDashboard from "../databaseDashboard";
 
 import styles from "./databasePage.module.scss";
 import {TabDashboardIcon, TabReplIcon, TabSchemaIcon} from "src/ui/icons";
@@ -22,7 +23,7 @@ const views: {
   [DatabaseTab.Dashboard]: {
     label: "Dashboard",
     icon: <TabDashboardIcon />,
-    content: <div className={styles.card}>Dashboard</div>,
+    content: <DatabaseDashboard />,
   },
   [DatabaseTab.Repl]: {
     label: "REPL",

@@ -46,7 +46,6 @@
 }
 
 .tabTitle {
-  cursor: pointer;
   border-radius: 4px;
   font-size: 15px;
   font-weight: 500;
@@ -55,8 +54,12 @@
   padding: 0 6px;
   margin-left: 2px;
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.05);
+  &.hasAction {
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
   }
 }
 

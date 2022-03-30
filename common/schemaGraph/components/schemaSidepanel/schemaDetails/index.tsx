@@ -1,6 +1,8 @@
 import React, {useState} from "react";
 import {observer} from "mobx-react";
 
+import CodeBlock from "@edgedb/common/ui/codeBlock";
+
 import styles from "./schemaDetails.module.scss";
 import sharedStyles from "../schemaSidepanel.module.scss";
 
@@ -13,8 +15,6 @@ import {
 } from "../../../state";
 
 import {ChevronIcon, Annotation, Constraint} from "../shared";
-
-import CodeBlock from "../codeBlock";
 
 function Field(item: {
   name: string;

@@ -1,9 +1,9 @@
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import SplitView from "src/ui/splitView";
-import CodeBlock from "src/ui/codeBlock";
 // import SwitcherButton from "../../ui/switcherButton";
 
 import styles from "./schema.module.scss";
@@ -86,10 +86,12 @@ const SchemaGraphView = observer(function SchemaGraphView() {
 
   return (
     <div className={styles.schemaGraphView}>
-      <DebugControls
-        debugState={debugState}
-        schemaState={schemaState.schemaState}
-      />
+      {process.env.NODE_ENV === "development" ? (
+        <DebugControls
+          debugState={debugState}
+          schemaState={schemaState.schemaState}
+        />
+      ) : null}
       <SchemaGraph debug={debugState[0]} />
       <SchemaSidepanel />
     </div>

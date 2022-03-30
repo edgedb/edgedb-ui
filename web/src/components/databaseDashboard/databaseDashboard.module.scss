@@ -1,0 +1,8 @@
+.dashboard {
+  background-color: var(--app-panel-bg);
+  flex-grow: 1;
+  border-top-left-radius: 8px;
+
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #fff;
+}

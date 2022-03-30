@@ -15,6 +15,7 @@ import {
   getRefsResolvingTo,
   Frozen,
   frozen,
+  idProp,
 } from "mobx-keystone";
 
 import {Text} from "@codemirror/state";
@@ -51,6 +52,7 @@ export enum ReplHistoryCellStatus {
 
 @model("Repl/HistoryCell")
 export class ReplHistoryCell extends Model({
+  $modelId: idProp,
   query: prop<string>(),
   timestamp: prop<number>(),
   duration: prop<number | QueryDuration>(),

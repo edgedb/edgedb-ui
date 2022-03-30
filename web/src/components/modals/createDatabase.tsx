@@ -10,6 +10,7 @@ import styles from "./modals.module.scss";
 export default function CreateDatabaseModal() {
   const appState = useAppState();
   const [name, setName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   return (
     <ModalOverlay onOverlayClick={appState.closeModalOverlay}>
@@ -18,8 +19,19 @@ export default function CreateDatabaseModal() {
         actions={
           <Button
             className={styles.greenButton}
+            loading={creating}
+            disabled={creating}
             size="large"
             label={"Create database"}
+            onClick={async () => {
+              setCreating(true);
+              await appState.defaultConnection?.query(
+                `create database ${name}`
+              );
+              await appState.instanceState.fetchInstanceInfo();
+              appState.openDatabasePage(name);
+              appState.closeModalOverlay();
+            }}
           />
         }
       >
