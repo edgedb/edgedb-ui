@@ -47,6 +47,7 @@ export default observer(function ReplView() {
                   shortcut="Ctrl+Enter"
                   macShortcut="⌘+Enter"
                   disabled={!replState.canRunQuery}
+                  loading={replState.queryRunning}
                   onClick={() => replState.runQuery()}
                 />
                 <ParamEditorPanel />

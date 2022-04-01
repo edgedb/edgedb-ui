@@ -207,6 +207,25 @@
   );
 }
 
+.editableCell {
+  &:hover {
+    outline: 2px solid #287cff;
+    border-radius: 3px;
+  }
+}
+
+.hasEdits {
+  &:before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    bottom: 2px;
+    border: 2px solid #ffa900;
+    border-radius: 5px;
+  }
+}
+
 .linkObjName {
   height: 22px;
   line-height: 22px;

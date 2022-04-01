@@ -14,7 +14,7 @@ import {
 } from "./extractQueryParameters";
 
 import {Repl} from ".";
-// import {tabCtx} from "..";
+import {dbCtx} from "../database";
 
 export type {ResolvedParameter};
 
@@ -66,11 +66,11 @@ export class ReplQueryParamsEditor extends Model({
   }
 
   onAttachedToRootStore() {
-    // const tab = tabCtx.get(this)!;
+    const dbState = dbCtx.get(this)!;
     const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
 
     const disposer = reaction(
-      () => [repl.currentQuery /*, tab.schemaData*/],
+      () => [repl.currentQuery, dbState.schemaData],
       () => this._extractQueryParameters(),
       {delay: 200, fireImmediately: true}
     );
@@ -81,11 +81,11 @@ export class ReplQueryParamsEditor extends Model({
   }
 
   async _extractQueryParameters() {
-    // const tab = tabCtx.get(this)!;
+    const dbState = dbCtx.get(this)!;
     const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
 
     const query = repl.currentQuery;
-    const schemaScalars = [] as any[]; //tab.schemaData?.data.scalars;
+    const schemaScalars = dbState.schemaData?.data.scalars;
 
     if (schemaScalars) {
       const params = await extractQueryParameters(

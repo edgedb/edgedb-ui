@@ -28,6 +28,7 @@ import {SchemaLink, SchemaProp} from "@edgedb/schema-graph";
 
 import {dbCtx} from "../database";
 import {connCtx} from "../connection";
+import {DataEditingManager} from "./edits";
 
 const fetchBlockSize = 100;
 
@@ -133,6 +134,8 @@ export class DataInspector extends Model({
   filter: prop<string>(""),
   filterError: prop<string>(""),
   filterPanelOpen: prop<boolean>(false).withSetter(),
+
+  edits: prop(() => new DataEditingManager({})),
 }) {
   gridRef: Grid | null = null;
 
@@ -567,11 +570,8 @@ export class DataInspector extends Model({
 
   get baseObjectsQuery() {
     return this.parentObject
-      ? `(SELECT ${this.parentObject.objectType}${
-          this.parentObject.subtypeName &&
-          this.parentObject.subtypeName !== this.parentObject.objectType
-            ? `[IS ${this.parentObject.subtypeName}]`
-            : ""
+      ? `(SELECT ${
+          this.parentObject.subtypeName ?? this.parentObject.objectType
         } FILTER .id = <uuid>'${this.parentObject.id}').${
           this.parentObject.fieldName
         }`
@@ -813,27 +813,32 @@ class ExpandedInspector extends Model({
           (field) =>
             !field.subtypeName || field.subtypeName === this.objectType
         )
-        .map((field) =>
-          field.type === ObjectFieldType.property
-            ? `${field.subtypeName ? `[IS ${field.subtypeName}].` : ""}${
-                field.name
-              }`
-            : `${field.name} := (SELECT ${
-                field.subtypeName ? `[IS ${field.subtypeName}]` : ""
-              }.${field.name} {
-              ${field.subFields
-                .map((subField) =>
-                  subField.type === ObjectFieldType.property
-                    ? subField.name
-                    : `${subField.name} := (SELECT .${subField.name} LIMIT 0),
-                    __count_${subField.name} := count(.${subField.name})`
-                )
-                .join(",\n")}
-            } LIMIT 10),
-            __count_${field.name} := count(${
-                field.subtypeName ? `[IS ${field.subtypeName}]` : ""
-              }.${field.name})`
-        )
+        .map((field) => {
+          if (field.type === ObjectFieldType.property) {
+            return `${field.subtypeName ? `[IS ${field.subtypeName}].` : ""}${
+              field.name
+            }`;
+          } else {
+            const linkSelect = `(SELECT ${
+              field.subtypeName ? `[IS ${field.subtypeName}]` : ""
+            }.${field.name} {
+            ${field.subFields
+              .map((subField) =>
+                subField.type === ObjectFieldType.property
+                  ? subField.name
+                  : `${subField.name} := (SELECT .${subField.name} LIMIT 0),
+                  __count_${subField.name} := count(.${subField.name})`
+              )
+              .join(",\n")}
+          } LIMIT 10)`;
+            return `${field.name} := ${
+              field.required ? `assert_exists(${linkSelect})` : linkSelect
+            },
+          __count_${field.name} := count(${
+              field.subtypeName ? `[IS ${field.subtypeName}]` : ""
+            }.${field.name})`;
+          }
+        })
         .join(",\n")}
     } FILTER .id = <uuid><str>$objectId LIMIT 1`;
   }

@@ -28,14 +28,7 @@ module.exports = {
         webpackConfig.resolve.fallback = {};
       }
       webpackConfig.resolve.fallback.util = false;
-      webpackConfig.resolve.fallback.crypto = false;
-      webpackConfig.resolve.fallback.fs = false;
-      webpackConfig.resolve.fallback.path = false;
-      webpackConfig.resolve.fallback.os = false;
-      webpackConfig.resolve.fallback.net = false;
-      webpackConfig.resolve.fallback.tls = false;
-      webpackConfig.resolve.fallback.readline = false;
-      webpackConfig.resolve.fallback.stream = false;
+      webpackConfig.resolve.fallback["node-fetch"] = false;
       webpackConfig.resolve.fallback.buffer = require.resolve("buffer/");
 
       return webpackConfig;

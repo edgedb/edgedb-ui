@@ -31,6 +31,7 @@ import {
 import {SortIcon, SortedAscIcon} from "./icons";
 import {ChevronDownIcon} from "src/ui/icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
+import {DataEditor} from "./dataEditor";
 
 const DataInspectorContext = createContext<DataInspectorState | null>(null);
 
@@ -162,23 +163,44 @@ const GridCell = observer(function GridCell({
   }
 
   const field = state.fields![columnIndex];
-
   const data = state.getData(rowData.index);
+
+  const cellEditState = state.edits.pendingCellEdits
+    .get(data?.id)
+    ?.get(field.name);
+
+  if (cellEditState && cellEditState === state.edits.activeCellEdit) {
+    return (
+      <DataEditor
+        value={cellEditState.value}
+        onChange={(val) => state.edits.updateCellEdit(cellEditState, val)}
+        onClose={() => state.edits.finishEditingCell()}
+        style={style}
+      />
+    );
+  }
 
   const value = data?.[field.queryName];
 
-  let content: JSX.Element | null = null;
-  if (
+  const isEmptySubtype =
     field.subtypeName &&
     data?.__tname__ &&
-    data?.__tname__ !== field.subtypeName
-  ) {
+    data?.__tname__ !== field.subtypeName;
+
+  let content: JSX.Element | null = null;
+  let knownTypename: string | null = null;
+  if (isEmptySubtype) {
     content = <span className={styles.emptySubtypeField}>-</span>;
   } else if (value !== undefined) {
     if (field.type === ObjectFieldType.property) {
       const codec = state.dataCodecs?.[columnIndex];
 
-      content = codec ? renderValue(value, codec, false).body : null;
+      if (codec) {
+        knownTypename = codec.getKnownTypeName();
+        content = codec
+          ? renderValue(cellEditState?.value ?? value, codec, false).body
+          : null;
+      }
     } else {
       const objs = Array.isArray(value) ? value : [value];
       const more = data![`__count_${field.queryName}`] - objs.length;
@@ -198,13 +220,27 @@ const GridCell = observer(function GridCell({
     }
   }
 
+  const isEditable = false; //knownTypename === "std::str";
+
   return (
     <div
       className={cn(styles.cell, {
         [styles.emptyCell]: !content,
         [styles.linksCell]: field.type === ObjectFieldType.link,
+        [styles.editableCell]: isEditable,
+        [styles.hasEdits]: !!cellEditState && cellEditState.value !== value,
       })}
       style={style}
+      onDoubleClick={() => {
+        if (isEditable) {
+          state.edits.startEditingCell(
+            data.id,
+            data.__tname__,
+            field.name,
+            value
+          );
+        }
+      }}
     >
       {content}
     </div>
@@ -299,7 +335,7 @@ function StickyCol() {
 
   return (
     <div className={styles.stickyCol}>
-      {Array(endIndex - startIndex + 1)
+      {Array(Math.min(endIndex - startIndex + 1))
         .fill(0)
         .map((_, i) => (
           <StickyRow key={startIndex + i} rowIndex={startIndex + i} />
@@ -316,6 +352,7 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
   const state = useDataInspectorState();
 
   const rowData = state.getRowData(rowIndex);
+
   const style = (state.gridRef as any)?._getItemStyle(rowIndex, 0) ?? {};
 
   if (rowData.kind === RowKind.expanded) {
@@ -349,6 +386,8 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
       </div>
     );
   } else {
+    if (rowData.index >= state.rowCount) return null;
+
     return (
       <div className={styles.rowIndex} style={{top: style.top}}>
         <div className={styles.cell}>{rowData.index + 1}</div>

@@ -41,7 +41,6 @@ import {
   ParamsData,
   ReplQueryParamsEditor,
 } from "./parameters";
-import {dbCtx} from "../database";
 
 export {TransactionStatementType};
 
@@ -215,7 +214,7 @@ export class Repl extends Model({
 
   @computed
   get canRunQuery() {
-    return !!this.currentQuery.toString().trim();
+    return !this.queryRunning && !!this.currentQuery.toString().trim();
   }
 
   onAttachedToRootStore() {
@@ -394,7 +393,7 @@ export class Repl extends Model({
           paramsData && filterParamsData(paramsData, statement.params)
         )
       ) as any;
-      console.log(result, duration, outCodecBuf, resultBuf);
+
       this.addHistoryCell({
         statement,
         timestamp,
@@ -431,6 +430,10 @@ export class Repl extends Model({
 
   @modelFlow
   runQuery = _async(function* (this: Repl) {
+    if (this.queryRunning) {
+      return;
+    }
+
     const query = this.currentQuery.toString().trim();
     if (!query) return;
 

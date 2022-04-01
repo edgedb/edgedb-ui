@@ -30,7 +30,7 @@ export type Item = {
 } & (
   | {
       type: ItemType.Set | ItemType.Array | ItemType.Tuple;
-      data: any[];
+      data: any[] | null;
       closingBracket: Item;
       expectedCount?: number;
     }
@@ -63,7 +63,7 @@ export function expandItem(
       case ItemType.Array:
       case ItemType.Tuple:
         {
-          childItems = item.data.flatMap((data, i) => {
+          childItems = (item.data ?? []).flatMap((data, i) => {
             const subCodec =
               item.level === 0
                 ? item.codec
@@ -80,7 +80,7 @@ export function expandItem(
                 level: item.level + 1,
               },
               data,
-              i < item.data.length - 1
+              i < item.data!.length - 1
             );
 
             return [
@@ -239,7 +239,9 @@ export function buildItem(
   }
 
   const codecKind =
-    base.level === 0 || base.expectedCount ? "set" : base.codec.getKind();
+    base.level === 0 || (base.expectedCount && data === null)
+      ? "set"
+      : base.codec.getKind();
 
   if (codecKind === "scalar") {
     return buildScalarItem(base, data, comma);

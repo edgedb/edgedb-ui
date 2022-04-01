@@ -15,6 +15,7 @@ import DataInspectorTable from "./dataInspector";
 
 import {BackArrowIcon} from "./icons";
 import {ChevronDownIcon} from "src/ui/icons";
+import {Select} from "src/ui/select";
 
 export default observer(function DataView() {
   const dataviewState = useDatabaseState().dataViewState;
@@ -57,16 +58,24 @@ const DataInspectorView = observer(function DataInspectorView({
       <div className={styles.header}>
         {stackIndex === 0 ? (
           <>
-            <select
-              value={stack[0]?.objectName}
-              onChange={(e) => dataviewState.selectObject(e.target.value)}
-            >
-              {dataviewState.objectTypeNames.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            <Select
+              className={styles.objectSelect}
+              items={dataviewState.objectTypeNames.map((name) => {
+                const [modName, typeName] = name.split(/::/);
+                return {
+                  label: (
+                    <>
+                      <span className={styles.modName}>{modName}::</span>
+                      {typeName}
+                    </>
+                  ),
+                  action: () => dataviewState.selectObject(name),
+                };
+              })}
+              selectedItemIndex={dataviewState.objectTypeNames.indexOf(
+                stack[0]?.objectName
+              )}
+            />
           </>
         ) : (
           <>
@@ -106,6 +115,20 @@ const DataInspectorView = observer(function DataInspectorView({
         <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
 
         <div className={styles.headerButtons}>
+          {inspectorState.edits.pendingCellEdits.size ? (
+            <>
+              <button
+                onClick={() => inspectorState.edits.commitPendingEdits()}
+              >
+                Commit Edits
+              </button>
+              <button
+                onClick={() => inspectorState.edits.clearAllPendingEdits()}
+              >
+                Clear Edits
+              </button>
+            </>
+          ) : null}
           <div
             className={cn(styles.headerButton, {
               [styles.active]: inspectorState.filterPanelOpen,

@@ -42,7 +42,7 @@ interface PrepareResult {
   duration: number;
 }
 
-type QueryKind = "query" | "prepare";
+type QueryKind = "query" | "prepare" | "executeScript";
 
 type PendingQuery = {
   query: string;
@@ -52,6 +52,7 @@ type PendingQuery = {
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
   | {kind: "prepare"; resolve: (result: QueryResult) => void}
+  | {kind: "executeScript"; resolve: (result: void) => void}
 );
 
 export enum TransactionState {
@@ -133,6 +134,10 @@ export class Connection extends Model({
     return this._addQueryToQueue("prepare", query, silent);
   }
 
+  executeScript(script: string, silent: boolean = false): Promise<void> {
+    return this._addQueryToQueue("executeScript", script, silent);
+  }
+
   _addQueryToQueue(
     kind: QueryKind,
     query: string,
@@ -182,7 +187,11 @@ export class Connection extends Model({
     kind: QueryKind,
     queryString: string,
     params?: QueryParams
-  ): Promise<QueryResult | PrepareResult> {
+  ): Promise<QueryResult | PrepareResult | void> {
+    if (kind === "executeScript") {
+      return await this.conn.rawExecuteScript(queryString);
+    }
+
     const startTime = performance.now();
 
     const [inCodec, outCodec, inCodecBuf, outCodecBuf, protoVer] =
@@ -215,10 +224,6 @@ export class Connection extends Model({
       outCodecBuf,
       resultBuf,
     };
-  }
-
-  async executeScript(script: string): Promise<void> {
-    await this.conn.rawExecuteScript(script);
   }
 
   @modelFlow

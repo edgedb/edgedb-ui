@@ -206,6 +206,7 @@
   line-height: 16px;
   color: var(--repl-history-query-colour);
   margin: 0 12px;
+  user-select: text;
 }
 
 .error {

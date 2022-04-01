@@ -68,11 +68,11 @@ export async function splitQuery(query: string): Promise<Statement[]> {
 
       for (const paramNode of params) {
         const paramName = getNodeText(query, paramNode);
-        paramNames.push(paramName);
+        paramNames.push(paramName.slice(1));
         const isPositional = /^\$\d+$/.test(paramName);
         expression +=
           query.slice(offset, paramNode.from) +
-          (isPositional ? `$p${paramName.slice(1)}` : paramName);
+          (isPositional ? `p${paramName.slice(1)}` : paramName);
         offset = paramNode.to;
       }
 

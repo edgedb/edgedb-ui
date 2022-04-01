@@ -9,6 +9,7 @@ import {DatabaseTab} from "src/state/models/database";
 
 import {Logo} from "src/ui/icons/logo";
 import {HeaderDatabaseIcon, HeaderInstanceIcon} from "src/ui/icons";
+import {Select, SelectProps} from "src/ui/select";
 
 import CreateDatabaseModal from "../modals/createDatabase";
 
@@ -33,6 +34,7 @@ export default observer(function Header() {
               ? () => appState.setCurrentPageId(PageType.Instance)
               : undefined
           }
+          items={null}
         />
         {appState.currentPage ? (
           <>
@@ -43,11 +45,11 @@ export default observer(function Header() {
               selectedItemIndex={appState.instanceState.databases.findIndex(
                 (db) => db.name === appState.currentPage!.name
               )}
-              dropdownList={appState.instanceState.databases.map((db) => ({
+              items={appState.instanceState.databases.map((db) => ({
                 label: db.name,
                 action: () => appState.openDatabasePage(db.name),
               }))}
-              dropdownActions={[
+              actions={[
                 {
                   label: "Database settings",
                   action: () => {
@@ -82,104 +84,13 @@ export default observer(function Header() {
 });
 
 interface TabProps {
-  title: string;
   icon: JSX.Element;
-  mainAction?: () => void;
-  selectedItemIndex?: number;
-  dropdownList?: {label: string; action: () => void}[];
-  dropdownActions?: {label: string; action: () => void}[];
 }
-function Tab({
-  title,
-  icon,
-  mainAction,
-  selectedItemIndex,
-  dropdownList,
-  dropdownActions,
-}: TabProps) {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const hasDropdown = !!dropdownList || !!dropdownActions;
-
-  useEffect(() => {
-    if (dropdownOpen) {
-      const listener = (e: MouseEvent) => {
-        if (!dropdownRef.current?.contains(e.target as Node)) {
-          setDropdownOpen(false);
-        }
-      };
-
-      window.addEventListener("click", listener, {capture: true});
-
-      return () => {
-        window.removeEventListener("click", listener, {capture: true});
-      };
-    }
-  }, [dropdownOpen]);
-
+function Tab({icon, ...selectProps}: TabProps & SelectProps) {
   return (
     <div className={styles.tab}>
       {icon}
-      <div
-        className={cn(styles.tabTitle, {
-          [styles.hasAction]: mainAction != null,
-        })}
-        onClick={mainAction}
-      >
-        {title}
-      </div>
-      {hasDropdown ? (
-        <>
-          <div
-            className={styles.tabDropdownButton}
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <DropdownIcon />
-          </div>
-
-          <div
-            ref={dropdownRef}
-            className={cn(styles.tabDropdown, {
-              [styles.tabDropdownOpen]: dropdownOpen,
-            })}
-          >
-            {dropdownList?.map((item, i) => (
-              <div
-                key={i}
-                className={cn(styles.dropdownItem, {
-                  [styles.dropdownItemSelected]: selectedItemIndex === i,
-                })}
-                onClick={() => {
-                  setDropdownOpen(false);
-                  item.action();
-                }}
-              >
-                {item.label}
-              </div>
-            ))}
-            {/* {dropdownList.length && dropdownActions.length ? (
-          <svg className={styles.dropdownItemSep}>
-            <rect y="0.75" width="100%" height="1.5" rx="0.75" />
-          </svg>
-        ) : null} */}
-            <div className={styles.dropdownActionsGroup}>
-              {dropdownActions?.map((item, i) => (
-                <div
-                  key={i}
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    item.action();
-                  }}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : null}
+      <Select titleClassName={styles.tabTitle} {...selectProps} />
     </div>
   );
 }
@@ -199,31 +110,6 @@ function TabSep() {
         stroke="#848484"
         strokeWidth={1.5}
         strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function DropdownIcon() {
-  return (
-    <svg
-      width="11"
-      height="18"
-      viewBox="0 0 11 18"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M1 11.6591L5.5 16.1591L10 11.6591"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M1 6.34088L5.5 1.84088L10 6.34088"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   );

@@ -1,0 +1,16 @@
+.dataEditor {
+  display: flex;
+  outline: 2px solid #ffa900;
+  border-radius: 3px;
+  z-index: 1;
+
+  input {
+    flex-grow: 1;
+    background: #fff;
+    border: none;
+    outline: none;
+    padding: 0 8px;
+    font-family: Roboto Mono;
+    font-size: 13px;
+  }
+}
