@@ -9,7 +9,7 @@ import {
   _await,
 } from "mobx-keystone";
 
-import {FetchConnection} from "edgedb/dist/fetchConn";
+import {AdminFetchConnection} from "edgedb/dist/fetchConn";
 import {PrepareMessageHeaders} from "edgedb/dist/ifaces";
 
 import {
@@ -86,7 +86,7 @@ export class Connection extends Model({
     // return tabCtx.get(this)?.replView.currentTransaction;
   }
 
-  conn = FetchConnection.create(
+  conn = AdminFetchConnection.create(
     {
       address:
         process.env.NODE_ENV === "development" ? ["localhost", 5656] : "",
