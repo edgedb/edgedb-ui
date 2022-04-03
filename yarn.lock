@@ -1838,7 +1838,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:common/common"
   peerDependencies:
-    edgedb: ^0.20.5
+    edgedb: ^0.20.6
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -1850,7 +1850,7 @@ __metadata:
   dependencies:
     "@types/react-window": ^1.8.3
     assert-never: ^1.2.1
-    edgedb: ^0.20.5
+    edgedb: ^0.20.6
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
@@ -1888,7 +1888,7 @@ __metadata:
     webcola: ^3.4.0
   peerDependencies:
     "@types/react": ^17.0.0
-    edgedb: ^0.20.5
+    edgedb: ^0.20.6
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -5535,12 +5535,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:^0.20.5":
-  version: 0.20.5
-  resolution: "edgedb@npm:0.20.5"
+"edgedb@npm:^0.20.6":
+  version: 0.20.6
+  resolution: "edgedb@npm:0.20.6"
   bin:
     edgeql-js: dist/reflection/cli.js
-  checksum: 2b9fa5643e8ed028eeba119eebb6166f2f9799b9977e8fa25eff9ff5e3a6d601854d6aa81009ae821cdf1e19f397237280584776fa3c35990fdfacf64216ae21
+  checksum: 503f6d43ff65503ee2b3631b6c40322986ed6cd43da028cf01e0d4b185b9f098623220f94dbb546efd023b1251e1c66bdddb7c929013ec936079b1d3029cd459
   languageName: node
   linkType: hard
 
@@ -12701,7 +12701,7 @@ __metadata:
     "@types/react": ^17.0.20
     "@types/react-dom": ^17.0.9
     buffer: ^6.0.3
-    edgedb: ^0.20.5
+    edgedb: ^0.20.6
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
