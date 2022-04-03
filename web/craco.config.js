@@ -12,7 +12,7 @@ module.exports = {
       ],
     },
     configure: (webpackConfig, {env, paths}) => {
-      webpackConfig.output.publicPath = "/admin/";
+      webpackConfig.output.publicPath = "/ui/";
       const {isFound, match} = getLoader(
         webpackConfig,
         loaderByName("babel-loader")

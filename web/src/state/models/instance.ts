@@ -24,7 +24,7 @@ export class InstancePageState extends Model({}) {
   }[] = [];
 
   async fetchInstanceInfo() {
-    const res = await fetch(`${serverUrl}/admin/instance-info`);
+    const res = await fetch(`${serverUrl}/ui/instance-info`);
     const data = await res.json();
 
     // console.log(data);
