@@ -40,7 +40,13 @@ class ReplQueryParamData extends Model({
 }
 
 export type ParamsData = {
-  [key: string]: {value: string | string[]; disabled: boolean};
+  [key: string]: {
+    type: string | null;
+    value: string | string[];
+    disabled: boolean;
+    isArray: boolean;
+    isOptional: boolean;
+  };
 };
 
 @model("Repl/QueryParamsEditor")
@@ -80,7 +86,7 @@ export class ReplQueryParamsEditor extends Model({
     };
   }
 
-  async _extractQueryParameters() {
+  _extractQueryParameters() {
     const dbState = dbCtx.get(this)!;
     const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
 
@@ -88,10 +94,7 @@ export class ReplQueryParamsEditor extends Model({
     const schemaScalars = dbState.schemaData?.data.scalars;
 
     if (schemaScalars) {
-      const params = await extractQueryParameters(
-        query.toString(),
-        schemaScalars
-      );
+      const params = extractQueryParameters(query.toString(), schemaScalars);
       if (params) {
         this.updateCurrentParams(params);
       }
@@ -108,8 +111,8 @@ export class ReplQueryParamsEditor extends Model({
     this.currentParams = params;
   }
 
-  async getParamsData(): Promise<ParamsData | null> {
-    await this._extractQueryParameters();
+  getParamsData(): ParamsData | null {
+    this._extractQueryParameters();
 
     const params = [...this.currentParams.values()];
 
@@ -121,8 +124,11 @@ export class ReplQueryParamsEditor extends Model({
       const paramData = this.paramData.get(param.name)!;
 
       data[param.name] = {
+        type: param.type,
         value: param.array ? [...paramData.values] : paramData.values[0],
         disabled: paramData.disabled,
+        isArray: param.array,
+        isOptional: param.optional,
       };
 
       return data;
@@ -160,7 +166,7 @@ export function filterParamsData(
   paramNames: string[]
 ) {
   return paramNames.reduce((params, name) => {
-    const paramName = /^\d+$/.test(name) ? `p${name}` : name;
+    const paramName = /^\d+$/.test(name) ? `__p${name}` : name;
     params[paramName] = paramsData[name].disabled
       ? null
       : paramsData[name].value;

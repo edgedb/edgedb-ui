@@ -3,6 +3,8 @@ import {parser} from "@edgedb/lang-edgeql";
 
 import {getNodeText, getAllChildren} from "src/utils/syntaxTree";
 
+import {ParamsData} from "./parameters";
+
 export enum TransactionStatementType {
   startTransaction = "startTransaction",
   savepoint = "savepoint",
@@ -32,7 +34,10 @@ export type Statement = {
     }
 );
 
-export async function splitQuery(query: string): Promise<Statement[]> {
+export function splitQuery(
+  query: string,
+  paramsData: ParamsData | null
+): Statement[] {
   const statements: Statement[] = [];
 
   let syntaxTree: Tree;
@@ -56,7 +61,7 @@ export async function splitQuery(query: string): Promise<Statement[]> {
 
     let expression = displayExpression;
 
-    const params = getAllChildren(statementNode, "QueryParameterName");
+    const params = getAllChildren(statementNode, "QueryParameter");
     const paramNames: string[] = [];
     // rewrite positional params to named params to fix queries where params
     // get split across multiple statements
@@ -67,12 +72,33 @@ export async function splitQuery(query: string): Promise<Statement[]> {
       expression = "";
 
       for (const paramNode of params) {
-        const paramName = getNodeText(query, paramNode);
-        paramNames.push(paramName.slice(1));
-        const isPositional = /^\$\d+$/.test(paramName);
+        const paramNameNode = paramNode.getChild("QueryParameterName");
+        if (!paramNameNode) {
+          continue;
+        }
+
+        let paramName = getNodeText(query, paramNameNode).slice(1);
+        paramNames.push(paramName);
+
+        const paramData = paramsData?.[paramName];
+
+        if (!paramData?.type) {
+          continue;
+        }
+
+        // is positional param
+        if (/^\d+$/.test(paramName)) {
+          paramName = `__p${paramName}`;
+        }
+
         expression +=
           query.slice(offset, paramNode.from) +
-          (isPositional ? `p${paramName.slice(1)}` : paramName);
+          (paramData.isArray
+            ? `<array<${paramData.type}>>`
+            : `<${paramData.type}>`) +
+          `<${paramData.isOptional ? "optional " : ""}${
+            paramData.isArray ? "array<str>" : "str"
+          }>$${paramName}`;
         offset = paramNode.to;
       }
 

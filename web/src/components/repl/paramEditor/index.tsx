@@ -20,7 +20,7 @@ export default observer(function ParamEditorPanel() {
       <div className={styles.header}>Parameters</div>
 
       {paramEditorState.mixedParamsError ? (
-        <div className={styles.paramError}>
+        <div className={cn(styles.paramError, styles.topLevelError)}>
           Cannot have both positional and named parameters in query
         </div>
       ) : (
@@ -85,7 +85,7 @@ const ParamEditor = observer(function ParamEditor({param}: ParamEditorProps) {
                 onChange={(e) => paramData.setValue(i, e.target.value)}
               />
               {values.length > 1 ? (
-                <button onClick={() => paramData.removeValue(i)}>X</button>
+                <button onClick={() => paramData.removeValue(i)}>×</button>
               ) : null}
             </div>
           ))}

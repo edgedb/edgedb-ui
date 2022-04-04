@@ -420,17 +420,17 @@ export class Repl extends Model({
     return false;
   });
 
-  @modelFlow
-  runSingleQuery = _async(function* (this: Repl, query: string) {
-    this.queryRunning = true;
+  // @modelFlow
+  // runSingleQuery = _async(function* (this: Repl, query: string) {
+  //   this.queryRunning = true;
 
-    const statement = (yield* _await(splitQuery(query)))[0];
-    if (statement) {
-      yield* _await(this._runStatement(statement));
-    }
+  //   const statement = (yield* _await(splitQuery(query,)))[0];
+  //   if (statement) {
+  //     yield* _await(this._runStatement(statement));
+  //   }
 
-    this.queryRunning = false;
-  });
+  //   this.queryRunning = false;
+  // });
 
   @modelFlow
   runQuery = _async(function* (this: Repl) {
@@ -444,9 +444,9 @@ export class Repl extends Model({
     this.queryRunning = true;
     let error = false;
 
-    const [statements, paramsData] = yield* _await(
-      Promise.all([splitQuery(query), this.queryParamsEditor.getParamsData()])
-    );
+    const paramsData = this.queryParamsEditor.getParamsData();
+
+    const statements = splitQuery(query, paramsData);
 
     let scriptBlock: ReplHistoryScriptBlock | null = null;
     if (statements.length > 1 || paramsData !== null) {

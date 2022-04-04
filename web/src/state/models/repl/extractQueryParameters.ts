@@ -40,7 +40,7 @@ export const KnownScalarTypes = [
 
 type KnownScalarType = typeof KnownScalarTypes[number];
 
-export async function extractQueryParameters(
+export function extractQueryParameters(
   query: string,
   schemaScalars: SchemaScalar[]
 ) {
