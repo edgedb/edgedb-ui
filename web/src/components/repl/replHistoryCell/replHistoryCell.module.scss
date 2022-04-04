@@ -171,20 +171,21 @@
   font-style: normal;
   font-weight: 500;
   font-size: 12px;
-  line-height: 20px;
+  line-height: 21px;
   text-transform: uppercase;
   color: var(--repl-history-button-colour);
   background: var(--repl-history-button-background);
-  border-radius: 4px;
+  border-radius: 11px;
   border: 0;
   outline: 0;
-  padding: 0 6px;
+  padding: 0 10px;
   margin-right: 8px;
   cursor: pointer;
 }
 
 .query {
   margin: 0px 12px 12px 30px;
+  padding-bottom: 1px;
   overflow: auto;
 
   @include customScrollbar;
@@ -203,10 +204,26 @@
   font-weight: normal;
   font-family: Roboto Mono;
   font-size: 14px;
-  line-height: 16px;
+  line-height: 20px;
   color: var(--repl-history-query-colour);
   margin: 0 12px;
   user-select: text;
+}
+
+.errorName {
+  font-weight: 600;
+}
+
+.errorHint {
+  // font-style: italic;
+  opacity: 0.7;
+}
+
+.errorUnderline {
+  background-repeat: repeat-x;
+  background-position: bottom;
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='3' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0.82843C0.511845 0.82843 1.02369 1.02369 1.41421 1.41422L1.58579 1.58579C2.36683 2.36684 3.63316 2.36684 4.41421 1.58579L4.58579 1.41422C4.97631 1.02369 5.48816 0.828431 6 0.828431' stroke='%23E91919'/%3E%3C/svg%3E%0A");
+  padding-bottom: 1px;
 }
 
 .error {

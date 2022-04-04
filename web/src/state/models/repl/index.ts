@@ -31,6 +31,10 @@ import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
 import {QueryDuration} from "src/interfaces/connection";
 
 import {EdgeDBSet, decode} from "src/utils/decodeRawBuffer";
+import {
+  ErrorDetails,
+  extractErrorDetails,
+} from "src/utils/extractErrorDetails";
 
 import {splitQuery, Statement, TransactionStatementType} from "./splitQuery";
 
@@ -142,7 +146,7 @@ export class ReplResultCell extends ExtendedModel(ReplExpandableCell, {
 
 @model("Repl/ErrorCell")
 export class ReplErrorCell extends ExtendedModel(ReplExpandableCell, {
-  error: prop<string>(),
+  error: prop<Frozen<ErrorDetails>>(),
 }) {}
 
 @model("Repl/TransactionCell")
@@ -252,7 +256,7 @@ export class Repl extends Model({
         resultBuf: Buffer;
       }
     | {
-        error: string;
+        error: ErrorDetails;
       }
   )) {
     const historyCellData: ModelCreationData<ReplHistoryCell> = {
@@ -269,7 +273,7 @@ export class Repl extends Model({
     if ("error" in data) {
       historyCell = new ReplErrorCell({
         ...historyCellData,
-        error: data.error,
+        error: frozen(data.error),
         expanded: true,
       });
       if (this.currentTransaction) {
@@ -409,7 +413,7 @@ export class Repl extends Model({
         statement,
         timestamp,
         duration: Date.now() - timestamp,
-        error: e.message,
+        error: extractErrorDetails(e, statement.expression),
         scriptBlock,
       });
     }

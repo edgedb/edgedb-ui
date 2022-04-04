@@ -221,7 +221,17 @@ export default observer(function ReplHistoryCell({
                   {cell instanceof ReplResultCell ? "Output" : "Error"}
                 </div>
                 {cell instanceof ReplErrorCell ? (
-                  <div className={styles.queryError}>{cell.error}</div>
+                  <div className={styles.queryError}>
+                    <span className={styles.errorName}>
+                      {cell.error.data.name}
+                    </span>
+                    : {cell.error.data.msg}
+                    {cell.error.data.hint ? (
+                      <div className={styles.errorHint}>
+                        Hint: {cell.error.data.hint}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
                 <div className={styles.info}>
                   <div className={styles.infoLabel}>
@@ -298,6 +308,11 @@ const ReplCellHeader = observer(function _ReplCellHeader({
         <CodeBlock
           className={cn(styles.code, styles.query)}
           code={cell.query}
+          highlightRanges={
+            cell instanceof ReplErrorCell && cell.error.data.range
+              ? [{range: cell.error.data.range, style: styles.errorUnderline}]
+              : undefined
+          }
         />
       ) : null}
     </>

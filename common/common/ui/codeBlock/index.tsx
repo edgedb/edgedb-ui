@@ -7,29 +7,83 @@ import {highlightStyle} from "@edgedb/code-editor/theme";
 
 interface CodeBlockProps {
   code: string;
+  highlightRanges?: {range: [number, number]; style: string}[];
 }
 
 export default function CodeBlock({
   code,
+  highlightRanges,
   ...otherProps
 }: React.HTMLAttributes<HTMLPreElement> & CodeBlockProps) {
   const tree = edgeqlLanguage.parser.parse(code);
 
   const html: (string | JSX.Element)[] = [];
 
+  let nextHighlightIndex = 0;
+  let highlight = highlightRanges?.[nextHighlightIndex++];
+
+  let highlightBuffer: (string | JSX.Element)[] | null = null;
+
   let cursor = 0;
+  function addSpan(text: string, className?: string): void {
+    if (
+      !highlightBuffer &&
+      highlight &&
+      highlight.range[0] >= cursor &&
+      highlight.range[0] <= cursor + text.length
+    ) {
+      if (highlight.range[0] !== cursor) {
+        const textSlice = text.slice(0, highlight.range[0] - cursor);
+        html.push(
+          className ? (
+            <span className={className}>{textSlice}</span>
+          ) : (
+            textSlice
+          )
+        );
+        text = text.slice(highlight.range[0] - cursor);
+      }
+      cursor = highlight.range[0];
+      highlightBuffer = [];
+    }
+    if (highlightBuffer) {
+      if (highlight!.range[1] <= cursor + text.length) {
+        const textSlice = text.slice(0, highlight!.range[1] - cursor);
+        highlightBuffer.push(
+          className ? (
+            <span className={className}>{textSlice}</span>
+          ) : (
+            textSlice
+          )
+        );
+        html.push(<span className={highlight!.style}>{highlightBuffer}</span>);
+        highlightBuffer = null;
+        cursor = highlight!.range[1];
+        highlight = highlightRanges?.[nextHighlightIndex++];
+        return addSpan(text.slice(textSlice.length), className);
+      } else {
+        highlightBuffer.push(
+          className ? <span className={className}>{text}</span> : text
+        );
+        cursor += text.length;
+        return;
+      }
+    }
+    html.push(className ? <span className={className}>{text}</span> : text);
+    cursor += text.length;
+  }
+
   highlightTree(tree, highlightStyle.match, (from, to, classes) => {
     if (cursor !== from) {
-      html.push(code.slice(cursor, from));
+      addSpan(code.slice(cursor, from));
     }
-    html.push(
-      <span key={html.length} className={classes}>
-        {code.slice(from, to)}
-      </span>
-    );
-    cursor = to;
+    addSpan(code.slice(from, to), classes);
   });
-  html.push(code.slice(cursor));
+  addSpan(code.slice(cursor));
+
+  if (highlightBuffer) {
+    html.push(<span className={highlight!.style}>{highlightBuffer}</span>);
+  }
 
   return <pre {...otherProps}>{html}</pre>;
 }
