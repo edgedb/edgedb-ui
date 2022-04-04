@@ -19,7 +19,7 @@ const tabs: {
   icon: string;
 }[] = [
   {name: SidepanelTabType.inspector, icon: "i"},
-  {name: SidepanelTabType.objects, icon: "o"},
+  // {name: SidepanelTabType.objects, icon: "o"},
   {name: SidepanelTabType.functions, icon: "f"},
   {name: SidepanelTabType.scalars, icon: "s"},
   {name: SidepanelTabType.constraints, icon: "c"},

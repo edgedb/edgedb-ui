@@ -11,7 +11,12 @@ import DataView from "src/components/dataView";
 import DatabaseDashboard from "../databaseDashboard";
 
 import styles from "./databasePage.module.scss";
-import {TabDashboardIcon, TabReplIcon, TabSchemaIcon} from "src/ui/icons";
+import {
+  TabDashboardIcon,
+  TabReplIcon,
+  TabSchemaIcon,
+  TabDataExplorerIcon,
+} from "src/ui/icons";
 
 const views: {
   [id in DatabaseTab]: {
@@ -36,7 +41,8 @@ const views: {
     content: <Schema />,
   },
   [DatabaseTab.Data]: {
-    label: "Data",
+    label: "Data Explorer",
+    icon: <TabDataExplorerIcon />,
     content: <DataView />,
   },
   [DatabaseTab.Settings]: {
