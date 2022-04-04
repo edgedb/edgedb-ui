@@ -17,6 +17,7 @@ import {
   TabSchemaIcon,
   TabDataExplorerIcon,
 } from "src/ui/icons";
+import {useEffect} from "react";
 
 const views: {
   [id in DatabaseTab]: {
@@ -51,8 +52,40 @@ const views: {
   },
 };
 
+const tabsOrder = [
+  DatabaseTab.Dashboard,
+  DatabaseTab.Repl,
+  DatabaseTab.Schema,
+  DatabaseTab.Data,
+];
+
 export default observer(function DatabasePage() {
   const appState = useAppState();
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        const currentIndex = tabsOrder.indexOf(
+          appState.currentPage!.currentTabId
+        );
+        if (currentIndex !== -1) {
+          appState.currentPage!.setCurrentTabId(
+            tabsOrder[
+              (tabsOrder.length + currentIndex + (e.shiftKey ? -1 : 1)) %
+                tabsOrder.length
+            ]
+          );
+        }
+      }
+    };
+
+    window.addEventListener("keydown", listener);
+
+    return () => {
+      window.removeEventListener("keydown", listener);
+    };
+  }, []);
 
   return (
     <div className={styles.databasePage}>

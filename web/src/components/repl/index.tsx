@@ -1,8 +1,9 @@
+import {useEffect, useRef} from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {CodeEditor} from "@edgedb/code-editor";
+import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
 
 import styles from "./repl.module.scss";
 
@@ -19,6 +20,12 @@ export default observer(function ReplView() {
   const appState = useAppState();
   const replState = useDatabaseState().replState;
 
+  const codeEditorRef = useRef<CodeEditorRef>();
+
+  useEffect(() => {
+    codeEditorRef.current?.focus();
+  }, []);
+
   return (
     <>
       <div className={cn(styles.repl)}>
@@ -26,6 +33,7 @@ export default observer(function ReplView() {
           views={[
             <div className={styles.editorBlock}>
               <CodeEditor
+                ref={codeEditorRef}
                 code={replState.currentQuery}
                 onChange={(value) => replState.setCurrentQuery(value)}
                 keybindings={[

@@ -1,4 +1,11 @@
-import {useEffect, useRef, useState, useLayoutEffect} from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useLayoutEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 
 import {EditorState, StateEffect, Text} from "@codemirror/state";
 import {
@@ -97,14 +104,20 @@ export interface CodeEditorProps {
   useDarkTheme?: boolean;
 }
 
-export function CodeEditor({
-  code,
-  onChange,
-  keybindings = [],
-  useDarkTheme = false,
-}: CodeEditorProps) {
+export interface CodeEditorRef {
+  focus: () => void;
+}
+
+export const CodeEditor = forwardRef(function CodeEditor(
+  {code, onChange, keybindings = [], useDarkTheme = false}: CodeEditorProps,
+  componentRef
+) {
   const ref = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
+
+  useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
+    focus: () => view.current?.focus(),
+  }));
 
   useEffect(() => {
     if (ref.current) {
@@ -144,7 +157,8 @@ export function CodeEditor({
           ref.current?.querySelector(".cm-content") as HTMLElement
         )?.style.setProperty(
           "padding-bottom",
-          `${entries[0].contentRect.height - 25}px`
+          // `${entries[0].contentRect.height - 25}px`
+          `${entries[0].contentRect.height / 2}px`
         );
       });
 
@@ -157,4 +171,4 @@ export function CodeEditor({
   }, [ref]);
 
   return <div className={styles.codeEditor} ref={ref} />;
-}
+});
