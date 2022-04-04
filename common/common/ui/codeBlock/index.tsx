@@ -36,7 +36,9 @@ export default function CodeBlock({
         const textSlice = text.slice(0, highlight.range[0] - cursor);
         html.push(
           className ? (
-            <span className={className}>{textSlice}</span>
+            <span key={html.length} className={className}>
+              {textSlice}
+            </span>
           ) : (
             textSlice
           )
@@ -51,25 +53,45 @@ export default function CodeBlock({
         const textSlice = text.slice(0, highlight!.range[1] - cursor);
         highlightBuffer.push(
           className ? (
-            <span className={className}>{textSlice}</span>
+            <span key={highlightBuffer.length} className={className}>
+              {textSlice}
+            </span>
           ) : (
             textSlice
           )
         );
-        html.push(<span className={highlight!.style}>{highlightBuffer}</span>);
+        html.push(
+          <span key={html.length} className={highlight!.style}>
+            {highlightBuffer}
+          </span>
+        );
         highlightBuffer = null;
         cursor = highlight!.range[1];
         highlight = highlightRanges?.[nextHighlightIndex++];
         return addSpan(text.slice(textSlice.length), className);
       } else {
         highlightBuffer.push(
-          className ? <span className={className}>{text}</span> : text
+          className ? (
+            <span key={highlightBuffer.length} className={className}>
+              {text}
+            </span>
+          ) : (
+            text
+          )
         );
         cursor += text.length;
         return;
       }
     }
-    html.push(className ? <span className={className}>{text}</span> : text);
+    html.push(
+      className ? (
+        <span key={html.length} className={className}>
+          {text}
+        </span>
+      ) : (
+        text
+      )
+    );
     cursor += text.length;
   }
 
@@ -82,7 +104,11 @@ export default function CodeBlock({
   addSpan(code.slice(cursor));
 
   if (highlightBuffer) {
-    html.push(<span className={highlight!.style}>{highlightBuffer}</span>);
+    html.push(
+      <span key={html.length} className={highlight!.style}>
+        {highlightBuffer}
+      </span>
+    );
   }
 
   return <pre {...otherProps}>{html}</pre>;
