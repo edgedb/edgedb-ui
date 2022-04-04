@@ -18,9 +18,9 @@ import {ChevronDownIcon} from "src/ui/icons";
 import {Select} from "src/ui/select";
 
 export default observer(function DataView() {
-  const dataviewState = useDatabaseState().dataViewState;
+  const dbState = useDatabaseState();
 
-  const stack = dataviewState.inspectorStack;
+  const stack = dbState.dataViewState.inspectorStack;
 
   return (
     <div className={styles.dataview}>
@@ -29,7 +29,9 @@ export default observer(function DataView() {
         <DataInspectorView stackIndex={stack.length - 1} />
       ) : (
         <div className={cn(styles.dataviewCard, styles.loadingSkeleton)}>
-          Loading schema...
+          {dbState.schemaData?.data
+            ? "No object types in schema"
+            : "Loading schema..."}
         </div>
       )}
     </div>
