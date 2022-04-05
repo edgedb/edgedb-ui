@@ -18,7 +18,7 @@ import {
   TabDataExplorerIcon,
   TabSettingsIcon,
 } from "src/ui/icons";
-import {useEffect} from "react";
+import {useEffect, useRef, useState} from "react";
 
 const views: {
   [id in DatabaseTab]: {
@@ -64,6 +64,10 @@ const tabsOrder = [
 export default observer(function DatabasePage() {
   const appState = useAppState();
 
+  const [showTabLabels, setShowTabLabels] = useState(false);
+  const tabMouseEnterTimeout = useRef<NodeJS.Timeout | null>(null);
+  const tabMouseLeaveTimeout = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey)) {
@@ -91,7 +95,11 @@ export default observer(function DatabasePage() {
 
   return (
     <div className={styles.databasePage}>
-      <div className={styles.tabs}>
+      <div
+        className={cn(styles.tabs, {
+          [styles.showLabels]: showTabLabels,
+        })}
+      >
         {Object.values(DatabaseTab).map((tabId) => (
           <div
             key={tabId}
@@ -101,9 +109,32 @@ export default observer(function DatabasePage() {
               [styles.settingsTab]: tabId === DatabaseTab.Settings,
             })}
             onClick={() => appState.currentPage!.setCurrentTabId(tabId)}
+            onMouseEnter={() => {
+              if (tabMouseLeaveTimeout.current) {
+                clearTimeout(tabMouseLeaveTimeout.current);
+                tabMouseLeaveTimeout.current = null;
+              }
+              if (!tabMouseEnterTimeout.current) {
+                tabMouseEnterTimeout.current = setTimeout(() => {
+                  setShowTabLabels(true);
+                }, 500);
+              }
+            }}
+            onMouseLeave={() => {
+              if (!tabMouseLeaveTimeout.current) {
+                tabMouseLeaveTimeout.current = setTimeout(() => {
+                  if (tabMouseEnterTimeout.current) {
+                    clearTimeout(tabMouseEnterTimeout.current);
+                    tabMouseEnterTimeout.current = null;
+                  }
+                  setShowTabLabels(false);
+                }, 200);
+              }
+            }}
           >
-            {views[tabId].icon(appState.currentPage!.currentTabId === tabId)
-              ?? tabId}
+            {views[tabId].icon(appState.currentPage!.currentTabId === tabId) ??
+              tabId}
+            <div className={styles.tabLabel}>{views[tabId].label}</div>
           </div>
         ))}
       </div>
