@@ -38,6 +38,7 @@
     margin: 0;
     padding: 2rem 0;
     height: max-content;
+    user-select: text;
 
     &:first-child {
       padding-left: 2rem;
@@ -51,6 +52,7 @@
     color: #8c8c8c;
     margin-right: 2rem;
     text-align: right;
+    user-select: none;
 
     @include darkTheme {
       color: #4e4e4e;
