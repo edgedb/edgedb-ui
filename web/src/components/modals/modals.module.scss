@@ -2,3 +2,11 @@
   --buttonBg: var(--app-accent-green);
   --buttonTextColour: #fff;
 }
+
+.modalBody {
+  .errorText {
+    max-width: 300px;
+    font-weight: bold;
+    color: var(--app-error-colour);
+  }
+}

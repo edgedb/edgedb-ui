@@ -12,6 +12,7 @@ export default function CreateDatabaseModal() {
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -31,9 +32,15 @@ export default function CreateDatabaseModal() {
             label={"Create database"}
             onClick={async () => {
               setCreating(true);
-              await appState.defaultConnection?.query(
-                `create database ${name}`
-              );
+              try {
+                await appState.defaultConnection?.query(
+                  `create database ${name}`
+                );
+              } catch (e) {
+                setError((e as any).toString());
+                setCreating(false);
+                return;
+              }
               await appState.instanceState.fetchInstanceInfo();
               appState.openDatabasePage(name);
               appState.closeModalOverlay();
@@ -41,12 +48,16 @@ export default function CreateDatabaseModal() {
           />
         }
       >
-        <ModalTextField
-          ref={inputRef}
-          label="Database Name"
-          value={name}
-          onChange={setName}
-        />
+        <div className={styles.modalBody}>
+          <ModalTextField
+            ref={inputRef}
+            label="Database Name"
+            value={name}
+            onChange={setName}
+          />
+
+          <div className={styles.errorText}>{error}</div>
+        </div>
       </Modal>
     </ModalOverlay>
   );
