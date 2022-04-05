@@ -3,6 +3,8 @@
 .schema {
   display: flex;
   flex-grow: 1;
+  flex-direction: column;
+  margin-bottom: -16px;
 }
 
 .schemaGraphView {
@@ -10,13 +12,23 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
+  overflow: hidden;
+
+  .schema > & {
+    border-radius: 8px;
+  }
 }
 
 .schemaTextView {
   flex-grow: 1;
   overflow: auto;
   display: flex;
+  background: var(--app-panel-bg);
   @include customScrollbar;
+
+  .schema > & {
+    border-radius: 8px;
+  }
 
   pre {
     font-family: Roboto Mono;
@@ -36,9 +48,13 @@
   }
 
   .lineNos {
-    color: #4e4e4e;
-    margin-right: 1rem;
+    color: #8c8c8c;
+    margin-right: 2rem;
     text-align: right;
+
+    @include darkTheme {
+      color: #4e4e4e;
+    }
   }
 }
 
