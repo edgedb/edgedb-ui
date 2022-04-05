@@ -49,20 +49,20 @@ export default function SwitcherButton<T extends string | number>({
       />
       {popupOpen ? (
         <div ref={popupRef} className={styles.popup}>
-          {items.map((item) =>
-            item.id === selected ? null : (
-              <div
-                key={item.id}
-                className={styles.item}
-                onClick={() => {
-                  setPopupOpen(false);
-                  onChange(item.id);
-                }}
-              >
-                {item.label}
-              </div>
-            )
-          )}
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={cn(styles.item, {
+                [styles.selectedItem]: item.id === selected,
+              })}
+              onClick={() => {
+                setPopupOpen(false);
+                onChange(item.id);
+              }}
+            >
+              {item.label}
+            </div>
+          ))}
         </div>
       ) : null}
     </div>
