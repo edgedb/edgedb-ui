@@ -3,6 +3,7 @@ import {
   forwardRef,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -86,6 +87,20 @@ export default observer(function DataInspectorTable({
   useResize(gridContainer, ({width, height}) =>
     setContainerSize([width, height])
   );
+
+  useLayoutEffect(() => {
+    const availableWidth = gridContainer.current?.clientWidth;
+    if (!state.fieldWidthsUpdated && availableWidth && state.fields) {
+      const newWidth = Math.min(
+        Math.floor((availableWidth - 200) / state.fields.length),
+        350
+      );
+      for (const field of state.fields) {
+        state.setFieldWidth(field, newWidth);
+      }
+      gridRef.current?.resetAfterColumnIndex(0);
+    }
+  }, []);
 
   useEffect(() => {
     if (gridRef.current) {
