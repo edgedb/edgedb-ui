@@ -104,7 +104,7 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
       <div className={styles.congrats}>Your new database is ready!</div>
 
       <div className={styles.importData}>
-        <h3>Use our example films schema and data</h3>
+        <h3>Use our example "movies" schema and data set</h3>
         <p>Import our example schema and play with the web REPL right away.</p>
         <div>
           <Button
