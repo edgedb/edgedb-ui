@@ -51,10 +51,12 @@
     flex-flow: row wrap;
     justify-content: center;
 
+    color: --app-text-colour;
+
     a {
       padding: 20px;
       margin: 10px;
-      border: 2px solid #d1d1d1;
+      border: 2px solid var(--app-card-bg);
       border-radius: 8px;
       min-width: 190px;
 

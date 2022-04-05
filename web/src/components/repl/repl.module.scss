@@ -67,8 +67,8 @@
 }
 
 .runButton {
-  --buttonBg: #49d8ad;
-  --buttonTextColour: #fff;
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #000;
   align-self: flex-start;
   flex-shrink: 0;
   margin-right: auto;
