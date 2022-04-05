@@ -149,6 +149,10 @@ export default observer(function DataInspectorTable({
   );
 });
 
+const inspectorOverrideStyles = {
+  uuid: styles.scalar_uuid,
+};
+
 const GridCell = observer(function GridCell({
   columnIndex,
   rowIndex,
@@ -198,7 +202,12 @@ const GridCell = observer(function GridCell({
       if (codec) {
         knownTypename = codec.getKnownTypeName();
         content = codec
-          ? renderValue(cellEditState?.value ?? value, codec, false).body
+          ? renderValue(
+              cellEditState?.value ?? value,
+              codec,
+              false,
+              inspectorOverrideStyles
+            ).body
           : null;
       }
     } else {

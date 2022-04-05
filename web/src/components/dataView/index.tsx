@@ -3,6 +3,8 @@ import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
 
+import {formatUUID} from "@edgedb/inspector/v2/buildScalar";
+
 import styles from "./dataview.module.scss";
 
 import {useAppState, useDatabaseState} from "src/state/providers";
@@ -93,7 +95,7 @@ const DataInspectorView = observer(function DataInspectorView({
                   {stack[1].parentObject?.objectType}
                 </div>
                 <div className={styles.pathStepIdent}>
-                  <span>{stack[1].parentObject?.id}</span>
+                  <span>{formatUUID(stack[1].parentObject!.id)}</span>
                 </div>
               </div>
               {stack.slice(1, stackIndex + 1).map((inspector, i, arr) => (
@@ -105,7 +107,7 @@ const DataInspectorView = observer(function DataInspectorView({
                     <span>
                       {arr.length - 1 === i
                         ? inspector.objectName
-                        : arr[i + 1].parentObject?.id}
+                        : formatUUID(arr[i + 1].parentObject!.id)}
                     </span>
                   </div>
                 </div>
