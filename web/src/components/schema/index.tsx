@@ -19,6 +19,7 @@ import {
   DebugControls,
 } from "@edgedb/schema-graph";
 import SchemaSidepanel from "@edgedb/schema-graph/components/schemaSidepanel";
+import SwitcherButton from "src/ui/switcherButton";
 
 export default observer(function SchemaView() {
   const schemaState = useDatabaseState().schemaState;
@@ -39,21 +40,22 @@ export default observer(function SchemaView() {
             minViewSize={20}
           />
         ) : null}
-      </div>
-      {/* <div className={cn(tabStyles.toolbar, styles.toolbar)}>
-        <div className={styles.switcherLabel}>View Layout</div>
-        <div className={styles.viewSwitcher}>
-          <SwitcherButton
-            items={[
-              {id: SchemaViewType.Text, label: "Text"},
-              {id: SchemaViewType.Graph, label: "Graph"},
-              {id: SchemaViewType.TextGraph, label: "Text/Graph"},
-            ]}
-            selected={schemaState.viewType}
-            onChange={(type) => schemaState.setViewType(type)}
-          />
+
+        <div className={cn(styles.toolbar)}>
+          <div className={styles.switcherLabel}>View Layout</div>
+          <div className={styles.viewSwitcher}>
+            <SwitcherButton
+              items={[
+                {id: SchemaViewType.Text, label: "Text"},
+                {id: SchemaViewType.Graph, label: "Graph"},
+                {id: SchemaViewType.TextGraph, label: "Text/Graph"},
+              ]}
+              selected={schemaState.viewType}
+              onChange={(type) => schemaState.setViewType(type)}
+            />
+          </div>
         </div>
-      </div> */}
+      </div>
     </schemaContext.Provider>
   );
 });
