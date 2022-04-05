@@ -200,6 +200,7 @@ export class Repl extends Model({
   scriptBlocks: prop<ReplHistoryScriptBlock[]>(() => []),
 
   splitView: prop(() => new SplitViewState({})),
+  persistQuery: prop<boolean>(false).withSetter(),
 
   historyScrollPos: prop<number>(0).withSetter(),
 }) {
@@ -466,7 +467,7 @@ export class Repl extends Model({
         break;
       }
     }
-    if (!error) {
+    if (!error && !this.persistQuery) {
       this.currentQuery = Text.empty;
       this.queryParamsEditor.clear();
     }
