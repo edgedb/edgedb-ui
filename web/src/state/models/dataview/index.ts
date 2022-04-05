@@ -722,11 +722,13 @@ class ExpandedInspector extends Model({
   objectId: prop<string>(),
   objectType: prop<string>(),
 
-  state: prop<any>(
+  state: prop<InspectorState>(
     () => new InspectorState({autoExpandDepth: 3, countPrefix: "__count_"})
   ),
 }) {
   onInit() {
+    this.state.loadNestedData = this.loadNestedData.bind(this);
+
     resultGetterCtx.set(this, async () => {
       const conn = connCtx.get(this)!;
       const {result} = await conn.query(this.dataQuery, true, {
@@ -736,6 +738,56 @@ class ExpandedInspector extends Model({
         return {data: result, codec: result._codec};
       }
     });
+  }
+
+  async loadNestedData(
+    parentObjectTypeName: string,
+    parentObjectId: string,
+    fieldName: string
+  ) {
+    const dbState = dbCtx.get(this)!;
+
+    const parentObjectType = dbState.schemaData?.data.objects.find(
+      (obj) => obj.name === parentObjectTypeName
+    );
+    if (!parentObjectType) {
+      throw new Error(
+        `Could not find objec type '${parentObjectTypeName}' in schema`
+      );
+    }
+
+    const objectTypeName = parentObjectType.links.find(
+      (link) => link.name === fieldName
+    )?.targetNames?.[0];
+    const objectType = dbState.schemaData?.data.objects.find(
+      (obj) => obj.name === objectTypeName
+    );
+    if (!objectType) {
+      throw new Error(
+        `Could not find objec type '${objectTypeName}' in schema`
+      );
+    }
+
+    const query = `with parentObj := (select ${parentObjectTypeName} filter .id = <uuid><str>$id)
+      select parentObj.${fieldName} {
+        ${[
+          ...objectType.properties.map((prop) => prop.name),
+          ...objectType.links.map(
+            (link) => `${link.name} := (SELECT .${link.name} LIMIT 0),
+        __count_${link.name} := count(.${link.name})`
+          ),
+        ].join(",\n")}
+      }`;
+
+    const {result} = await dbState.connection.query(query, true, {
+      id: parentObjectId,
+    });
+
+    if (!result) {
+      throw new Error(`Failed to fetch nested data, query returned no data`);
+    }
+
+    return {data: result, codec: result._codec};
   }
 
   getItems() {
