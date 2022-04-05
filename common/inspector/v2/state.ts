@@ -26,6 +26,12 @@ export const resultGetterCtx =
     (state: InspectorState) => Promise<EdgeDBResult | undefined>
   >();
 
+export type NestedDataGetter = (
+  objectType: string,
+  objectId: string,
+  fieldName: string
+) => Promise<{data: any; codec: _ICodec}>;
+
 @model("edb/Inspector")
 export class InspectorState extends Model({
   expanded: prop<ArraySet<string> | undefined>(),
@@ -39,6 +45,8 @@ export class InspectorState extends Model({
   _jsonMode = false;
 
   loadingData = false;
+
+  loadNestedData: NestedDataGetter | null = null;
 
   getItems() {
     if (!this._items.length) {
@@ -79,6 +87,7 @@ export class InspectorState extends Model({
         buildItem(
           {
             id: ".",
+            parent: null,
             level: 0,
             codec: result.codec,
           },
@@ -97,6 +106,11 @@ export class InspectorState extends Model({
   });
 
   @modelAction
+  replaceItemBody(item: Item, body: JSX.Element) {
+    this._items[this._items.indexOf(item)] = {...item, body};
+  }
+
+  @modelAction
   expandItem(index: number, expandLevels?: number) {
     const item = this._items[index];
 
@@ -104,7 +118,9 @@ export class InspectorState extends Model({
       item,
       this.expanded!,
       expandLevels,
-      this.countPrefix
+      this.countPrefix,
+      this.loadNestedData,
+      this
     );
     this._items.splice(index + 1, 0, ...expandedItems);
   }

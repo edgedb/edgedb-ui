@@ -1,5 +1,7 @@
 import React from "react";
 
+import cn from "@edgedb/common/utils/classNames";
+
 import {_ICodec} from "edgedb";
 import {CodecKind} from "edgedb/dist/codecs/ifaces";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
@@ -8,6 +10,7 @@ import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 import {buildScalarItem} from "./buildScalar";
 
 import styles from "./inspector.module.scss";
+import {InspectorState, NestedDataGetter} from "./state";
 
 export enum ItemType {
   Set,
@@ -21,6 +24,7 @@ export enum ItemType {
 
 export type Item = {
   id: string;
+  parent: Item | null;
   level: number;
   height?: number;
   codec: _ICodec;
@@ -48,7 +52,9 @@ export function expandItem(
   item: Item,
   expanded: Set<string>,
   expandLevels: number | undefined,
-  countPrefix: string | null
+  countPrefix: string | null,
+  loadNestedData: NestedDataGetter | null,
+  state: InspectorState
 ): Item[] {
   if (item.type !== ItemType.Scalar && item.type !== ItemType.Other) {
     expanded.add(item.id);
@@ -76,6 +82,7 @@ export function expandItem(
             const childItem = buildItem(
               {
                 id,
+                parent: item,
                 codec: subCodec,
                 level: item.level + 1,
               },
@@ -86,7 +93,14 @@ export function expandItem(
             return [
               childItem,
               ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(childItem, expanded, expandLevels, countPrefix)
+                ? expandItem(
+                    childItem,
+                    expanded,
+                    expandLevels,
+                    countPrefix,
+                    loadNestedData,
+                    state
+                  )
                 : []),
             ];
           });
@@ -97,18 +111,61 @@ export function expandItem(
           ) {
             const more = item.expectedCount - (item.data?.length ?? 0);
 
-            childItems.push({
+            const canLoadMoreData =
+              loadNestedData &&
+              (item.data?.length ?? 0) === 0 &&
+              (item.parent as any)?.data &&
+              item.fieldName;
+
+            const childItem: Item = {
               id: `${item.id}.count`,
+              parent: item,
               type: ItemType.Other,
               codec: item.codec,
               level: item.level + 1,
               body: (
-                <span className={styles.resultsHidden}>
-                  ...{item.data?.length ? "further " : ""}
-                  {more} result{more > 1 ? "s" : ""} hidden
-                </span>
+                <>
+                  {canLoadMoreData ? (
+                    <span
+                      className={cn(styles.resultsHidden, styles.loadable)}
+                      onClick={async () => {
+                        state.replaceItemBody(
+                          childItem,
+                          <span className={styles.resultsHidden}>
+                            Loading...
+                          </span>
+                        );
+                        const {data, codec} = await loadNestedData(
+                          (item.parent as any).data.__tname__,
+                          (item.parent as any).data.id,
+                          item.fieldName!
+                        );
+                        (item.parent as any).data[item.fieldName!] = data;
+                        const codecIndex = (
+                          item.parent as any
+                        ).codec.fields.findIndex(
+                          (f: any) => f.name === item.fieldName!
+                        );
+                        (item.parent as any).codec.codecs[
+                          codecIndex
+                        ].subCodec = codec;
+                        const parentIndex = state._items.indexOf(item.parent!);
+                        state.collapseItem(parentIndex);
+                        state.expandItem(parentIndex);
+                      }}
+                    >
+                      load {more} hidden result{more > 1 ? "s" : ""}...
+                    </span>
+                  ) : (
+                    <span className={styles.resultsHidden}>
+                      ...{item.data?.length ? "further " : ""}
+                      {more} result{more > 1 ? "s" : ""} hidden
+                    </span>
+                  )}
+                </>
               ),
-            });
+            };
+            childItems.push(childItem);
           }
         }
         break;
@@ -138,6 +195,7 @@ export function expandItem(
             const childItem = buildItem(
               {
                 id,
+                parent: item,
                 codec: subCodecs[i],
                 level: item.level + 1,
                 label: (
@@ -159,7 +217,14 @@ export function expandItem(
             return [
               childItem,
               ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(childItem, expanded, expandLevels, countPrefix)
+                ? expandItem(
+                    childItem,
+                    expanded,
+                    expandLevels,
+                    countPrefix,
+                    loadNestedData,
+                    state
+                  )
                 : []),
             ];
           });
@@ -178,6 +243,7 @@ export function expandItem(
             const childItem = buildItem(
               {
                 id,
+                parent: item,
                 codec: subCodecs[i],
                 level: item.level + 1,
                 label: (
@@ -195,7 +261,14 @@ export function expandItem(
             return [
               childItem,
               ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(childItem, expanded, expandLevels, countPrefix)
+                ? expandItem(
+                    childItem,
+                    expanded,
+                    expandLevels,
+                    countPrefix,
+                    loadNestedData,
+                    state
+                  )
                 : []),
             ];
           });
@@ -225,6 +298,7 @@ const itemTypes: {
 export function buildItem(
   base: {
     id: string;
+    parent: Item | null;
     level: number;
     codec: _ICodec;
     label?: JSX.Element;
@@ -265,6 +339,7 @@ export function buildItem(
     ),
     closingBracket: {
       id: base.id,
+      parent: base.parent,
       level: base.level,
       codec: base.codec,
       type: ItemType.Other,
