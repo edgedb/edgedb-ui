@@ -49,15 +49,27 @@ export default observer(function ReplView() {
                 useDarkTheme={appState.theme === Theme.dark}
               />
               <div className={styles.replEditorOverlays}>
-                <Button
-                  className={styles.runButton}
-                  label="Run"
-                  shortcut="Ctrl+Enter"
-                  macShortcut="⌘+Enter"
-                  disabled={!replState.canRunQuery}
-                  loading={replState.queryRunning}
-                  onClick={() => replState.runQuery()}
-                />
+                <div className={styles.controls}>
+                  <Button
+                    className={styles.runButton}
+                    label="Run"
+                    shortcut="Ctrl+Enter"
+                    macShortcut="⌘+Enter"
+                    disabled={!replState.canRunQuery}
+                    loading={replState.queryRunning}
+                    onClick={() => replState.runQuery()}
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={replState.persistQuery}
+                      onChange={(e) => {
+                        replState.setPersistQuery(e.target.checked);
+                      }}
+                    />
+                    Persist Query
+                  </label>
+                </div>
                 <ParamEditorPanel />
               </div>
             </div>,
