@@ -16,9 +16,7 @@ import {
 
 import Button from "src/ui/button";
 
-import {
-  HeaderDatabaseIcon,
-} from "src/ui/icons";
+import {HeaderDatabaseIcon} from "src/ui/icons";
 
 export default observer(function DatabaseDashboard() {
   const dbState = useDatabaseState();
@@ -31,57 +29,60 @@ export default observer(function DatabaseDashboard() {
   return (
     <div className={styles.dashboard}>
       <div className={styles.dbName}>
-        <HeaderDatabaseIcon/>
+        <HeaderDatabaseIcon />
         <span>{dbState.name}</span>
       </div>
 
       <div className={styles.buttons}>
         <Button
-            label="Open REPL"
-            size="large"
-            style="square"
-            onClick={async () => {
-              appState.currentPage!.setCurrentTabId(DatabaseTab.Repl)
-            }}
-          ></Button>
+          label="Open REPL"
+          size="large"
+          style="square"
+          onClick={async () => {
+            appState.currentPage!.setCurrentTabId(DatabaseTab.Repl);
+          }}
+        ></Button>
 
         <Button
-            label="Browse Schema"
-            size="large"
-            style="square"
-            onClick={async () => {
-              appState.currentPage!.setCurrentTabId(DatabaseTab.Schema)
-            }}
-          ></Button>
+          label="Browse Schema"
+          size="large"
+          style="square"
+          onClick={async () => {
+            appState.currentPage!.setCurrentTabId(DatabaseTab.Schema);
+          }}
+        ></Button>
 
         <Button
-            label="Browse Data"
-            size="large"
-            style="square"
-            onClick={async () => {
-              appState.currentPage!.setCurrentTabId(DatabaseTab.Data)
-            }}
-          ></Button>
+          label="Browse Data"
+          size="large"
+          style="square"
+          onClick={async () => {
+            appState.currentPage!.setCurrentTabId(DatabaseTab.Data);
+          }}
+        ></Button>
       </div>
 
       <div className={styles.docButtons}>
-        <a href="https://www.edgedb.com/docs/guides/quickstart">
-          <DocsQuickstartIcon/>
+        <a
+          href="https://www.edgedb.com/docs/guides/quickstart"
+          target="_blank"
+        >
+          <DocsQuickstartIcon />
           <span>5-min Quickstart</span>
         </a>
 
-        <a href="https://www.edgedb.com/tutorial">
-          <DocsTutorialIcon/>
+        <a href="https://www.edgedb.com/tutorial" target="_blank">
+          <DocsTutorialIcon />
           <span>Interactive Tutorial</span>
         </a>
 
-        <a href="https://www.edgedb.com/easy-edgedb">
-          <DocsEasyEdgeDBIcon/>
+        <a href="https://www.edgedb.com/easy-edgedb" target="_blank">
+          <DocsEasyEdgeDBIcon />
           <span>Easy EdgeDB</span>
         </a>
 
-        <a href="https://www.edgedb.com/docs/">
-          <DocsIcon/>
+        <a href="https://www.edgedb.com/docs/" target="_blank">
+          <DocsIcon />
           <span>Documentation</span>
         </a>
       </div>
@@ -94,34 +95,35 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
   const [buttonLabel, setButtonLabel] = useState<string>("");
   const [running, setRunning] = useState(false);
 
-  return <div className={styles.firstDashboard}>
-    <div className={styles.dbName}>
-      <HeaderDatabaseIcon/>
-      <span>{dbState.name}</span>
-    </div>
-    <div className={styles.congrats}>Your new database is ready!</div>
+  return (
+    <div className={styles.firstDashboard}>
+      <div className={styles.dbName}>
+        <HeaderDatabaseIcon />
+        <span>{dbState.name}</span>
+      </div>
+      <div className={styles.congrats}>Your new database is ready!</div>
 
-    <div className={styles.importData}>
-      <h3>Use our example films schema and data</h3>
-      <p>Import our example schema and play with the web REPL right away.</p>
-      <div>
-        <Button
-          label={buttonLabel || `Setup example schema & data`}
-          loading={running}
-          disabled={running}
-          size="large"
-          style="square"
-          onClick={async () => {
-            setRunning(true);
-            setButtonLabel(`Setting up schema...`);
-            const {schemaScript} = await import("./exampleSchema");
-            await dbState.connection.executeScript(schemaScript);
-            setButtonLabel(`Updating schema...`);
-            await dbState.fetchSchemaData();
-          }}
-        ></Button>
+      <div className={styles.importData}>
+        <h3>Use our example films schema and data</h3>
+        <p>Import our example schema and play with the web REPL right away.</p>
+        <div>
+          <Button
+            label={buttonLabel || `Setup example schema & data`}
+            loading={running}
+            disabled={running}
+            size="large"
+            style="square"
+            onClick={async () => {
+              setRunning(true);
+              setButtonLabel(`Setting up schema...`);
+              const {schemaScript} = await import("./exampleSchema");
+              await dbState.connection.executeScript(schemaScript);
+              setButtonLabel(`Updating schema...`);
+              await dbState.fetchSchemaData();
+            }}
+          ></Button>
+        </div>
       </div>
     </div>
-  </div>
+  );
 });
-
