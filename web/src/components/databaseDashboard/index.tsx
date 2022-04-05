@@ -22,6 +22,10 @@ export default observer(function DatabaseDashboard() {
   const dbState = useDatabaseState();
   const appState = useAppState();
 
+  if (dbState.migrationId === undefined) {
+    return <div className={styles.dashboard} />;
+  }
+
   if (dbState.migrationId === null) {
     return <FirstRunDashboard />;
   }
