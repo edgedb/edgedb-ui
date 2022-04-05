@@ -25,7 +25,12 @@ export const appCtx = createContext<App>();
 
 @model("App")
 export class App extends Model({
-  theme: prop<Theme>(Theme.light).withSetter(),
+  theme: prop<Theme>(() => {
+    const theme = localStorage.getItem("studioTheme");
+    return theme === "light" || theme === "dark"
+      ? (theme as Theme)
+      : Theme.light;
+  }),
 
   currentPageId: prop<PageType | string>(PageType.Instance).withSetter(),
   // pages
@@ -54,6 +59,12 @@ export class App extends Model({
     if (typeof this.currentPageId === "string") {
       return this.databasePageStates.get(this.currentPageId);
     }
+  }
+
+  @modelAction
+  setTheme(theme: Theme) {
+    this.theme = theme;
+    localStorage.setItem("studioTheme", theme);
   }
 
   @modelAction
