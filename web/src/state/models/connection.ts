@@ -48,6 +48,7 @@ type PendingQuery = {
   query: string;
   params?: QueryParams;
   silent: boolean;
+  newCodec: boolean;
   reject: (error: Error) => void;
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
@@ -89,11 +90,11 @@ export class Connection extends Model({
   conn = AdminFetchConnection.create(
     {
       address:
-        (process.env.NODE_ENV === "development"
-        ? (process.env.REACT_APP_EDGEDB_SERVER
-           ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
-           : ["localhost", 5656])
-        : ""),
+        process.env.NODE_ENV === "development"
+          ? process.env.REACT_APP_EDGEDB_SERVER
+            ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
+            : ["localhost", 5656]
+          : "",
       database: this.config.database,
     },
     codecsRegistry
@@ -129,9 +130,10 @@ export class Connection extends Model({
   query(
     query: string,
     silent: boolean = false,
-    params?: QueryParams
+    params?: QueryParams,
+    newCodec?: boolean
   ): Promise<QueryResult> {
-    return this._addQueryToQueue("query", query, silent, params);
+    return this._addQueryToQueue("query", query, silent, params, newCodec);
   }
 
   prepare(query: string, silent: boolean = false): Promise<PrepareResult> {
@@ -146,7 +148,8 @@ export class Connection extends Model({
     kind: QueryKind,
     query: string,
     silent: boolean,
-    params?: QueryParams
+    params?: QueryParams,
+    newCodec: boolean = false
   ) {
     return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
@@ -154,6 +157,7 @@ export class Connection extends Model({
         query,
         params,
         silent,
+        newCodec,
         resolve,
         reject,
       });
@@ -174,6 +178,7 @@ export class Connection extends Model({
         const result = await this._query(
           query.kind,
           query.query,
+          query.newCodec,
           query.params
         );
         query.resolve(result as any);
@@ -190,6 +195,7 @@ export class Connection extends Model({
   async _query(
     kind: QueryKind,
     queryString: string,
+    newCodec: boolean,
     params?: QueryParams
   ): Promise<QueryResult | PrepareResult | void> {
     if (kind === "executeScript") {
@@ -223,7 +229,7 @@ export class Connection extends Model({
     };
 
     return {
-      result: decode(outCodecBuf, resultBuf),
+      result: decode(outCodecBuf, resultBuf, newCodec),
       duration,
       outCodecBuf,
       resultBuf,

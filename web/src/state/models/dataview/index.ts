@@ -731,9 +731,14 @@ class ExpandedInspector extends Model({
 
     resultGetterCtx.set(this, async () => {
       const conn = connCtx.get(this)!;
-      const {result} = await conn.query(this.dataQuery, true, {
-        objectId: this.objectId,
-      });
+      const {result} = await conn.query(
+        this.dataQuery,
+        true,
+        {
+          objectId: this.objectId,
+        },
+        true
+      );
       if (result) {
         return {data: result, codec: result._codec};
       }
@@ -779,9 +784,14 @@ class ExpandedInspector extends Model({
         ].join(",\n")}
       }`;
 
-    const {result} = await dbState.connection.query(query, true, {
-      id: parentObjectId,
-    });
+    const {result} = await dbState.connection.query(
+      query,
+      true,
+      {
+        id: parentObjectId,
+      },
+      true
+    );
 
     if (!result) {
       throw new Error(`Failed to fetch nested data, query returned no data`);

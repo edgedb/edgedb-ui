@@ -6,21 +6,26 @@ import {decode as _decode, EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
 
 export type {EdgeDBSet};
 
-export const codecsRegistry = new _CodecsRegistry();
+function newCodecsRegistry() {
+  const registry = new _CodecsRegistry();
+  registry.setStringCodecs({
+    decimal: true,
+    int64: true,
+    datetime: true,
+    local_datetime: true,
+  });
+  return registry;
+}
 
-codecsRegistry.setStringCodecs({
-  decimal: true,
-  int64: true,
-  datetime: true,
-  local_datetime: true,
-});
+export const codecsRegistry = newCodecsRegistry();
 
 export function decode(
   outCodecBuf: Uint8Array,
-  resultBuf: Uint8Array
+  resultBuf: Uint8Array,
+  newCodec: boolean = false
 ): EdgeDBSet | null {
   return _decode(
-    codecsRegistry,
+    newCodec ? newCodecsRegistry() : codecsRegistry,
     typedArrayToBuffer(outCodecBuf),
     typedArrayToBuffer(resultBuf),
     [0, 13]
