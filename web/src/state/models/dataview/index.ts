@@ -138,6 +138,7 @@ export class DataInspector extends Model({
   edits: prop(() => new DataEditingManager({})),
 }) {
   gridRef: Grid | null = null;
+  fieldWidthsUpdated = false;
 
   @observable.ref
   filterEditStr = Text.of(["filter "]);
@@ -713,6 +714,7 @@ export class DataInspector extends Model({
 
   @modelAction
   setFieldWidth(field: ObjectField, width: number) {
+    this.fieldWidthsUpdated = true;
     field.width = Math.max(width, 100);
   }
 }
