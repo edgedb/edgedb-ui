@@ -47,7 +47,7 @@ export class DataView extends Model({
     const db = dbCtx.get(this)!;
 
     when(
-      () => !!db.schemaData,
+      () => this.objectTypeNames.length !== 0,
       () => {
         const name = this.objectTypeNames[0];
         if (!this.inspectorStack.length && name) {
