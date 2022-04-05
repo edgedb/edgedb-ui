@@ -76,6 +76,7 @@ export default observer(function Header() {
         ) : null}
       </div>
       <div
+        className={styles.themeSwitcher}
         style={{marginLeft: "auto"}}
         onClick={() =>
           appState.setTheme(
