@@ -1,5 +1,8 @@
 import React, {PropsWithChildren} from "react";
 import {_ICodec} from "edgedb";
+
+import cn from "@edgedb/common/utils/classNames";
+
 import {EdgeDBDateTime} from "edgedb/dist/datatypes/datetime";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
 
@@ -8,7 +11,13 @@ import {Item, ItemType} from "./buildItem";
 import styles from "./inspector.module.scss";
 
 export function buildScalarItem(
-  base: {id: string; level: number; codec: _ICodec; label?: JSX.Element},
+  base: {
+    id: string;
+    parent: Item | null;
+    level: number;
+    codec: _ICodec;
+    label?: JSX.Element;
+  },
   data: any,
   comma?: boolean
 ): Item {
@@ -45,7 +54,8 @@ function ScalarTag({name, children}: PropsWithChildren<TagProps>) {
 export function renderValue(
   value: any,
   codec: _ICodec,
-  showTypeTag: boolean = true
+  showTypeTag: boolean = true,
+  overrideStyles: {[key: string]: string} = {}
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
     return {body: <span className={styles.scalar_empty}>{"{}"}</span>};
@@ -97,7 +107,9 @@ export function renderValue(
       return {
         body: (
           <Tag name="uuid">
-            <span className={styles.scalar_string}>{value.toString()}</span>
+            <span className={cn(styles.scalar_string, overrideStyles.uuid)}>
+              {formatUUID(value.toString())}
+            </span>
           </Tag>
         ),
       };
@@ -155,6 +167,20 @@ export function renderValue(
       </Tag>
     ),
   };
+}
+
+export function formatUUID(uuid: string): string {
+  return (
+    uuid.slice(0, 8) +
+    "-" +
+    uuid.slice(8, 12) +
+    "-" +
+    uuid.slice(12, 16) +
+    "-" +
+    uuid.slice(16, 20) +
+    "-" +
+    uuid.slice(20)
+  );
 }
 
 function bufferToString(buf: Buffer): string {
