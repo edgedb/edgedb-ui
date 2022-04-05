@@ -1,5 +1,14 @@
 type IconProps = React.SVGProps<SVGSVGElement>;
 
+type ActiveItem = {
+  active?: boolean;
+}
+
+const activeColor1 = '#74A6FC';
+const activeColor2 = '#B199F2';
+const activeColor3 = '#E5AAA5';
+const activeColor4 = '#8EA1F7';
+
 export function ChevronIcon(props: IconProps) {
   return (
     <svg {...props} viewBox="0 0 12 12">
@@ -67,7 +76,7 @@ export function HeaderDatabaseIcon() {
   );
 }
 
-export function TabDashboardIcon() {
+export function TabDashboardIcon(props: ActiveItem) {
   return (
     <svg
       width="28"
@@ -79,49 +88,32 @@ export function TabDashboardIcon() {
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 10V2H10V10H2ZM0 1C0 0.447715 0.447715 0 1 0H11C11.5523 0 12 0.447715 12 1V11C12 11.5523 11.5523 12 11 12H1C0.447715 12 0 11.5523 0 11V1ZM2 24V16H10V24H2ZM0 15C0 14.4477 0.447715 14 1 14H11C11.5523 14 12 14.4477 12 15V25C12 25.5523 11.5523 26 11 26H1C0.447715 26 0 25.5523 0 25V15ZM16 2V10H24V2H16ZM15 0C14.4477 0 14 0.447715 14 1V11C14 11.5523 14.4477 12 15 12H25C25.5523 12 26 11.5523 26 11V1C26 0.447715 25.5523 0 25 0H15ZM16 24V16H24V24H16ZM14 15C14 14.4477 14.4477 14 15 14H25C25.5523 14 26 14.4477 26 15V25C26 25.5523 25.5523 26 25 26H15C14.4477 26 14 25.5523 14 25V15Z"
+        d="M2 2V10H10V2H2ZM1 0C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H11C11.5523 12 12 11.5523 12 11V1C12 0.447715 11.5523 0 11 0H1Z"
+        fill={props && props.active ? activeColor1 : undefined}
       />
-    </svg>
-  );
-}
-
-export function TabReplIcon() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="-1 -1 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M4.70711 5.29289C4.31658 4.90237 3.68342 4.90237 3.29289 5.29289C2.90237 5.68342 2.90237 6.31658 3.29289 6.70711L9.58579 13L3.29289 19.2929C2.90237 19.6834 2.90237 20.3166 3.29289 20.7071C3.68342 21.0976 4.31658 21.0976 4.70711 20.7071L11.7071 13.7071C12.0976 13.3166 12.0976 12.6834 11.7071 12.2929L4.70711 5.29289ZM15 19C14.4477 19 14 19.4477 14 20C14 20.5523 14.4477 21 15 21H22C22.5523 21 23 20.5523 23 20C23 19.4477 22.5523 19 22 19H15Z"
+        d="M2 16V24H10V16H2ZM1 14C0.447715 14 0 14.4477 0 15V25C0 25.5523 0.447715 26 1 26H11C11.5523 26 12 25.5523 12 25V15C12 14.4477 11.5523 14 11 14H1Z"
+        fill={props && props.active ? activeColor4 : undefined}
       />
-    </svg>
-  );
-}
-
-export function TabSchemaIcon() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="-1 -1 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 2V10H10V2H2ZM1 0C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H5V17.9999C5 18.6485 5.1602 19.4042 5.66928 20.0151C6.20509 20.6581 7.00952 20.9999 8 20.9999H13.9999L13.9992 18.9999H8C7.49048 18.9999 7.29491 18.8418 7.20572 18.7348C7.0898 18.5956 7 18.3514 7 17.9999V12H11C11.5523 12 12 11.5523 12 11V1C12 0.447715 11.5523 0 11 0H1ZM16 16V24H24V16H16ZM15 14C14.4477 14 14 14.4477 14 15V25C14 25.5523 14.4477 26 15 26H25C25.5523 26 26 25.5523 26 25V15C26 14.4477 25.5523 14 25 14H15Z"
+        d="M16 2V10H24V2H16ZM15 0C14.4477 0 14 0.447715 14 1V11C14 11.5523 14.4477 12 15 12H25C25.5523 12 26 11.5523 26 11V1C26 0.447715 25.5523 0 25 0H15Z"
+        fill={props && props.active ? activeColor2 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 16V24H24V16H16ZM15 14C14.4477 14 14 14.4477 14 15V25C14 25.5523 14.4477 26 15 26H25C25.5523 26 26 25.5523 26 25V15C26 14.4477 25.5523 14 25 14H15Z"
+        fill={props && props.active ? activeColor3 : undefined}
       />
     </svg>
   );
 }
 
-export function TabDataExplorerIcon() {
+export function TabReplIcon(props: ActiveItem) {
   return (
     <svg
       width="26"
@@ -133,11 +125,102 @@ export function TabDataExplorerIcon() {
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M4 4V12H6V4H4ZM3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H7C7.55228 14 8 13.5523 8 13V3C8 2.44772 7.55228 2 7 2H3ZM4 18V21H6V18H4ZM3 16C2.44772 16 2 16.4477 2 17V22C2 22.5523 2.44772 23 3 23H7C7.55228 23 8 22.5523 8 22V17C8 16.4477 7.55228 16 7 16H3ZM14 21H12V15H14V21ZM10 14C10 13.4477 10.4477 13 11 13H15C15.5523 13 16 13.4477 16 14V22C16 22.5523 15.5523 23 15 23H11C10.4477 23 10 22.5523 10 22V14ZM12 4V9H14V4H12ZM11 2C10.4477 2 10 2.44772 10 3V10C10 10.5523 10.4477 11 11 11H15C15.5523 11 16 10.5523 16 10V3C16 2.44772 15.5523 2 15 2H11ZM20 21V4H22V21H20ZM18 3C18 2.44772 18.4477 2 19 2H23C23.5523 2 24 2.44772 24 3V22C24 22.5523 23.5523 23 23 23H19C18.4477 23 18 22.5523 18 22V3Z"
+        d="M4.70711 5.29289C4.31658 4.90237 3.68342 4.90237 3.29289 5.29289C2.90237 5.68342 2.90237 6.31658 3.29289 6.70711L9.58579 13L3.29289 19.2929C2.90237 19.6834 2.90237 20.3166 3.29289 20.7071C3.68342 21.0976 4.31658 21.0976 4.70711 20.7071L11.7071 13.7071C12.0976 13.3166 12.0976 12.6834 11.7071 12.2929L4.70711 5.29289Z"
+        fill={props && props.active ? activeColor1 : undefined}
+      />
+      <path
+        d="M15 19C14.4477 19 14 19.4477 14 20C14 20.5523 14.4477 21 15 21H22C22.5523 21 23 20.5523 23 20C23 19.4477 22.5523 19 22 19H15Z"
+        fill={props && props.active ? activeColor3 : undefined}
       />
     </svg>
   );
 }
+
+export function TabSchemaIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 26 26"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 2V10H10V2H2ZM1 0C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H11C11.5523 12 12 11.5523 12 11V1C12 0.447715 11.5523 0 11 0H1Z"
+        fill={props && props.active ? activeColor1 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 16V24H24V16H16ZM15 14C14.4477 14 14 14.4477 14 15V25C14 25.5523 14.4477 26 15 26H25C25.5523 26 26 25.5523 26 25V15C26 14.4477 25.5523 14 25 14H15Z"
+        fill={props && props.active ? activeColor2 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5 12H7V17.9999C7 18.3514 7.0898 18.5956 7.20572 18.7348C7.29491 18.8418 7.49048 18.9999 8 18.9999H13.9992L13.9999 20.9999H8C7.00952 20.9999 6.20509 20.6581 5.66928 20.0151C5.1602 19.4042 5 18.6485 5 17.9999V12Z"
+        fill={props && props.active ? activeColor3 : undefined}
+      />
+    </svg>
+  );
+}
+
+export function TabDataExplorerIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="26"
+      height="25"
+      viewBox="0 0 26 25"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10 11V14H24V11H10ZM9 9C8.44772 9 8 9.44772 8 10V15C8 15.5523 8.44772 16 9 16H25C25.5523 16 26 15.5523 26 15V10C26 9.44772 25.5523 9 25 9H9Z"
+        fill={props && props.active ? activeColor1 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 20V23H20V20H2ZM1 18C0.447715 18 0 18.4477 0 19V24C0 24.5523 0.447716 25 1 25H21C21.5523 25 22 24.5523 22 24V19C22 18.4477 21.5523 18 21 18H1Z"
+        fill={props && props.active ? activeColor2 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 2V5H20V2H2ZM1 0C0.447715 0 0 0.447715 0 1V6C0 6.55228 0.447716 7 1 7H21C21.5523 7 22 6.55228 22 6V1C22 0.447715 21.5523 0 21 0H1Z"
+        fill={props && props.active ? activeColor3 : undefined}
+      />
+    </svg>
+  );
+}
+
+export function TabSettingsIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M5.31509 1.581L7.89825 3.51171L8.35975 0.318907C9.20555 0.110533 10.0899 0 11 0C11.9101 0 12.7944 0.110533 13.6403 0.318907L14.1017 3.51171L16.6849 1.581C18.2115 2.50439 19.4956 3.78845 20.419 5.31508L18.4883 7.89825L21.6811 8.35975C21.8895 9.20555 22 10.0899 22 11C22 11.9101 21.8895 12.7944 21.6811 13.6403L18.4883 14.1017L20.419 16.6849C19.4956 18.2115 18.2115 19.4956 16.6849 20.419L14.1017 18.4883L13.6403 21.6811C12.7944 21.8895 11.9101 22 11 22C10.0899 22 9.20555 21.8895 8.35975 21.6811L7.89825 18.4883L5.31508 20.419C3.78845 19.4956 2.50439 18.2115 1.581 16.6849L3.51171 14.1017L0.318907 13.6403C0.110533 12.7944 0 11.9101 0 11C0 10.0899 0.110533 9.20555 0.318907 8.35975L3.51171 7.89825L1.581 5.31509C2.50439 3.78845 3.78845 2.50439 5.31509 1.581ZM11 2C10.7067 2 10.417 2.01397 10.1316 2.04122L9.39629 7.12829L5.27963 4.05141C4.83196 4.42047 4.42047 4.83196 4.05141 5.27963L7.12829 9.39629L2.04122 10.1316C2.01397 10.417 2 10.7067 2 11C2 11.2933 2.01397 11.583 2.04122 11.8684L7.12829 12.6037L4.05141 16.7204C4.42047 17.168 4.83195 17.5795 5.27963 17.9486L9.39629 14.8717L10.1316 19.9588C10.417 19.986 10.7067 20 11 20C11.2933 20 11.583 19.986 11.8684 19.9588L12.6037 14.8717L16.7204 17.9486C17.168 17.5795 17.5795 17.168 17.9486 16.7204L14.8717 12.6037L19.9588 11.8684C19.986 11.583 20 11.2933 20 11C20 10.7067 19.986 10.417 19.9588 10.1316L14.8717 9.39629L17.9486 5.27963C17.5795 4.83195 17.168 4.42047 16.7204 4.05141L12.6037 7.12829L11.8684 2.04122C11.583 2.01397 11.2933 2 11 2Z"
+        fill={props && props.active ? activeColor1 : undefined}
+      />
+      <path
+        d="M11 14C12.6569 14 14 12.6569 14 11C14 9.34315 12.6569 8 11 8C9.34315 8 8 9.34315 8 11C8 12.6569 9.34315 14 11 14Z"
+        fill={props && props.active ? activeColor3 : undefined}
+      />
+    </svg>
+  );
+}
+
 
 export function ThemeSwitcherIcon() {
   return (

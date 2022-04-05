@@ -22,6 +22,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background-color ease-in .1s;
 
   & > svg {
     fill: #999;
@@ -32,11 +33,7 @@
   }
 
   &:hover {
-    background: var(--app-accent-green);
-
-    & > svg {
-      fill: var(--app-bg);
-    }
+    background: var(--app-panel-bg);
   }
 }
 

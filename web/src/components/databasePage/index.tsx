@@ -16,38 +16,40 @@ import {
   TabReplIcon,
   TabSchemaIcon,
   TabDataExplorerIcon,
+  TabSettingsIcon,
 } from "src/ui/icons";
 import {useEffect} from "react";
 
 const views: {
   [id in DatabaseTab]: {
     label: string;
-    icon?: JSX.Element;
+    icon: (active: boolean) => JSX.Element;
     content: JSX.Element;
   };
 } = {
   [DatabaseTab.Dashboard]: {
     label: "Dashboard",
-    icon: <TabDashboardIcon />,
+    icon: (active) => <TabDashboardIcon active={active} />,
     content: <DatabaseDashboard />,
   },
   [DatabaseTab.Repl]: {
     label: "REPL",
-    icon: <TabReplIcon />,
+    icon: (active) => <TabReplIcon active={active} />,
     content: <Repl />,
   },
   [DatabaseTab.Schema]: {
     label: "Schema",
-    icon: <TabSchemaIcon />,
+    icon: (active) => <TabSchemaIcon active={active} />,
     content: <Schema />,
   },
   [DatabaseTab.Data]: {
     label: "Data Explorer",
-    icon: <TabDataExplorerIcon />,
+    icon: (active) => <TabDataExplorerIcon active={active} />,
     content: <DataView />,
   },
   [DatabaseTab.Settings]: {
     label: "Settings",
+    icon: (active) => <TabSettingsIcon active={active} />,
     content: <div className={styles.card}>Settings</div>,
   },
 };
@@ -100,7 +102,8 @@ export default observer(function DatabasePage() {
             })}
             onClick={() => appState.currentPage!.setCurrentTabId(tabId)}
           >
-            {views[tabId].icon ?? tabId}
+            {views[tabId].icon(appState.currentPage!.currentTabId === tabId)
+              ?? tabId}
           </div>
         ))}
       </div>
