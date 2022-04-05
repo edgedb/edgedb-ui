@@ -89,7 +89,11 @@ export class Connection extends Model({
   conn = AdminFetchConnection.create(
     {
       address:
-        process.env.NODE_ENV === "development" ? ["localhost", 5656] : "",
+        (process.env.NODE_ENV === "development"
+        ? (process.env.REACT_APP_EDGEDB_SERVER
+           ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
+           : ["localhost", 5656])
+        : ""),
       database: this.config.database,
     },
     codecsRegistry

@@ -10,7 +10,9 @@ import {
 
 const serverUrl =
   process.env.NODE_ENV === "development"
-    ? "http://localhost:5656"
+    ? (process.env.REACT_APP_EDGEDB_SERVER
+        ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
+        : "http://10.42.42.42:5656")
     : window.location.origin;
 
 @model("InstancePageState")
