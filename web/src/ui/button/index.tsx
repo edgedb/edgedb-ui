@@ -18,6 +18,7 @@ interface ButtonProps {
   onClick?: MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
   loading?: boolean;
+  style?: "round" | "square";
 }
 
 export default function Button({
@@ -30,6 +31,7 @@ export default function Button({
   onClick,
   disabled,
   loading,
+  style,
 }: ButtonProps) {
   const _shortcut = isMac ? macShortcut : shortcut;
 
@@ -37,6 +39,7 @@ export default function Button({
     <button
       className={cn(styles.button, className, {
         [styles.largeButton]: size === "large",
+        [styles.squareButton]: style === "square",
       })}
       onClick={onClick}
       disabled={disabled}
