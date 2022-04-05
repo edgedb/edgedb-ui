@@ -1,4 +1,5 @@
-import {PropsWithChildren, useState} from "react";
+import {forwardRef, PropsWithChildren, useState} from "react";
+import {CloseIcon} from "../icons";
 
 import styles from "./modal.module.scss";
 
@@ -46,9 +47,9 @@ export function Modal({
     <div className={styles.modalCard}>
       <div className={styles.modalHeader}>
         <div className={styles.modalTitle}>{title}</div>
-        {/* {close ? (
+        {close ? (
           <CloseIcon className={styles.modalClose} onClick={close} />
-        ) : null} */}
+        ) : null}
       </div>
       <div className={styles.modalContent}>{children}</div>
       {progress ? (
@@ -78,23 +79,22 @@ interface ModalTextFieldProps {
   value: string;
   onChange: (value: string) => void;
 }
-export function ModalTextField({
-  type,
-  label,
-  value,
-  onChange,
-}: ModalTextFieldProps) {
+export const ModalTextField = forwardRef(function ModalTextField(
+  {type, label, value, onChange}: ModalTextFieldProps,
+  ref
+) {
   return (
     <label className={styles.modalField}>
       <span>{label}</span>
       <input
+        ref={ref as any}
         type={type ?? "text"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
     </label>
   );
-}
+});
 
 interface ModalSelectFieldProps<T> {
   label: string;
