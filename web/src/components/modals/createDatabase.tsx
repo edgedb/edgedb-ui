@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
 
 import {useAppState} from "src/state/providers";
 
@@ -11,16 +11,22 @@ export default function CreateDatabaseModal() {
   const appState = useAppState();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
     <ModalOverlay onOverlayClick={appState.closeModalOverlay}>
       <Modal
         title="New Database"
+        close={appState.closeModalOverlay}
         actions={
           <Button
             className={styles.greenButton}
             loading={creating}
-            disabled={creating}
+            disabled={!name.trim() || creating}
             size="large"
             label={"Create database"}
             onClick={async () => {
@@ -36,6 +42,7 @@ export default function CreateDatabaseModal() {
         }
       >
         <ModalTextField
+          ref={inputRef}
           label="Database Name"
           value={name}
           onChange={setName}
