@@ -19,6 +19,8 @@
 .databases {
   display: flex;
   margin-top: 54px;
+  flex-flow: row wrap;
+  justify-content: center;
 }
 
 .databaseCard {
