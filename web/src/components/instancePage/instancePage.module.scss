@@ -23,8 +23,10 @@
   justify-content: center;
 }
 
-.databaseCard {
+.databaseCard, .newDatabaseCard {
   background: var(--app-card-bg);
+  border: 2px solid var(--app-card-bg);
+  opacity: 0.8;
   border-radius: 8px;
   padding: 8px;
   margin: 8px;
@@ -32,13 +34,35 @@
   width: 170px;
   height: 136px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+
+  span {
+    font-weight: bold;
+  }
 
   svg {
     fill: #999;
     transform: scale(1.1);
     display: inline-block;
-    margin-right: .5em;
+  }
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.newDatabaseCard {
+  background: none;
+  border: 2px dashed var(--app-card-outline);
+
+  span {
+    font-style: italic;
+    font-weight: normal;
+    max-width: 100px;
+    text-align: center;
+    display: block;
   }
 }

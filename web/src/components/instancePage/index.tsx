@@ -1,9 +1,9 @@
 import {observer} from "mobx-react";
 
 import {useAppState} from "src/state/providers";
+import CreateDatabaseModal from "../modals/createDatabase";
 
 import styles from "./instancePage.module.scss";
-
 import {HeaderDatabaseIcon} from "src/ui/icons";
 
 export default observer(function InstancePage() {
@@ -25,6 +25,15 @@ export default observer(function InstancePage() {
             <span>{db.name}</span>
           </div>
         ))}
+
+        <div
+          className={styles.newDatabaseCard}
+          onClick={() => {
+            appState.openModalOverlay(<CreateDatabaseModal />);
+          }}
+        >
+          <span>Create new database</span>
+        </div>
       </div>
     </div>
   );
