@@ -4,6 +4,8 @@ import {useAppState} from "src/state/providers";
 
 import styles from "./instancePage.module.scss";
 
+import {HeaderDatabaseIcon} from "src/ui/icons";
+
 export default observer(function InstancePage() {
   const appState = useAppState();
 
@@ -19,7 +21,8 @@ export default observer(function InstancePage() {
             className={styles.databaseCard}
             onClick={() => appState.openDatabasePage(db.name)}
           >
-            {db.name}
+            <HeaderDatabaseIcon/>
+            <span>{db.name}</span>
           </div>
         ))}
       </div>

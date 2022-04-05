@@ -34,4 +34,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  svg {
+    fill: #999;
+    transform: scale(1.1);
+    display: inline-block;
+    margin-right: .5em;
+  }
 }
