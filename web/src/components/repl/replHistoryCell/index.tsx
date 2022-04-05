@@ -235,7 +235,7 @@ export default observer(function ReplHistoryCell({
                 ) : null}
                 <div className={styles.info}>
                   <div className={styles.infoLabel}>
-                    <ReplQueryDuration duration={cell.duration} />
+                    {/*<ReplQueryDuration duration={cell.duration} />*/}
                   </div>
                 </div>
               </div>
