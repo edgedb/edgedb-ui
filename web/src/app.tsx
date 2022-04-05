@@ -3,6 +3,7 @@ import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
 
+import "./fonts/include.scss";
 import styles from "./app.module.scss";
 
 import {highlightStyle} from "@edgedb/code-editor/theme";

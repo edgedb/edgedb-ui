@@ -1,0 +1,19 @@
+@mixin font($name, $fn, $weight, $italic: false) {
+  @font-face {
+    font-family: $name;
+    font-weight: $weight;
+    font-display: swap;
+
+    @if $italic {
+      font-style: italic;
+      src: url("./#{$fn}-#{$weight}italic.woff2") format("woff2");
+    } @else {
+      font-style: normal;
+      src: url("./#{$fn}-#{$weight}.woff2") format("woff2");
+    }
+  }
+}
+
+@each $weight in 300, 400, 500, 600, 700 {
+  @include font("EdgeDB", "edgedb", $weight);
+}
