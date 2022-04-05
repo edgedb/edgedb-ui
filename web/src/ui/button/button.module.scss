@@ -41,4 +41,21 @@
     opacity: 0.5;
     pointer-events: none;
   }
+
+  &.largeButton {
+    .inner {
+      height: 46px;
+      border-radius: 23px;
+      font-size: 16px;
+      font-weight: bold;
+      padding: 0 23px;
+      text-transform: none;
+    }
+  }
+
+  &.squareButton {
+    .inner {
+      border-radius: 4px;
+    }
+  }
 }
