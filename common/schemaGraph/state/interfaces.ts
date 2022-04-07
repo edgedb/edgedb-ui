@@ -3,6 +3,7 @@ import {UUID} from "edgedb";
 export interface SchemaObject {
   name: string;
   is_abstract: boolean;
+  from_alias: boolean;
   expr: string | null;
   inherits_from: string[];
   inherited_by: string[];
