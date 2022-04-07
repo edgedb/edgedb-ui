@@ -4,6 +4,7 @@ WITH MODULE schema,
 SELECT ObjectType {
   name,
   is_abstract,
+  from_alias,
   expr,
   inherits_from := (
     SELECT .bases
