@@ -1,0 +1,100 @@
+.databasePage {
+  flex-grow: 1;
+  overflow: hidden;
+  display: flex;
+  padding: 0 16px 16px 0;
+}
+
+.tabs {
+  flex-shrink: 0;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+}
+
+.tab {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  & > svg {
+    fill: #999;
+  }
+
+  &.tabSelected {
+    background: var(--app-panel-bg);
+  }
+
+  &:hover {
+    background: var(--app-panel-bg);
+
+    .showLabels & .tabLabel {
+      opacity: 1;
+    }
+  }
+}
+
+.tabLabel {
+  position: absolute;
+  left: calc(100% + 9px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  background: #4c4c4c;
+  color: #f5f5f5;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 4px;
+
+  &:before {
+    position: absolute;
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 1px;
+    transform: rotate(45deg);
+    background: inherit;
+    left: -2px;
+    top: calc(50% - 5px);
+  }
+}
+
+.settingsTab {
+  margin-top: auto;
+  margin-bottom: 10px;
+  display: none;
+}
+
+.tabContent {
+  display: flex;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.card {
+  background-color: var(--app-panel-bg);
+  flex-grow: 1;
+  border-radius: 8px;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

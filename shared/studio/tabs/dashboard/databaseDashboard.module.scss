@@ -1,0 +1,136 @@
+.dashboard,
+.firstDashboard {
+  background-color: var(--app-panel-bg);
+  border-radius: 8px;
+
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #fff;
+
+  .dbName {
+    font-size: 28px;
+    margin-top: 54px;
+    font-family: Roboto Mono;
+    font-weight: bold;
+    text-align: center;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    span {
+      display: inline-block;
+    }
+
+    svg {
+      fill: #999;
+      transform: scale(1.8);
+      display: inline-block;
+      margin-right: 20px;
+    }
+  }
+}
+
+.dashboard {
+  .buttons {
+    margin: 30px;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+  }
+
+  .docButtons {
+    margin-top: 50px;
+    padding: 50px;
+
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+
+    color: --app-text-colour;
+
+    a {
+      padding: 20px;
+      margin: 10px;
+      border: 2px solid var(--app-card-bg);
+      border-radius: 8px;
+      min-width: 190px;
+
+      text-decoration: none;
+      outline: none;
+
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+
+      svg {
+        color: var(--app-accent-green);
+      }
+
+      span {
+        display: inline-block;
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--app-text-colour);
+      }
+
+      &:hover {
+        border-color: var(--app-accent-green);
+        background-color: var(--app-accent-green);
+
+        svg {
+          color: white;
+        }
+
+        span {
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+.firstDashboard {
+  .congrats {
+    font-family: EdgeDB;
+    font-weight: bold;
+    font-size: 68px;
+    max-width: 750px;
+    text-align: center;
+    line-height: 60px;
+    margin-top: 50px;
+
+    background: linear-gradient(90.06deg, #a088ff 1.59%, #e48da2 102.98%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .importData {
+    margin-top: 50px;
+    max-width: 400px;
+    text-align: center;
+
+    h3 {
+      font-family: EdgeDB;
+      font-size: 25px;
+      margin: 0 0 20px 0;
+    }
+
+    p {
+      font-size: 18px;
+      margin: 20px 0;
+    }
+
+    & > div {
+      margin: 30px 0;
+      button {
+        padding: 0;
+      }
+    }
+  }
+}

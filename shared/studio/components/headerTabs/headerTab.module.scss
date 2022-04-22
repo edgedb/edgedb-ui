@@ -1,0 +1,24 @@
+.tabs {
+  display: flex;
+  margin-left: 58px;
+
+  font-family: "Inter", sans-serif;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+
+  & > svg {
+    fill: #adadad;
+  }
+
+  .tabTitle {
+    font-weight: 500;
+  }
+}
+
+.tabSep {
+  margin: 0 8px;
+}

@@ -1,0 +1,133 @@
+@import "@edgedb/common/mixins.scss";
+
+.repl {
+  font-family: Roboto;
+  font-style: normal;
+  min-height: 0;
+  flex-grow: 1;
+
+  --repl-history-background: #f7f7f7;
+  --repl-history-collapse-background: #e3e3e3;
+  --repl-history-collapse-icon: #7f7f7f;
+  --repl-history-input-background: #ffffff;
+  --repl-history-output-background: #f0f0f0;
+  --repl-history-block-label: #808080;
+  --repl-history-info-label: #7f7f7f;
+  --repl-history-query-colour: #595959;
+  --repl-history-button-background: #e3e3e3;
+  --repl-history-button-colour: #7f7f7f;
+  --repl-inspector-colour: #595959;
+
+  --transaction-query-colour: #333333;
+  --transaction-status-colour: #bfbfbf;
+  --transaction-active: #a5b4ea;
+  --transaction-active-dark: #97a5d6;
+  --transaction-error: #eb9292;
+  --transaction-error-dark: #d78686;
+  --transaction-savepoint: #e9da8a;
+  --transaction-savepoint-dark: #d5c77f;
+  --transaction-committed: #80bea8;
+  --transaction-committed-dark: #76ae9a;
+
+  @include darkTheme {
+    --repl-history-background: #242424;
+    --repl-history-collapse-background: #1c1c1c;
+    --repl-history-collapse-icon: #808080;
+    --repl-history-input-background: #333333;
+    --repl-history-output-background: #2e2e2e;
+    --repl-history-block-label: #808080;
+    --repl-history-info-label: #cccccc;
+    --repl-history-query-colour: #bfbfbf;
+    --repl-history-button-background: #1f1f1f;
+    --repl-history-button-colour: #8b8b8f;
+    --repl-inspector-colour: #bfbfbf;
+
+    --transaction-query-colour: #191919;
+    --transaction-status-colour: #bfbfbf;
+    --transaction-active: #5f74c0;
+    --transaction-active-dark: #4f5f98;
+    --transaction-error: #ac4343;
+    --transaction-error-dark: #893a3a;
+    --transaction-savepoint: #978837;
+    --transaction-savepoint-dark: #796e31;
+    --transaction-committed: #057d52;
+    --transaction-committed-dark: #0c6645;
+  }
+}
+
+.editorBlock {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.replEditorOverlays {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 50%;
+}
+
+.controls {
+  margin: 8px;
+  display: flex;
+  align-items: center;
+
+  label {
+    display: flex;
+    align-items: center;
+    color: #909090;
+    margin-right: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 16px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    input {
+      appearance: none;
+      border: 1px solid rgb(143, 143, 143, 0.7);
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      margin: 4px;
+      cursor: inherit;
+
+      &:checked {
+        background-color: #49d8ad;
+        background-size: 12px 12px;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 6L9 17L4 12' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+        border: none;
+      }
+    }
+  }
+}
+
+.runButton {
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #000;
+  align-self: flex-start;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
+.replHistory {
+  min-height: 0;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.historyList {
+  @include hideScrollbar;
+}
