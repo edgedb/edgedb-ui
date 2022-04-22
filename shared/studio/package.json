@@ -1,0 +1,20 @@
+{
+  "name": "@edgedb/studio",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@edgedb/code-editor": "workspace:*",
+    "@edgedb/common": "workspace:*",
+    "@edgedb/inspector": "workspace:*",
+    "@edgedb/schema-graph": "workspace:*"
+  },
+  "peerDependencies": {
+    "edgedb": "^0.20.7",
+    "mobx": "^6.5.0",
+    "mobx-keystone": "^0.67.2",
+    "mobx-react-lite": "^3.3.0",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0"
+  },
+  "main": "index.ts"
+}
