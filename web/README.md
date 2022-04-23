@@ -17,10 +17,11 @@ admin UI enabled, e.g.:
 env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --admin-ui=enabled
 
 # or with a nightly instance:
-env EDGEDB_DEBUG_INJECT_CORS=1 edgedb instance start --foreground <instance-name>
+env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edgedb instance start --foreground <instance-name>
 ```
 
-To customize the EdgeDB server address (default is `localhost:5656`):
+To customize the EdgeDB server address (if it's not running at the 
+default of `localhost:5656`):
 
 ```sh
 env REACT_APP_EDGEDB_SERVER="192.168.0.123:5656" yarn start
