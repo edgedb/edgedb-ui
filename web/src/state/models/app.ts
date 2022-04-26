@@ -1,96 +1,21 @@
-import {action, computed, observable, when} from "mobx";
-import {
-  createContext,
-  Model,
-  model,
-  modelAction,
-  objectMap,
-  prop,
-} from "mobx-keystone";
+import {createContext, Model, model, prop} from "mobx-keystone";
 
-import {Connection} from "./connection";
-import {InstancePageState} from "./instance";
-import {DatabasePageState} from "./database";
+import {InstanceState} from "@edgedb/studio/state/instance";
 
-export enum Theme {
-  light = "light",
-  dark = "dark",
-}
-
-export enum PageType {
-  Instance,
-}
+const serverUrl =
+  process.env.NODE_ENV === "development"
+    ? process.env.REACT_APP_EDGEDB_SERVER
+      ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
+      : "http://localhost:5656"
+    : window.location.origin;
 
 export const appCtx = createContext<App>();
 
 @model("App")
 export class App extends Model({
-  theme: prop<Theme>(() => {
-    const theme = localStorage.getItem("studioTheme");
-    return theme === "light" || theme === "dark"
-      ? (theme as Theme)
-      : Theme.light;
-  }),
-
-  currentPageId: prop<PageType | string>(PageType.Instance).withSetter(),
-  // pages
-  instanceState: prop(() => new InstancePageState({})),
-  databasePageStates: prop(() => objectMap<DatabasePageState>()),
+  instanceState: prop(() => new InstanceState({serverUrl})),
 }) {
   onInit() {
     appCtx.set(this, this);
-
-    when(
-      () =>
-        this.defaultConnection === null &&
-        this.instanceState.databases.length > 0,
-      () => {
-        this.defaultConnection = new Connection({
-          config: {database: this.instanceState.databases[0].name},
-        });
-      }
-    );
-  }
-
-  defaultConnection: Connection | null = null;
-
-  @computed
-  get currentPage() {
-    if (typeof this.currentPageId === "string") {
-      return this.databasePageStates.get(this.currentPageId);
-    }
-  }
-
-  @modelAction
-  setTheme(theme: Theme) {
-    this.theme = theme;
-    localStorage.setItem("studioTheme", theme);
-  }
-
-  @modelAction
-  openDatabasePage(databaseName: string) {
-    const key = `${this.instanceState.instanceName}/${databaseName}`;
-    if (!this.databasePageStates.has(key)) {
-      this.databasePageStates.set(
-        key,
-        new DatabasePageState({name: databaseName})
-      );
-    }
-    this.currentPageId = key;
-  }
-
-  @observable.ref
-  modalOverlay: JSX.Element | null = null;
-
-  @action
-  openModalOverlay(modal: JSX.Element | null) {
-    if (!this.modalOverlay) {
-      this.modalOverlay = modal;
-    }
-  }
-
-  @action.bound
-  closeModalOverlay() {
-    this.modalOverlay = null;
   }
 }

@@ -12,7 +12,9 @@ module.exports = {
       ],
     },
     configure: (webpackConfig, {env, paths}) => {
-      webpackConfig.output.publicPath = "/ui/";
+      if (env !== "development") {
+        webpackConfig.output.publicPath = "/ui/";
+      }
       const {isFound, match} = getLoader(
         webpackConfig,
         loaderByName("babel-loader")
@@ -21,7 +23,7 @@ module.exports = {
         const include = Array.isArray(match.loader.include)
           ? match.loader.include
           : [match.loader.include];
-        match.loader.include = [...include, path.resolve("../common")];
+        match.loader.include = [...include, path.resolve("../shared")];
       }
 
       if (!webpackConfig.resolve.fallback) {

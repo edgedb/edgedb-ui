@@ -1,27 +1,30 @@
 import {observer} from "mobx-react";
+import {useNavigate} from "react-router-dom";
+
+import {useModal} from "@edgedb/common/hooks/useModal";
+import CreateDatabaseModal from "@edgedb/studio/components/modals/createDatabase";
+import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 
 import {useAppState} from "src/state/providers";
-import CreateDatabaseModal from "../modals/createDatabase";
 
 import styles from "./instancePage.module.scss";
-import {HeaderDatabaseIcon} from "src/ui/icons";
 
 export default observer(function InstancePage() {
-  const appState = useAppState();
+  const instanceState = useAppState().instanceState;
+  const navigate = useNavigate();
+  const {openModal} = useModal();
 
   return (
     <div className={styles.instancePage}>
-      <div className={styles.instanceName}>
-        {appState.instanceState.instanceName}
-      </div>
+      <div className={styles.instanceName}>{instanceState.instanceName}</div>
       <div className={styles.databases}>
-        {appState.instanceState.databases.map((db) => (
+        {instanceState.databases?.map((db) => (
           <div
             key={db.name}
             className={styles.databaseCard}
-            onClick={() => appState.openDatabasePage(db.name)}
+            onClick={() => navigate(db.name)}
           >
-            <HeaderDatabaseIcon/>
+            <HeaderDatabaseIcon />
             <span>{db.name}</span>
           </div>
         ))}
@@ -29,7 +32,12 @@ export default observer(function InstancePage() {
         <div
           className={styles.newDatabaseCard}
           onClick={() => {
-            appState.openModalOverlay(<CreateDatabaseModal />);
+            openModal(
+              <CreateDatabaseModal
+                instanceState={instanceState}
+                dbPagePathPrefix={`/`}
+              />
+            );
           }}
         >
           <span>Create new database</span>

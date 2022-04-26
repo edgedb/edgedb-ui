@@ -1,146 +1,80 @@
 import {observer} from "mobx-react";
+import {useNavigate, useParams} from "react-router-dom";
 
-import cn from "@edgedb/common/utils/classNames";
+import {InstanceStateContext} from "@edgedb/studio/state/instance";
+import {HeaderTab} from "@edgedb/studio/components/headerTabs";
+import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
+
+import {useModal} from "@edgedb/common/hooks/useModal";
+import CreateDatabaseModal from "@edgedb/studio/components/modals/createDatabase";
+
+import DatabasePageContent, {
+  DatabaseTabSpec,
+} from "@edgedb/studio/components/databasePage";
+
+import {dashboardTabSpec} from "@edgedb/studio/tabs/dashboard";
+import {replTabSpec} from "@edgedb/studio/tabs/repl";
+import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
+import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 
 import {useAppState} from "src/state/providers";
-import {DatabaseTab} from "src/state/models/database";
 
-import Repl from "src/components/repl";
-import Schema from "src/components/schema";
-import DataView from "src/components/dataView";
-import DatabaseDashboard from "../databaseDashboard";
-
-import styles from "./databasePage.module.scss";
-import {
-  TabDashboardIcon,
-  TabReplIcon,
-  TabSchemaIcon,
-  TabDataExplorerIcon,
-  TabSettingsIcon,
-} from "src/ui/icons";
-import {useEffect, useRef, useState} from "react";
-
-const views: {
-  [id in DatabaseTab]: {
-    label: string;
-    icon: (active: boolean) => JSX.Element;
-    content: JSX.Element;
-  };
-} = {
-  [DatabaseTab.Dashboard]: {
-    label: "Dashboard",
-    icon: (active) => <TabDashboardIcon active={active} />,
-    content: <DatabaseDashboard />,
-  },
-  [DatabaseTab.Repl]: {
-    label: "REPL",
-    icon: (active) => <TabReplIcon active={active} />,
-    content: <Repl />,
-  },
-  [DatabaseTab.Schema]: {
-    label: "Schema",
-    icon: (active) => <TabSchemaIcon active={active} />,
-    content: <Schema />,
-  },
-  [DatabaseTab.Data]: {
-    label: "Data Explorer",
-    icon: (active) => <TabDataExplorerIcon active={active} />,
-    content: <DataView />,
-  },
-  [DatabaseTab.Settings]: {
-    label: "Settings",
-    icon: (active) => <TabSettingsIcon active={active} />,
-    content: <div className={styles.card}>Settings</div>,
-  },
-};
-
-const tabsOrder = [
-  DatabaseTab.Dashboard,
-  DatabaseTab.Repl,
-  DatabaseTab.Schema,
-  DatabaseTab.Data,
+const tabs: DatabaseTabSpec[] = [
+  dashboardTabSpec,
+  replTabSpec,
+  schemaTabSpec,
+  dataviewTabSpec,
 ];
 
 export default observer(function DatabasePage() {
   const appState = useAppState();
-
-  const [showTabLabels, setShowTabLabels] = useState(false);
-  const tabMouseEnterTimeout = useRef<NodeJS.Timeout | null>(null);
-  const tabMouseLeaveTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        const currentIndex = tabsOrder.indexOf(
-          appState.currentPage!.currentTabId
-        );
-        if (currentIndex !== -1) {
-          appState.currentPage!.setCurrentTabId(
-            tabsOrder[
-              (tabsOrder.length + currentIndex + (e.shiftKey ? -1 : 1)) %
-                tabsOrder.length
-            ]
-          );
-        }
-      }
-    };
-
-    window.addEventListener("keydown", listener);
-
-    return () => {
-      window.removeEventListener("keydown", listener);
-    };
-  }, []);
+  const params = useParams();
+  const navigate = useNavigate();
+  const {openModal} = useModal();
 
   return (
-    <div className={styles.databasePage}>
-      <div
-        className={cn(styles.tabs, {
-          [styles.showLabels]: showTabLabels,
-        })}
-      >
-        {Object.values(DatabaseTab).map((tabId) => (
-          <div
-            key={tabId}
-            className={cn(styles.tab, {
-              [styles.tabSelected]:
-                appState.currentPage!.currentTabId === tabId,
-              [styles.settingsTab]: tabId === DatabaseTab.Settings,
-            })}
-            onClick={() => appState.currentPage!.setCurrentTabId(tabId)}
-            onMouseEnter={() => {
-              if (tabMouseLeaveTimeout.current) {
-                clearTimeout(tabMouseLeaveTimeout.current);
-                tabMouseLeaveTimeout.current = null;
-              }
-              if (!tabMouseEnterTimeout.current) {
-                tabMouseEnterTimeout.current = setTimeout(() => {
-                  setShowTabLabels(true);
-                }, 500);
-              }
-            }}
-            onMouseLeave={() => {
-              if (!tabMouseLeaveTimeout.current) {
-                tabMouseLeaveTimeout.current = setTimeout(() => {
-                  if (tabMouseEnterTimeout.current) {
-                    clearTimeout(tabMouseEnterTimeout.current);
-                    tabMouseEnterTimeout.current = null;
-                  }
-                  setShowTabLabels(false);
-                }, 200);
-              }
-            }}
-          >
-            {views[tabId].icon(appState.currentPage!.currentTabId === tabId) ??
-              tabId}
-            <div className={styles.tabLabel}>{views[tabId].label}</div>
-          </div>
-        ))}
-      </div>
-      <div className={styles.tabContent}>
-        {views[appState.currentPage!.currentTabId].content}
-      </div>
-    </div>
+    <>
+      <HeaderTab
+        depth={1}
+        title={params.databaseName}
+        icon={<HeaderDatabaseIcon />}
+        selectedItemIndex={
+          appState.instanceState.databases?.findIndex(
+            (db) => db.name === params.databaseName
+          )!
+        }
+        items={
+          appState.instanceState.databases?.map((db) => ({
+            label: db.name,
+            action: () => navigate(`/${db.name}`),
+          }))!
+        }
+        actions={[
+          // {
+          //   label: "Database settings",
+          //   action: () => {
+          //     appState.currentPage!.setCurrentTabId(
+          //       DatabaseTab.Settings
+          //     );
+          //   },
+          // },
+          {
+            label: "Create new database",
+            action: () => {
+              openModal(
+                <CreateDatabaseModal
+                  instanceState={appState.instanceState}
+                  dbPagePathPrefix={`/`}
+                />
+              );
+            },
+          },
+        ]}
+      />
+
+      <InstanceStateContext.Provider value={appState.instanceState}>
+        <DatabasePageContent databaseName={params.databaseName!} tabs={tabs} />
+      </InstanceStateContext.Provider>
+    </>
   );
 });

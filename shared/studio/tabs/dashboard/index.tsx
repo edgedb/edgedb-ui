@@ -5,6 +5,7 @@ import {useNavigate} from "react-router-dom";
 import styles from "./databaseDashboard.module.scss";
 
 import {useDatabaseState} from "../../state/database";
+import {DatabaseTabSpec} from "../../components/databasePage";
 
 import {
   DocsQuickstartIcon,
@@ -15,11 +16,9 @@ import {
 
 import Button from "@edgedb/common/ui/button";
 
-import {HeaderDatabaseIcon} from "../../icons";
+import {HeaderDatabaseIcon, TabDashboardIcon} from "../../icons";
 
-export {TabDashboardIcon} from "../../icons";
-
-export default observer(function DatabaseDashboard() {
+export const DatabaseDashboard = observer(function DatabaseDashboard() {
   const dbState = useDatabaseState();
   const navigate = useNavigate();
 
@@ -88,6 +87,13 @@ export default observer(function DatabaseDashboard() {
     </div>
   );
 });
+
+export const dashboardTabSpec: DatabaseTabSpec = {
+  path: "",
+  label: "Dashboard",
+  icon: (active) => <TabDashboardIcon active={active} />,
+  element: <DatabaseDashboard />,
+};
 
 const FirstRunDashboard = observer(function FirstRunDashboard() {
   const dbState = useDatabaseState();

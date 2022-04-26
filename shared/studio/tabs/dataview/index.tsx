@@ -1,4 +1,3 @@
-import {Fragment} from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -15,6 +14,7 @@ import {
   DataView as DataViewState,
   DataInspector as DataInspectorState,
 } from "./state";
+import {DatabaseTabSpec} from "../../components/databasePage";
 
 import {CodeEditor} from "@edgedb/code-editor";
 
@@ -23,13 +23,10 @@ import DataInspectorTable from "./dataInspector";
 import {ReviewEditsModal} from "./reviewEditsModal";
 
 import {BackArrowIcon} from "./icons";
-import {ChevronDownIcon} from "../../icons";
+import {ChevronDownIcon, TabDataExplorerIcon} from "../../icons";
 import {Select} from "@edgedb/common/ui/select";
 
-export {DataViewState};
-export {TabDataExplorerIcon} from "../../icons";
-
-export default observer(function DataView() {
+export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
 
   const stack = useTabState(DataViewState).inspectorStack;
@@ -49,6 +46,14 @@ export default observer(function DataView() {
     </div>
   );
 });
+
+export const dataviewTabSpec: DatabaseTabSpec = {
+  path: "data",
+  label: "Data Explorer",
+  icon: (active) => <TabDataExplorerIcon active={active} />,
+  state: DataViewState,
+  element: <DataView />,
+};
 
 interface DataInspectorViewProps {
   stackIndex: number;

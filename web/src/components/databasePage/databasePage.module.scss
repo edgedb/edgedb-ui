@@ -84,3 +84,17 @@
   flex-grow: 1;
   border-radius: 8px;
 }
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
