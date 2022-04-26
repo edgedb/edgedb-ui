@@ -1,26 +1,18 @@
-import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react";
 
-import cn from "@edgedb/common/utils/classNames";
+import {HeaderTabs} from "@edgedb/studio/components/headerTabs";
+import {useTheme, Theme} from "@edgedb/common/hooks/useTheme";
 
 import {useAppState} from "src/state/providers";
-import {PageType, Theme} from "src/state/models/app";
-import {DatabaseTab} from "src/state/models/database";
 
-import {Logo} from "src/ui/icons/logo";
-import {
-  HeaderDatabaseIcon,
-  HeaderInstanceIcon,
-  ThemeSwitcherIcon,
-} from "src/ui/icons";
-import {Select, SelectProps} from "src/ui/select";
-
-import CreateDatabaseModal from "../modals/createDatabase";
+import {Logo} from "@edgedb/common/ui/icons/logo";
+import {ThemeSwitcherIcon} from "@edgedb/common/ui/icons";
 
 import styles from "./header.module.scss";
 
 export default observer(function Header() {
   const appState = useAppState();
+  const [theme, setTheme] = useTheme();
 
   return (
     <div className={styles.header}>
@@ -31,57 +23,13 @@ export default observer(function Header() {
         </div>
       </div>
 
-      <div className={styles.tabs}>
-        <Tab
-          title={appState.instanceState.instanceName ?? ""}
-          icon={<HeaderInstanceIcon />}
-          mainAction={
-            appState.currentPage
-              ? () => appState.setCurrentPageId(PageType.Instance)
-              : undefined
-          }
-          items={null}
-        />
-        {appState.currentPage ? (
-          <>
-            <TabSep />
-            <Tab
-              title={appState.currentPage.name}
-              icon={<HeaderDatabaseIcon />}
-              selectedItemIndex={appState.instanceState.databases.findIndex(
-                (db) => db.name === appState.currentPage!.name
-              )}
-              items={appState.instanceState.databases.map((db) => ({
-                label: db.name,
-                action: () => appState.openDatabasePage(db.name),
-              }))}
-              actions={[
-                // {
-                //   label: "Database settings",
-                //   action: () => {
-                //     appState.currentPage!.setCurrentTabId(
-                //       DatabaseTab.Settings
-                //     );
-                //   },
-                // },
-                {
-                  label: "Create new database",
-                  action: () => {
-                    appState.openModalOverlay(<CreateDatabaseModal />);
-                  },
-                },
-              ]}
-            />
-          </>
-        ) : null}
-      </div>
+      <HeaderTabs />
+
       <div
         className={styles.themeSwitcher}
         style={{marginLeft: "auto"}}
         onClick={() =>
-          appState.setTheme(
-            appState.theme === Theme.dark ? Theme.light : Theme.dark
-          )
+          setTheme(theme === Theme.dark ? Theme.light : Theme.dark)
         }
       >
         <ThemeSwitcherIcon />
@@ -89,38 +37,6 @@ export default observer(function Header() {
     </div>
   );
 });
-
-interface TabProps {
-  icon: JSX.Element;
-}
-function Tab({icon, ...selectProps}: TabProps & SelectProps) {
-  return (
-    <div className={styles.tab}>
-      {icon}
-      <Select titleClassName={styles.tabTitle} {...selectProps} />
-    </div>
-  );
-}
-
-function TabSep() {
-  return (
-    <svg
-      width="16"
-      height="30"
-      viewBox="0 0 16 30"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={styles.tabSep}
-    >
-      <path
-        d="M 1,29 L 15,1"
-        stroke="#848484"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 function StudioText() {
   return (

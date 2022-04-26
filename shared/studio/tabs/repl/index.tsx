@@ -10,6 +10,8 @@ import styles from "./repl.module.scss";
 import {useTabState} from "../../state";
 import {Repl} from "./state";
 
+import {DatabaseTabSpec} from "../../components/databasePage";
+
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 import SplitView from "@edgedb/common/ui/splitView";
@@ -17,11 +19,9 @@ import Button from "@edgedb/common/ui/button";
 
 import ReplHistory from "./replHistory";
 import ParamEditorPanel from "./paramEditor";
+import {TabReplIcon} from "../../icons";
 
-export {Repl};
-export {TabReplIcon} from "../../icons";
-
-export default observer(function ReplView() {
+export const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
 
   const [theme] = useTheme();
@@ -88,3 +88,11 @@ export default observer(function ReplView() {
     </>
   );
 });
+
+export const replTabSpec: DatabaseTabSpec = {
+  path: "repl",
+  label: "REPL",
+  icon: (active) => <TabReplIcon active={active} />,
+  state: Repl,
+  element: <ReplView />,
+};

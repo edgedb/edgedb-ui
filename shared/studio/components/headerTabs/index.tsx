@@ -1,3 +1,4 @@
+import {useLayoutEffect, useState} from "react";
 import {createPortal} from "react-dom";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -14,16 +15,21 @@ interface _HeaderTabProps {
 export type HeaderTabProps = _HeaderTabProps & SelectProps;
 
 export function HeaderTab({icon, depth, ...selectProps}: HeaderTabProps) {
-  return createPortal(
-    <>
-      {depth ? <TabSep /> : null}
-      <div className={styles.tab}>
-        {icon}
-        <Select titleClassName={styles.tabTitle} {...selectProps} />
-      </div>
-    </>,
-    document.getElementById(`headerTabsPortalTarget${depth}`)!
-  );
+  const targetEl = document.getElementById(`headerTabsPortalTarget${depth}`);
+
+  if (targetEl) {
+    return createPortal(
+      <>
+        {depth ? <TabSep /> : null}
+        <div className={styles.tab}>
+          {icon}
+          <Select titleClassName={styles.tabTitle} {...selectProps} />
+        </div>
+      </>,
+      targetEl
+    );
+  }
+  return null;
 }
 
 interface HeaderTabsProps {

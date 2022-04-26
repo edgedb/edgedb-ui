@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .app {
   position: relative;
   height: 100vh;
@@ -20,5 +22,65 @@
     right: 0;
     cursor: var(--drag-cursor);
     z-index: 999999;
+  }
+}
+
+.theme {
+  display: contents;
+
+  --app-bg: #ffffff;
+  --app-panel-bg: #f5f5f5;
+  --app-card-bg: #ebebeb;
+  --app-card-outline: #c3c3c3;
+  --app-text-colour: #4d4d4d;
+  --app-accent-green: #0ccb93;
+  --app-modal-overlay: rgba(0, 0, 0, 0.2);
+  --app-modal-bg: #fff;
+
+  // Header
+  --header-tab-text-colour: #3c3c3c;
+  --header-dropdown-bg: #fff;
+  --header-dropdown-actions-bg: #f5f5f5;
+
+  // Forms
+  --form-field-bg: #ebebeb;
+  --form-field-text-colour: #4d4d4d;
+
+  // Syntax highlighting
+  --syntax-purple: #be65cd;
+  --syntax-green: #1a8f66;
+  --syntax-blue: #0075d2;
+  --syntax-red: #e72525;
+  --syntax-orange: #d78100;
+  --syntax-comment: #7f7f7f;
+  --syntax-mod: #838383;
+
+  @include darkTheme {
+    --app-bg: #141414;
+    --app-panel-bg: #242424;
+    --app-card-bg: #2e2e2e;
+    --app-card-outline: #525252;
+    --app-text-colour: #e7e7e7;
+    --app-accent-green: #26b98c;
+    --app-modal-overlay: rgba(0, 0, 0, 0.5);
+    --app-modal-bg: #242424;
+
+    // Header
+    --header-tab-text-colour: #f7f7f7;
+    --header-dropdown-bg: #2e2e2e;
+    --header-dropdown-actions-bg: #141414;
+
+    // Forms
+    --form-field-bg: #141414;
+    --form-field-text-colour: #f7f7f7;
+
+    // Syntax highlighting
+    --syntax-purple: #ac86f6;
+    --syntax-green: #07a66d;
+    --syntax-blue: #369ff2;
+    --syntax-red: #f13f4a;
+    --syntax-orange: #f4e470;
+    --syntax-comment: #7f7f7f;
+    --syntax-mod: #9f9f9f;
   }
 }

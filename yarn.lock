@@ -1449,6 +1449,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.7.6":
+  version: 7.17.9
+  resolution: "@babel/runtime@npm:7.17.9"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: 4d56bdb82890f386d5a57c40ef985a0ed7f0a78f789377a2d0c3e8826819e0f7f16ba0fe906d9b2241c5f7ca56630ef0653f5bb99f03771f7b87ff8af4bf5fe3
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.16.7, @babel/template@npm:^7.3.3":
   version: 7.16.7
   resolution: "@babel/template@npm:7.16.7"
@@ -1811,9 +1820,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@edgedb/code-editor@workspace:*, @edgedb/code-editor@workspace:common/codeEditor":
+"@edgedb/code-editor@workspace:*, @edgedb/code-editor@workspace:shared/codeEditor":
   version: 0.0.0-use.local
-  resolution: "@edgedb/code-editor@workspace:common/codeEditor"
+  resolution: "@edgedb/code-editor@workspace:shared/codeEditor"
   dependencies:
     "@codemirror/autocomplete": ^0.19.14
     "@codemirror/closebrackets": ^0.19.1
@@ -1834,9 +1843,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@edgedb/common@workspace:*, @edgedb/common@workspace:common/common":
+"@edgedb/common@workspace:*, @edgedb/common@workspace:shared/common":
   version: 0.0.0-use.local
-  resolution: "@edgedb/common@workspace:common/common"
+  resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
     edgedb: ^0.20.7
     react: ^17.0.0
@@ -1844,9 +1853,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@edgedb/inspector@workspace:common/inspector":
+"@edgedb/inspector@workspace:*, @edgedb/inspector@workspace:shared/inspector":
   version: 0.0.0-use.local
-  resolution: "@edgedb/inspector@workspace:common/inspector"
+  resolution: "@edgedb/inspector@workspace:shared/inspector"
   dependencies:
     "@types/react-window": ^1.8.3
     assert-never: ^1.2.1
@@ -1857,14 +1866,14 @@ __metadata:
     react-window: ^1.8.6
   peerDependencies:
     "@types/react": ^16.9.34
-    react: ^16.13.1
-    react-dom: ^16.13.1
+    react: ^17.0.0
+    react-dom: ^17.0.0
   languageName: unknown
   linkType: soft
 
-"@edgedb/lang-edgeql@workspace:common/lang-edgeql":
+"@edgedb/lang-edgeql@workspace:shared/lang-edgeql":
   version: 0.0.0-use.local
-  resolution: "@edgedb/lang-edgeql@workspace:common/lang-edgeql"
+  resolution: "@edgedb/lang-edgeql@workspace:shared/lang-edgeql"
   dependencies:
     "@codemirror/language": ^0.19.8
     "@lezer/generator": ^0.15.4
@@ -1873,9 +1882,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@edgedb/schema-graph@workspace:common/schemaGraph":
+"@edgedb/schema-graph@workspace:*, @edgedb/schema-graph@workspace:shared/schemaGraph":
   version: 0.0.0-use.local
-  resolution: "@edgedb/schema-graph@workspace:common/schemaGraph"
+  resolution: "@edgedb/schema-graph@workspace:shared/schemaGraph"
   dependencies:
     "@edgedb/common": "workspace:*"
     "@types/react-transition-group": ^4.4.0
@@ -1889,6 +1898,24 @@ __metadata:
   peerDependencies:
     "@types/react": ^17.0.0
     edgedb: ^0.20.7
+    react: ^17.0.0
+    react-dom: ^17.0.0
+  languageName: unknown
+  linkType: soft
+
+"@edgedb/studio@workspace:*, @edgedb/studio@workspace:shared/studio":
+  version: 0.0.0-use.local
+  resolution: "@edgedb/studio@workspace:shared/studio"
+  dependencies:
+    "@edgedb/code-editor": "workspace:*"
+    "@edgedb/common": "workspace:*"
+    "@edgedb/inspector": "workspace:*"
+    "@edgedb/schema-graph": "workspace:*"
+  peerDependencies:
+    edgedb: ^0.20.7
+    mobx: ^6.5.0
+    mobx-keystone: ^0.67.2
+    mobx-react-lite: ^3.3.0
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -6803,6 +6830,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"history@npm:^5.2.0":
+  version: 5.3.0
+  resolution: "history@npm:5.3.0"
+  dependencies:
+    "@babel/runtime": ^7.7.6
+  checksum: d73c35df49d19ac172f9547d30a21a26793e83f16a78386d99583b5bf1429cc980799fcf1827eb215d31816a6600684fba9686ce78104e23bd89ec239e7c726f
+  languageName: node
+  linkType: hard
+
 "hoopy@npm:^0.1.4":
   version: 0.1.4
   resolution: "hoopy@npm:0.1.4"
@@ -10523,7 +10559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:^17.0.2":
+"react-dom@npm:^17.0.0":
   version: 17.0.2
   resolution: "react-dom@npm:17.0.2"
   dependencies:
@@ -10561,6 +10597,30 @@ __metadata:
   version: 0.11.0
   resolution: "react-refresh@npm:0.11.0"
   checksum: 112178a05b1e0ffeaf5d9fb4e56b4410a34a73adeb04dbf13abdc50d9ac9df2ada83e81485156cca0b3fa296aa3612751b3d6cd13be4464642a43679b819cbc7
+  languageName: node
+  linkType: hard
+
+"react-router-dom@npm:^6.3.0":
+  version: 6.3.0
+  resolution: "react-router-dom@npm:6.3.0"
+  dependencies:
+    history: ^5.2.0
+    react-router: 6.3.0
+  peerDependencies:
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 77603a654f8a8dc7f65535a2e5917a65f8d9ffcb06546d28dd297e52adcc4b8a84377e0115f48dca330b080af2da3e78f29d590c89307094d36927d2b1751ec3
+  languageName: node
+  linkType: hard
+
+"react-router@npm:6.3.0":
+  version: 6.3.0
+  resolution: "react-router@npm:6.3.0"
+  dependencies:
+    history: ^5.2.0
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 7be673f5e72104be01e6ab274516bdb932efd93305243170690f6560e3bd1035dd1df3d3c9ce1e0f452638a2529f43a1e77dcf0934fc8031c4783da657be13ca
   languageName: node
   linkType: hard
 
@@ -10659,7 +10719,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:^17.0.2":
+"react@npm:^17.0.0":
   version: 17.0.2
   resolution: "react@npm:17.0.2"
   dependencies:
@@ -12693,6 +12753,7 @@ __metadata:
     "@craco/craco": ^6.4.3
     "@edgedb/code-editor": "workspace:*"
     "@edgedb/common": "workspace:*"
+    "@edgedb/studio": "workspace:*"
     "@testing-library/jest-dom": ^5.14.1
     "@testing-library/react": ^12.0.0
     "@testing-library/user-event": ^13.2.1
@@ -12705,8 +12766,9 @@ __metadata:
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
-    react: ^17.0.2
-    react-dom: ^17.0.2
+    react: ^17.0.0
+    react-dom: ^17.0.0
+    react-router-dom: ^6.3.0
     react-scripts: 5.0.0
     sass: ^1.49.9
     typescript: ^4.4.2

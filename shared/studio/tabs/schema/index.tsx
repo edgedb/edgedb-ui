@@ -4,7 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import SplitView from "@edgedb/common/ui/splitView";
-// import SwitcherButton from "../../ui/switcherButton";
+import SwitcherButton from "@edgedb/common/ui/switcherButton";
 
 import styles from "./schema.module.scss";
 // import tabStyles from "../tabView/tabView.module.scss";
@@ -19,13 +19,13 @@ import {
   DebugControls,
 } from "@edgedb/schema-graph";
 import SchemaSidepanel from "@edgedb/schema-graph/components/schemaSidepanel";
-import SwitcherButton from "@edgedb/common/ui/switcherButton";
+
 import {useDatabaseState} from "../../state/database";
+import {DatabaseTabSpec} from "../../components/databasePage";
 
-export {Schema};
-export {TabSchemaIcon} from "../../icons";
+import {TabSchemaIcon} from "../../icons";
 
-export default observer(function SchemaView() {
+export const SchemaView = observer(function SchemaView() {
   const schemaState = useTabState(Schema);
 
   return (
@@ -63,6 +63,14 @@ export default observer(function SchemaView() {
     </schemaContext.Provider>
   );
 });
+
+export const schemaTabSpec: DatabaseTabSpec = {
+  path: "schema",
+  label: "Schema",
+  icon: (active) => <TabSchemaIcon active={active} />,
+  state: Schema,
+  element: <SchemaView />,
+};
 
 const SchemaTextView = observer(function SchemaTextView() {
   const dbState = useDatabaseState();
