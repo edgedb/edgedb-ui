@@ -8,7 +8,7 @@ export function getAllChildren(
   node: SyntaxNode,
   type: string | number
 ): SyntaxNode[] {
-  let cur = node.cursor;
+  let cur = node.cursor();
   if (!cur.firstChild()) {
     return [];
   }

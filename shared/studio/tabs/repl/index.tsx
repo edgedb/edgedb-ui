@@ -7,7 +7,7 @@ import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
 
 import styles from "./repl.module.scss";
 
-import {useTabState} from "../../state";
+import {useDatabaseState, useTabState} from "../../state";
 import {Repl} from "./state";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
@@ -22,6 +22,7 @@ import ParamEditorPanel from "./paramEditor";
 import {TabReplIcon} from "../../icons";
 
 export const ReplView = observer(function ReplView() {
+  const dbState = useDatabaseState();
   const replState = useTabState(Repl);
 
   const [theme] = useTheme();
@@ -53,6 +54,7 @@ export const ReplView = observer(function ReplView() {
                   },
                 ]}
                 useDarkTheme={theme === Theme.dark}
+                schemaObjects={dbState.schemaData?.data.objects}
               />
               <div className={styles.replEditorOverlays}>
                 <div className={styles.controls}>
