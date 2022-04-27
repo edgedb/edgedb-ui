@@ -1,60 +1,19 @@
 import {EditorView} from "@codemirror/view";
-import {tags as t, HighlightStyle} from "@codemirror/highlight";
+import {HighlightStyle} from "@codemirror/language";
+import {tags as t} from "@lezer/highlight";
+import {StyleSpec} from "style-mod";
 
-export const darkTheme = EditorView.theme(
-  {
-    "&": {
-      backgroundColor: "var(--code-editor-bg, #242424)",
-      color: "#e5e5e5",
-      width: "100%",
-    },
-    "&.cm-editor.cm-focused": {
-      outline: "none",
-    },
-    "& .cm-scroller": {
-      fontSize: "15px",
-      fontFamily: `"Roboto Mono", monospace;`,
-      overflow: "auto",
-    },
-    ".cm-gutters": {
-      backgroundColor: "var(--code-editor-bg, #242424)",
-      padding: "0 12px 0 8px",
-      userSelect: "none",
-    },
-    ".cm-lineNumbers": {
-      color: "#8b8b8b",
-    },
-    ".cm-activeLine": {
-      backgroundColor: "#353535",
-    },
-    "&.cm-focused .cm-selectionBackground": {
-      backgroundColor: "#353535",
-    },
-    ".cm-cursor": {
-      borderLeft: "2px solid #4a96e6",
-      marginLeft: "-1px",
-    },
-    ".cm-cursor-secondary": {
-      opacity: 0.5,
-    },
-    "&.cm-focused .cm-matchingBracket": {
-      background: "none",
-      outline: "1px solid rgba(255,255,255,0.35)",
-      // borderRadius: "1px",
-    },
-    "&.cm-focused .cm-nonmatchingBracket": {
-      background: "none",
-    },
-    ".cm-indentation-marker": {
-      background: "none",
-      borderLeft: "1px solid rgba(255,255,255,0.1)",
-      marginLeft: "-1px",
-    },
-  },
-  {dark: true}
-);
+type ThemeSpec = {[selector: string]: StyleSpec};
 
-export const lightTheme = EditorView.theme({
+function mergeThemeSpec(baseSpec: ThemeSpec, spec: ThemeSpec): ThemeSpec {
+  const newSpec = {...baseSpec};
+  for (const [key, val] of Object.entries(spec)) {
+    newSpec[key] = {...newSpec[key], ...val};
+  }
+  return newSpec;
+}
+
+const lightThemeSpec: ThemeSpec = {
   "&": {
     backgroundColor: "var(--code-editor-bg, #f5f5f5)",
     color: "#333",
@@ -106,7 +65,61 @@ export const lightTheme = EditorView.theme({
     borderLeft: "1px solid rgba(0,0,0,0.1)",
     marginLeft: "-1px",
   },
-});
+  ".cm-tooltip-autocomplete": {
+    background: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    overflow: "hidden",
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.15)",
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul": {
+    maxHeight: "166px",
+    scrollbarWidth: "thin",
+    fontFamily: `"Roboto Mono", monospace;`,
+  },
+  ".cm-tooltip.cm-tooltip-autocomplete > ul > li": {
+    lineHeight: "28px",
+  },
+  ".cm-tooltip-autocomplete ul li[aria-selected]": {
+    background: "var(--app-accent-green)",
+  },
+};
+
+export const lightTheme = EditorView.theme(lightThemeSpec);
+
+export const darkTheme = EditorView.theme(
+  mergeThemeSpec(lightThemeSpec, {
+    "&": {
+      backgroundColor: "var(--code-editor-bg, #242424)",
+      color: "#e5e5e5",
+    },
+    ".cm-gutters": {
+      backgroundColor: "var(--code-editor-bg, #242424)",
+    },
+    ".cm-lineNumbers": {
+      color: "#8b8b8b",
+    },
+    ".cm-activeLine": {
+      backgroundColor: "#353535",
+    },
+    "&.cm-focused .cm-selectionBackground": {
+      backgroundColor: "#353535",
+    },
+    ".cm-cursor": {
+      borderLeftColor: "#4a96e6",
+    },
+    "&.cm-focused .cm-matchingBracket": {
+      outlineColor: "rgba(255,255,255,0.35)",
+    },
+    ".cm-indentation-marker": {
+      borderLeftColor: "rgba(255,255,255,0.1)",
+    },
+    ".cm-tooltip-autocomplete": {
+      background: "#1F1F1F",
+    },
+  }),
+  {dark: true}
+);
 
 export const highlightStyle = HighlightStyle.define([
   {tag: t.keyword, color: "var(--syntax-purple)"},

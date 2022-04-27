@@ -9,13 +9,10 @@
     "generate": "lezer-generator lang.grammar -o lang.js",
     "debug": "node debug.js"
   },
-  "peerDependencies": {
-    "@codemirror/highlight": "^0.19.7"
-  },
   "dependencies": {
-    "@codemirror/language": "^0.19.8"
+    "@lezer/highlight": "^0.16.0"
   },
   "devDependencies": {
-    "@lezer/generator": "^0.15.4"
+    "@lezer/generator": "^0.16.0"
   }
 }

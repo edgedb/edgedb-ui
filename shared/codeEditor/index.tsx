@@ -15,25 +15,29 @@ import {
   highlightSpecialChars,
   drawSelection,
   KeyBinding,
+  lineNumbers,
+  highlightActiveLineGutter,
 } from "@codemirror/view";
-import {defaultKeymap} from "@codemirror/commands";
-import {lineNumbers, highlightActiveLineGutter} from "@codemirror/gutter";
-import {history, historyKeymap} from "@codemirror/history";
-import {bracketMatching} from "@codemirror/matchbrackets";
-import {closeBrackets, closeBracketsKeymap} from "@codemirror/closebrackets";
-import {commentKeymap} from "@codemirror/comment";
-import {searchKeymap, highlightSelectionMatches} from "@codemirror/search";
+import {defaultKeymap, history, historyKeymap} from "@codemirror/commands";
+import {bracketMatching, syntaxHighlighting} from "@codemirror/language";
+import {
+  closeBrackets,
+  closeBracketsKeymap,
+  autocompletion,
+  completionKeymap,
+} from "@codemirror/autocomplete";
 import {indentationMarkers} from "@replit/codemirror-indentation-markers";
-import {autocompletion} from "@codemirror/autocomplete";
 
-import {edgeql} from "@edgedb/lang-edgeql";
+import {edgeql, edgeqlLanguage} from "@edgedb/lang-edgeql";
 import {highlightStyle, darkTheme, lightTheme} from "./theme";
+import {getCompletions} from "./completions";
+
+import {SchemaObject} from "@edgedb/schema-graph";
 
 import styles from "./codeEditor.module.scss";
 
 // import { foldGutter, foldKeymap } from "@codemirror/fold";
 // import { indentOnInput } from "@codemirror/language";
-// import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 // import { rectangularSelection } from "@codemirror/rectangular-selection";
 // import { lintKeymap } from "@codemirror/lint";
 
@@ -41,12 +45,14 @@ interface ExtensionConfig {
   onChange: (doc: Text) => void;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
+  schemaObjects?: SchemaObject[];
 }
 
 function getExtensions({
   onChange,
   keybindings = [],
   useDarkTheme = false,
+  schemaObjects,
 }: ExtensionConfig) {
   return [
     lineNumbers(),
@@ -61,10 +67,17 @@ function getExtensions({
     // defaultHighlightStyle.fallback,
     bracketMatching(),
     closeBrackets(),
-    // autocompletion(),
+    autocompletion(),
+    ...(schemaObjects
+      ? [
+          edgeqlLanguage.data.of({
+            autocomplete: getCompletions(schemaObjects),
+          }),
+        ]
+      : []),
     // rectangularSelection(),
     highlightActiveLine(),
-    highlightSelectionMatches(),
+    // highlightSelectionMatches(),
     indentationMarkers(),
     autocompletion(),
     keymap.of([
@@ -74,13 +87,12 @@ function getExtensions({
       // ...searchKeymap,
       ...historyKeymap,
       // ...foldKeymap,
-      ...commentKeymap,
-      // ...completionKeymap,
+      ...completionKeymap,
       // ...lintKeymap,
     ]),
     //
     useDarkTheme ? darkTheme : lightTheme,
-    highlightStyle,
+    syntaxHighlighting(highlightStyle),
     edgeql(),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
@@ -102,6 +114,7 @@ export interface CodeEditorProps {
   onChange: (value: Text) => void;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
+  schemaObjects?: SchemaObject[];
 }
 
 export interface CodeEditorRef {
@@ -109,7 +122,13 @@ export interface CodeEditorRef {
 }
 
 export const CodeEditor = forwardRef(function CodeEditor(
-  {code, onChange, keybindings = [], useDarkTheme = false}: CodeEditorProps,
+  {
+    code,
+    onChange,
+    keybindings = [],
+    useDarkTheme = false,
+    schemaObjects,
+  }: CodeEditorProps,
   componentRef
 ) {
   const ref = useRef<HTMLDivElement>(null);
@@ -122,7 +141,12 @@ export const CodeEditor = forwardRef(function CodeEditor(
   useEffect(() => {
     if (ref.current) {
       view.current = new EditorView({
-        state: createState(code, {onChange, keybindings, useDarkTheme}),
+        state: createState(code, {
+          onChange,
+          keybindings,
+          useDarkTheme,
+          schemaObjects,
+        }),
         parent: ref.current,
       });
 
@@ -135,7 +159,7 @@ export const CodeEditor = forwardRef(function CodeEditor(
   useEffect(() => {
     if (view.current && view.current?.state.doc !== code) {
       view.current.setState(
-        createState(code, {onChange, keybindings, useDarkTheme})
+        createState(code, {onChange, keybindings, useDarkTheme, schemaObjects})
       );
     }
   }, [code]);
@@ -144,11 +168,11 @@ export const CodeEditor = forwardRef(function CodeEditor(
     if (view.current) {
       view.current.dispatch({
         effects: StateEffect.reconfigure.of(
-          getExtensions({onChange, keybindings, useDarkTheme})
+          getExtensions({onChange, keybindings, useDarkTheme, schemaObjects})
         ),
       });
     }
-  }, [useDarkTheme]);
+  }, [useDarkTheme, schemaObjects]);
 
   useEffect(() => {
     if (ref.current?.firstChild) {

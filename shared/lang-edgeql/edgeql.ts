@@ -1,9 +1,8 @@
 import type {LRParser} from "@lezer/lr";
 import {LRLanguage, LanguageSupport} from "@codemirror/language";
-import {styleTags, tags as t} from "@codemirror/highlight";
+import {styleTags, tags as t} from "@lezer/highlight";
 
 import {parser as _parser} from "./lang";
-// import {completions} from "./completions";
 
 const parser = _parser as LRParser;
 
@@ -40,7 +39,6 @@ export const edgeqlLanguage = LRLanguage.define({
     commentTokens: {
       line: "#",
     },
-    // autocomplete: completions,
   },
 });
 

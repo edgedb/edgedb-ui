@@ -9,17 +9,11 @@
     "react-dom": "^17.0.0"
   },
   "devDependencies": {
-    "@codemirror/autocomplete": "^0.19.14",
-    "@codemirror/closebrackets": "^0.19.1",
-    "@codemirror/commands": "^0.19.8",
-    "@codemirror/comment": "^0.19.1",
-    "@codemirror/gutter": "^0.19.9",
-    "@codemirror/highlight": "^0.19.7",
-    "@codemirror/history": "^0.19.2",
-    "@codemirror/matchbrackets": "^0.19.4",
-    "@codemirror/search": "^0.19.9",
-    "@codemirror/state": "^0.19.9",
-    "@codemirror/view": "^0.19.47",
-    "@replit/codemirror-indentation-markers": "^0.19.1"
+    "@codemirror/autocomplete": "^0.20.0",
+    "@codemirror/commands": "^0.20.0",
+    "@codemirror/language": "^0.20.0",
+    "@codemirror/state": "^0.20.0",
+    "@codemirror/view": "^0.20.0",
+    "@replit/codemirror-indentation-markers": "^0.20.0"
   }
 }

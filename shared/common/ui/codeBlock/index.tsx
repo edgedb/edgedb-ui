@@ -1,7 +1,7 @@
 import React from "react";
 import {StyleModule} from "style-mod";
 
-import {highlightTree} from "@codemirror/highlight";
+import {highlightTree} from "@lezer/highlight";
 
 import {edgeqlLanguage} from "@edgedb/lang-edgeql";
 import {highlightStyle} from "@edgedb/code-editor/theme";
@@ -100,7 +100,7 @@ export default function CodeBlock({
     cursor += text.length;
   }
 
-  highlightTree(tree, highlightStyle.match, (from, to, classes) => {
+  highlightTree(tree, highlightStyle, (from, to, classes) => {
     if (cursor !== from) {
       addSpan(code.slice(cursor, from));
     }
