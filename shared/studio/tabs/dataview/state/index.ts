@@ -276,7 +276,8 @@ export class DataInspector extends Model({
         );
         const queryNamePrefix = `__${subtypeObjName.replace(/:/g, "")}_`;
 
-        return subtypeObj && !subtypeObj.expr // skip subtype fields on aliases
+        // skip subtype fields on aliases
+        return subtypeObj && !subtypeObj.from_alias
           ? [
               ...subtypeObj.properties.map((prop) =>
                 createField(
