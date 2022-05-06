@@ -27,12 +27,14 @@ import {
   SchemaFunction,
   SchemaAbstractConstraint,
   SchemaScalar,
+  typesQuery,
 } from "@edgedb/schema-graph";
 
 // import {Repl} from "./repl";
 // import {Schema} from "./schema";
 // import {DataView} from "./dataview";
 import {connCtx, Connection} from "./connection";
+import {buildTypesGraph, SchemaType} from "../utils/schema";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
@@ -43,6 +45,7 @@ export interface SchemaData {
   functions: SchemaFunction[];
   constraints: SchemaAbstractConstraint[];
   scalars: SchemaScalar[];
+  types: Map<string, SchemaType>;
 }
 
 @model("DatabaseState")
@@ -122,36 +125,37 @@ export class DatabaseState extends Model({
       this.fetchingSchemaData = true;
 
       try {
-        const [sdl, objects, functions, constraints, scalars] = yield* _await(
-          Promise.all([
-            conn
-              .query(`describe schema as sdl`, true)
-              .then(({result}) => result![0] as string),
-            conn
-              .query(schemaQuery, true)
-              .then(({result}) => result as SchemaObject[]),
-            conn
-              .query(functionsQuery, true)
-              .then(({result}) => result as SchemaFunction[]),
-            conn
-              .query(constraintsQuery, true)
-              .then(({result}) => result as SchemaAbstractConstraint[]),
-            conn
-              .query(scalarsQuery, true)
-              .then(({result}) => result as SchemaScalar[]),
-          ])
-        );
+        const [sdl, objects, functions, constraints, scalars, types] =
+          yield* _await(
+            Promise.all([
+              conn
+                .query(`describe schema as sdl`, true)
+                .then(({result}) => result![0] as string),
+              conn
+                .query(schemaQuery, true)
+                .then(({result}) => result as SchemaObject[]),
+              conn
+                .query(functionsQuery, true)
+                .then(({result}) => result as SchemaFunction[]),
+              conn
+                .query(constraintsQuery, true)
+                .then(({result}) => result as SchemaAbstractConstraint[]),
+              conn
+                .query(scalarsQuery, true)
+                .then(({result}) => result as SchemaScalar[]),
+              conn.query(typesQuery, true).then(({result}) => result as any),
+            ])
+          );
 
-        const schemaData: SchemaData = JSON.parse(
-          JSON.stringify({
-            migrationId,
-            sdl,
-            objects,
-            functions,
-            constraints,
-            scalars,
-          })
-        );
+        const schemaData: SchemaData = {
+          migrationId,
+          sdl,
+          objects,
+          functions,
+          constraints,
+          scalars,
+          types: buildTypesGraph(types),
+        };
 
         // storeSchemaData(this.$modelId, schemaData);
 

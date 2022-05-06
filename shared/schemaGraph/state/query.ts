@@ -28,7 +28,10 @@ SELECT ObjectType {
   properties: {
     name,
     targetName := .target.name,
+    targetId := .target.id,
     required,
+    readonly,
+    cardinality,
     expr,
     default,
     constraints: {
@@ -56,6 +59,7 @@ SELECT ObjectType {
       )
     ),
     required,
+    readonly,
     cardinality,
     expr,
     default,
@@ -167,3 +171,18 @@ SELECT ScalarType {
     @value
   },
 }`;
+
+export const typesQuery = `
+with module schema
+select Type {
+  type := .__type__.name,
+  id,
+  name,
+  element_type_id := [is Array].element_type.id,
+  [is Tuple].element_types: {
+    name,
+    type_id := .type.id,
+  } order by @index,
+  [is ScalarType].enum_values,
+} filter Type is not ObjectType
+`;

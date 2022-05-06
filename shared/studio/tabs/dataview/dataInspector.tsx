@@ -34,6 +34,9 @@ import {SortIcon, SortedAscIcon} from "./icons";
 import {ChevronDownIcon, DeleteIcon, UndeleteIcon} from "../../icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
 import {DataEditor} from "./dataEditor";
+import {trace} from "mobx";
+import {ICodec} from "edgedb/dist/codecs/ifaces";
+import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -120,8 +123,6 @@ export default observer(function DataInspectorTable({
 
   const rowIndexCharWidth = state.rowCount.toString().length;
 
-  const rowInserts = edits.insertEdits.get(state.objectName);
-
   return (
     <DataInspectorContext.Provider value={{state, edits}}>
       <RenderedRowsContext.Provider value={renderedRowIndexes}>
@@ -153,7 +154,7 @@ export default observer(function DataInspectorTable({
             columnCount={state.fields?.length ?? 0}
             estimatedColumnWidth={180}
             columnWidth={(index) => state.fields![index].width}
-            rowCount={state.gridRowCount + (rowInserts?.size ?? 0)}
+            rowCount={state.gridRowCount}
             estimatedRowHeight={30}
             rowHeight={(rowIndex) =>
               state.getRowData(rowIndex).kind === RowKind.expanded ? 24 : 30
@@ -173,7 +174,7 @@ export default observer(function DataInspectorTable({
               );
             }}
           >
-            {GridCell}
+            {GridCellWrapper}
           </Grid>
         </div>
       </RenderedRowsContext.Provider>
@@ -185,45 +186,143 @@ const inspectorOverrideStyles = {
   uuid: styles.scalar_uuid,
 };
 
-const GridCell = observer(function GridCell({
+function GridCellWrapper({
   columnIndex,
   rowIndex,
   style,
-}: any) {
+}: {
+  columnIndex: number;
+  rowIndex: number;
+  style: any;
+}) {
+  return (
+    <div className={styles.cellWrapper} style={style}>
+      <GridCell columnIndex={columnIndex} rowIndex={rowIndex} />
+    </div>
+  );
+}
+
+function renderCellValue(value: any, codec: ICodec): JSX.Element {
+  switch (codec.getKind()) {
+    case "scalar":
+      return renderValue(value, codec, false, inspectorOverrideStyles).body;
+    case "set":
+      return (
+        <>
+          {"{"}
+          {(value as any[]).map((item, i) => (
+            <>
+              {i !== 0 ? ", " : null}
+              {renderCellValue(item, codec.getSubcodecs()[0])}
+            </>
+          ))}
+          {"}"}
+        </>
+      );
+    case "array":
+      return (
+        <>
+          [
+          {(value as any[]).map((item, i) => (
+            <>
+              {i !== 0 ? ", " : null}
+              {renderCellValue(item, codec.getSubcodecs()[0])}
+            </>
+          ))}
+          ]
+        </>
+      );
+    case "tuple":
+      return (
+        <>
+          (
+          {(value as any[]).map((item, i) => (
+            <>
+              {i !== 0 ? ", " : null}
+              {renderCellValue(item, codec.getSubcodecs()[i])}
+            </>
+          ))}
+          )
+        </>
+      );
+    case "namedtuple": {
+      const fieldNames = (codec as NamedTupleCodec).getNames();
+      const subCodecs = codec.getSubcodecs();
+      return (
+        <>
+          (
+          {fieldNames.map((name, i) => (
+            <>
+              {i !== 0 ? ", " : null}
+              {name}
+              {" := "}
+              {renderCellValue(value[name], subCodecs[i])}
+            </>
+          ))}
+          )
+        </>
+      );
+    }
+    default:
+      return <></>;
+  }
+}
+
+const GridCell = observer(function GridCell({
+  columnIndex,
+  rowIndex,
+}: {
+  columnIndex: number;
+  rowIndex: number;
+}) {
+  // console.log("rendering");
+  // trace();
   const {state, edits} = useDataInspectorState();
 
-  const rowData = state.getRowData(
-    rowIndex - (edits.insertEdits.get(state.objectName)?.size ?? 0)
-  );
+  const rowDataIndex = rowIndex - state.insertedRows.length;
 
-  if (rowData.kind !== RowKind.data) {
+  const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
+
+  if (rowData && rowData.kind !== RowKind.data) {
     return null;
   }
 
   const field = state.fields![columnIndex];
-  const data = state.getData(rowData.index);
+  const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
+
+  const data = rowData ? state.getData(rowData.index) : insertedRow!.data;
 
   const isDeletedRow = edits.deleteEdits.has(data?.id);
 
-  const cellEditState = edits.propertyEdits.get(`${data?.id}__${field.name}`);
-  const linkEditState = edits.linkEdits.get(`${data?.id}__${field.name}`);
+  const cellId = `${data?.id}__${field.name}`;
+
+  const cellEditState = edits.propertyEdits.get(cellId);
+  const linkEditState = edits.linkEdits.get(cellId);
+
+  const value =
+    cellEditState?.value !== undefined
+      ? cellEditState.value
+      : data?.[rowData ? field.queryName : field.name] ?? null;
 
   if (
     !isDeletedRow &&
-    cellEditState &&
-    cellEditState === edits.activePropertyEdit
+    field.type === ObjectFieldType.property &&
+    edits.activePropertyEditId === cellId
   ) {
     return (
       <DataEditor
-        value={cellEditState.value}
-        onChange={(val) => edits.updateCellEdit(cellEditState, val)}
+        type={field.schemaType}
+        isRequired={field.required}
+        isMulti={field.multi}
+        value={value}
+        onChange={(val) =>
+          edits.updateCellEdit(data?.id, data.__tname__, field.name, val)
+        }
         onClose={() => edits.finishEditingCell()}
-        style={style}
+        onClearEdit={() => edits.clearPropertyEdit(data?.id, field.name)}
       />
     );
   }
-
-  const value = data?.[field.queryName];
 
   const isEmptySubtype =
     field.subtypeName &&
@@ -231,63 +330,90 @@ const GridCell = observer(function GridCell({
     data?.__tname__ !== field.subtypeName;
 
   let content: JSX.Element | null = null;
-  let knownTypename: string | null = null;
   if (isEmptySubtype) {
     content = <span className={styles.emptySubtypeField}>-</span>;
-  } else if (value !== undefined) {
+  } else if (data) {
     if (field.type === ObjectFieldType.property) {
-      const codec = state.dataCodecs?.[columnIndex];
-
-      if (codec) {
-        knownTypename = codec.getKnownTypeName();
-        content = codec
-          ? renderValue(
-              cellEditState?.value ?? value,
-              codec,
-              false,
-              inspectorOverrideStyles
-            ).body
-          : null;
+      if ((!rowData && field.name === "id") || value === null) {
+        content = (
+          <span className={styles.emptySet}>
+            {(!rowData ? field.default : null) ?? "{}"}
+          </span>
+        );
+      } else {
+        const codec = state.dataCodecs?.[columnIndex];
+        if (codec) {
+          content = renderCellValue(cellEditState?.value ?? value, codec);
+        }
       }
     } else {
-      const objs = Array.isArray(value) ? value : [value];
-      const more = data![`__count_${field.queryName}`] - objs.length;
+      const counts: {[typename: string]: number} =
+        data?.[`__count_${field.queryName}`]?.reduce(
+          (counts: any, {typename, count}: any) => {
+            counts[typename] = count;
+            return counts;
+          },
+          {}
+        ) ?? {};
 
-      content = (
-        <>
-          {objs.map((obj, i) => (
-            <div className={styles.linkObjName} key={i}>
-              {obj?.__tname__}
-            </div>
-          ))}
-          {more > 0 ? (
-            <div className={styles.moreLinks}>+{more} more</div>
-          ) : null}
-        </>
-      );
+      if (linkEditState) {
+        for (const change of linkEditState.changes.values()) {
+          counts[change.typename] =
+            change.kind === UpdateLinkChangeKind.Set
+              ? 1
+              : (counts[change.typename] ?? 0) +
+                (change.kind === UpdateLinkChangeKind.Add ? 1 : -1);
+        }
+        for (const insert of linkEditState.inserts.values()) {
+          counts[insert.objectTypeName] =
+            (counts[insert.objectTypeName] ?? 0) + 1;
+        }
+      }
+
+      if (Object.keys(counts).length === 0) {
+        content = <span className={styles.emptySet}>{"{}"}</span>;
+      } else {
+        content = (
+          <>
+            {Object.entries(counts).map(([typename, count], i) => (
+              <div className={styles.linkObjName} key={i}>
+                {typename} {count}
+              </div>
+            ))}
+          </>
+        );
+      }
     }
   }
 
   const isEditable =
-    field.type === ObjectFieldType.link || knownTypename === "std::str";
+    !field.computed &&
+    (!field.readonly || rowData) &&
+    data &&
+    (field.type === ObjectFieldType.link ||
+      (field.name !== "id" && !isEmptySubtype));
 
   return (
     <div
       className={cn(styles.cell, {
-        [styles.emptyCell]: !content,
+        [styles.loadingCell]: !data,
         [styles.isDeleted]: isDeletedRow,
         [styles.linksCell]: field.type === ObjectFieldType.link,
         [styles.editableCell]: !isDeletedRow && isEditable,
         [styles.hasEdits]:
-          !isDeletedRow && (!!cellEditState || !!linkEditState),
+          !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
       })}
-      style={style}
+      onClick={() => {
+        if (field.type === ObjectFieldType.link) {
+          state.openNestedView(data.id, data.__tname__, field.name);
+        }
+      }}
       onDoubleClick={() => {
         if (isEditable) {
           if (field.type === ObjectFieldType.property) {
-            edits.startEditingCell(data.id, data.__tname__, field.name, value);
+            edits.startEditingCell(data.id, field.name);
           } else {
-            state.openNestedView(data.id, data.__tname__, field.name);
+            state.openNestedView(data.id, data.__tname__, field.name, true);
           }
         }
       }}
@@ -361,7 +487,10 @@ const FieldHeader = observer(function FieldHeader({
     <div className={styles.headerField} style={{width: field.width + "px"}}>
       <div className={styles.fieldTitle}>
         <div className={styles.fieldName}>{field.name}</div>
-        <div className={styles.fieldTypename}>{field.typename}</div>
+        <div className={styles.fieldTypename}>
+          {field.multi ? "multi " : ""}
+          {field.typename}
+        </div>
       </div>
 
       {field.type === ObjectFieldType.property && field.name !== "id" ? (
@@ -403,16 +532,11 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
 
   const style = (state.gridRef as any)?._getItemStyle(rowIndex, 0) ?? {};
 
-  const rowDataIndex =
-    rowIndex - (edits.insertEdits.get(state.objectName)?.size ?? 0);
+  const rowDataIndex = rowIndex - state.insertedRows.length;
 
-  if (rowDataIndex < 0) {
-    return null;
-  }
+  const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
-  const rowData = state.getRowData(rowDataIndex);
-
-  if (rowData.kind === RowKind.expanded) {
+  if (rowData?.kind === RowKind.expanded) {
     const item = rowData.state.getItems()?.[rowData.index];
 
     return (
@@ -449,35 +573,38 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
       </div>
     );
   } else {
-    if (rowData.index >= state.rowCount) return null;
+    if (rowData && rowData.index >= state.rowCount) return null;
 
-    const data = state.getData(rowData.index);
+    const data = rowData && state.getData(rowData.index);
 
     const isDeletedRow = data != null && edits.deleteEdits.has(data.id);
 
-    const editedLinkChange =
-      state.parentObject?.editMode &&
-      edits.linkEdits
-        .get(`${state.parentObject.id}__${state.parentObject.fieldName}`)
-        ?.changes.get(data?.id);
+    const editedLink =
+      state.parentObject && edits.linkEdits.get(state.parentObject.linkId);
+
+    const editedLinkChange = editedLink?.changes.get(data?.id);
 
     return (
       <>
         <div
           className={cn(styles.rowIndex, {
-            [styles.hasLinkEdit]: !!editedLinkChange,
+            [styles.hasLinkEdit]: !!editedLinkChange || !rowData,
           })}
           style={{top: style.top}}
         >
           <div className={styles.rowActions}>
-            {data ? (
+            {!rowData || data ? (
               <>
                 <div
                   className={styles.deleteRowAction}
                   onClick={() => {
-                    edits.toggleRowDelete(data.id, data.__tname__);
-                    if (state.expandedInspectors.has(data.id)) {
-                      state.toggleRowExpanded(rowDataIndex);
+                    if (rowData) {
+                      edits.toggleRowDelete(data.id, data.__tname__);
+                      if (state.expandedInspectors.has(data.id)) {
+                        state.toggleRowExpanded(rowDataIndex);
+                      }
+                    } else {
+                      edits.removeInsertedRow(state.insertedRows[rowIndex]);
                     }
                   }}
                 >
@@ -490,26 +617,43 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
                         state.parentObject.isMultiLink ? "checkbox" : "radio"
                       }
                       checked={
-                        editedLinkChange
-                          ? editedLinkChange.kind === UpdateLinkChangeKind.Add
-                          : data.__isLinked
+                        rowData
+                          ? editedLinkChange
+                            ? editedLinkChange.kind ===
+                              UpdateLinkChangeKind.Add
+                            : data.__isLinked
+                          : editedLink?.inserts.has(
+                              state.insertedRows[rowIndex]
+                            ) ?? false
                       }
                       onChange={() => {
-                        if (editedLinkChange) {
-                          edits.removeLinkUpdate(
-                            state.parentObject!.id,
-                            state.parentObject!.fieldName,
-                            data.id
-                          );
+                        if (rowData) {
+                          if (editedLinkChange) {
+                            edits.removeLinkUpdate(
+                              state.parentObject!.id,
+                              state.parentObject!.fieldName,
+                              data.id
+                            );
+                          } else {
+                            edits.addLinkUpdate(
+                              state.parentObject!.id!,
+                              state.parentObject!.objectType,
+                              state.parentObject!.fieldName,
+                              state.objectName,
+                              data.__isLinked
+                                ? UpdateLinkChangeKind.Remove
+                                : UpdateLinkChangeKind.Add,
+                              data.id,
+                              data.__tname__
+                            );
+                          }
                         } else {
-                          edits.addLinkUpdate(
-                            state.parentObject!.id,
+                          edits.toggleLinkInsert(
+                            state.parentObject!.id!,
                             state.parentObject!.objectType,
                             state.parentObject!.fieldName,
-                            data.__isLinked
-                              ? UpdateLinkChangeKind.Remove
-                              : UpdateLinkChangeKind.Add,
-                            data.id
+                            state.objectName,
+                            state.insertedRows[rowIndex]
                           );
                         }
                       }}
@@ -519,21 +663,25 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
               </>
             ) : null}
           </div>
-          <div className={styles.cell}>{rowData.index + 1}</div>
-          <div
-            className={cn(styles.expandRow, {
-              [styles.isExpanded]: state.expandedDataRowIndexes.has(
-                rowData.index
-              ),
-              [styles.isHidden]: isDeletedRow,
-            })}
-            onClick={() => {
-              state.toggleRowExpanded(rowData.index);
-              state.gridRef?.resetAfterRowIndex(rowIndex);
-            }}
-          >
-            <ChevronDownIcon />
+          <div className={styles.cell}>
+            {rowData ? rowData.index + 1 : null}
           </div>
+          {rowData ? (
+            <div
+              className={cn(styles.expandRow, {
+                [styles.isExpanded]: state.expandedDataRowIndexes.has(
+                  rowData.index
+                ),
+                [styles.isHidden]: isDeletedRow,
+              })}
+              onClick={() => {
+                state.toggleRowExpanded(rowData.index);
+                state.gridRef?.resetAfterRowIndex(rowIndex);
+              }}
+            >
+              <ChevronDownIcon />
+            </div>
+          ) : null}
         </div>
         {isDeletedRow ? (
           <div

@@ -173,7 +173,12 @@
   }
 }
 
+.cellWrapper {
+  display: flex;
+}
+
 .cell {
+  flex-grow: 1;
   box-sizing: border-box;
   overflow: hidden;
   line-height: 30px;
@@ -185,7 +190,7 @@
   font-size: 13px;
 }
 
-.emptyCell {
+.loadingCell {
   &:before {
     content: "";
     position: absolute;
@@ -200,6 +205,10 @@
       background: #2f2f2f;
     }
   }
+}
+
+.emptySet {
+  opacity: 0.6;
 }
 
 .linksCell {
@@ -257,12 +266,6 @@
   }
 }
 
-.moreLinks {
-  color: #686868;
-  font-family: Inter;
-  font-style: italic;
-}
-
 .emptySubtypeField {
   color: #747474;
 }
@@ -276,6 +279,7 @@
   .rowIndex {
     position: absolute;
     width: var(--rowIndexWidth);
+    height: 30px;
     display: flex;
     padding-left: 4px;
 
