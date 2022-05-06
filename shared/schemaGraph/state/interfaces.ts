@@ -16,7 +16,10 @@ export type SchemaCardinality = "One" | "Many";
 export interface SchemaProp {
   name: string;
   targetName: string;
+  targetId: string;
   required: boolean;
+  readonly: boolean;
+  cardinality: SchemaCardinality;
   expr: string | null;
   default: string;
   constraints: SchemaConstraint[];
@@ -27,6 +30,7 @@ export interface SchemaLink {
   name: string;
   targetNames: string[];
   required: boolean;
+  readonly: boolean;
   cardinality: SchemaCardinality;
   expr: string | null;
   default: string;
@@ -84,3 +88,17 @@ export interface SchemaScalar {
   enum_values: string[] | null;
   annotations: SchemaAnnotation[];
 }
+
+export type SchemaType = {
+  type: string;
+  id: string;
+  name: string;
+  element_type_id: string | null;
+  element_types:
+    | {
+        name: string;
+        type_id: string;
+      }[]
+    | null;
+  enum_values: string[] | null;
+};

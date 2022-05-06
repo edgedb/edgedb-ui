@@ -111,7 +111,11 @@ const DataInspectorView = observer(function DataInspectorView({
                   {stack[1].parentObject?.objectType}
                 </div>
                 <div className={styles.pathStepIdent}>
-                  <span>{formatUUID(stack[1].parentObject!.id)}</span>
+                  {typeof stack[1].parentObject!.id === "string" ? (
+                    <span>{formatUUID(stack[1].parentObject!.id)}</span>
+                  ) : (
+                    <span style={{fontStyle: "italic"}}>new object</span>
+                  )}
                 </div>
               </div>
               {stack.slice(1, stackIndex + 1).map((inspector, i, arr) => (
@@ -123,7 +127,9 @@ const DataInspectorView = observer(function DataInspectorView({
                     <span>
                       {arr.length - 1 === i
                         ? inspector.objectName
-                        : formatUUID(arr[i + 1].parentObject!.id)}
+                        : typeof arr[i + 1].parentObject!.id === "string"
+                        ? formatUUID(arr[i + 1].parentObject!.id as string)
+                        : null}
                     </span>
                   </div>
                 </div>
@@ -135,15 +141,17 @@ const DataInspectorView = observer(function DataInspectorView({
         {inspectorState.parentObject ? (
           <button onClick={() => inspectorState.toggleEditLinkMode()}>
             {inspectorState.parentObject.editMode
-              ? "Finish editing"
-              : "Edit link"}
+              ? "Close edit mode"
+              : "Edit links"}
           </button>
         ) : null}
 
         <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
 
         <div className={styles.headerButtons}>
-          {inspectorState.insertTypeNames.length ? (
+          {inspectorState.insertTypeNames.length &&
+          (!inspectorState.parentObject ||
+            inspectorState.parentObject.editMode) ? (
             <Select
               title="Insert..."
               items={null}
@@ -162,12 +170,7 @@ const DataInspectorView = observer(function DataInspectorView({
                   openModal(<ReviewEditsModal state={dataviewState} />)
                 }
               >
-                Review Edits
-              </button>
-              <button
-                onClick={() => dataviewState.edits.clearAllPendingEdits()}
-              >
-                Clear Edits
+                Review Changes
               </button>
             </>
           ) : null}

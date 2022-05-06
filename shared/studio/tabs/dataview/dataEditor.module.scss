@@ -1,16 +1,261 @@
+@import "@edgedb/common/mixins.scss";
+
 .dataEditor {
+  position: relative;
+  flex-grow: 1;
+  height: max-content;
+  min-height: 100%;
   display: flex;
-  outline: 2px solid #ffa900;
-  border-radius: 3px;
+  // outline: 2px solid #ffa900;
+  // border-radius: 3px;
   z-index: 1;
 
-  input {
+  input,
+  textarea {
     flex-grow: 1;
+    appearance: none;
+    box-sizing: border-box;
     background: #fff;
     border: none;
-    outline: none;
-    padding: 0 8px;
+    outline: 2px solid transparent;
+    border-radius: 3px;
+    padding: 5px 8px;
+    margin: 0;
     font-family: Roboto Mono;
     font-size: 13px;
+    line-height: 20px;
+    min-height: 30px;
+    white-space: pre;
+    @include hideScrollbar;
+
+    &.active {
+      outline-color: #ffa900;
+    }
+
+    &.error {
+      outline-color: #f42b2b;
+    }
+  }
+
+  // &.errorState {
+  //   outline-color: #f42b2b;
+  // }
+}
+
+.actions {
+  position: absolute;
+  top: 0;
+  height: 30px;
+  left: 100%;
+  padding-left: 6px;
+  display: flex;
+  align-items: center;
+
+  .action {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 14px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    cursor: pointer;
+  }
+}
+
+.textbox {
+  flex-grow: 1;
+  display: flex;
+  position: relative;
+
+  input:focus + .errMessage,
+  textarea:focus + .errMessage {
+    display: block;
+  }
+}
+
+.errMessage {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #da3c3c;
+  color: #fff;
+  border-radius: 4px;
+  padding: 4px 6px;
+  line-height: 20px;
+  z-index: 1;
+  display: none;
+}
+
+.boolEditor {
+  display: flex;
+  align-items: center;
+  height: 30px;
+
+  div {
+    font-family: Roboto Mono;
+    line-height: 22px;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 14px;
+    padding: 0 8px;
+    cursor: pointer;
+    opacity: 0.6;
+
+    &:not(:last-child) {
+      margin-right: 6px;
+    }
+  }
+
+  .boolSelected {
+    background: var(--app-accent-green);
+    border-color: transparent;
+    color: #fff;
+  }
+}
+
+.panel {
+  position: relative;
+  background: #eaeaea;
+  border-radius: 3px;
+  padding: 6px 22px;
+  min-height: 28px;
+
+  &:before,
+  &:after {
+    position: absolute;
+    font-family: Roboto Mono;
+    opacity: 0.7;
+    line-height: 30px;
+  }
+  &:before {
+    top: 5px;
+    left: 7px;
+  }
+  &:after {
+    bottom: 5px;
+    right: 7px;
+  }
+
+  &.panelNested {
+    background: #e0e0e0;
+  }
+}
+
+.emptyValue {
+  opacity: 0.6;
+  margin-right: 8px;
+}
+
+.button {
+  line-height: 22px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 14px;
+  padding: 0 8px;
+  cursor: pointer;
+  opacity: 0.9;
+  width: max-content;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.tupleEditor {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  &:before {
+    content: "(";
+  }
+  &:after {
+    content: ")";
+  }
+
+  .tupleElement {
+    display: flex;
+    line-height: 30px;
+
+    .tupleElementName {
+      font-family: Roboto Mono;
+      flex-shrink: 0;
+      margin-right: 6px;
+
+      span {
+        opacity: 0.7;
+        margin-left: 3px;
+      }
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 6px;
+
+      &:after {
+        align-self: flex-end;
+        content: ",";
+        padding-left: 3px;
+        width: 0;
+        margin-right: -3px;
+        opacity: 0.7;
+      }
+    }
+  }
+
+  &.emptyTuple {
+    padding: 1px 12px;
+
+    &:before {
+      content: "";
+    }
+    &:after {
+      content: "";
+    }
+
+    & > div {
+      display: flex;
+      height: 28px;
+      align-items: center;
+    }
+  }
+}
+
+.arrayEditor {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  &:before {
+    content: "[";
+  }
+  &:after {
+    content: "]";
+  }
+
+  &.isSet {
+    &:before {
+      content: "{";
+    }
+    &:after {
+      content: "}";
+    }
+  }
+
+  .arrayItem {
+    display: flex;
+    align-items: center;
+    line-height: 30px;
+    margin-right: -12px;
+
+    & > span {
+      opacity: 0.7;
+      margin: 0 3px;
+      align-self: flex-end;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 6px;
+    }
   }
 }

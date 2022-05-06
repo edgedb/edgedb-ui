@@ -8,11 +8,9 @@ export type {EdgeDBSet};
 
 function newCodecsRegistry() {
   const registry = new _CodecsRegistry();
-  registry.setStringCodecs({
-    decimal: true,
-    int64: true,
-    datetime: true,
-    local_datetime: true,
+  registry.setCustomCodecs({
+    decimalString: true,
+    int64Bigint: true,
   });
   return registry;
 }

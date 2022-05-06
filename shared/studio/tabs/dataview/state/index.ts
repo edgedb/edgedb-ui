@@ -20,6 +20,7 @@ import {_ICodec} from "edgedb";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {EdgeDBSet} from "../../../utils/decodeRawBuffer";
+import {SchemaType} from "../../../utils/schema";
 
 import {ObservableLRU} from "./lru";
 
@@ -35,8 +36,9 @@ type ParentObject = {
   editMode: boolean;
   objectType: string;
   subtypeName?: string;
-  id: string;
+  id: string | number;
   fieldName: string;
+  linkId: string;
   isMultiLink: boolean;
 };
 
@@ -81,6 +83,12 @@ export class DataView extends Model({
   closeLastNestedView() {
     this.inspectorStack.pop();
   }
+
+  refreshAllViews() {
+    for (const view of [...this.inspectorStack].reverse()) {
+      view._refreshData(true);
+    }
+  }
 }
 
 export enum ObjectFieldType {
@@ -99,12 +107,18 @@ export type ObjectField = {
   queryName: string;
   width: number;
   typename: string;
+  required: boolean;
+  computed: boolean;
+  readonly: boolean;
+  multi: boolean;
 } & (
-  | {type: ObjectFieldType.property}
+  | {
+      type: ObjectFieldType.property;
+      default: string | null;
+      schemaType: SchemaType;
+    }
   | {
       type: ObjectFieldType.link;
-      required: boolean;
-      isMultiLink: boolean;
       subFields: {
         type: ObjectFieldType;
         name: string;
@@ -168,7 +182,12 @@ export class DataInspector extends Model({
     };
   }
 
-  openNestedView(objectId: string, subtypeName: string, fieldName: string) {
+  openNestedView(
+    objectId: string | number,
+    subtypeName: string,
+    fieldName: string,
+    editMode: boolean = false
+  ) {
     const dataView = findParent<DataView>(
       this,
       (parent) => parent instanceof DataView
@@ -177,13 +196,13 @@ export class DataInspector extends Model({
     const field = this.fields!.find((field) => field.name === fieldName)!;
 
     dataView.openNestedView(field.typename, {
-      editMode: false,
+      editMode,
       objectType: this.objectName,
       subtypeName,
       id: objectId,
       fieldName,
-      isMultiLink:
-        field.type === ObjectFieldType.link ? field.isMultiLink : false,
+      linkId: `${objectId}__${fieldName}`,
+      isMultiLink: field.type === ObjectFieldType.link ? field.multi : false,
     });
   }
 
@@ -199,7 +218,8 @@ export class DataInspector extends Model({
 
   @modelAction
   _updateFields() {
-    const schemaObjects = dbCtx.get(this)!.schemaData!.data.objects;
+    const schemaData = dbCtx.get(this)!.schemaData!.data;
+    const schemaObjects = schemaData.objects;
 
     const obj = schemaObjects.find((obj) => obj.name === this.objectName);
 
@@ -222,21 +242,33 @@ export class DataInspector extends Model({
           type === ObjectFieldType.property
             ? (field as SchemaProp).targetName
             : (field as SchemaLink).targetNames.join(" | "),
+        required: field.required,
+        multi: field.cardinality === "Many",
+        computed: !!field.expr,
+        readonly: field.readonly,
         width: 180,
       };
 
       if (type === ObjectFieldType.property) {
+        const schemaType = schemaData.types.get(
+          (field as SchemaProp).targetId
+        );
+        if (!schemaType) {
+          throw new Error(
+            `Could not get type data for property: ${field.name}`
+          );
+        }
         return {
           type,
           ...baseField,
+          schemaType,
+          default: field.default?.replace(/^select/i, "").trim(),
         };
       }
 
       return {
         type,
         ...baseField,
-        required: field.required,
-        isMultiLink: (field as SchemaLink).cardinality === "Many",
         subFields: (field as SchemaLink).targetNames.flatMap((targetName) => {
           const subFieldObj = schemaObjects.find(
             (obj) => obj.name === targetName
@@ -333,6 +365,27 @@ export class DataInspector extends Model({
   }
 
   @computed
+  get insertedRows() {
+    const dataView = findParent<DataView>(
+      this,
+      (parent) => parent instanceof DataView
+    )!;
+
+    if (this.parentObject?.editMode === false) {
+      return [
+        ...(dataView.edits.linkEdits.get(this.parentObject.linkId)?.inserts ??
+          []),
+      ];
+    }
+
+    const typeNames = new Set(this.insertTypeNames);
+
+    return [...(dataView.edits.insertEdits.values() ?? [])].filter((row) =>
+      typeNames.has(row.objectTypeName)
+    );
+  }
+
+  @computed
   get subtypeFieldRanges() {
     const ranges = new Map<string, {left: number; width: number}>();
 
@@ -365,7 +418,11 @@ export class DataInspector extends Model({
   get gridRowCount() {
     return (
       this.rowCount +
-      this.expandedRows.reduce((sum, row) => sum + row.inspector.rowsCount, 0)
+      this.expandedRows.reduce(
+        (sum, row) => sum + row.inspector.rowsCount,
+        0
+      ) +
+      this.insertedRows.length
     );
   }
 
@@ -447,6 +504,7 @@ export class DataInspector extends Model({
 
     if (conn.isConnected) {
       const {query, params} = this.getBaseObjectsQuery();
+      // console.log(query);
       const data = yield* _await(
         conn.query(
           `SELECT count((${query}${
@@ -534,6 +592,8 @@ export class DataInspector extends Model({
     try {
       const conn = connCtx.get(this)!;
       const dataQuery = this.dataQuery;
+
+      // console.log(dataQuery?.query);
 
       if (dataQuery && conn.isConnected) {
         // console.log(`fetching ${offset}`);
@@ -625,11 +685,13 @@ export class DataInspector extends Model({
 
   get _baseObjectsQuery() {
     return this.parentObject
-      ? `(SELECT ${
-          this.parentObject.subtypeName ?? this.parentObject.objectType
-        } FILTER .id = <uuid>'${this.parentObject.id}').${
-          this.parentObject.fieldName
-        }`
+      ? typeof this.parentObject.id === "string"
+        ? `(SELECT ${
+            this.parentObject.subtypeName ?? this.parentObject.objectType
+          } FILTER .id = <uuid>'${this.parentObject.id}').${
+            this.parentObject.fieldName
+          }`
+        : `<${this.objectName}>{}`
       : this.objectName;
   }
 
@@ -650,7 +712,7 @@ export class DataInspector extends Model({
       const addedLinkIds = this.parentObject
         ? [
             ...(dataView.edits.linkEdits
-              .get(`${this.parentObject.id}__${this.parentObject.fieldName}`)
+              .get(this.parentObject.linkId)
               ?.changes.values() ?? []),
           ]
             .filter((change) => change.kind !== UpdateLinkChangeKind.Remove)
@@ -711,11 +773,14 @@ export class DataInspector extends Model({
                 : selectName
             }`;
           } else {
-            const linkSelect = `(SELECT ${selectName} LIMIT 3)`;
-            return `${field.queryName} := ${
-              field.required ? `assert_exists(${linkSelect})` : linkSelect
-            },
-              __count_${field.queryName} := count(${selectName})`;
+            return `__count_${field.queryName} := (for g in (
+              group ${selectName}
+              using typename := .__type__.name
+              by typename
+            ) union {
+              typename := g.key.typename,
+              count := <std::float64>count(g.elements)
+            })`;
           }
         })
         .filter((line) => !!line)
@@ -859,7 +924,7 @@ class ExpandedInspector extends Model({
     );
     if (!parentObjectType) {
       throw new Error(
-        `Could not find objec type '${parentObjectTypeName}' in schema`
+        `Could not find object type '${parentObjectTypeName}' in schema`
       );
     }
 
@@ -871,7 +936,7 @@ class ExpandedInspector extends Model({
     );
     if (!objectType) {
       throw new Error(
-        `Could not find objec type '${objectTypeName}' in schema`
+        `Could not find object type '${objectTypeName}' in schema`
       );
     }
 

@@ -3,7 +3,6 @@ import {_ICodec} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {EdgeDBDateTime} from "edgedb/dist/datatypes/datetime";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
 
 import {Item, ItemType} from "./buildItem";
@@ -115,7 +114,6 @@ export function renderValue(
       };
     case "std::datetime":
     case "cal::local_datetime":
-      value = edgeDBDateTimeToString(value);
     case "cal::local_time":
     case "cal::local_date":
     case "std::duration":
@@ -153,7 +151,7 @@ export function renderValue(
     return {
       body: (
         <span>
-          <span className={styles.typeName}>{mt}.</span>
+          {showTypeTag ? <span className={styles.typeName}>{mt}.</span> : null}
           <b>{value.toString()}</b>
         </span>
       ),
@@ -276,22 +274,4 @@ function prettyPrintJSON(json: string, indentSpaces: number = 2): string {
   }
   pretty += json.slice(lasti);
   return pretty;
-}
-
-function edgeDBDateTimeToString(datetime: EdgeDBDateTime): string {
-  const year = `${datetime.year < 0 ? "-" : ""}${Math.abs(datetime.year)
-    .toString()
-    .padStart(4, "0")}`;
-  return `${year}-${datetime.month.toString().padStart(2, "0")}-${datetime.day
-    .toString()
-    .padStart(2, "0")}T${datetime.hour
-    .toString()
-    .padStart(2, "0")}:${datetime.minute
-    .toString()
-    .padStart(2, "0")}:${datetime.second.toString().padStart(2, "0")}${
-    datetime.microsecond
-      ? "." +
-        datetime.microsecond.toString().padStart(6, "0").replace(/0+$/, "")
-      : ""
-  }`;
 }

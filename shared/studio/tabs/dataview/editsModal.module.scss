@@ -1,0 +1,14 @@
+.codeBlock {
+  background: var(--app-panel-bg);
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.greenButton {
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #fff;
+}
+
+.errorMessage {
+  color: red;
+}
