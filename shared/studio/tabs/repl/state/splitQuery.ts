@@ -5,34 +5,11 @@ import {getNodeText, getAllChildren} from "../../../utils/syntaxTree";
 
 import {ParamsData} from "./parameters";
 
-export enum TransactionStatementType {
-  startTransaction = "startTransaction",
-  savepoint = "savepoint",
-  releaseSavepoint = "releaseSavepoint",
-  commit = "commit",
-  rollback = "rollback",
-  rollbackTo = "rollbackTo",
-}
-
 export type Statement = {
   displayExpression: string;
   expression: string;
   params: string[];
-} & (
-  | {
-      transactionType?:
-        | TransactionStatementType.startTransaction
-        | TransactionStatementType.commit
-        | TransactionStatementType.rollback;
-    }
-  | {
-      transactionType:
-        | TransactionStatementType.savepoint
-        | TransactionStatementType.releaseSavepoint
-        | TransactionStatementType.rollbackTo;
-      savepointName: string;
-    }
-);
+};
 
 export function splitQuery(
   query: string,

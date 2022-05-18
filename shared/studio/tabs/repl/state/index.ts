@@ -35,14 +35,11 @@ import {
   ErrorDetails,
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
+import {renderResultAsJson} from "../../../utils/renderJsonResult";
 
-import {splitQuery, Statement, TransactionStatementType} from "./splitQuery";
+import {splitQuery, Statement} from "./splitQuery";
 
-import {
-  connCtx,
-  Transaction,
-  TransactionState,
-} from "../../../state/connection";
+import {connCtx} from "../../../state/connection";
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
   filterParamsData,
@@ -50,21 +47,12 @@ import {
   ReplQueryParamsEditor,
 } from "./parameters";
 
-export {TransactionStatementType};
-
-export enum ReplHistoryCellStatus {
-  active,
-  rolledback,
-}
-
 @model("Repl/HistoryCell")
 export class ReplHistoryCell extends Model({
   $modelId: idProp,
   query: prop<string>(),
   timestamp: prop<number>(),
   duration: prop<number | QueryDuration>(),
-  transaction: prop<Ref<Transaction> | null>(null),
-  status: prop<ReplHistoryCellStatus>(ReplHistoryCellStatus.active),
   renderHeight: prop<number>(64).withSetter(),
 }) {
   edit() {
@@ -146,34 +134,18 @@ export class ReplResultCell extends ExtendedModel(ReplExpandableCell, {
       }
     });
   }
+
+  copyAsJson() {
+    navigator.clipboard?.writeText(
+      renderResultAsJson(this._result, this._result!._codec)
+    );
+  }
 }
 
 @model("Repl/ErrorCell")
 export class ReplErrorCell extends ExtendedModel(ReplExpandableCell, {
   error: prop<Frozen<ErrorDetails>>(),
 }) {}
-
-@model("Repl/TransactionCell")
-export class ReplTransactionCell extends ExtendedModel(ReplHistoryCell, {
-  type: prop<
-    Exclude<TransactionStatementType, TransactionStatementType.savepoint>
-  >(),
-}) {}
-
-@model("Repl/TransactionSavepointCell")
-export class ReplTransactionSavepointCell extends ExtendedModel(
-  ReplHistoryCell,
-  {
-    type: prop<TransactionStatementType.savepoint>(
-      TransactionStatementType.savepoint
-    ),
-    savepointName: prop<string>(),
-    isReleased: prop<boolean>(false),
-    beforeStatus: prop<ReplHistoryCellStatus>(ReplHistoryCellStatus.active),
-  }
-) {}
-
-const transactionRef = rootRef<Transaction>("Repl/TransactionRef");
 
 const scriptBlockCellRef = rootRef<ReplHistoryCell>("Repl/ScriptBlockCellRef");
 
@@ -200,7 +172,6 @@ export class Repl extends Model({
   queryParamsEditor: prop(() => new ReplQueryParamsEditor({})),
 
   queryHistory: prop<ReplHistoryCell[]>(() => []),
-  transactionHistory: prop<Transaction[]>(() => []),
   scriptBlocks: prop<ReplHistoryScriptBlock[]>(() => []),
 
   splitView: prop(() => new SplitViewState({})),
@@ -209,9 +180,6 @@ export class Repl extends Model({
   historyScrollPos: prop<number>(0).withSetter(),
 }) {
   @observable queryRunning = false;
-
-  @observable
-  currentTransaction: Transaction | undefined = undefined;
 
   @observable.ref
   currentQuery = Text.empty;
@@ -227,16 +195,6 @@ export class Repl extends Model({
   }
 
   onAttachedToRootStore() {
-    const lastTransaction =
-      this.transactionHistory[this.transactionHistory.length - 1];
-    if (
-      lastTransaction &&
-      lastTransaction.state !== TransactionState.Committed &&
-      lastTransaction.state !== TransactionState.Rolledback
-    ) {
-      lastTransaction.setState(TransactionState.Rolledback);
-    }
-
     return () => {
       // removeReplResults(this.$modelId);
     };
@@ -268,9 +226,6 @@ export class Repl extends Model({
       query: statement.displayExpression,
       timestamp,
       duration,
-      transaction: this.currentTransaction
-        ? transactionRef(this.currentTransaction)
-        : undefined,
     };
 
     let historyCell: ReplHistoryCell;
@@ -281,99 +236,20 @@ export class Repl extends Model({
         error: frozen(data.error),
         expanded: true,
       });
-      if (this.currentTransaction) {
-        this.currentTransaction.state = TransactionState.InError;
-      }
     } else {
-      if (statement.transactionType) {
-        if (statement.transactionType === TransactionStatementType.savepoint) {
-          historyCell = new ReplTransactionSavepointCell({
-            ...historyCellData,
-            savepointName: statement.savepointName,
-          });
-        } else {
-          switch (statement.transactionType) {
-            case TransactionStatementType.startTransaction: {
-              const newTransaction = new Transaction({});
-              this.transactionHistory.unshift(newTransaction);
-              this.currentTransaction = newTransaction;
-              historyCellData.transaction = transactionRef(newTransaction);
-              break;
-            }
-            case TransactionStatementType.rollback: {
-              if (this.currentTransaction) {
-                this.currentTransaction.state = TransactionState.Rolledback;
-              }
-              this.currentTransaction = undefined;
-              break;
-            }
-            case TransactionStatementType.commit: {
-              if (this.currentTransaction) {
-                this.currentTransaction.state = TransactionState.Committed;
-              }
-              this.currentTransaction = undefined;
-              break;
-            }
-            case TransactionStatementType.releaseSavepoint: {
-              const historyCell = this.queryHistory.find(
-                (cell) =>
-                  cell instanceof ReplTransactionSavepointCell &&
-                  cell.transaction?.current === this.currentTransaction &&
-                  cell.savepointName === statement.savepointName &&
-                  cell.isReleased === false
-              ) as ReplTransactionSavepointCell | undefined;
-              if (historyCell) {
-                historyCell.isReleased = true;
-              }
-              break;
-            }
-            case TransactionStatementType.rollbackTo: {
-              if (this.currentTransaction) {
-                this.currentTransaction.state = TransactionState.Active;
-                const historyCells = this.queryHistory.filter(
-                  (cell) =>
-                    cell.transaction?.current === this.currentTransaction
-                );
-                let foundSavepoint = false;
-                for (const cell of historyCells) {
-                  if (foundSavepoint) {
-                    cell.status = ReplHistoryCellStatus.rolledback;
-                    if (cell instanceof ReplTransactionSavepointCell) {
-                      cell.beforeStatus = ReplHistoryCellStatus.rolledback;
-                    }
-                  } else if (
-                    cell instanceof ReplTransactionSavepointCell &&
-                    cell.savepointName === statement.savepointName &&
-                    cell.isReleased === false
-                  ) {
-                    foundSavepoint = true;
-                    cell.status = ReplHistoryCellStatus.rolledback;
-                  }
-                }
-              }
-              break;
-            }
-          }
-          historyCell = new ReplTransactionCell({
-            ...historyCellData,
-            type: statement.transactionType,
-          });
-        }
-      } else {
-        historyCell = new ReplResultCell({
-          ...historyCellData,
-          inspectorState: new InspectorState({}),
-          expanded: !!data.result,
-        });
+      historyCell = new ReplResultCell({
+        ...historyCellData,
+        inspectorState: new InspectorState({}),
+        expanded: !!data.result,
+      });
 
-        if (data.result) {
-          (historyCell as ReplResultCell).setResult(data.result);
-          // storeReplResult(historyCell.$modelId, {
-          //   replId: this.$modelId,
-          //   outCodecBuf: data.outCodecBuf,
-          //   resultBuf: data.resultBuf,
-          // });
-        }
+      if (data.result) {
+        (historyCell as ReplResultCell).setResult(data.result);
+        // storeReplResult(historyCell.$modelId, {
+        //   replId: this.$modelId,
+        //   outCodecBuf: data.outCodecBuf,
+        //   resultBuf: data.resultBuf,
+        // });
       }
     }
 
@@ -424,18 +300,6 @@ export class Repl extends Model({
     }
     return false;
   });
-
-  // @modelFlow
-  // runSingleQuery = _async(function* (this: Repl, query: string) {
-  //   this.queryRunning = true;
-
-  //   const statement = (yield* _await(splitQuery(query,)))[0];
-  //   if (statement) {
-  //     yield* _await(this._runStatement(statement));
-  //   }
-
-  //   this.queryRunning = false;
-  // });
 
   @modelFlow
   runQuery = _async(function* (this: Repl) {

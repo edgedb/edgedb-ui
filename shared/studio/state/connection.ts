@@ -1,9 +1,8 @@
-import {action, computed, observable} from "mobx";
+import {action, observable} from "mobx";
 import {
   createContext,
   model,
   Model,
-  modelFlow,
   prop,
   _async,
   _await,
@@ -60,37 +59,15 @@ type PendingQuery = {
   | {kind: "executeScript"; resolve: (result: void) => void}
 );
 
-export enum TransactionState {
-  Active,
-  InError,
-  Committed,
-  Rolledback,
-}
-
 const queryHeaders: PrepareMessageHeaders = {
   implicitTypenames: "true",
   implicitTypeids: "true",
 };
 
-@model("TransactionState")
-export class Transaction extends Model({
-  state: prop<TransactionState>(TransactionState.Active).withSetter(),
-}) {}
-
 @model("Connection")
 export class Connection extends Model({
   config: prop<ConnectConfig>(),
 }) {
-  @observable connecting = false;
-  @observable isConnected = true;
-  @observable errorMessage = "";
-
-  @computed
-  get transaction(): any {
-    return;
-    // return tabCtx.get(this)?.replView.currentTransaction;
-  }
-
   conn = AdminFetchConnection.create(
     {
       address: this.config.serverUrl,
@@ -98,28 +75,6 @@ export class Connection extends Model({
     },
     codecsRegistry
   );
-
-  onAttachedToRootStore() {
-    return () => {
-      this.close();
-    };
-  }
-
-  @modelFlow
-  connect = _async(function* (this: Connection) {
-    this.connecting = true;
-    this.errorMessage = "";
-
-    try {
-      // yield* _await(ipc.invoke("createConnection", id, {...this.config}));
-      this.isConnected = true;
-    } catch (e: any) {
-      console.error(e);
-      this.errorMessage = e.message;
-    } finally {
-      this.connecting = false;
-    }
-  });
 
   @observable private _runningQuery = false;
   @observable runningQuery = false;
@@ -234,10 +189,4 @@ export class Connection extends Model({
       resultBuf,
     };
   }
-
-  @modelFlow
-  close = _async(function* (this: Connection) {
-    // yield* _await(ipc.invoke("closeConnection", id));
-    this.isConnected = false;
-  });
 }

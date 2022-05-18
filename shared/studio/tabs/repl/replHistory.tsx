@@ -15,21 +15,16 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import styles from "./repl.module.scss";
 
 import {ReplHistoryCell as ReplHistoryCellState} from "./state";
-// import {Transaction} from "../../state/models/connection";
 
-import ReplHistoryCell, {ReplTransactionStatus} from "./replHistoryCell";
+import ReplHistoryCell from "./replHistoryCell";
 import {useTabState} from "../../state";
 import {Repl} from "./state";
 
 const ListPadding = 24;
 
 interface ListData {
-  getItem: (index: number) =>
-    | ReplHistoryCellState
-    | {
-        // transaction: Transaction;
-        setHeight: React.Dispatch<React.SetStateAction<number>>;
-      };
+  getItem: (index: number) => ReplHistoryCellState;
+
   listRef: React.RefObject<List>;
 }
 
@@ -47,7 +42,7 @@ const innerElementType = forwardRef(({style, ...rest}: any, ref) => (
 export default observer(function ReplHistory() {
   const replState = useTabState(Repl);
 
-  const {queryHistory, currentTransaction} = replState;
+  const {queryHistory} = replState;
 
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,24 +53,13 @@ export default observer(function ReplHistory() {
     () => replState.historyScrollPos
   );
 
-  const [transactionHeight, setTransactionHeight] = useState<number>(32);
-
   const listRef = useRef<List>(null);
 
   const getItem = useCallback(
     (index: number) => {
-      if (currentTransaction) {
-        if (index === 0) {
-          return {
-            transaction: currentTransaction,
-            setHeight: setTransactionHeight,
-          };
-        }
-        return queryHistory[queryHistory.length - index];
-      }
       return queryHistory[queryHistory.length - 1 - index];
     },
-    [queryHistory, currentTransaction, setTransactionHeight]
+    [queryHistory]
   );
 
   return (
@@ -90,20 +74,10 @@ export default observer(function ReplHistory() {
         onScroll={({scrollOffset}) =>
           replState.setHistoryScrollPos(scrollOffset)
         }
-        itemCount={queryHistory.length + (currentTransaction ? 1 : 0)}
+        itemCount={queryHistory.length}
         itemData={{getItem, listRef}}
-        itemKey={(index) => {
-          const item = getItem(index);
-          return item instanceof ReplHistoryCellState
-            ? item.$modelId
-            : item.transaction.$modelId;
-        }}
-        itemSize={(index) => {
-          const item = getItem(index);
-          return item instanceof ReplHistoryCellState
-            ? item.renderHeight
-            : transactionHeight;
-        }}
+        itemKey={(index) => getItem(index).$modelId}
+        itemSize={(index) => getItem(index).renderHeight}
       >
         {QueryHistoryItem}
       </List>
@@ -123,13 +97,8 @@ function QueryHistoryItem({
   useLayoutEffect(() => {
     if (containerRef.current) {
       const observer = new ResizeObserver(([entry]) => {
-        if (item instanceof ReplHistoryCellState) {
-          if (item.renderHeight !== entry.contentRect.height) {
-            item.setRenderHeight(entry.contentRect.height);
-            listRef.current?.resetAfterIndex(index);
-          }
-        } else {
-          item.setHeight(entry.contentRect.height);
+        if (item.renderHeight !== entry.contentRect.height) {
+          item.setRenderHeight(entry.contentRect.height);
           listRef.current?.resetAfterIndex(index);
         }
       });
@@ -151,10 +120,7 @@ function QueryHistoryItem({
       }}
       ref={containerRef}
     >
-      {item instanceof ReplHistoryCellState ? (
-        <ReplHistoryCell cell={item} />
-      ) : null // <ReplTransactionStatus transaction={item.transaction} />
-      }
+      <ReplHistoryCell cell={item} />
     </div>
   );
 }

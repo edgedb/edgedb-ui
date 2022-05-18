@@ -19,16 +19,16 @@
   --repl-history-button-colour: #7f7f7f;
   --repl-inspector-colour: #595959;
 
-  --transaction-query-colour: #333333;
-  --transaction-status-colour: #bfbfbf;
-  --transaction-active: #a5b4ea;
-  --transaction-active-dark: #97a5d6;
-  --transaction-error: #eb9292;
-  --transaction-error-dark: #d78686;
-  --transaction-savepoint: #e9da8a;
-  --transaction-savepoint-dark: #d5c77f;
-  --transaction-committed: #80bea8;
-  --transaction-committed-dark: #76ae9a;
+  // --transaction-query-colour: #333333;
+  // --transaction-status-colour: #bfbfbf;
+  // --transaction-active: #a5b4ea;
+  // --transaction-active-dark: #97a5d6;
+  // --transaction-error: #eb9292;
+  // --transaction-error-dark: #d78686;
+  // --transaction-savepoint: #e9da8a;
+  // --transaction-savepoint-dark: #d5c77f;
+  // --transaction-committed: #80bea8;
+  // --transaction-committed-dark: #76ae9a;
 
   @include darkTheme {
     --repl-history-background: #242424;
@@ -43,16 +43,16 @@
     --repl-history-button-colour: #8b8b8f;
     --repl-inspector-colour: #bfbfbf;
 
-    --transaction-query-colour: #191919;
-    --transaction-status-colour: #bfbfbf;
-    --transaction-active: #5f74c0;
-    --transaction-active-dark: #4f5f98;
-    --transaction-error: #ac4343;
-    --transaction-error-dark: #893a3a;
-    --transaction-savepoint: #978837;
-    --transaction-savepoint-dark: #796e31;
-    --transaction-committed: #057d52;
-    --transaction-committed-dark: #0c6645;
+    // --transaction-query-colour: #191919;
+    // --transaction-status-colour: #bfbfbf;
+    // --transaction-active: #5f74c0;
+    // --transaction-active-dark: #4f5f98;
+    // --transaction-error: #ac4343;
+    // --transaction-error-dark: #893a3a;
+    // --transaction-savepoint: #978837;
+    // --transaction-savepoint-dark: #796e31;
+    // --transaction-committed: #057d52;
+    // --transaction-committed-dark: #0c6645;
   }
 }
 
