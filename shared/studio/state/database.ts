@@ -4,8 +4,6 @@ import {action, computed, observable, reaction} from "mobx";
 import {
   AnyModel,
   createContext as createMobxContext,
-  frozen,
-  Frozen,
   idProp,
   Model,
   model,
@@ -19,32 +17,34 @@ import {
 } from "mobx-keystone";
 
 import {
-  schemaQuery,
+  typesQuery,
   functionsQuery,
   constraintsQuery,
-  scalarsQuery,
-  SchemaObject,
+  RawSchemaType,
+  RawFunctionType,
+  RawConstraintType,
+} from "@edgedb/common/schemaData/queries";
+import {
+  buildTypesGraph,
+  SchemaType,
+  SchemaObjectType,
+  SchemaScalarType,
   SchemaFunction,
-  SchemaAbstractConstraint,
-  SchemaScalar,
-  typesQuery,
-} from "@edgedb/schema-graph";
+  SchemaConstraint,
+} from "@edgedb/common/schemaData";
 
-// import {Repl} from "./repl";
-// import {Schema} from "./schema";
-// import {DataView} from "./dataview";
 import {connCtx, Connection} from "./connection";
-import {buildTypesGraph, SchemaType} from "../utils/schema";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
 export interface SchemaData {
   migrationId: string | null;
   sdl: string;
-  objects: SchemaObject[];
-  functions: SchemaFunction[];
-  constraints: SchemaAbstractConstraint[];
-  scalars: SchemaScalar[];
+  objects: Map<string, SchemaObjectType>;
+  objectsByName: Map<string, SchemaObjectType>;
+  functions: Map<string, SchemaFunction>;
+  constraints: Map<string, SchemaConstraint>;
+  scalars: Map<string, SchemaScalarType>;
   types: Map<string, SchemaType>;
 }
 
@@ -56,8 +56,8 @@ export class DatabaseState extends Model({
 
   tabStates: prop<ObjectMap<AnyModel>>(),
 }) {
-  @observable
-  schemaData: Frozen<SchemaData> | null = null;
+  @observable.ref
+  schemaData: SchemaData | null = null;
 
   @observable
   fetchingSchemaData = false;
@@ -75,19 +75,7 @@ export class DatabaseState extends Model({
   }
 
   onAttachedToRootStore() {
-    const schemaReactionDisposer = reaction(
-      () => this.connection.isConnected,
-      (isConnected) => {
-        if (isConnected) {
-          this.fetchSchemaData();
-        }
-      },
-      {fireImmediately: true}
-    );
-
-    return () => {
-      schemaReactionDisposer();
-    };
+    this.fetchSchemaData();
   }
 
   // private async _fetchSchemaDataFromStore() {
@@ -121,45 +109,65 @@ export class DatabaseState extends Model({
 
     this.migrationId = migrationId;
 
-    if (!this.schemaData || this.schemaData.data.migrationId !== migrationId) {
+    if (!this.schemaData || this.schemaData.migrationId !== migrationId) {
       this.fetchingSchemaData = true;
 
       try {
-        const [sdl, objects, functions, constraints, scalars, types] =
-          yield* _await(
-            Promise.all([
-              conn
-                .query(`describe schema as sdl`, true)
-                .then(({result}) => result![0] as string),
-              conn
-                .query(schemaQuery, true)
-                .then(({result}) => result as SchemaObject[]),
-              conn
-                .query(functionsQuery, true)
-                .then(({result}) => result as SchemaFunction[]),
-              conn
-                .query(constraintsQuery, true)
-                .then(({result}) => result as SchemaAbstractConstraint[]),
-              conn
-                .query(scalarsQuery, true)
-                .then(({result}) => result as SchemaScalar[]),
-              conn.query(typesQuery, true).then(({result}) => result as any),
-            ])
-          );
+        const [sdl, rawTypes] = yield* _await(
+          Promise.all([
+            conn
+              .query(`describe schema as sdl`, true)
+              .then(({result, duration}) => {
+                // console.log("describe", duration);
+                return result![0] as string;
+              }),
+            conn
+              .query(
+                `select {
+                  types := (${typesQuery}),
+                  functions := (${functionsQuery}),
+                  constraints := (${constraintsQuery}),
+                }`
+              )
+              .then(({result, duration}) => {
+                console.log("types", duration);
+                return result![0] as {
+                  types: RawSchemaType[];
+                  functions: RawFunctionType[];
+                  constraints: RawConstraintType[];
+                };
+              }),
+          ])
+        );
+
+        const {types, functions, constraints} = buildTypesGraph(rawTypes);
 
         const schemaData: SchemaData = {
           migrationId,
           sdl,
-          objects,
+          objects: new Map(
+            [...types.values()]
+              .filter((t) => t.schemaType === "Object")
+              .map((t) => [t.id, t as SchemaObjectType])
+          ),
+          objectsByName: new Map(
+            [...types.values()]
+              .filter((t) => t.schemaType === "Object")
+              .map((t) => [t.name, t as SchemaObjectType])
+          ),
           functions,
           constraints,
-          scalars,
-          types: buildTypesGraph(types),
+          scalars: new Map(
+            [...types.values()]
+              .filter((t) => t.schemaType === "Scalar")
+              .map((t) => [t.name, t as SchemaScalarType])
+          ),
+          types,
         };
 
         // storeSchemaData(this.$modelId, schemaData);
 
-        this.schemaData = frozen(schemaData);
+        this.schemaData = schemaData;
       } finally {
         this.fetchingSchemaData = false;
         console.log("fetched schema");

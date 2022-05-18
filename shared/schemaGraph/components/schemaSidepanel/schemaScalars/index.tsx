@@ -1,11 +1,12 @@
 import React from "react";
 import {observer} from "mobx-react";
 
+import {SchemaScalarType} from "@edgedb/common/schemaData";
+
 import sharedStyles from "../schemaSidepanel.module.scss";
 import colourStyles from "../colours.module.scss";
 
 import {useSchemaState} from "../../../state/provider";
-import {SchemaScalar} from "../../../state";
 import {FilterMatches} from "../../../state/sidepanel";
 import {
   markString,
@@ -18,15 +19,15 @@ import DetailCard from "../detailCard";
 
 import {Annotation, SearchBar, Constraint} from "../shared";
 
-function ScalarCard(scalar: SchemaScalar, filterMatch?: FilterMatches) {
+function ScalarCard(scalar: SchemaScalarType, filterMatch?: FilterMatches) {
   let scalarName = markModuleName(scalar.name, ["object"]);
 
   if (filterMatch?.name)
     scalarName = markString(scalarName, "filterMatch", filterMatch.name);
 
-  const extendNames = scalar.extends.length
+  const extendNames = scalar.bases.length
     ? joinMarkedStrings(
-        scalar.extends.map((name) => markModuleName(name)),
+        scalar.bases.map(({name}) => markModuleName(name)),
         [{str: ", "}]
       )
     : null;

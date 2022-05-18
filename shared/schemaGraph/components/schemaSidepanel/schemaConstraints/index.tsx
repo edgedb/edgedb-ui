@@ -1,11 +1,12 @@
 import React from "react";
 import {observer} from "mobx-react";
 
+import {SchemaConstraint} from "@edgedb/common/schemaData";
+
 import sharedStyles from "../schemaSidepanel.module.scss";
 import colourStyles from "../colours.module.scss";
 
 import {useSchemaState} from "../../../state/provider";
-import {SchemaAbstractConstraint} from "../../../state";
 import {FilterMatches} from "../../../state/sidepanel";
 import {
   markString,
@@ -21,7 +22,7 @@ import DetailCard from "../detailCard";
 import {Annotation, SearchBar, ShowSource} from "../shared";
 
 function ConstraintCard(
-  constraint: SchemaAbstractConstraint,
+  constraint: SchemaConstraint,
   filterMatch?: FilterMatches
 ) {
   let constraintName = markModuleName(constraint.name, ["object"]);
@@ -47,7 +48,7 @@ function ConstraintCard(
         : []),
       ...paramName,
       {str: ": "},
-      ...getFullTypeExpr(param.typeName, param.typemod),
+      ...getFullTypeExpr(param.type.name, param.typemod),
       ...(param.default ? [{str: " = "}, {str: param.default}] : []),
     ];
   });

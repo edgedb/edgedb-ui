@@ -54,7 +54,7 @@ export const ReplView = observer(function ReplView() {
                   },
                 ]}
                 useDarkTheme={theme === Theme.dark}
-                schemaObjects={dbState.schemaData?.data.objects}
+                schemaObjects={dbState.schemaData?.objectsByName}
               />
               <div className={styles.replEditorOverlays}>
                 <div className={styles.controls}>

@@ -1,13 +1,14 @@
 import {types, getParentOfType} from "mobx-state-tree";
 
+import {
+  SchemaScalarType,
+  SchemaFunction,
+  SchemaConstraint,
+} from "@edgedb/common/schemaData";
+
 import Fuse from "fuse.js";
 
-import {
-  Schema,
-  SchemaFunction,
-  SchemaAbstractConstraint,
-  SchemaScalar,
-} from ".";
+import {Schema} from ".";
 
 export enum SidepanelTabType {
   inspector = "inspector",
@@ -96,7 +97,7 @@ export const SchemaSidepanel = types
       {}
     ),
     constraints: types.optional(
-      createSchemaSidepanelFilter<SchemaAbstractConstraint>(
+      createSchemaSidepanelFilter<SchemaConstraint>(
         "Constraints",
         (schemaState) => schemaState.constraints,
         {keys: ["name", "params.name"]}
@@ -104,7 +105,7 @@ export const SchemaSidepanel = types
       {}
     ),
     scalars: types.optional(
-      createSchemaSidepanelFilter<SchemaScalar>(
+      createSchemaSidepanelFilter<SchemaScalarType>(
         "Scalars",
         (schemaState) => schemaState.scalars,
         {keys: ["name"]}

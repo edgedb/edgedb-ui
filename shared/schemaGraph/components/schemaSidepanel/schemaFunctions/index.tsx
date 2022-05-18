@@ -1,11 +1,12 @@
 import React from "react";
 import {observer} from "mobx-react";
 
+import {SchemaFunction} from "@edgedb/common/schemaData";
+
 import sharedStyles from "../schemaSidepanel.module.scss";
 import colourStyles from "../colours.module.scss";
 
 import {useSchemaState} from "../../../state/provider";
-import {SchemaFunction} from "../../../state";
 import {FilterMatches} from "../../../state/sidepanel";
 import {
   markString,
@@ -37,7 +38,7 @@ function FunctionCard(func: SchemaFunction, filterMatch?: FilterMatches) {
     return [
       ...paramName,
       {str: ": "},
-      ...getFullTypeExpr(param.typeName, param.typemod),
+      ...getFullTypeExpr(param.type.name, param.typemod),
       ...(param.default ? [{str: " = "}, {str: param.default}] : []),
     ];
   });
@@ -54,7 +55,7 @@ function FunctionCard(func: SchemaFunction, filterMatch?: FilterMatches) {
       : []),
     {str: ")"},
     {str: " -> ", marks: ["operator"]},
-    ...getFullTypeExpr(func.returnTypeName, func.returnTypemod),
+    ...getFullTypeExpr(func.returnType.name, func.returnTypemod),
   ];
 
   const tags = [func.volatility];

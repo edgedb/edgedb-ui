@@ -71,34 +71,3 @@ export interface SchemaFunction {
   volatility: string;
   annotations: SchemaAnnotation[];
 }
-
-export interface SchemaAbstractConstraint {
-  id: string;
-  name: string;
-  params: SchemaFunctionParam[];
-  expr: string | null;
-  annotations: SchemaAnnotation[];
-}
-
-export interface SchemaScalar {
-  id: string;
-  name: string;
-  extends: string[];
-  constraints: SchemaConstraint[];
-  enum_values: string[] | null;
-  annotations: SchemaAnnotation[];
-}
-
-export type SchemaType = {
-  type: string;
-  id: string;
-  name: string;
-  element_type_id: string | null;
-  element_types:
-    | {
-        name: string;
-        type_id: string;
-      }[]
-    | null;
-  enum_values: string[] | null;
-};
