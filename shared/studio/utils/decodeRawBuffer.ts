@@ -9,8 +9,9 @@ export type {EdgeDBSet};
 function newCodecsRegistry() {
   const registry = new _CodecsRegistry();
   registry.setCustomCodecs({
-    decimalString: true,
-    int64Bigint: true,
+    decimal_string: true,
+    int64_bigint: true,
+    datetime_localDatetime: true,
   });
   return registry;
 }

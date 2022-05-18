@@ -1,5 +1,5 @@
 import React, {PropsWithChildren} from "react";
-import {_ICodec} from "edgedb";
+import {LocalDateTime, _ICodec} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -20,7 +20,11 @@ export function buildScalarItem(
   data: any,
   comma?: boolean
 ): Item {
-  const {body, height} = renderValue(data, base.codec);
+  const {body, height} = renderValue(
+    data,
+    base.codec.getKnownTypeName(),
+    base.codec instanceof EnumCodec
+  );
 
   return {
     ...base,
@@ -52,7 +56,8 @@ function ScalarTag({name, children}: PropsWithChildren<TagProps>) {
 
 export function renderValue(
   value: any,
-  codec: _ICodec,
+  knownTypeName: string,
+  isEnum: boolean,
   showTypeTag: boolean = true,
   overrideStyles: {[key: string]: string} = {}
 ): {body: JSX.Element; height?: number} {
@@ -64,8 +69,7 @@ export function renderValue(
     ? ScalarTag
     : ({children}: PropsWithChildren<{}>) => <>{children}</>;
 
-  const mt = codec.getKnownTypeName();
-  switch (mt) {
+  switch (knownTypeName) {
     case "std::bigint":
     case "std::decimal":
       return {
@@ -113,13 +117,22 @@ export function renderValue(
         ),
       };
     case "std::datetime":
+      return {
+        body: (
+          <Tag name={knownTypeName}>
+            <span className={styles.scalar_string}>
+              {formatDatetime(value)}
+            </span>
+          </Tag>
+        ),
+      };
     case "cal::local_datetime":
     case "cal::local_time":
     case "cal::local_date":
     case "std::duration":
       return {
         body: (
-          <Tag name={mt}>
+          <Tag name={knownTypeName}>
             <span className={styles.scalar_string}>{value.toString()}</span>
           </Tag>
         ),
@@ -147,11 +160,13 @@ export function renderValue(
     };
   }
 
-  if (codec instanceof EnumCodec) {
+  if (isEnum) {
     return {
       body: (
         <span>
-          {showTypeTag ? <span className={styles.typeName}>{mt}.</span> : null}
+          {showTypeTag ? (
+            <span className={styles.typeName}>{knownTypeName}.</span>
+          ) : null}
           <b>{value.toString()}</b>
         </span>
       ),
@@ -160,11 +175,26 @@ export function renderValue(
 
   return {
     body: (
-      <Tag name={mt}>
+      <Tag name={knownTypeName}>
         <b>{value.toString()}</b>
       </Tag>
     ),
   };
+}
+
+export function scalarItemToString(item: any, typename: string): string {
+  switch (typename) {
+    case "std::uuid":
+      return formatUUID(item);
+    case "std::bytes":
+      return bufferToString(item);
+    case "std::json":
+      return prettyPrintJSON(item);
+    case "std::datetime":
+      return formatDatetime(item);
+    default:
+      return item.toString();
+  }
 }
 
 export function formatUUID(uuid: string): string {
@@ -179,6 +209,10 @@ export function formatUUID(uuid: string): string {
     "-" +
     uuid.slice(20)
   );
+}
+
+function formatDatetime(date: LocalDateTime): string {
+  return date.toString() + "+00:00";
 }
 
 function bufferToString(buf: Buffer): string {
