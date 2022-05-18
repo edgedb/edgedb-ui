@@ -3,9 +3,11 @@ import React, {useState} from "react";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
+import {SchemaConstraint} from "@edgedb/common/schemaData";
+
 import styles from "./schemaSidepanel.module.scss";
 
-import {SchemaAnnotation, SchemaConstraint} from "../../state";
+import {SchemaAnnotation} from "../../state";
 
 export function Annotation(annotation: SchemaAnnotation) {
   return (

@@ -91,7 +91,7 @@ export class ReplQueryParamsEditor extends Model({
     const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
 
     const query = repl.currentQuery;
-    const schemaScalars = dbState.schemaData?.data.scalars;
+    const schemaScalars = dbState.schemaData?.scalars;
 
     if (schemaScalars) {
       const params = extractQueryParameters(query.toString(), schemaScalars);

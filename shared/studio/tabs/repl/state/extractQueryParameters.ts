@@ -1,7 +1,7 @@
 import {SyntaxNode} from "@lezer/common";
 
 import {parser} from "@edgedb/lang-edgeql";
-import {SchemaScalar} from "@edgedb/schema-graph";
+import {SchemaScalarType, KnownScalarTypes} from "@edgedb/common/schemaData";
 
 import {getAllChildren, getNodeText} from "../../../utils/syntaxTree";
 
@@ -17,32 +17,11 @@ export interface ResolvedParameter extends ExtractedParameter {
   type: KnownScalarType | null;
 }
 
-export const KnownScalarTypes = [
-  "std::uuid",
-  "std::str",
-  "std::bytes",
-  "std::int16",
-  "std::int32",
-  "std::int64",
-  "std::float32",
-  "std::float64",
-  "std::decimal",
-  "std::bool",
-  "std::datetime",
-  "cal::local_datetime",
-  "cal::local_date",
-  "cal::local_time",
-  "std::duration",
-  "std::json",
-  "std::bigint",
-  "cfg::memory",
-] as const;
-
 type KnownScalarType = typeof KnownScalarTypes[number];
 
 export function extractQueryParameters(
   query: string,
-  schemaScalars: SchemaScalar[]
+  schemaScalars: Map<string, SchemaScalarType>
 ) {
   try {
     const syntaxTree = parser.parse(query);
@@ -114,10 +93,6 @@ export function extractQueryParameters(
 
     const resolvedParams = new Map<string, ResolvedParameter>();
 
-    const schemaScalarsMap = new Map(
-      schemaScalars.map((scalar) => [scalar.name, scalar])
-    );
-
     for (const param of extractedParams) {
       if (param.error) {
         resolvedParams.set(param.name, {...param, type: null});
@@ -133,11 +108,11 @@ export function extractQueryParameters(
       } else {
         let typeName = param.type!;
         while (
-          schemaScalarsMap.has(typeName) ||
-          schemaScalarsMap.has(`default::${typeName}`)
+          schemaScalars.has(typeName) ||
+          schemaScalars.has(`default::${typeName}`)
         ) {
-          const extendsTypeName = (schemaScalarsMap.get(typeName) ??
-            schemaScalarsMap.get(`default::${typeName}`))!.extends[0];
+          const extendsTypeName = (schemaScalars.get(typeName) ??
+            schemaScalars.get(`default::${typeName}`))!.bases[0].name;
           if (KnownScalarTypes.includes(extendsTypeName as any)) {
             resolvedType = extendsTypeName as any;
             break;

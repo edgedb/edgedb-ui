@@ -1,13 +1,14 @@
 import {types, cast, Instance} from "mobx-state-tree";
 
+import {
+  SchemaScalarType,
+  SchemaFunction,
+  SchemaConstraint,
+} from "@edgedb/common/schemaData";
+
 import {SchemaGraph} from "./graph";
 
-import {
-  SchemaObject,
-  SchemaFunction,
-  SchemaAbstractConstraint,
-  SchemaScalar,
-} from "./interfaces";
+import {SchemaObject} from "./interfaces";
 import {SchemaSidepanel} from "./sidepanel";
 
 export type {
@@ -17,8 +18,6 @@ export type {
   SchemaConstraint,
   SchemaAnnotation,
   SchemaFunction,
-  SchemaAbstractConstraint,
-  SchemaScalar,
 } from "./interfaces";
 
 export const Schema = types
@@ -26,14 +25,14 @@ export const Schema = types
     graph: types.optional(SchemaGraph, {viewport: {}}),
     sidepanel: types.optional(SchemaSidepanel, {}),
     objects: types.maybe(types.map(types.frozen<SchemaObject>())),
-    functions: types.maybe(types.array(types.frozen<SchemaFunction>())),
-    constraints: types.maybe(
-      types.array(types.frozen<SchemaAbstractConstraint>())
-    ),
-    scalars: types.maybe(types.array(types.frozen<SchemaScalar>())),
     selectedObjectName: "",
     selectedLinkName: "",
   })
+  .volatile(() => ({
+    functions: null as SchemaFunction[] | null,
+    constraints: null as SchemaConstraint[] | null,
+    scalars: null as SchemaScalarType[] | null,
+  }))
   .views((self) => ({
     get isLoaded() {
       return !!self.objects;
@@ -54,8 +53,8 @@ export const Schema = types
     updateSchema(
       objects: SchemaObject[],
       functions: SchemaFunction[],
-      constraints: SchemaAbstractConstraint[],
-      scalars: SchemaScalar[]
+      constraints: SchemaConstraint[],
+      scalars: SchemaScalarType[]
     ) {
       self.objects = cast(
         objects.reduce((objects, obj) => {
@@ -63,9 +62,9 @@ export const Schema = types
           return objects;
         }, {} as {[key: string]: SchemaObject})
       );
-      self.functions = cast(functions);
-      self.constraints = cast(constraints);
-      self.scalars = cast(scalars);
+      self.functions = functions;
+      self.constraints = constraints;
+      self.scalars = scalars;
 
       self.graph.updateGraphNodesAndLinks(objects);
       return self.graph.autoLayoutNodes();

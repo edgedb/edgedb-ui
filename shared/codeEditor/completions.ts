@@ -7,8 +7,8 @@ import {
 import {syntaxTree} from "@codemirror/language";
 import {Text} from "@codemirror/state";
 import {EditorView} from "@codemirror/view";
-import {SchemaObject} from "@edgedb/schema-graph";
 import {SyntaxNode} from "@lezer/common";
+import {SchemaObjectType} from "@edgedb/common/schemaData";
 
 function sliceDoc(doc: Text, range: {from: number; to: number}): string {
   return doc.sliceString(range.from, range.to);
@@ -29,7 +29,11 @@ function stripModuleName(typename: string): string {
   return module === "default" ? name : typename;
 }
 
-export function getCompletions(schemaObjects: SchemaObject[]) {
+export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
+  const userSchemaObjects = [...schemaObjects.values()].filter(
+    (obj) => !obj.builtin && !obj.unionOf && !obj.insectionOf
+  );
+
   return function completions(
     context: CompletionContext
   ): CompletionResult | null {
@@ -52,7 +56,7 @@ export function getCompletions(schemaObjects: SchemaObject[]) {
     ) {
       return {
         from: node?.name === "Keyword" ? context.pos : node.from,
-        options: schemaObjects.map((obj) => ({
+        options: userSchemaObjects.map((obj) => ({
           label: stripModuleName(obj.name),
         })),
         validFor: (text, from, to, state) => {
@@ -79,19 +83,17 @@ export function getCompletions(schemaObjects: SchemaObject[]) {
             if (!typeName.includes("::")) {
               typeName = "default::" + typeName;
             }
-            let typeObj = schemaObjects.find((obj) => obj.name === typeName);
+            let typeObj = schemaObjects.get(typeName);
 
             for (const pathPart of path) {
               if (!typeObj) break;
 
-              const link = typeObj.links.find(
-                (pointer) => pointer.name === pathPart
-              );
-              const targetName =
-                link?.targetNames.length === 1 ? link.targetNames[0] : null;
-              typeObj =
-                targetName &&
-                schemaObjects.find((obj) => obj.name === targetName);
+              const link = typeObj.links[pathPart];
+
+              const targetName = !link?.target.unionOf
+                ? link.target.name
+                : null;
+              typeObj = targetName ? schemaObjects.get(targetName) : undefined;
             }
 
             if (typeObj) {
@@ -101,15 +103,19 @@ export function getCompletions(schemaObjects: SchemaObject[]) {
                   {
                     label: "*",
                     apply: [
-                      ...typeObj.properties.map((prop) => prop.name),
-                      ...typeObj.links.map((link) => `${link.name}: {}`),
+                      ...Object.values(typeObj.properties).map(
+                        (prop) => prop.name
+                      ),
+                      ...Object.values(typeObj.links).map(
+                        (link) => `${link.name}: {}`
+                      ),
                     ].join(`,\n${" ".repeat(pos - doc.lineAt(pos).from)}`),
                   },
-                  ...typeObj.properties.map((prop) => ({
+                  ...Object.values(typeObj.properties).map((prop) => ({
                     label: prop.name,
                     apply: prop.name + ",",
                   })),
-                  ...typeObj.links.map((link) => ({
+                  ...Object.values(typeObj.links).map((link) => ({
                     label: link.name,
                     apply: (
                       view: EditorView,

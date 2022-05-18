@@ -75,7 +75,7 @@ export const schemaTabSpec: DatabaseTabSpec = {
 const SchemaTextView = observer(function SchemaTextView() {
   const dbState = useDatabaseState();
 
-  const sdl = (dbState.schemaData?.data.sdl ?? "").replace(
+  const sdl = (dbState.schemaData?.sdl ?? "").replace(
     /;\n(?!\s*}| {12})/g,
     ";\n\n"
   );

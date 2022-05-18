@@ -32,7 +32,7 @@ import {edgeql, edgeqlLanguage} from "@edgedb/lang-edgeql";
 import {highlightStyle, darkTheme, lightTheme} from "./theme";
 import {getCompletions} from "./completions";
 
-import {SchemaObject} from "@edgedb/schema-graph";
+import {SchemaObjectType} from "@edgedb/common/schemaData";
 
 import styles from "./codeEditor.module.scss";
 
@@ -45,7 +45,7 @@ interface ExtensionConfig {
   onChange: (doc: Text) => void;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
-  schemaObjects?: SchemaObject[];
+  schemaObjects?: Map<string, SchemaObjectType>;
 }
 
 function getExtensions({
@@ -114,7 +114,7 @@ export interface CodeEditorProps {
   onChange: (value: Text) => void;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
-  schemaObjects?: SchemaObject[];
+  schemaObjects?: Map<string, SchemaObjectType>;
 }
 
 export interface CodeEditorRef {
