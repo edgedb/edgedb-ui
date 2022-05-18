@@ -1,6 +1,7 @@
-import React from "react";
+import React, {Fragment} from "react";
 import {StyleModule} from "style-mod";
 
+import {Tree} from "@lezer/common";
 import {highlightTree} from "@lezer/highlight";
 
 import {edgeqlLanguage} from "@edgedb/lang-edgeql";
@@ -10,35 +11,46 @@ if (highlightStyle.module) {
   StyleModule.mount(document, highlightStyle.module);
 }
 
+type CustomRange = {range: [number, number]} & (
+  | {style: string}
+  | {
+      renderer: (range: [number, number], content: JSX.Element) => JSX.Element;
+    }
+);
+
 interface CodeBlockProps {
   code: string;
-  highlightRanges?: {range: [number, number]; style: string}[];
+  customRanges?: CustomRange[] | ((tree: Tree) => CustomRange[]);
 }
 
 export default function CodeBlock({
   code,
-  highlightRanges,
+  customRanges,
   ...otherProps
 }: React.HTMLAttributes<HTMLPreElement> & CodeBlockProps) {
   const tree = edgeqlLanguage.parser.parse(code);
 
   const html: (string | JSX.Element)[] = [];
 
-  let nextHighlightIndex = 0;
-  let highlight = highlightRanges?.[nextHighlightIndex++];
+  const ranges = Array.isArray(customRanges)
+    ? customRanges
+    : customRanges?.(tree);
 
-  let highlightBuffer: (string | JSX.Element)[] | null = null;
+  let nextRangeIndex = 0;
+  let currentRange = ranges?.[nextRangeIndex++];
+
+  let customRangeBuffer: (string | JSX.Element)[] | null = null;
 
   let cursor = 0;
   function addSpan(text: string, className?: string): void {
     if (
-      !highlightBuffer &&
-      highlight &&
-      highlight.range[0] >= cursor &&
-      highlight.range[0] <= cursor + text.length
+      !customRangeBuffer &&
+      currentRange &&
+      currentRange.range[0] >= cursor &&
+      currentRange.range[0] <= cursor + text.length
     ) {
-      if (highlight.range[0] !== cursor) {
-        const textSlice = text.slice(0, highlight.range[0] - cursor);
+      if (currentRange.range[0] !== cursor) {
+        const textSlice = text.slice(0, currentRange.range[0] - cursor);
         html.push(
           className ? (
             <span key={html.length} className={className}>
@@ -48,17 +60,17 @@ export default function CodeBlock({
             textSlice
           )
         );
-        text = text.slice(highlight.range[0] - cursor);
+        text = text.slice(currentRange.range[0] - cursor);
       }
-      cursor = highlight.range[0];
-      highlightBuffer = [];
+      cursor = currentRange.range[0];
+      customRangeBuffer = [];
     }
-    if (highlightBuffer) {
-      if (highlight!.range[1] <= cursor + text.length) {
-        const textSlice = text.slice(0, highlight!.range[1] - cursor);
-        highlightBuffer.push(
+    if (customRangeBuffer) {
+      if (currentRange!.range[1] <= cursor + text.length) {
+        const textSlice = text.slice(0, currentRange!.range[1] - cursor);
+        customRangeBuffer.push(
           className ? (
-            <span key={highlightBuffer.length} className={className}>
+            <span key={customRangeBuffer.length} className={className}>
               {textSlice}
             </span>
           ) : (
@@ -66,18 +78,27 @@ export default function CodeBlock({
           )
         );
         html.push(
-          <span key={html.length} className={highlight!.style}>
-            {highlightBuffer}
-          </span>
+          "style" in currentRange ? (
+            <span key={html.length} className={currentRange.style}>
+              {customRangeBuffer}
+            </span>
+          ) : (
+            <Fragment key={html.length}>
+              {currentRange.renderer(
+                currentRange.range,
+                <>{customRangeBuffer}</>
+              )}
+            </Fragment>
+          )
         );
-        highlightBuffer = null;
-        cursor = highlight!.range[1];
-        highlight = highlightRanges?.[nextHighlightIndex++];
+        customRangeBuffer = null;
+        cursor = currentRange!.range[1];
+        currentRange = ranges?.[nextRangeIndex++];
         return addSpan(text.slice(textSlice.length), className);
       } else {
-        highlightBuffer.push(
+        customRangeBuffer.push(
           className ? (
-            <span key={highlightBuffer.length} className={className}>
+            <span key={customRangeBuffer.length} className={className}>
               {text}
             </span>
           ) : (
@@ -108,11 +129,17 @@ export default function CodeBlock({
   });
   addSpan(code.slice(cursor));
 
-  if (highlightBuffer) {
+  if (customRangeBuffer) {
     html.push(
-      <span key={html.length} className={highlight!.style}>
-        {highlightBuffer}
-      </span>
+      "style" in currentRange ? (
+        <span key={html.length} className={currentRange.style}>
+          {customRangeBuffer}
+        </span>
+      ) : (
+        <Fragment key={html.length}>
+          {currentRange.renderer(currentRange.range, <>{customRangeBuffer}</>)}
+        </Fragment>
+      )
     );
   }
 

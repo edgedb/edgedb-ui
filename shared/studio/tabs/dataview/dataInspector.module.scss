@@ -3,6 +3,7 @@
 .dataInspector {
   flex-grow: 1;
   min-height: 0;
+  background: #f2f2f2;
 
   // 6px left padding + 30px delete icon +
   // 10px (chevron width) + 16px (chevron padding)
@@ -16,10 +17,15 @@
     // above + 30px checkbox
     --rowIndexWidth: calc(var(--rowIndexCharWidth) * 7.8px + 92px);
   }
+
+  @include darkTheme {
+    background: #2e2e2e;
+  }
 }
 
 .innerContainer {
   margin-left: var(--rowIndexWidth);
+  margin-bottom: var(--gridBottomPadding);
 }
 
 .header {
@@ -32,7 +38,7 @@
   min-width: 100%;
   padding-left: var(--rowIndexWidth);
   padding-right: 4rem;
-  background: rgba(214, 214, 214, 0.9);
+  background: rgba(228, 228, 228, 0.9);
   backdrop-filter: blur(4px);
   z-index: 2;
 
@@ -47,7 +53,7 @@
   }
 
   @include darkTheme {
-    background: rgba(29, 29, 29, 0.8);
+    background: rgba(37, 37, 37, 0.9);
   }
 }
 
@@ -74,7 +80,7 @@
 
   .fieldName {
     font-weight: 500;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 16px;
     color: #333;
     margin-bottom: 2px;
@@ -88,12 +94,22 @@
 
   .fieldSort {
     display: flex;
-    padding: 8px;
+    padding: 8px 4px;
     margin-left: auto;
     cursor: pointer;
     flex-shrink: 0;
 
-    &.fieldSortDesc {
+    svg {
+      fill: #999;
+    }
+
+    &.fieldSorted {
+      svg {
+        fill: #047cff;
+      }
+    }
+
+    &.fieldSortAsc {
       transform: scale(-1);
     }
   }
@@ -144,7 +160,7 @@
     height: 14px;
     border-radius: 7px;
     padding: 0 8px;
-    background: #939393;
+    background: #a8a8a8;
     font-family: Roboto Mono;
     font-style: normal;
     font-weight: 400;
@@ -156,7 +172,7 @@
   &:before {
     content: "";
     position: absolute;
-    background: #939393;
+    background: #a8a8a8;
     left: 8px;
     right: 8px;
     height: 3px;
@@ -175,19 +191,21 @@
 
 .cellWrapper {
   display: flex;
+  padding: 4px 0;
+  box-sizing: border-box;
 }
 
 .cell {
   flex-grow: 1;
   box-sizing: border-box;
   overflow: hidden;
-  line-height: 30px;
+  line-height: 32px;
   white-space: nowrap;
   text-overflow: ellipsis;
   padding: 0 8px;
   font-family: Roboto Mono;
   font-weight: normal;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .loadingCell {
@@ -197,7 +215,7 @@
     height: 10px;
     border-radius: 5px;
     left: 1rem;
-    top: 10px;
+    top: 15px;
     width: calc(100% - 4rem);
     background: #e6e6e6;
 
@@ -212,6 +230,7 @@
 }
 
 .linksCell {
+  height: 32px;
   display: flex;
   align-items: center;
   mask-image: linear-gradient(
@@ -226,43 +245,70 @@
   &:hover:after {
     content: "";
     position: absolute;
-    top: 0;
+    top: 4px;
     left: 0;
     right: 0;
-    bottom: 0;
-    border: 2px solid #287cff;
+    bottom: 4px;
+    border: 2px solid #047cff;
     border-radius: 4px;
+    opacity: 0.5;
   }
 }
 
-.hasEdits {
+.hasEdits,
+.hasErrors {
   &:before {
     content: "";
     position: absolute;
-    top: 2px;
+    top: 7px;
     left: 2px;
-    bottom: 2px;
+    bottom: 7px;
     border: 2px solid #ffa900;
     border-radius: 5px;
+
+    @include darkTheme {
+      border-color: #e5c18c;
+    }
+  }
+}
+
+.hasErrors:before {
+  border-color: #d78d87;
+
+  @include darkTheme {
+    border-color: #af6963;
   }
 }
 
 .isDeleted {
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
 .linkObjName {
-  height: 22px;
-  line-height: 22px;
-  background: #d9d9d9;
-  border-radius: 11px;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 24px;
+  line-height: 24px;
+  background: #e6e6e6;
+  border-radius: 12px;
   color: #4d4d4d;
-  padding: 0 8px;
-  margin-right: 6px;
+  padding-left: 10px;
+  margin-right: 8px;
+  overflow: hidden;
+
+  span {
+    background: #d9d9d9;
+    margin-left: 8px;
+    padding: 0 10px 0 8px;
+  }
 
   @include darkTheme {
     background: #3d3d3d;
-    color: #8b8b8b;
+    color: #adadad;
+
+    span {
+      background: #494949;
+    }
   }
 }
 
@@ -274,32 +320,13 @@
   position: relative;
   height: 0px;
   left: 0px;
-  z-index: 1;
-
-  .rowIndex {
-    position: absolute;
-    width: var(--rowIndexWidth);
-    height: 30px;
-    display: flex;
-    padding-left: 4px;
-
-    &.hasLinkEdit:after {
-      content: "";
-      position: absolute;
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      bottom: 2px;
-      border: 2px solid #ffa900;
-      border-radius: 5px;
-    }
-  }
 
   .deletedRowStrikethrough {
     position: absolute;
     left: var(--rowIndexWidth);
     width: var(--gridWidth);
-    height: 30px;
+    height: 40px;
+    z-index: 1;
 
     &:after {
       content: "";
@@ -308,52 +335,37 @@
       left: -2px;
       right: -2px;
       height: 0px;
-      border: 1px solid #ffa900;
+      border: 1px solid #a1843d;
       border-radius: 2px;
-      top: 14px;
+      top: 20px;
     }
   }
 
-  .cell {
-    color: #686868;
-    text-align: right;
-    flex-grow: 1;
-    overflow: visible;
-    padding-left: 0;
-  }
+  .rowHoverBg {
+    position: absolute;
+    height: 40px;
+    width: calc(var(--rowIndexWidth) + var(--gridWidth) + 32px);
+    min-width: 100%;
 
-  .expandRow {
-    width: 10px;
-    padding: 0 1rem;
-    flex-shrink: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+    &.active {
+      background: #fafafa;
 
-    svg {
-      width: 100%;
-      transform: rotate(-90deg);
-      transition: transform 0.1s;
-    }
-
-    &.isExpanded svg {
-      transform: none;
-    }
-
-    &.isHidden {
-      visibility: hidden;
+      @include darkTheme {
+        background: #262626;
+      }
     }
   }
 
   .inspectorRow {
-    --lineHeight: 24px;
+    --lineHeight: 28px;
 
     position: absolute;
     font-family: Roboto Mono;
-    font-size: 13px;
+    font-size: 14px;
     margin-left: var(--rowIndexWidth);
     display: flex;
     align-items: center;
+    z-index: 1;
   }
 
   .viewInTableButton {
@@ -381,36 +393,131 @@
 
 .scalar_uuid {
   color: #6f6f6f;
-}
 
-.rowActions {
-  display: flex;
-}
-
-.deleteRowAction {
-  display: flex;
-  width: 30px;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  opacity: 0;
-
-  svg {
-    fill: #ff4242;
-  }
-
-  .rowIndex:hover & {
-    opacity: 1;
+  &:before,
+  &:after {
+    content: "";
   }
 }
 
-.selectLinkAction {
+.rowIndex {
+  position: absolute;
+  width: var(--rowIndexWidth);
+  height: 40px;
+  z-index: 1;
   display: flex;
-  width: 30px;
-  align-items: center;
-  cursor: pointer;
+  padding-left: 4px;
 
-  input {
+  &.hasLinkEdit:after {
+    content: "";
+    position: absolute;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    bottom: 2px;
+    border: 2px solid #ffa900;
+    border-radius: 5px;
+
+    @include darkTheme {
+      border-color: #e5c18c;
+    }
+  }
+
+  .cell {
+    text-align: right;
+    flex-grow: 1;
+    overflow: visible;
+    padding-left: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #a7a7a7;
+    line-height: 40px;
+  }
+
+  .expandRow {
+    width: 10px;
+    padding: 0 1rem;
+    flex-shrink: 0;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+
+    svg {
+      width: 100%;
+      transform: rotate(-90deg);
+      transition: transform 0.1s;
+    }
+
+    &.isExpanded svg {
+      transform: none;
+    }
+
+    &.isHidden {
+      visibility: hidden;
+    }
+  }
+
+  .rowActions {
+    display: flex;
+  }
+
+  .deleteRowAction {
+    display: flex;
+    width: 30px;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+
+    svg {
+      fill: #ff4242;
+    }
+  }
+
+  .selectLinkAction {
+    display: flex;
+    width: 30px;
+    align-items: center;
+    cursor: pointer;
+
+    input {
+      cursor: pointer;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #cccccc;
+      border-radius: 3px;
+
+      &.isRadio {
+        border-radius: 8px;
+      }
+
+      &:checked {
+        border: 0;
+        background-color: #1f8aed;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-image: url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5 1H1.5C1.22386 1 1 1.22386 1 1.5V4.5C1 4.77614 1.22386 5 1.5 5H5C5.27614 5 5.5 4.77614 5.5 4.5V4H6.5V4.5C6.5 5.32843 5.82843 6 5 6H1.5C0.671573 6 0 5.32843 0 4.5V1.5C0 0.671573 0.671573 0 1.5 0H5C5.82843 0 6.5 0.671573 6.5 1.5H5.5C5.5 1.22386 5.27614 1 5 1ZM8.5 3H5C4.72386 3 4.5 3.22386 4.5 3.5V4H3.5V3.5C3.5 2.67157 4.17157 2 5 2H8.5C9.32843 2 10 2.67157 10 3.5V6.5C10 7.32843 9.32843 8 8.5 8H5C4.17157 8 3.5 7.32843 3.5 6.5H4.5C4.5 6.77614 4.72386 7 5 7H8.5C8.77614 7 9 6.77614 9 6.5V3.5C9 3.22386 8.77614 3 8.5 3Z' fill='white'/%3E%3C/svg%3E%0A");
+      }
+
+      @include darkTheme {
+        border-color: #7d7d7d;
+      }
+    }
+  }
+
+  &.active {
+    .cell {
+      color: #00ba83;
+    }
+
+    .expandRow {
+      opacity: 1;
+    }
+
+    .deleteRowAction {
+      opacity: 1;
+    }
   }
 }

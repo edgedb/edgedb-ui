@@ -1,6 +1,7 @@
 import {
   createContext,
   forwardRef,
+  Fragment,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -9,6 +10,10 @@ import {
 } from "react";
 import {observer} from "mobx-react";
 import {VariableSizeGrid as Grid} from "react-window";
+
+import {ICodec} from "edgedb/dist/codecs/ifaces";
+import {EnumCodec} from "edgedb/dist/codecs/enum";
+import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -24,19 +29,18 @@ import styles from "./dataInspector.module.scss";
 
 import {
   DataInspector as DataInspectorState,
+  DataRowData,
+  ExpandedRowData,
   ObjectField,
   ObjectFieldType,
   RowKind,
 } from "./state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
 
-import {SortIcon, SortedAscIcon} from "./icons";
+import {SortIcon, SortedDescIcon} from "./icons";
 import {ChevronDownIcon, DeleteIcon, UndeleteIcon} from "../../icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
 import {DataEditor} from "./dataEditor";
-import {trace} from "mobx";
-import {ICodec} from "edgedb/dist/codecs/ifaces";
-import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -47,20 +51,25 @@ const useDataInspectorState = () => {
   return useContext(DataInspectorContext)!;
 };
 
-const RenderedRowsContext = createContext<[number, number]>([0, 0]);
-
 const innerElementType = forwardRef<HTMLDivElement>(
-  ({style, ...props}: any, ref) => (
-    <div
-      ref={ref}
-      className={styles.innerContainer}
-      style={{
-        ...style,
-        position: "relative",
-      }}
-      {...props}
-    />
-  )
+  ({style, ...props}: any, ref) => {
+    const {state} = useDataInspectorState();
+
+    return (
+      <div
+        ref={ref}
+        className={styles.innerContainer}
+        style={{
+          ...style,
+          position: "relative",
+        }}
+        onMouseLeave={() => {
+          state.setHoverRowIndex(null);
+        }}
+        {...props}
+      />
+    );
+  }
 );
 
 const outerElementType = forwardRef<HTMLDivElement>(
@@ -88,10 +97,6 @@ export default observer(function DataInspectorTable({
   const gridRef = useRef<Grid>(null);
 
   const initialScrollOffset = useInitialValue(() => state.scrollPos);
-
-  const [renderedRowIndexes, setRenderedRowIndexes] = useState<
-    [number, number]
-  >([0, 0]);
 
   useResize(gridContainer, ({width, height}) =>
     setContainerSize([width, height])
@@ -125,59 +130,57 @@ export default observer(function DataInspectorTable({
 
   return (
     <DataInspectorContext.Provider value={{state, edits}}>
-      <RenderedRowsContext.Provider value={renderedRowIndexes}>
-        <div
-          ref={gridContainer}
-          className={cn(styles.dataInspector, inspectorStyles.inspectorTheme, {
-            [styles.editMode]: !!state.parentObject?.editMode,
-          })}
-          style={
-            {
-              "--rowIndexCharWidth": rowIndexCharWidth,
-              "--gridWidth":
-                (state.fields?.reduce((sum, f) => sum + f.width, 0) ?? 0) +
-                "px",
-            } as any
+      <div
+        ref={gridContainer}
+        className={cn(styles.dataInspector, inspectorStyles.inspectorTheme, {
+          [styles.editMode]: !!state.parentObject?.editMode,
+        })}
+        style={
+          {
+            "--rowIndexCharWidth": rowIndexCharWidth,
+            "--gridWidth":
+              (state.fields?.reduce((sum, f) => sum + f.width, 0) ?? 0) + "px",
+            "--gridBottomPadding":
+              containerSize[1] -
+              (state.hasSubtypeFields ? 64 : 48) -
+              40 +
+              "px",
+          } as any
+        }
+      >
+        <Grid
+          ref={gridRef}
+          outerElementType={outerElementType}
+          innerElementType={innerElementType}
+          width={containerSize[0]}
+          height={containerSize[1]}
+          initialScrollTop={initialScrollOffset[0]}
+          initialScrollLeft={initialScrollOffset[1]}
+          onScroll={({scrollTop, scrollLeft}) => {
+            state.setScrollPos([scrollTop, scrollLeft]);
+          }}
+          columnCount={state.fields?.length ?? 0}
+          estimatedColumnWidth={180}
+          columnWidth={(index) => state.fields![index].width}
+          rowCount={state.gridRowCount}
+          estimatedRowHeight={40}
+          rowHeight={(rowIndex) =>
+            state.getRowData(rowIndex - state.insertedRows.length).kind ===
+            RowKind.expanded
+              ? 28
+              : 40
           }
-        >
-          <Grid
-            ref={gridRef}
-            outerElementType={outerElementType}
-            innerElementType={innerElementType}
-            width={containerSize[0]}
-            height={containerSize[1]}
-            initialScrollTop={initialScrollOffset[0]}
-            initialScrollLeft={initialScrollOffset[1]}
-            onScroll={({scrollTop, scrollLeft}) => {
-              state.setScrollPos([scrollTop, scrollLeft]);
-            }}
-            columnCount={state.fields?.length ?? 0}
-            estimatedColumnWidth={180}
-            columnWidth={(index) => state.fields![index].width}
-            rowCount={state.gridRowCount}
-            estimatedRowHeight={30}
-            rowHeight={(rowIndex) =>
-              state.getRowData(rowIndex).kind === RowKind.expanded ? 24 : 30
-            }
-            overscanRowCount={5}
-            onItemsRendered={({
+          overscanRowCount={5}
+          onItemsRendered={({overscanRowStartIndex, overscanRowStopIndex}) => {
+            state.setVisibleRowIndexes(
               overscanRowStartIndex,
-              overscanRowStopIndex,
-            }) => {
-              setRenderedRowIndexes([
-                overscanRowStartIndex,
-                overscanRowStopIndex,
-              ]);
-              state.setVisibleRowIndexes(
-                overscanRowStartIndex,
-                overscanRowStopIndex
-              );
-            }}
-          >
-            {GridCellWrapper}
-          </Grid>
-        </div>
-      </RenderedRowsContext.Provider>
+              overscanRowStopIndex
+            );
+          }}
+        >
+          {GridCellWrapper}
+        </Grid>
+      </div>
     </DataInspectorContext.Provider>
   );
 });
@@ -195,8 +198,14 @@ function GridCellWrapper({
   rowIndex: number;
   style: any;
 }) {
+  const {state} = useDataInspectorState();
+
   return (
-    <div className={styles.cellWrapper} style={style}>
+    <div
+      className={styles.cellWrapper}
+      style={style}
+      onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
+    >
       <GridCell columnIndex={columnIndex} rowIndex={rowIndex} />
     </div>
   );
@@ -205,16 +214,22 @@ function GridCellWrapper({
 function renderCellValue(value: any, codec: ICodec): JSX.Element {
   switch (codec.getKind()) {
     case "scalar":
-      return renderValue(value, codec, false, inspectorOverrideStyles).body;
+      return renderValue(
+        value,
+        codec.getKnownTypeName(),
+        codec instanceof EnumCodec,
+        false,
+        inspectorOverrideStyles
+      ).body;
     case "set":
       return (
         <>
           {"{"}
           {(value as any[]).map((item, i) => (
-            <>
+            <Fragment key={i}>
               {i !== 0 ? ", " : null}
               {renderCellValue(item, codec.getSubcodecs()[0])}
-            </>
+            </Fragment>
           ))}
           {"}"}
         </>
@@ -224,10 +239,10 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
         <>
           [
           {(value as any[]).map((item, i) => (
-            <>
+            <Fragment key={i}>
               {i !== 0 ? ", " : null}
               {renderCellValue(item, codec.getSubcodecs()[0])}
-            </>
+            </Fragment>
           ))}
           ]
         </>
@@ -237,10 +252,10 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
         <>
           (
           {(value as any[]).map((item, i) => (
-            <>
+            <Fragment key={i}>
               {i !== 0 ? ", " : null}
               {renderCellValue(item, codec.getSubcodecs()[i])}
-            </>
+            </Fragment>
           ))}
           )
         </>
@@ -252,12 +267,12 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
         <>
           (
           {fieldNames.map((name, i) => (
-            <>
+            <Fragment key={i}>
               {i !== 0 ? ", " : null}
               {name}
               {" := "}
               {renderCellValue(value[name], subCodecs[i])}
-            </>
+            </Fragment>
           ))}
           )
         </>
@@ -275,8 +290,6 @@ const GridCell = observer(function GridCell({
   columnIndex: number;
   rowIndex: number;
 }) {
-  // console.log("rendering");
-  // trace();
   const {state, edits} = useDataInspectorState();
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
@@ -299,13 +312,23 @@ const GridCell = observer(function GridCell({
   const cellEditState = edits.propertyEdits.get(cellId);
   const linkEditState = edits.linkEdits.get(cellId);
 
+  const editedLinkChange =
+    state.parentObject &&
+    edits.linkEdits.get(state.parentObject.linkId)?.changes.get(data?.id);
+
   const value =
     cellEditState?.value !== undefined
       ? cellEditState.value
       : data?.[rowData ? field.queryName : field.name] ?? null;
 
+  const isEmptySubtype =
+    field.subtypeName &&
+    data?.__tname__ &&
+    data?.__tname__ !== field.subtypeName;
+
   if (
     !isDeletedRow &&
+    !isEmptySubtype &&
     field.type === ObjectFieldType.property &&
     edits.activePropertyEditId === cellId
   ) {
@@ -324,11 +347,6 @@ const GridCell = observer(function GridCell({
     );
   }
 
-  const isEmptySubtype =
-    field.subtypeName &&
-    data?.__tname__ &&
-    data?.__tname__ !== field.subtypeName;
-
   let content: JSX.Element | null = null;
   if (isEmptySubtype) {
     content = <span className={styles.emptySubtypeField}>-</span>;
@@ -337,7 +355,7 @@ const GridCell = observer(function GridCell({
       if ((!rowData && field.name === "id") || value === null) {
         content = (
           <span className={styles.emptySet}>
-            {(!rowData ? field.default : null) ?? "{}"}
+            {(!rowData ? field.default ?? field.computedExpr : null) ?? "{}"}
           </span>
         );
       } else {
@@ -374,38 +392,46 @@ const GridCell = observer(function GridCell({
         content = <span className={styles.emptySet}>{"{}"}</span>;
       } else {
         content = (
-          <>
+          <div className={styles.linksCell}>
             {Object.entries(counts).map(([typename, count], i) => (
               <div className={styles.linkObjName} key={i}>
-                {typename} {count}
+                {typename}
+                <span>{count}</span>
               </div>
             ))}
-          </>
+          </div>
         );
       }
     }
   }
 
   const isEditable =
-    !field.computed &&
-    (!field.readonly || rowData) &&
+    !isEmptySubtype &&
+    !field.computedExpr &&
+    (!field.readonly || !rowData) &&
     data &&
-    (field.type === ObjectFieldType.link ||
-      (field.name !== "id" && !isEmptySubtype));
+    (field.type === ObjectFieldType.link || field.name !== "id");
 
   return (
     <div
       className={cn(styles.cell, {
         [styles.loadingCell]: !data,
-        [styles.isDeleted]: isDeletedRow,
-        [styles.linksCell]: field.type === ObjectFieldType.link,
+        [styles.isDeleted]:
+          isDeletedRow ||
+          editedLinkChange?.kind === UpdateLinkChangeKind.Remove,
         [styles.editableCell]: !isDeletedRow && isEditable,
         [styles.hasEdits]:
           !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
+        [styles.hasErrors]:
+          !rowData &&
+          isEditable &&
+          field.required &&
+          value === null &&
+          !linkEditState,
       })}
       onClick={() => {
         if (field.type === ObjectFieldType.link) {
-          state.openNestedView(data.id, data.__tname__, field.name);
+          state.openNestedView(data.id, data.__tname__, field);
         }
       }}
       onDoubleClick={() => {
@@ -413,7 +439,7 @@ const GridCell = observer(function GridCell({
           if (field.type === ObjectFieldType.property) {
             edits.startEditingCell(data.id, field.name);
           } else {
-            state.openNestedView(data.id, data.__tname__, field.name, true);
+            state.openNestedView(data.id, data.__tname__, field, true);
           }
         }
       }}
@@ -445,7 +471,7 @@ const FieldHeaders = observer(function FieldHeaders() {
           )
         )}
         {state.fields?.map((field, i) => (
-          <FieldHeader key={field.name} colIndex={i} field={field} />
+          <FieldHeader key={field.queryName} colIndex={i} field={field} />
         ))}
       </div>
     </div>
@@ -496,11 +522,12 @@ const FieldHeader = observer(function FieldHeader({
       {field.type === ObjectFieldType.property && field.name !== "id" ? (
         <div
           className={cn(styles.fieldSort, {
-            [styles.fieldSortDesc]: sortDir === "DESC",
+            [styles.fieldSorted]: !!sortDir,
+            [styles.fieldSortAsc]: sortDir === "ASC",
           })}
           onClick={() => state.setSortBy(colIndex)}
         >
-          {sortDir ? <SortedAscIcon /> : <SortIcon />}
+          {sortDir ? <SortedDescIcon /> : <SortIcon />}
         </div>
       ) : null}
 
@@ -509,8 +536,9 @@ const FieldHeader = observer(function FieldHeader({
   );
 });
 
-function StickyCol() {
-  const [startIndex, endIndex] = useContext(RenderedRowsContext);
+const StickyCol = observer(function StickyCol() {
+  const {state} = useDataInspectorState();
+  const [startIndex, endIndex] = state.visibleIndexes;
 
   return (
     <div className={styles.stickyCol}>
@@ -521,7 +549,7 @@ function StickyCol() {
         ))}
     </div>
   );
-}
+});
 
 interface StickyRowProps {
   rowIndex: number;
@@ -533,91 +561,83 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
   const style = (state.gridRef as any)?._getItemStyle(rowIndex, 0) ?? {};
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
-
   const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
   if (rowData?.kind === RowKind.expanded) {
-    const item = rowData.state.getItems()?.[rowData.index];
-
-    return (
-      <div className={styles.inspectorRow} style={{top: style.top}}>
-        {item ? (
-          <>
-            <InspectorRow
-              item={item}
-              isExpanded={!!rowData.state.state.expanded?.has(item.id)}
-              toggleExpanded={() => {
-                rowData.state.toggleExpanded(rowData.index);
-                state.gridRef?.resetAfterRowIndex(rowIndex);
-              }}
-            />
-            {item.level === 2 &&
-            rowData.state.linkFields.has(item.fieldName as string) ? (
-              <div
-                className={styles.viewInTableButton}
-                onClick={() =>
-                  state.openNestedView(
-                    rowData.state.objectId,
-                    rowData.state.objectType,
-                    item.fieldName!
-                  )
-                }
-              >
-                View in Table
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <div>Loading...</div>
-        )}
-      </div>
-    );
+    return <ExpandedDataInspector rowData={rowData} styleTop={style.top} />;
   } else {
-    if (rowData && rowData.index >= state.rowCount) return null;
-
-    const data = rowData && state.getData(rowData.index);
-
-    const isDeletedRow = data != null && edits.deleteEdits.has(data.id);
-
-    const editedLink =
-      state.parentObject && edits.linkEdits.get(state.parentObject.linkId);
-
-    const editedLinkChange = editedLink?.changes.get(data?.id);
-
     return (
-      <>
-        <div
-          className={cn(styles.rowIndex, {
-            [styles.hasLinkEdit]: !!editedLinkChange || !rowData,
-          })}
-          style={{top: style.top}}
-        >
-          <div className={styles.rowActions}>
-            {!rowData || data ? (
-              <>
-                <div
-                  className={styles.deleteRowAction}
-                  onClick={() => {
-                    if (rowData) {
-                      edits.toggleRowDelete(data.id, data.__tname__);
-                      if (state.expandedInspectors.has(data.id)) {
-                        state.toggleRowExpanded(rowDataIndex);
-                      }
-                    } else {
-                      edits.removeInsertedRow(state.insertedRows[rowIndex]);
+      <DataRowIndex
+        rowIndex={rowIndex}
+        dataIndex={rowData?.index ?? null}
+        styleTop={style.top}
+        active={state.hoverRowIndex === rowIndex}
+      />
+    );
+  }
+});
+
+const DataRowIndex = observer(function DataRowIndex({
+  rowIndex,
+  dataIndex,
+  styleTop,
+  active,
+}: {
+  rowIndex: number;
+  dataIndex: number | null;
+  styleTop: any;
+  active: boolean;
+}) {
+  const {state, edits} = useDataInspectorState();
+
+  if (dataIndex !== null && dataIndex >= state.rowCount) return null;
+
+  const rowDataIndex = rowIndex - state.insertedRows.length;
+
+  const data = dataIndex !== null && state.getData(dataIndex);
+
+  const isDeletedRow = data != null && edits.deleteEdits.has(data.id);
+
+  const editedLink =
+    state.parentObject && edits.linkEdits.get(state.parentObject.linkId);
+
+  const editedLinkChange = editedLink?.changes.get(data?.id);
+
+  return (
+    <>
+      <div
+        className={cn(styles.rowIndex, {
+          [styles.active]: active,
+          [styles.hasLinkEdit]: !!editedLinkChange || dataIndex === null,
+        })}
+        style={{top: styleTop}}
+        onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
+      >
+        <div className={styles.rowActions}>
+          {dataIndex === null || data ? (
+            <>
+              <div
+                className={styles.deleteRowAction}
+                onClick={() => {
+                  if (dataIndex !== null) {
+                    edits.toggleRowDelete(data.id, data.__tname__);
+                    if (state.expandedInspectors.has(data.id)) {
+                      state.toggleRowExpanded(rowDataIndex);
                     }
-                  }}
-                >
-                  {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
-                </div>
-                {state.parentObject?.editMode ? (
-                  <label className={styles.selectLinkAction}>
+                  } else {
+                    edits.removeInsertedRow(state.insertedRows[rowIndex]);
+                  }
+                }}
+              >
+                {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
+              </div>
+              {state.parentObject?.editMode ? (
+                <label className={styles.selectLinkAction}>
+                  {state.parentObject.isMultiLink ? (
                     <input
-                      type={
-                        state.parentObject.isMultiLink ? "checkbox" : "radio"
-                      }
+                      type="checkbox"
                       checked={
-                        rowData
+                        dataIndex !== null
                           ? editedLinkChange
                             ? editedLinkChange.kind ===
                               UpdateLinkChangeKind.Add
@@ -627,7 +647,7 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
                             ) ?? false
                       }
                       onChange={() => {
-                        if (rowData) {
+                        if (dataIndex !== null) {
                           if (editedLinkChange) {
                             edits.removeLinkUpdate(
                               state.parentObject!.id,
@@ -637,9 +657,10 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
                           } else {
                             edits.addLinkUpdate(
                               state.parentObject!.id!,
-                              state.parentObject!.objectType,
+                              state.parentObject!.subtypeName ??
+                                state.parentObject!.objectTypeName,
                               state.parentObject!.fieldName,
-                              state.objectName,
+                              state.objectType!.name,
                               data.__isLinked
                                 ? UpdateLinkChangeKind.Remove
                                 : UpdateLinkChangeKind.Add,
@@ -650,46 +671,138 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
                         } else {
                           edits.toggleLinkInsert(
                             state.parentObject!.id!,
-                            state.parentObject!.objectType,
+                            state.parentObject!.subtypeName ??
+                              state.parentObject!.objectTypeName,
                             state.parentObject!.fieldName,
-                            state.objectName,
+                            state.objectType!.name,
                             state.insertedRows[rowIndex]
                           );
                         }
                       }}
                     />
-                  </label>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-          <div className={styles.cell}>
-            {rowData ? rowData.index + 1 : null}
-          </div>
-          {rowData ? (
-            <div
-              className={cn(styles.expandRow, {
-                [styles.isExpanded]: state.expandedDataRowIndexes.has(
-                  rowData.index
-                ),
-                [styles.isHidden]: isDeletedRow,
-              })}
-              onClick={() => {
-                state.toggleRowExpanded(rowData.index);
-                state.gridRef?.resetAfterRowIndex(rowIndex);
-              }}
-            >
-              <ChevronDownIcon />
-            </div>
+                  ) : (
+                    <input
+                      className={styles.isRadio}
+                      type="checkbox"
+                      checked={
+                        dataIndex !== null
+                          ? editedLink
+                            ? editedLink.changes.has(data.id)
+                            : data.__isLinked
+                          : editedLink?.inserts.has(
+                              state.insertedRows[rowIndex]
+                            ) ?? false
+                      }
+                      onChange={() => {
+                        if (dataIndex !== null) {
+                          if (data.__isLinked) {
+                            edits.clearLinkEdits(state.parentObject!.linkId);
+                          } else {
+                            edits.addLinkUpdate(
+                              state.parentObject!.id!,
+                              state.parentObject!.subtypeName ??
+                                state.parentObject!.objectTypeName,
+                              state.parentObject!.fieldName,
+                              state.objectType!.name,
+                              UpdateLinkChangeKind.Set,
+                              data.id,
+                              data.__tname__
+                            );
+                          }
+                        } else {
+                          edits.toggleLinkInsert(
+                            state.parentObject!.id!,
+                            state.parentObject!.subtypeName ??
+                              state.parentObject!.objectTypeName,
+                            state.parentObject!.fieldName,
+                            state.objectType!.name,
+                            state.insertedRows[rowIndex],
+                            true
+                          );
+                        }
+                      }}
+                    />
+                  )}
+                </label>
+              ) : null}
+            </>
           ) : null}
         </div>
-        {isDeletedRow ? (
+        <div className={styles.cell}>
+          {dataIndex !== null ? dataIndex + 1 : null}
+        </div>
+        {dataIndex !== null ? (
           <div
-            className={styles.deletedRowStrikethrough}
-            style={{top: style.top}}
-          />
+            className={cn(styles.expandRow, {
+              [styles.isExpanded]: state.expandedDataRowIndexes.has(dataIndex),
+              [styles.isHidden]: isDeletedRow,
+            })}
+            onClick={() => {
+              state.toggleRowExpanded(dataIndex);
+              state.gridRef?.resetAfterRowIndex(rowIndex);
+            }}
+          >
+            <ChevronDownIcon />
+          </div>
         ) : null}
-      </>
-    );
-  }
+      </div>
+      <div
+        className={cn(styles.rowHoverBg, {
+          [styles.active]: active,
+        })}
+        style={{top: styleTop}}
+        onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
+      />
+      {isDeletedRow ? (
+        <div
+          className={styles.deletedRowStrikethrough}
+          style={{top: styleTop}}
+        />
+      ) : null}
+    </>
+  );
+});
+
+const ExpandedDataInspector = observer(function ExpandedDataInspector({
+  rowData,
+  styleTop,
+}: {
+  rowData: ExpandedRowData;
+  styleTop: any;
+}) {
+  const {state} = useDataInspectorState();
+  const item = rowData.state.getItems()?.[rowData.index];
+
+  return (
+    <div className={styles.inspectorRow} style={{top: styleTop}}>
+      {item ? (
+        <>
+          <InspectorRow
+            item={item}
+            isExpanded={!!rowData.state.state.expanded?.has(item.id)}
+            toggleExpanded={() => {
+              rowData.state.toggleExpanded(rowData.index);
+            }}
+          />
+          {item.level === 2 &&
+          rowData.state.linkFields.has(item.fieldName as string) ? (
+            <div
+              className={styles.viewInTableButton}
+              onClick={() =>
+                state.openNestedView(
+                  rowData.state.objectId,
+                  rowData.state.objectTypeName,
+                  state.fields!.find((field) => field.name === item.fieldName)!
+                )
+              }
+            >
+              View in Table
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div>Loading...</div>
+      )}
+    </div>
+  );
 });

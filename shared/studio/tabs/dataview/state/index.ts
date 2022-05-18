@@ -20,12 +20,17 @@ import {_ICodec} from "edgedb";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {EdgeDBSet} from "../../../utils/decodeRawBuffer";
-import {SchemaType} from "../../../utils/schema";
 
 import {ObservableLRU} from "./lru";
 
+import {
+  SchemaLink,
+  SchemaProperty,
+  SchemaType,
+} from "@edgedb/common/schemaData";
+import {resolveObjectTypeUnion} from "@edgedb/common/schemaData/utils";
+
 import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
-import {SchemaLink, SchemaProp} from "@edgedb/schema-graph";
 
 import {dbCtx, connCtx} from "../../../state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./edits";
@@ -34,7 +39,8 @@ const fetchBlockSize = 100;
 
 type ParentObject = {
   editMode: boolean;
-  objectType: string;
+  objectTypeId: string;
+  objectTypeName: string;
   subtypeName?: string;
   id: string | number;
   fieldName: string;
@@ -49,39 +55,46 @@ export class DataView extends Model({
   edits: prop(() => new DataEditingManager({})),
 }) {
   @computed
-  get objectTypeNames() {
-    return (
-      dbCtx.get(this)!.schemaData?.data.objects.map((obj) => obj.name) ?? []
-    );
+  get objectTypes() {
+    const objects = dbCtx.get(this)!.schemaData?.objects;
+    return objects
+      ? [...objects.values()].filter(
+          (obj) =>
+            !obj.builtin && !obj.unionOf && !obj.insectionOf && !obj.from_alias
+        )
+      : [];
   }
 
   onAttachedToRootStore() {
-    const db = dbCtx.get(this)!;
-
     when(
-      () => this.objectTypeNames.length !== 0,
+      () => this.objectTypes.length !== 0,
       () => {
-        const name = this.objectTypeNames[0];
-        if (!this.inspectorStack.length && name) {
-          this.selectObject(name);
+        const id = this.objectTypes[0].id;
+        if (!this.inspectorStack.length && id) {
+          this.selectObject(id);
         }
       }
     );
   }
 
   @modelAction
-  selectObject(objectName: string) {
-    this.inspectorStack = [new DataInspector({objectName})];
+  selectObject(objectTypeId: string) {
+    this.inspectorStack = [new DataInspector({objectTypeId})];
   }
 
   @modelAction
-  openNestedView(objectName: string, parentObject: ParentObject) {
-    this.inspectorStack.push(new DataInspector({objectName, parentObject}));
+  openNestedView(objectTypeId: string, parentObject: ParentObject) {
+    this.inspectorStack.push(new DataInspector({objectTypeId, parentObject}));
   }
 
   @modelAction
   closeLastNestedView() {
     this.inspectorStack.pop();
+  }
+
+  @modelAction
+  closeAllNestedViews() {
+    this.inspectorStack = this.inspectorStack.slice(0, 1);
   }
 
   refreshAllViews() {
@@ -91,14 +104,21 @@ export class DataView extends Model({
   }
 }
 
-export enum ObjectFieldType {
-  property,
-  link,
-}
-
 export enum RowKind {
   data,
   expanded,
+}
+export type DataRowData = {kind: RowKind.data; index: number};
+export type ExpandedRowData = {
+  kind: RowKind.expanded;
+  index: number;
+  dataRowIndex: number;
+  state: ExpandedInspector;
+};
+
+export enum ObjectFieldType {
+  property,
+  link,
 }
 
 export type ObjectField = {
@@ -106,9 +126,10 @@ export type ObjectField = {
   name: string;
   queryName: string;
   width: number;
+  typeid: string;
   typename: string;
   required: boolean;
-  computed: boolean;
+  computedExpr: string | null;
   readonly: boolean;
   multi: boolean;
 } & (
@@ -119,10 +140,6 @@ export type ObjectField = {
     }
   | {
       type: ObjectFieldType.link;
-      subFields: {
-        type: ObjectFieldType;
-        name: string;
-      }[];
     }
 );
 
@@ -134,7 +151,7 @@ interface SortBy {
 @model("DataInspector")
 export class DataInspector extends Model({
   $modelId: idProp,
-  objectName: prop<string>(),
+  objectTypeId: prop<string>(),
   parentObject: prop<ParentObject | null>(null),
   fields: prop<ObjectField[] | null>(null),
 
@@ -163,29 +180,18 @@ export class DataInspector extends Model({
       this._updateFields();
     }
 
-    const conn = connCtx.get(this)!;
-    const connWatchDisposer = reaction(
-      () => conn.isConnected,
-      (isConnected) => {
-        if (isConnected) {
-          this._updateRowCount();
-          // this._fetchData();
-        }
-      },
-      {fireImmediately: true}
-    );
+    this._updateRowCount();
+  }
 
-    // autorun(() => console.log(this.dataQuery));
-
-    return () => {
-      connWatchDisposer();
-    };
+  @computed
+  get objectType() {
+    return dbCtx.get(this)!.schemaData!.objects.get(this.objectTypeId);
   }
 
   openNestedView(
     objectId: string | number,
     subtypeName: string,
-    fieldName: string,
+    field: ObjectField,
     editMode: boolean = false
   ) {
     const dataView = findParent<DataView>(
@@ -193,15 +199,14 @@ export class DataInspector extends Model({
       (parent) => parent instanceof DataView
     )!;
 
-    const field = this.fields!.find((field) => field.name === fieldName)!;
-
-    dataView.openNestedView(field.typename, {
+    dataView.openNestedView(field.typeid, {
       editMode,
-      objectType: this.objectName,
+      objectTypeId: this.objectTypeId,
+      objectTypeName: this.objectType!.name,
       subtypeName,
       id: objectId,
-      fieldName,
-      linkId: `${objectId}__${fieldName}`,
+      fieldName: field.name,
+      linkId: `${objectId}__${field.name}`,
       isMultiLink: field.type === ObjectFieldType.link ? field.multi : false,
     });
   }
@@ -218,119 +223,80 @@ export class DataInspector extends Model({
 
   @modelAction
   _updateFields() {
-    const schemaData = dbCtx.get(this)!.schemaData!.data;
-    const schemaObjects = schemaData.objects;
-
-    const obj = schemaObjects.find((obj) => obj.name === this.objectName);
+    const obj = this.objectType;
 
     if (!obj) {
-      // return;
-      throw new Error(`Cannot find schema object: ${this.objectName}`);
+      throw new Error(`Cannot find schema object id: ${this.objectTypeId}`);
     }
 
-    function createField<T extends ObjectFieldType>(
-      type: T,
-      field: T extends ObjectFieldType.property ? SchemaProp : SchemaLink,
+    function createField(
+      pointer: SchemaProperty | SchemaLink,
       subtypeName?: string,
       queryNamePrefix: string = ""
     ): ObjectField {
+      const type =
+        pointer.type === "Property"
+          ? ObjectFieldType.property
+          : ObjectFieldType.link;
+
       const baseField = {
         subtypeName,
-        name: field.name,
-        queryName: queryNamePrefix + field.name,
-        typename:
-          type === ObjectFieldType.property
-            ? (field as SchemaProp).targetName
-            : (field as SchemaLink).targetNames.join(" | "),
-        required: field.required,
-        multi: field.cardinality === "Many",
-        computed: !!field.expr,
-        readonly: field.readonly,
+        name: pointer.name,
+        queryName: queryNamePrefix + pointer.name,
+        typeid: pointer.target.id,
+        typename: pointer.target.name,
+        required: pointer.required,
+        multi: pointer.cardinality === "Many",
+        computedExpr: pointer.expr,
+        readonly: pointer.readonly,
         width: 180,
       };
 
       if (type === ObjectFieldType.property) {
-        const schemaType = schemaData.types.get(
-          (field as SchemaProp).targetId
-        );
-        if (!schemaType) {
-          throw new Error(
-            `Could not get type data for property: ${field.name}`
-          );
-        }
         return {
           type,
           ...baseField,
-          schemaType,
-          default: field.default?.replace(/^select/i, "").trim(),
+          schemaType: pointer.target,
+          default: pointer.default?.replace(/^select/i, "").trim() ?? null,
         };
       }
 
       return {
         type,
         ...baseField,
-        subFields: (field as SchemaLink).targetNames.flatMap((targetName) => {
-          const subFieldObj = schemaObjects.find(
-            (obj) => obj.name === targetName
-          );
-
-          if (subFieldObj) {
-            return [
-              ...subFieldObj.properties.map((prop) => ({
-                type: ObjectFieldType.property,
-                name: prop.name,
-              })),
-              ...subFieldObj.links.map((link) => ({
-                type: ObjectFieldType.link,
-                name: link.name,
-              })),
-            ];
-          }
-
-          return [];
-        }),
       };
     }
 
     const baseFields = [
-      ...obj.properties.map((prop) =>
-        createField(ObjectFieldType.property, prop)
-      ),
-      ...obj.links.map((link) => createField(ObjectFieldType.link, link)),
-    ];
+      ...Object.values(obj.properties),
+      ...Object.values(obj.links),
+    ].map((pointer) => createField(pointer));
 
     const baseFieldNames = new Set(baseFields.map((field) => field.name));
 
-    const subtypeFields = obj.inherited_by
-      .flatMap((subtypeObjName) => {
-        const subtypeObj = schemaObjects.find(
-          (obj) => obj.name === subtypeObjName
-        );
-        const queryNamePrefix = `__${subtypeObjName.replace(/:/g, "")}_`;
+    const subTypes = obj.unionOf
+      ? new Set(
+          resolveObjectTypeUnion(obj).flatMap((type) => [
+            type,
+            ...type.descendents,
+          ])
+        )
+      : obj.descendents;
 
-        // skip subtype fields on aliases
-        return subtypeObj && !subtypeObj.from_alias
-          ? [
-              ...subtypeObj.properties.map((prop) =>
-                createField(
-                  ObjectFieldType.property,
-                  prop,
-                  subtypeObjName,
-                  queryNamePrefix
-                )
-              ),
-              ...subtypeObj.links.map((link) =>
-                createField(
-                  ObjectFieldType.link,
-                  link,
-                  subtypeObjName,
-                  queryNamePrefix
-                )
-              ),
-            ]
-          : [];
-      })
-      .filter((field) => !baseFieldNames.has(field.name));
+    const subtypeFields = [...subTypes]
+      .filter((subType) => !subType.abstract && !subType.from_alias)
+      .flatMap((subtypeObj) => {
+        const queryNamePrefix = `__${subtypeObj.name.replace(/:/g, "")}_`;
+
+        return [
+          ...Object.values(subtypeObj.properties),
+          ...Object.values(subtypeObj.links),
+        ]
+          .filter((pointer) => !baseFieldNames.has(pointer.name))
+          .map((pointer) =>
+            createField(pointer, subtypeObj.name, queryNamePrefix)
+          );
+      });
 
     this.fields = [...baseFields, ...subtypeFields];
   }
@@ -341,27 +307,19 @@ export class DataInspector extends Model({
   }
 
   @computed
-  get isAbstractType() {
-    return dbCtx
-      .get(this)!
-      .schemaData?.data.objects.find((obj) => obj.name === this.objectName)
-      ?.is_abstract;
-  }
-
-  @computed
   get insertTypeNames() {
     const objectType = dbCtx
       .get(this)!
-      .schemaData?.data.objects.find((obj) => obj.name === this.objectName);
+      .schemaData?.objects.get(this.objectTypeId);
 
     if (!objectType) {
       return [];
     }
 
-    return [
-      ...(objectType.is_abstract ? [] : [objectType.name]),
-      ...objectType.inherited_by,
-    ];
+    return resolveObjectTypeUnion(objectType)
+      .flatMap((type) => [type, ...type.descendents])
+      .filter((type) => !type.abstract)
+      .map((type) => type.name);
   }
 
   @computed
@@ -407,12 +365,23 @@ export class DataInspector extends Model({
   // offset handling
 
   @observable
+  visibleIndexes: [number, number] = [0, 0];
+
+  @observable
   rowCount = 0;
 
   _pendingOffsets: number[] = [];
 
   @observable
   visibleOffsets: number[] = [];
+
+  @observable
+  hoverRowIndex: number | null = null;
+
+  @action
+  setHoverRowIndex(index: number | null) {
+    this.hoverRowIndex = index;
+  }
 
   @computed
   get gridRowCount() {
@@ -430,6 +399,8 @@ export class DataInspector extends Model({
   setVisibleRowIndexes(startIndex: number, endIndex: number) {
     const startRow = this.getRowData(startIndex);
     const endRow = this.getRowData(endIndex);
+
+    this.visibleIndexes = [startIndex, endIndex];
 
     const startDataIndex =
       startRow.kind === RowKind.expanded
@@ -456,14 +427,7 @@ export class DataInspector extends Model({
     this._fetchData();
   }
 
-  getRowData(rowIndex: number):
-    | {kind: RowKind.data; index: number}
-    | {
-        kind: RowKind.expanded;
-        index: number;
-        dataRowIndex: number;
-        state: ExpandedInspector;
-      } {
+  getRowData(rowIndex: number): DataRowData | ExpandedRowData {
     let index = rowIndex;
     for (const expandedRow of this.expandedRows) {
       if (index <= expandedRow.dataRowIndex) {
@@ -502,22 +466,19 @@ export class DataInspector extends Model({
   _updateRowCount = _async(function* (this: DataInspector) {
     const conn = connCtx.get(this)!;
 
-    if (conn.isConnected) {
-      const {query, params} = this.getBaseObjectsQuery();
-      // console.log(query);
-      const data = yield* _await(
-        conn.query(
-          `SELECT count((${query}${
-            this.filter ? ` FILTER ${this.filter}` : ""
-          }))`,
-          true,
-          params
-        )
-      );
+    const {query, params} = this.getBaseObjectsQuery();
+    const data = yield* _await(
+      conn.query(
+        `SELECT count((${query}${
+          this.filter ? ` FILTER ${this.filter}` : ""
+        }))`,
+        true,
+        params
+      )
+    );
 
-      if (data.result) {
-        this.rowCount = parseInt(data.result[0], 10);
-      }
+    if (data.result) {
+      this.rowCount = parseInt(data.result[0], 10);
     }
   });
 
@@ -551,7 +512,7 @@ export class DataInspector extends Model({
       if (data) {
         const inspector = new ExpandedInspector({
           objectId: data.id,
-          objectType: data.__tname__,
+          objectTypeName: data.__tname__,
         });
         this.expandedInspectors.set(data.id, inspector);
 
@@ -593,9 +554,9 @@ export class DataInspector extends Model({
       const conn = connCtx.get(this)!;
       const dataQuery = this.dataQuery;
 
-      // console.log(dataQuery?.query);
+      // console.log(dataQuery);
 
-      if (dataQuery && conn.isConnected) {
+      if (dataQuery) {
         // console.log(`fetching ${offset}`);
         const data = yield* _await(
           conn.query(dataQuery.query, true, {
@@ -683,24 +644,51 @@ export class DataInspector extends Model({
 
   // queries
 
+  get _getObjectTypeQuery() {
+    const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
+      (t) => t.name
+    );
+
+    return typeUnionNames.length > 1
+      ? `{${typeUnionNames.join(", ")}}`
+      : typeUnionNames[0];
+  }
+
   get _baseObjectsQuery() {
+    if (this.parentObject && typeof this.parentObject.id === "string") {
+      return `(SELECT ${
+        this.parentObject.subtypeName ?? this.parentObject.objectTypeName
+      } FILTER .id = <uuid>'${this.parentObject.id}').${
+        this.parentObject.fieldName
+      }`;
+    }
+
+    const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
+      (t) => t.name
+    );
+
     return this.parentObject
-      ? typeof this.parentObject.id === "string"
-        ? `(SELECT ${
-            this.parentObject.subtypeName ?? this.parentObject.objectType
-          } FILTER .id = <uuid>'${this.parentObject.id}').${
-            this.parentObject.fieldName
-          }`
-        : `<${this.objectName}>{}`
-      : this.objectName;
+      ? `<${typeUnionNames.join(" | ")}>{}`
+      : typeUnionNames.length > 1
+      ? `{${typeUnionNames.join(", ")}}`
+      : typeUnionNames[0];
   }
 
   getBaseObjectsQuery() {
     if (this.parentObject?.editMode) {
+      if (typeof this.parentObject.id === "string") {
+        return {
+          query: `with linkedObjects := (${this._baseObjectsQuery}),
+            objs := ${this._getObjectTypeQuery}
+          select objs {
+            __isLinked := objs in linkedObjects
+          }`,
+        };
+      }
+
       return {
-        query: `with linkedObjects := (${this._baseObjectsQuery})
-      select ${this.objectName} {
-        __isLinked := ${this.objectName} in linkedObjects
+        query: `select (${this._getObjectTypeQuery}) {
+        __isLinked := false
       }`,
       };
     } else {
@@ -722,7 +710,7 @@ export class DataInspector extends Model({
         return {
           query: `select {
             (${this._baseObjectsQuery}),
-            (select ${this.objectName} filter .id in <uuid>array_unpack(<array<std::str>>$addedLinkIds))
+            (select ${this._getObjectTypeQuery} filter .id in <uuid>array_unpack(<array<std::str>>$addedLinkIds))
           }`,
           params: {addedLinkIds},
         };
@@ -844,22 +832,20 @@ export class DataInspector extends Model({
 
     const conn = connCtx.get(this)!;
 
-    if (conn.isConnected) {
-      try {
-        yield* _await(conn.prepare(filterCheckQuery, true));
-      } catch (err: any) {
-        const errMessage = String(err.message);
-        this.filterError = /unexpected 'ORDER'/i.test(errMessage)
-          ? "Filter can only contain 'FILTER' clause"
-          : errMessage;
-        return;
-      }
-
-      this.filterError = "";
-      this.filter = filter;
-
-      this._refreshData(true);
+    try {
+      yield* _await(conn.prepare(filterCheckQuery, true));
+    } catch (err: any) {
+      const errMessage = String(err.message);
+      this.filterError = /unexpected 'ORDER'/i.test(errMessage)
+        ? "Filter can only contain 'FILTER' clause"
+        : errMessage;
+      return;
     }
+
+    this.filterError = "";
+    this.filter = filter;
+
+    this._refreshData(true);
   });
 
   @modelAction
@@ -869,12 +855,22 @@ export class DataInspector extends Model({
   }
 
   @modelAction
-  clearFilter() {
+  disableFilter() {
     this.filter = "";
-    this.filterEditStr = Text.of(["filter "]);
     this.filterError = "";
 
     this._refreshData(true);
+  }
+
+  @modelAction
+  clearFilter() {
+    this.filterEditStr = Text.of(["filter "]);
+    this.filterError = "";
+
+    if (this.filter) {
+      this.filter = "";
+      this._refreshData(true);
+    }
   }
 
   @modelAction
@@ -887,7 +883,7 @@ export class DataInspector extends Model({
 @model("ExpandedInspector")
 class ExpandedInspector extends Model({
   objectId: prop<string>(),
-  objectType: prop<string>(),
+  objectTypeName: prop<string>(),
 
   state: prop<InspectorState>(
     () => new InspectorState({autoExpandDepth: 3, countPrefix: "__count_"})
@@ -912,6 +908,20 @@ class ExpandedInspector extends Model({
     });
   }
 
+  onAttachedToRootStore() {
+    const dataInspector = findParent<DataInspector>(
+      this,
+      (parent) => parent instanceof DataInspector
+    )!;
+
+    return reaction(
+      () => this.state._items.length,
+      () => {
+        dataInspector.gridRef?.resetAfterRowIndex(0);
+      }
+    );
+  }
+
   async loadNestedData(
     parentObjectTypeName: string,
     parentObjectId: string,
@@ -919,8 +929,8 @@ class ExpandedInspector extends Model({
   ) {
     const dbState = dbCtx.get(this)!;
 
-    const parentObjectType = dbState.schemaData?.data.objects.find(
-      (obj) => obj.name === parentObjectTypeName
+    const parentObjectType = dbState.schemaData?.objectsByName.get(
+      parentObjectTypeName
     );
     if (!parentObjectType) {
       throw new Error(
@@ -928,24 +938,14 @@ class ExpandedInspector extends Model({
       );
     }
 
-    const objectTypeName = parentObjectType.links.find(
-      (link) => link.name === fieldName
-    )?.targetNames?.[0];
-    const objectType = dbState.schemaData?.data.objects.find(
-      (obj) => obj.name === objectTypeName
-    );
-    if (!objectType) {
-      throw new Error(
-        `Could not find object type '${objectTypeName}' in schema`
-      );
-    }
+    const objectType = parentObjectType.links[fieldName].target;
 
     const query = `with parentObj := (select ${parentObjectTypeName} filter .id = <uuid><str>$id)
       select parentObj.${fieldName} {
         ${[
-          ...objectType.properties.map((prop) => prop.name),
-          ...objectType.links.map(
-            (link) => `${link.name} := (SELECT .${link.name} LIMIT 0),
+          ...Object.values(objectType.properties).map((prop) => prop.name),
+          ...Object.values(objectType.links).map(
+            (link) => `${link.name} limit 0,
         __count_${link.name} := count(.${link.name})`
           ),
         ].join(",\n")}
@@ -1009,44 +1009,39 @@ class ExpandedInspector extends Model({
 
   @computed
   get dataQuery() {
-    const dataInspector = findParent<DataInspector>(
-      this,
-      (parent) => parent instanceof DataInspector
-    )!;
+    const schemaData = dbCtx.get(this)!.schemaData!;
 
-    return `SELECT ${dataInspector.objectName} {
-      ${dataInspector
-        .fields!.filter(
-          (field) =>
-            !field.subtypeName || field.subtypeName === this.objectType
+    const objectType = schemaData.objectsByName.get(this.objectTypeName);
+
+    if (!objectType) {
+      throw new Error(
+        `Could not find object type '${this.objectTypeName}' in schema`
+      );
+    }
+
+    return `select ${this.objectTypeName} {
+      ${[
+        ...Object.values(objectType.properties).map((prop) => {
+          return prop.name;
+        }),
+        ...Object.values(objectType.links).map((link) => {
+          const linkSelect = `${link.name}: {
+      ${[
+        ...Object.values(link.target.properties),
+        ...Object.values(link.target.links),
+      ]
+        .map((subField) =>
+          subField.type === "Property"
+            ? subField.name
+            : `${subField.name} limit 0,
+            __count_${subField.name} := count(.${subField.name})`
         )
-        .map((field) => {
-          if (field.type === ObjectFieldType.property) {
-            return `${field.subtypeName ? `[IS ${field.subtypeName}].` : ""}${
-              field.name
-            }`;
-          } else {
-            const linkSelect = `(SELECT ${
-              field.subtypeName ? `[IS ${field.subtypeName}]` : ""
-            }.${field.name} {
-            ${field.subFields
-              .map((subField) =>
-                subField.type === ObjectFieldType.property
-                  ? subField.name
-                  : `${subField.name} := (SELECT .${subField.name} LIMIT 0),
-                  __count_${subField.name} := count(.${subField.name})`
-              )
-              .join(",\n")}
-          } LIMIT 10)`;
-            return `${field.name} := ${
-              field.required ? `assert_exists(${linkSelect})` : linkSelect
-            },
-          __count_${field.name} := count(${
-              field.subtypeName ? `[IS ${field.subtypeName}]` : ""
-            }.${field.name})`;
-          }
-        })
         .join(",\n")}
-    } FILTER .id = <uuid><str>$objectId LIMIT 1`;
+    } limit 10`;
+          return `${linkSelect},
+    __count_${link.name} := count(.${link.name})`;
+        }),
+      ].join(",\n")}
+    } filter .id = <uuid><str>$objectId`;
   }
 }

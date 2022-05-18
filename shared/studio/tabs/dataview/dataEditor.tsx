@@ -9,14 +9,17 @@ import {
 
 import cn from "@edgedb/common/utils/classNames";
 
+import {scalarItemToString} from "@edgedb/inspector/v2/buildScalar";
+
 import {
   SchemaArrayType,
   SchemaScalarType,
   SchemaTupleType,
   SchemaType,
-} from "../../utils/schema";
+} from "@edgedb/common/schemaData";
 
 import styles from "./dataEditor.module.scss";
+import {EmptySetIcon, UndoChangesIcon} from "../../icons";
 
 export interface DataEditorProps<T = any> {
   type: SchemaType;
@@ -77,24 +80,27 @@ export function DataEditor({
             onChange(val);
           }
         }}
-        allowNull
+        allowNull={!isRequired}
       />
 
       <div className={styles.actions}>
         {!isRequired ? (
           <div
-            className={styles.action}
+            className={cn(styles.action, styles.emptySetAction)}
             onClick={() => {
               setVal(null);
               setError(false);
               onChange(null);
             }}
           >
-            {"{ }"}
+            <EmptySetIcon />
           </div>
         ) : null}
-        <div className={styles.action} onClick={onClearEdit}>
-          X
+        <div
+          className={cn(styles.action, styles.clearChangesAction)}
+          onClick={onClearEdit}
+        >
+          <UndoChangesIcon />
         </div>
       </div>
       {/* {err ? <div className={styles.errMessage}>{err}</div> : null} */}
@@ -116,13 +122,14 @@ function getInputComponent(
     if (type.enum_values) {
       return EnumEditor as any;
     }
-    if (type.name === "std::bool") {
+    const typeName = (type.knownBaseType ?? type).name;
+    if (typeName === "std::bool") {
       return BoolEditor;
     }
-    if (type.name === "std::str" || type.name === "std::json") {
+    if (typeName === "std::str" || typeName === "std::json") {
       return ExpandingTextbox as any;
     }
-    if (parsers[type.name]) {
+    if (parsers[typeName]) {
       return Textbox as any;
     }
     return () => <></>;
@@ -363,7 +370,10 @@ const Textbox = forwardRef(function Textbox(
   },
   ref
 ) {
-  const [val, setVal] = useState<string>(() => value?.toString() ?? "");
+  const baseTypeName = (type.knownBaseType ?? type).name;
+  const [val, setVal] = useState<string>(() =>
+    value ? scalarItemToString(value, baseTypeName) : ""
+  );
   const [err, setErr] = useState<string | null>(
     allowNull || value !== null ? null : "Value is required"
   );
@@ -383,7 +393,7 @@ const Textbox = forwardRef(function Textbox(
           let parsed: any = e.target.value;
           let err: string | null = null;
           try {
-            parsed = parsers[type.name](e.target.value);
+            parsed = parsers[baseTypeName](e.target.value);
           } catch (e) {
             err = (e as Error).message;
           }
@@ -413,6 +423,7 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
   },
   ref
 ) {
+  const baseTypeName = (type.knownBaseType ?? type).name;
   const [err, setErr] = useState<string | null>(() =>
     allowNull || value !== null ? null : "Value is required"
   );
@@ -426,7 +437,7 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
         value={value ?? ""}
         onChange={(e) => {
           let err = null;
-          if (type.name === "std::json") {
+          if (baseTypeName === "std::json") {
             try {
               JSON.parse(e.target.value);
             } catch {
@@ -436,7 +447,7 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
           setErr(err);
           onChange(e.target.value, !!err);
         }}
-        style={{height: 20 * (value?.split("\n").length ?? 1) + 10 + "px"}}
+        style={{height: 22 * (value?.split("\n").length ?? 1) + 10 + "px"}}
       />
       {err ? <div className={styles.errMessage}>{err}</div> : null}
     </div>
@@ -550,29 +561,38 @@ const parsers: {[typename: string]: (val: string) => any} = {
   },
   "std::datetime": (val: string) => {
     const date = new Date(val);
-    if (
-      Number.isNaN(date.getTime()) ||
-      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}(?::\d{2})?)$/.test(
-        val
-      )
-    ) {
+    const match = val.match(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(?:Z|[+-]\d{2}(?::\d{2})?)$/
+    );
+    if (Number.isNaN(date.getTime()) || !match) {
       throw new Error("Invalid datetime");
     }
     const year = date.getUTCFullYear();
     if (year < 1 || year > 9999) {
       throw new Error("Year must be between 1 and 9999");
     }
-    return date;
+    const fSeconds = (match[1] ?? "").padEnd(6, "0");
+
+    return new LocalDateTime(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + 1,
+      date.getUTCDate(),
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds(),
+      Number(fSeconds.slice(0, 3)),
+      Number(fSeconds.slice(3, 6))
+    );
   },
   "cal::local_datetime": (val: string) => {
     const [_match, _year, month, day, hour, minute, second, _fSeconds] =
       val.match(
-        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?$/
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?$/
       ) ?? [];
     if (!_match) {
       throw new Error("invalid local datetime");
     }
-    const fSeconds = (_fSeconds ?? "").padEnd(9, "0");
+    const fSeconds = (_fSeconds ?? "").padEnd(6, "0");
     const year = Number(_year);
 
     if (year < 1 || year > 9999) {
@@ -587,8 +607,7 @@ const parsers: {[typename: string]: (val: string) => any} = {
       Number(minute),
       Number(second),
       Number(fSeconds.slice(0, 3)),
-      Number(fSeconds.slice(3, 6)),
-      Number(fSeconds.slice(6, 9))
+      Number(fSeconds.slice(3, 6))
     );
   },
   "cal::local_date": (val: string) => {
@@ -607,19 +626,18 @@ const parsers: {[typename: string]: (val: string) => any} = {
   },
   "cal::local_time": (val: string) => {
     const [_match, hour, minute, second, _fSeconds] =
-      val.match(/^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?$/) ?? [];
+      val.match(/^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?$/) ?? [];
     if (!_match) {
       throw new Error("invalid local time");
     }
-    const fSeconds = (_fSeconds ?? "").padEnd(9, "0");
+    const fSeconds = (_fSeconds ?? "").padEnd(6, "0");
 
     return new LocalTime(
       Number(hour),
       Number(minute),
       Number(second),
       Number(fSeconds.slice(0, 3)),
-      Number(fSeconds.slice(3, 6)),
-      Number(fSeconds.slice(6, 9))
+      Number(fSeconds.slice(3, 6))
     );
   },
   "std::duration": (val: string) => {

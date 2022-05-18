@@ -28,8 +28,11 @@ export function Select({
   actions,
   ...dropdown
 }: SelectProps) {
+  const selectRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
 
   const hasDropdown = !!dropdown.items || !!actions;
 
@@ -40,8 +43,11 @@ export function Select({
           setDropdownOpen(false);
         }
       };
-
       window.addEventListener("click", listener, {capture: true});
+
+      setMaxHeight(
+        window.innerHeight - selectRef.current.getBoundingClientRect().top - 32
+      );
 
       return () => {
         window.removeEventListener("click", listener, {capture: true});
@@ -51,6 +57,7 @@ export function Select({
 
   return (
     <div
+      ref={selectRef}
       className={cn(styles.select, className, {
         [styles.fullButton]: !mainAction && hasDropdown,
       })}
@@ -77,6 +84,7 @@ export function Select({
             className={cn(styles.tabDropdown, {
               [styles.tabDropdownOpen]: dropdownOpen,
             })}
+            style={{maxHeight: maxHeight ?? maxHeight + "px"}}
           >
             {dropdown.items?.map((item, i) => (
               <div
