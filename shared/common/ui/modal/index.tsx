@@ -1,4 +1,7 @@
 import {forwardRef, PropsWithChildren, useState} from "react";
+
+import cn from '@edgedb/common/utils/classNames';
+
 import {CloseIcon} from "../icons";
 
 import styles from "./modal.module.scss";
@@ -31,6 +34,7 @@ interface ModalProps {
   error?: string;
   progress?: string;
   close?: () => void;
+  contentClass?: string;
 }
 
 export function Modal({
@@ -40,6 +44,7 @@ export function Modal({
   progress,
   close,
   children,
+  contentClass,
 }: PropsWithChildren<ModalProps>) {
   const [showProgress, setShowProgress] = useState(false);
 
@@ -51,7 +56,7 @@ export function Modal({
           <CloseIcon className={styles.modalClose} onClick={close} />
         ) : null}
       </div>
-      <div className={styles.modalContent}>{children}</div>
+      <div className={cn(styles.modalContent, contentClass)}>{children}</div>
       {progress ? (
         <>
           <div

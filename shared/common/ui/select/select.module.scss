@@ -66,6 +66,8 @@
     0px 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 6px;
   overflow: hidden;
+  overflow-y: auto;
+  @include hideScrollbar;
   z-index: 1;
   pointer-events: none;
   opacity: 0;

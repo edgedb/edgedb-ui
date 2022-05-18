@@ -1,8 +1,9 @@
 import {action, computed, observable, runInAction} from "mobx";
 import {model, Model} from "mobx-keystone";
+
+import {getNameOfSchemaType, SchemaType} from "@edgedb/common/schemaData";
+
 import {connCtx, dbCtx} from "../../../state";
-import {SchemaData} from "../../../state/database";
-import {getNameOfSchemaType, SchemaType} from "../../../utils/schema";
 
 enum EditKind {
   UpdateProperty,
@@ -159,7 +160,6 @@ export class DataEditingManager extends Model({}) {
 
   @action
   toggleRowDelete(objectId: string, objectTypeName: string) {
-    console.log(objectId, objectTypeName);
     if (this.deleteEdits.has(objectId)) {
       this.deleteEdits.delete(objectId);
     } else {
@@ -204,6 +204,12 @@ export class DataEditingManager extends Model({}) {
     }
 
     const linkChanges = this.linkEdits.get(linkId)!.changes;
+
+    if (kind === UpdateLinkChangeKind.Set) {
+      linkChanges.clear();
+      this.linkEdits.get(linkId)!.inserts.clear();
+    }
+
     linkChanges.set(linkObjectId, {
       id: linkObjectId,
       kind,
@@ -227,12 +233,18 @@ export class DataEditingManager extends Model({}) {
   }
 
   @action
+  clearLinkEdits(linkId: string) {
+    this.linkEdits.delete(linkId);
+  }
+
+  @action
   toggleLinkInsert(
     objectId: string | number,
     objectTypeName: string,
     fieldName: string,
     linkTypeName: string,
-    insertedRow: InsertObjectEdit
+    insertedRow: InsertObjectEdit,
+    setLink: boolean = false
   ) {
     const linkId = `${objectId}__${fieldName}`;
 
@@ -249,6 +261,11 @@ export class DataEditingManager extends Model({}) {
     }
 
     const linkEdit = this.linkEdits.get(linkId)!;
+
+    if (setLink) {
+      linkEdit.inserts.clear();
+      linkEdit.changes.clear();
+    }
 
     if (linkEdit.inserts.has(insertedRow)) {
       linkEdit.inserts.delete(insertedRow);
@@ -269,23 +286,23 @@ export class DataEditingManager extends Model({}) {
   }
 
   generateStatements() {
-    const schemaData = dbCtx.get(this)!.schemaData!.data;
+    const schemaData = dbCtx.get(this)!.schemaData!;
 
-    const statements: {text: string; varName: string}[] = [];
-    const params: {[key: string]: any} = {};
+    const statements: {code: string; varName: string; error?: string}[] = [];
+    const params: {[key: string]: {type: SchemaType; value: any}} = {};
 
     function generatePropUpdate(
       objectTypeName: string,
       propName: string,
       val: any
     ) {
-      const type = schemaData.objects
-        .find((obj) => obj.name === objectTypeName)
-        ?.properties.find((prop) => prop.name === propName);
+      const type =
+        schemaData.objectsByName.get(objectTypeName)?.properties[propName];
       return `${propName} := ${generateParamExpr(
-        schemaData.types.get(type!.targetId)!,
+        schemaData.types.get(type!.target.id)!,
         val,
-        params
+        params,
+        type!.cardinality === "Many"
       )}`;
     }
 
@@ -326,20 +343,40 @@ export class DataEditingManager extends Model({}) {
 
     const inserts = new Map<
       number,
-      {id: number; statement: string; deps: Set<number>}
+      {id: number; statement: string; deps: Set<number>; error?: string}
     >();
     for (const insertEdit of this.insertEdits.values()) {
       const fields: string[] = [];
       const deps: number[] = [];
+
+      const type = schemaData.objectsByName.get(insertEdit.objectTypeName)!;
 
       for (const [key, val] of Object.entries(insertEdit.data)) {
         if (key === "id" || key === "__tname__") continue;
         fields.push(generatePropUpdate(insertEdit.objectTypeName, key, val));
       }
 
-      for (const linkEdits of insertLinkEdits.get(insertEdit.id) ?? []) {
-        fields.push(generateLinkUpdate(linkEdits, deps, true));
+      const linkEdits = insertLinkEdits.get(insertEdit.id) ?? [];
+
+      for (const linkEdit of linkEdits) {
+        fields.push(generateLinkUpdate(linkEdit, deps, true));
       }
+
+      const setLinks = new Set(
+        linkEdits.map((linkEdit) => linkEdit.fieldName)
+      );
+      const missingFields = [
+        ...Object.values(type.properties).filter(
+          (prop) =>
+            prop.required &&
+            !prop.default &&
+            insertEdit.data[prop.name] == null
+        ),
+
+        ...Object.values(type.links).filter(
+          (link) => link.required && !link.default && !setLinks.has(link.name)
+        ),
+      ];
 
       inserts.set(insertEdit.id, {
         id: insertEdit.id,
@@ -347,15 +384,26 @@ export class DataEditingManager extends Model({}) {
           ",\n  "
         )}\n}`,
         deps: new Set(deps),
+        error: missingFields.length
+          ? `Values are missing for required fields: ${missingFields
+              .map((field) => `'${field.name}'`)
+              .join(", ")}`
+          : undefined,
       });
     }
     for (const insert of topoSort(inserts)) {
-      statements.push({varName: `insert${insert.id}`, text: insert.statement});
+      statements.push({
+        varName: `insert${insert.id}`,
+        code: insert.statement,
+        error: insert.error,
+      });
     }
 
     let updateCount = 1;
     for (const [objectId, edits] of updateEdits) {
       const editLines: string[] = [];
+
+      const type = schemaData.objectsByName.get(edits.objectTypeName)!;
 
       for (const propEdit of edits.props) {
         editLines.push(
@@ -367,16 +415,22 @@ export class DataEditingManager extends Model({}) {
         );
       }
       for (const linkEdit of edits.links) {
-        editLines.push(generateLinkUpdate(linkEdit));
+        editLines.push(
+          generateLinkUpdate(
+            linkEdit,
+            undefined,
+            type.links[linkEdit.fieldName]!.cardinality === "One"
+          )
+        );
       }
 
       statements.push({
         varName: `update${updateCount++}`,
-        text: `update ${edits.objectTypeName}
-    filter .id = <uuid>'${objectId}'
-    set {
-      ${editLines.join(",\n  ")}
-    }`,
+        code: `update ${edits.objectTypeName}
+filter .id = <uuid>'${objectId}'
+set {
+  ${editLines.join(",\n  ")}
+}`,
       });
     }
 
@@ -384,7 +438,7 @@ export class DataEditingManager extends Model({}) {
     for (const deleteEdit of this.deleteEdits.values()) {
       statements.push({
         varName: `delete${deleteCount++}`,
-        text: `delete ${deleteEdit.objectTypeName} filter .id = <uuid>'${deleteEdit.objectId}'`,
+        code: `delete ${deleteEdit.objectTypeName} filter .id = <uuid>'${deleteEdit.objectId}'`,
       });
     }
 
@@ -403,7 +457,12 @@ export class DataEditingManager extends Model({}) {
     await conn.query(
       query,
       undefined,
-      Object.keys(params).length ? params : undefined
+      Object.keys(params).length
+        ? Object.keys(params).reduce((args, key) => {
+            args[key] = params[key].value;
+            return args;
+          }, {} as {[key: string]: any})
+        : undefined
     );
 
     runInAction(() => this.propertyEdits.clear());
@@ -411,10 +470,10 @@ export class DataEditingManager extends Model({}) {
 }
 
 export function generateQueryFromStatements(
-  statements: {varName: string; text: string}[]
+  statements: {varName: string; code: string}[]
 ) {
   return `with\n${statements
-    .map(({varName, text}) => `${varName} := (${text})`)
+    .map(({varName, code}) => `${varName} := (${code})`)
     .join(",\n")}
 select {\n  ${statements.map(({varName}) => varName).join(",\n  ")}\n}`;
 }
@@ -454,13 +513,15 @@ function generateLinkUpdate(
           ? "-="
           : "+="
         : ":=";
-    links.push(
-      `(select ${linkEdits.linkTypeName} filter .id ${
-        changes.length === 1
-          ? `= <uuid>'${changes[0].id}'`
-          : `in <uuid>{${changes.map(({id}) => `'${id}'`).join(", ")}}`
-      })`
-    );
+    if (changes.length) {
+      links.push(
+        `(select ${linkEdits.linkTypeName} filter .id ${
+          changes.length === 1
+            ? `= <uuid>'${changes[0].id}'`
+            : `in <uuid>{${changes.map(({id}) => `'${id}'`).join(", ")}}`
+        })`
+      );
+    }
   }
   if (linkEdits.inserts.size) {
     deps?.push(...[...linkEdits.inserts.values()].map(({id}) => id));
@@ -479,21 +540,28 @@ function generateLinkUpdate(
 function generateParamExpr(
   type: SchemaType,
   data: any,
-  params: {[key: string]: any}
+  params: {[key: string]: {type: SchemaType; value: any}},
+  multi?: boolean
 ): string {
   if (data === null) {
     return `<${getNameOfSchemaType(type)}>{}`;
   }
 
+  if (multi) {
+    return `{${(data as any[])
+      .map((item) => generateParamExpr(type, item, params))
+      .join(", ")}}`;
+  }
+
   if (type.schemaType === "Scalar") {
     const paramName = `p${Object.keys(params).length}`;
-    params[paramName] = data;
+    params[paramName] = {type, value: data};
     return `<${type.name}>$${paramName}`;
   }
   if (type.schemaType === "Array") {
     if (type.elementType.schemaType === "Scalar") {
       const paramName = `p${Object.keys(params).length}`;
-      params[paramName] = data;
+      params[paramName] = {type, value: data};
       return `<array<${type.elementType.name}>>$${paramName}`;
     } else {
       return `[${(data as any[])

@@ -14,6 +14,7 @@ interface ButtonProps {
   shortcut?: string | JSX.Element;
   macShortcut?: string | JSX.Element;
   icon?: JSX.Element;
+  leftIcon?: boolean;
   size?: "small" | "large";
   onClick?: MouseEventHandler<HTMLButtonElement>;
   disabled?: boolean;
@@ -27,6 +28,7 @@ export default function Button({
   shortcut,
   macShortcut,
   icon,
+  leftIcon,
   size,
   onClick,
   disabled,
@@ -35,27 +37,31 @@ export default function Button({
 }: ButtonProps) {
   const _shortcut = isMac ? macShortcut : shortcut;
 
+  const _icon = loading ? (
+          <Spinner size={14} angle={135} strokeWidth={1.5} period={1.5} />
+        ) : (
+          icon
+        )
+
   return (
     <button
       className={cn(styles.button, className, {
         [styles.largeButton]: size === "large",
         [styles.squareButton]: style === "square",
+        [styles.leftIcon]: !!leftIcon
       })}
       onClick={onClick}
       disabled={disabled}
     >
       <div className={styles.inner}>
+        {leftIcon ? _icon : null}
         <span>
           {label}
           {_shortcut ? (
             <span className={styles.shortcut}>{_shortcut}</span>
           ) : null}
         </span>
-        {loading ? (
-          <Spinner size={14} angle={135} strokeWidth={1.5} period={1.5} />
-        ) : (
-          icon
-        )}
+        {!leftIcon ? _icon : null}
       </div>
     </button>
   );

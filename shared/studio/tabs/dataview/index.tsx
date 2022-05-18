@@ -22,9 +22,10 @@ import DataInspectorTable from "./dataInspector";
 
 import {ReviewEditsModal} from "./reviewEditsModal";
 
-import {BackArrowIcon} from "./icons";
-import {ChevronDownIcon, TabDataExplorerIcon} from "../../icons";
+import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
+import {ChevronDownIcon, FilterIcon, TabDataExplorerIcon} from "../../icons";
 import {Select} from "@edgedb/common/ui/select";
+import Button from "@edgedb/common/ui/button";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
@@ -38,7 +39,7 @@ export const DataView = observer(function DataView() {
         <DataInspectorView stackIndex={stack.length - 1} />
       ) : (
         <div className={cn(styles.dataviewCard, styles.loadingSkeleton)}>
-          {dbState.schemaData?.data
+          {dbState.schemaData
             ? "No object types in schema"
             : "Loading schema..."}
         </div>
@@ -69,6 +70,8 @@ const DataInspectorView = observer(function DataInspectorView({
 
   const inspectorState = stack[stackIndex];
 
+  const nestedPath = stackIndex > 0 ? stack[stack.length - 1] : null;
+
   return (
     <div
       className={cn(styles.dataviewCard, {
@@ -76,11 +79,11 @@ const DataInspectorView = observer(function DataInspectorView({
       })}
     >
       <div className={styles.header}>
-        {stackIndex === 0 ? (
+        {!nestedPath ? (
           <>
             <Select
               className={styles.objectSelect}
-              items={dataviewState.objectTypeNames.map((name) => {
+              items={dataviewState.objectTypes.map(({id, name}) => {
                 const [modName, typeName] = name.split(/::/);
                 return {
                   label: (
@@ -89,11 +92,11 @@ const DataInspectorView = observer(function DataInspectorView({
                       {typeName}
                     </>
                   ),
-                  action: () => dataviewState.selectObject(name),
+                  action: () => dataviewState.selectObject(id),
                 };
               })}
-              selectedItemIndex={dataviewState.objectTypeNames.indexOf(
-                stack[0]?.objectName
+              selectedItemIndex={dataviewState.objectTypes.indexOf(
+                stack[0]?.objectType!
               )}
             />
           </>
@@ -105,50 +108,66 @@ const DataInspectorView = observer(function DataInspectorView({
             >
               <BackArrowIcon />
             </div>
+            {stack.length > 2 ? (
+              <div
+                className={styles.upButton}
+                onClick={() => dataviewState.closeAllNestedViews()}
+              >
+                <BackArrowIcon />
+              </div>
+            ) : null}
             <div className={styles.nestedPathSteps}>
               <div className={styles.nestedPathStep}>
                 <div className={styles.pathStepName}>
-                  {stack[1].parentObject?.objectType}
+                  {nestedPath.parentObject?.objectTypeName}
                 </div>
                 <div className={styles.pathStepIdent}>
-                  {typeof stack[1].parentObject!.id === "string" ? (
-                    <span>{formatUUID(stack[1].parentObject!.id)}</span>
+                  {typeof nestedPath.parentObject!.id === "string" ? (
+                    <span>{formatUUID(nestedPath.parentObject!.id)}</span>
                   ) : (
                     <span style={{fontStyle: "italic"}}>new object</span>
                   )}
                 </div>
               </div>
-              {stack.slice(1, stackIndex + 1).map((inspector, i, arr) => (
-                <div key={i} className={styles.nestedPathStep}>
-                  <div className={styles.pathStepName}>
-                    .{inspector.parentObject?.fieldName}
-                  </div>
-                  <div className={styles.pathStepIdent}>
-                    <span>
-                      {arr.length - 1 === i
-                        ? inspector.objectName
-                        : typeof arr[i + 1].parentObject!.id === "string"
-                        ? formatUUID(arr[i + 1].parentObject!.id as string)
-                        : null}
-                    </span>
-                  </div>
+              <div className={styles.nestedPathStep}>
+                <div className={styles.pathStepName}>
+                  .{nestedPath.parentObject?.fieldName}
                 </div>
-              ))}
+                <div className={styles.pathStepIdent}>
+                  <span>{nestedPath.objectType!.name}</span>
+                </div>
+              </div>
             </div>
           </>
         )}
 
         {inspectorState.parentObject ? (
-          <button onClick={() => inspectorState.toggleEditLinkMode()}>
+          <div
+            className={styles.headerButton}
+            onClick={() => inspectorState.toggleEditLinkMode()}
+          >
             {inspectorState.parentObject.editMode
               ? "Close edit mode"
               : "Edit links"}
-          </button>
+          </div>
         ) : null}
 
         <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
 
         <div className={styles.headerButtons}>
+          {dataviewState.edits.hasPendingEdits ? (
+            <>
+              <div
+                className={styles.headerButton}
+                onClick={() =>
+                  openModal(<ReviewEditsModal state={dataviewState} />)
+                }
+              >
+                Review Changes
+              </div>
+            </>
+          ) : null}
+
           {inspectorState.insertTypeNames.length &&
           (!inspectorState.parentObject ||
             inspectorState.parentObject.editMode) ? (
@@ -163,20 +182,11 @@ const DataInspectorView = observer(function DataInspectorView({
               }))}
             />
           ) : null}
-          {dataviewState.edits.hasPendingEdits ? (
-            <>
-              <button
-                onClick={() =>
-                  openModal(<ReviewEditsModal state={dataviewState} />)
-                }
-              >
-                Review Changes
-              </button>
-            </>
-          ) : null}
+
           <div
-            className={cn(styles.headerButton, {
-              [styles.active]: inspectorState.filterPanelOpen,
+            className={cn(styles.filterButton, {
+              [styles.open]: inspectorState.filterPanelOpen,
+              [styles.filterActive]: !!inspectorState.filter,
             })}
             onClick={() => {
               inspectorState.setFilterPanelOpen(
@@ -184,9 +194,9 @@ const DataInspectorView = observer(function DataInspectorView({
               );
             }}
           >
-            <ChevronDownIcon />
-            {inspectorState.filterEdited ? "*" : ""}Filter
-            {inspectorState.filter ? " (Active)" : ""}
+            <FilterIcon className={styles.filterIcon} />
+            Filter
+            <ChevronDownIcon className={styles.openIcon} />
           </div>
         </div>
       </div>
@@ -222,18 +232,32 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
       <div className={styles.filterActions}>
         <div className={styles.filterError}>{state.filterError}</div>
 
-        {state.filter ? (
-          <button onClick={() => state.clearFilter()}>Clear</button>
-        ) : null}
-        {state.filterEdited ? (
-          <button onClick={() => state.revertFilter()}>Revert</button>
-        ) : null}
-        <button
-          onClick={() => state.applyFilter()}
+        <Button
+          className={styles.clearFilterButton}
+          label="Clear"
+          icon={<ClearFilterIcon />}
+          leftIcon
+          disabled={!state.filter && !state.filterEdited}
+          onClick={() => state.clearFilter()}
+        />
+
+        <Button
+          className={styles.disableFilterButton}
+          label="Disable Filter"
+          icon={<ClearFilterIcon />}
+          leftIcon
+          disabled={!state.filter}
+          onClick={() => state.disableFilter()}
+        />
+
+        <Button
+          className={styles.applyFilterButton}
+          label={state.filter ? "Update Filter" : "Apply Filter"}
+          icon={<ApplyFilterIcon />}
+          leftIcon
           disabled={!state.filterEdited}
-        >
-          Apply Filter
-        </button>
+          onClick={() => state.applyFilter()}
+        />
       </div>
     </div>
   );

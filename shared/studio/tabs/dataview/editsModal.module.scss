@@ -1,7 +1,80 @@
+@import "@edgedb/common/mixins.scss";
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  color: var(--app-text-colour);
+}
+
 .codeBlock {
   background: var(--app-panel-bg);
   padding: 16px;
   border-radius: 8px;
+  overflow: auto;
+
+  pre {
+    margin: 0;
+    margin-left: 1em;
+  }
+
+  @include darkTheme {
+    background: var(--app-bg);
+  }
+}
+
+.statementName {
+  font-family: Roboto Mono;
+  font-size: 13px;
+  opacity: 0.65;
+}
+
+.statementMessages {
+  &:not(:last-child) {
+    margin-bottom: 2em;
+  }
+}
+
+.statementError {
+  background: rgba(222, 83, 83, 0.1);
+  color: #de5353;
+  padding: 7px 8px;
+  border-radius: 4px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  max-width: 60ch;
+  line-height: 20px;
+  font-size: 14px;
+
+  svg {
+    fill: currentColor;
+    height: 15px;
+    margin-right: 6px;
+  }
+}
+
+.codeBlockParam {
+  display: inline-flex;
+  background: #e0e0e0;
+  line-height: 22px;
+  height: 22px;
+  border-radius: 12px;
+  padding-left: 6px;
+  overflow: hidden;
+
+  .codeBlockParamValue {
+    background: #fff;
+    margin-left: 6px;
+    padding: 0 6px;
+  }
+
+  @include darkTheme {
+    background: #292929;
+
+    .codeBlockParamValue {
+      background: #414141;
+    }
+  }
 }
 
 .greenButton {
@@ -9,6 +82,11 @@
   --buttonTextColour: #fff;
 }
 
+.redButton {
+  --buttonTextColour: #de5353;
+  margin-right: auto;
+}
+
 .errorMessage {
-  color: red;
+  color: #de5353;
 }
