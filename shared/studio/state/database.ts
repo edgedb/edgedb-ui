@@ -46,6 +46,7 @@ export interface SchemaData {
   constraints: Map<string, SchemaConstraint>;
   scalars: Map<string, SchemaScalarType>;
   types: Map<string, SchemaType>;
+  extensions: Set<string>;
 }
 
 @model("DatabaseState")
@@ -127,14 +128,18 @@ export class DatabaseState extends Model({
                   types := (${typesQuery}),
                   functions := (${functionsQuery}),
                   constraints := (${constraintsQuery}),
+                  extensions := (
+                    select schema::Extension.name
+                  )
                 }`
               )
               .then(({result, duration}) => {
-                console.log("types", duration);
+                // console.log("types", duration);
                 return result![0] as {
                   types: RawSchemaType[];
                   functions: RawFunctionType[];
                   constraints: RawConstraintType[];
+                  extensions: string[];
                 };
               }),
           ])
@@ -163,6 +168,7 @@ export class DatabaseState extends Model({
               .map((t) => [t.name, t as SchemaScalarType])
           ),
           types,
+          extensions: new Set(rawTypes.extensions),
         };
 
         // storeSchemaData(this.$modelId, schemaData);

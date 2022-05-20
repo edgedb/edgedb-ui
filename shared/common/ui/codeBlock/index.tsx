@@ -2,6 +2,7 @@ import React, {Fragment} from "react";
 import {StyleModule} from "style-mod";
 
 import {Tree} from "@lezer/common";
+import {Language} from "@codemirror/language";
 import {highlightTree} from "@lezer/highlight";
 
 import {edgeqlLanguage} from "@edgedb/lang-edgeql";
@@ -20,15 +21,17 @@ type CustomRange = {range: [number, number]} & (
 
 interface CodeBlockProps {
   code: string;
+  language?: Language;
   customRanges?: CustomRange[] | ((tree: Tree) => CustomRange[]);
 }
 
 export default function CodeBlock({
   code,
+  language,
   customRanges,
   ...otherProps
 }: React.HTMLAttributes<HTMLPreElement> & CodeBlockProps) {
-  const tree = edgeqlLanguage.parser.parse(code);
+  const tree = (language ?? edgeqlLanguage).parser.parse(code);
 
   const html: (string | JSX.Element)[] = [];
 
