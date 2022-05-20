@@ -264,7 +264,10 @@ function strToString(value: string): string {
   return escape(value);
 }
 
-function prettyPrintJSON(json: string, indentSpaces: number = 2): string {
+export function prettyPrintJSON(
+  json: string,
+  indentSpaces: number = 2
+): string {
   let pretty = "";
   let i = 0;
   let lasti = 0;

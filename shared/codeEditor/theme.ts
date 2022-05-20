@@ -35,15 +35,16 @@ const lightThemeSpec: ThemeSpec = {
   },
   ".cm-lineNumbers": {
     color: "#8b8b8b",
+    fontSize: "14px",
   },
   ".cm-activeLineGutter": {
     background: "none",
   },
   ".cm-activeLine": {
-    backgroundColor: "#ebebeb",
+    backgroundColor: "rgba(0,0,0,0.04)",
   },
   "&.cm-focused .cm-selectionBackground": {
-    backgroundColor: "#ebebeb",
+    backgroundColor: "rgba(0,0,0,0.04)",
   },
   ".cm-cursor": {
     borderLeft: "2px solid #4a96e6",
@@ -64,6 +65,9 @@ const lightThemeSpec: ThemeSpec = {
     background: "none",
     borderLeft: "1px solid rgba(0,0,0,0.1)",
     marginLeft: "-1px",
+  },
+  ".cm-tooltip": {
+    zIndex: "101",
   },
   ".cm-tooltip-autocomplete": {
     background: "#fff",
@@ -100,10 +104,10 @@ export const darkTheme = EditorView.theme(
       color: "#8b8b8b",
     },
     ".cm-activeLine": {
-      backgroundColor: "#353535",
+      backgroundColor: "rgba(255,255,255,0.04)",
     },
     "&.cm-focused .cm-selectionBackground": {
-      backgroundColor: "#353535",
+      backgroundColor: "rgba(255,255,255,0.04)",
     },
     ".cm-cursor": {
       borderLeftColor: "#4a96e6",

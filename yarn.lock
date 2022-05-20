@@ -1528,6 +1528,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-json@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "@codemirror/lang-json@npm:0.20.0"
+  dependencies:
+    "@codemirror/language": ^0.20.0
+    "@lezer/json": ^0.16.0
+  checksum: 20bbf0a480852fd11b0904561d4c7fe151f7a5cbe49b36516890ce7d729b4fd51e7c0443fb27463fd25e69e5ed693c3ce5e346ba60669a012f313cf8b06db13e
+  languageName: node
+  linkType: hard
+
 "@codemirror/language@npm:^0.20.0":
   version: 0.20.0
   resolution: "@codemirror/language@npm:0.20.0"
@@ -1538,6 +1548,17 @@ __metadata:
     "@lezer/highlight": ^0.16.0
     "@lezer/lr": ^0.16.0
   checksum: e8ad6f1932b2f62b3c3d4307168813f8cd17f71947814a4e8228365de98aa470df79c44d47a27dcbc7426ccbdec71a377b1b6e16f7c4f76be241317404347c4a
+  languageName: node
+  linkType: hard
+
+"@codemirror/lint@npm:^0.20.0":
+  version: 0.20.2
+  resolution: "@codemirror/lint@npm:0.20.2"
+  dependencies:
+    "@codemirror/state": ^0.20.0
+    "@codemirror/view": ^0.20.0
+    crelt: ^1.0.5
+  checksum: 34bb6bbc3f027b73a9689a2b872934b29e58dd654c6ee34ec2ec6b8205a5b504ef3e4a5b65ecbf42cb2abad6ebff1e76835ca5e0a8adfefe4b54539ae96f25ea
   languageName: node
   linkType: hard
 
@@ -1770,10 +1791,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/studio@workspace:shared/studio"
   dependencies:
+    "@codemirror/lang-json": ^0.20.0
+    "@codemirror/lint": ^0.20.0
     "@edgedb/code-editor": "workspace:*"
     "@edgedb/common": "workspace:*"
     "@edgedb/inspector": "workspace:*"
     "@edgedb/schema-graph": "workspace:*"
+    codemirror-graphql: ^1.3.0
+    graphql: ^16.5.0
   peerDependencies:
     edgedb: ^0.20.7
     mobx: ^6.5.0
@@ -2096,6 +2121,16 @@ __metadata:
   dependencies:
     "@lezer/common": ^0.16.0
   checksum: f1be44044096c6e58d7f48b8eb50eb3c6b561d72b1537e239e50df3c7686ea46fce3c068cb95ef4a79bb1eb939caf700ff4a3dcddb39dd0ae6bce46aeccbdaf3
+  languageName: node
+  linkType: hard
+
+"@lezer/json@npm:^0.16.0":
+  version: 0.16.0
+  resolution: "@lezer/json@npm:0.16.0"
+  dependencies:
+    "@lezer/highlight": ^0.16.0
+    "@lezer/lr": ^0.16.0
+  checksum: 3fe14dcd8879c9318dc74e77c3543fff21e2f7b45b344b93e58e67eae48ea0c603c6b602129967d85a8ade1fa88b2c6abe43b3772b57829890fd91b111676f13
   languageName: node
   linkType: hard
 
@@ -4364,6 +4399,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"codemirror-graphql@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "codemirror-graphql@npm:1.3.0"
+  dependencies:
+    graphql-language-service: ^5.0.4
+  peerDependencies:
+    "@codemirror/language": ^0.20.0
+    codemirror: ^5.65.3
+    graphql: ^15.5.0 || ^16.0.0
+  checksum: e9a89c5ec2d3187dc46f0c9714c0b2ce5afa68a6b692d86b91b980712d6bfdcdf8ac94cb3e3aac9ba2c4da93b7a79b6f27a3f05f1f86965d0e4de341c0820c22
+  languageName: node
+  linkType: hard
+
 "collect-v8-coverage@npm:^1.0.0":
   version: 1.0.1
   resolution: "collect-v8-coverage@npm:1.0.1"
@@ -4643,6 +4691,13 @@ __metadata:
   version: 1.1.1
   resolution: "create-require@npm:1.1.1"
   checksum: a9a1503d4390d8b59ad86f4607de7870b39cad43d929813599a23714831e81c520bddf61bcdd1f8e30f05fd3a2b71ae8538e946eb2786dc65c2bbc520f692eff
+  languageName: node
+  linkType: hard
+
+"crelt@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "crelt@npm:1.0.5"
+  checksum: 04a618c5878e12a14a9a328a49ff6e37bed76abb88b72e661c56b5f161d8a9aca133650da6bcbc5224ad1f7f43a69325627f209e92a21002986d52a8f844b367
   languageName: node
   linkType: hard
 
@@ -6607,6 +6662,27 @@ __metadata:
   version: 4.2.9
   resolution: "graceful-fs@npm:4.2.9"
   checksum: 68ea4e07ff2c041ada184f9278b830375f8e0b75154e3f080af6b70f66172fabb4108d19b3863a96b53fc068a310b9b6493d86d1291acc5f3861eb4b79d26ad6
+  languageName: node
+  linkType: hard
+
+"graphql-language-service@npm:^5.0.4":
+  version: 5.0.4
+  resolution: "graphql-language-service@npm:5.0.4"
+  dependencies:
+    nullthrows: ^1.0.0
+    vscode-languageserver-types: ^3.15.1
+  peerDependencies:
+    graphql: ^15.5.0 || ^16.0.0
+  bin:
+    graphql: dist/temp-bin.js
+  checksum: 768fca75150402318ae30a928b7528fb878edc3b53edd5e5a9086a9277559e3097ba5a43d1e7dd3338be0b0411469c5918c4f54a2f85bea06a6aeb6d72f6232e
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^16.5.0":
+  version: 16.5.0
+  resolution: "graphql@npm:16.5.0"
+  checksum: a82a926d085818934d04fdf303a269af170e79de943678bd2726370a96194f9454ade9d6d76c2de69afbd7b9f0b4f8061619baecbbddbe82125860e675ac219e
   languageName: node
   linkType: hard
 
@@ -8924,6 +9000,13 @@ __metadata:
   dependencies:
     boolbase: ^1.0.0
   checksum: 5386d035c48438ff304fe687704d93886397349d1bed136de97aeae464caba10e8ffac55a04b215b86b3bc8897f33e0a5aa1045a9d8b2f251ae61b2a3ad3e450
+  languageName: node
+  linkType: hard
+
+"nullthrows@npm:^1.0.0":
+  version: 1.1.1
+  resolution: "nullthrows@npm:1.1.1"
+  checksum: 10806b92121253eb1b08ecf707d92480f5331ba8ae5b23fa3eb0548ad24196eb797ed47606153006568a5733ea9e528a3579f21421f7828e09e7756f4bdd386f
   languageName: node
   linkType: hard
 
@@ -12352,6 +12435,13 @@ __metadata:
   version: 1.1.2
   resolution: "vary@npm:1.1.2"
   checksum: ae0123222c6df65b437669d63dfa8c36cee20a504101b2fcd97b8bf76f91259c17f9f2b4d70a1e3c6bbcee7f51b28392833adb6b2770b23b01abec84e369660b
+  languageName: node
+  linkType: hard
+
+"vscode-languageserver-types@npm:^3.15.1":
+  version: 3.17.1
+  resolution: "vscode-languageserver-types@npm:3.17.1"
+  checksum: ceb4145dfd840e026a51a6059af6ca2ced606763d945ab24851b1871bf8614f12e7f6fdb1f865ba6ea26f62db066ef188b183b1c830e0f38f28e08b584136464
   languageName: node
   linkType: hard
 
