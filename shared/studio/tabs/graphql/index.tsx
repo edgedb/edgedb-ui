@@ -17,7 +17,7 @@ import {DatabaseTabSpec} from "../../components/databasePage";
 import {GraphQL} from "./state";
 import {GraphQLLanguage} from "./lang";
 
-import {ChevronDownIcon, TabReplIcon} from "../../icons";
+import {ChevronDownIcon, TabGraphQlIcon} from "../../icons";
 import Button from "@edgedb/common/ui/button";
 
 const JSONLang = json();
@@ -45,7 +45,7 @@ export const GraphQLView = observer(function GraphQLView() {
 export const graphqlTabSpec: DatabaseTabSpec = {
   path: "graphql",
   label: "GraphQL",
-  icon: (active) => <TabReplIcon active={active} />,
+  icon: (active) => <TabGraphQlIcon active={active} />,
   state: GraphQL,
   element: <GraphQLView />,
 };
