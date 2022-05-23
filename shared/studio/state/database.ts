@@ -1,9 +1,10 @@
 import {createContext, useContext} from "react";
 
-import {action, computed, observable, reaction} from "mobx";
+import {action, computed, observable, reaction, runInAction, when} from "mobx";
 import {
   AnyModel,
   createContext as createMobxContext,
+  findParent,
   idProp,
   Model,
   model,
@@ -33,6 +34,9 @@ import {
   SchemaConstraint,
 } from "@edgedb/common/schemaData";
 
+import {fetchSchemaData, storeSchemaData} from "../idbStore";
+
+import {InstanceState} from "./instance";
 import {connCtx, Connection} from "./connection";
 
 export const dbCtx = createMobxContext<DatabaseState>();
@@ -76,17 +80,34 @@ export class DatabaseState extends Model({
   }
 
   onAttachedToRootStore() {
-    this.fetchSchemaData();
+    const instanceState = findParent<InstanceState>(
+      this,
+      (parent) => parent instanceof InstanceState
+    )!;
+
+    when(
+      () => instanceState.instanceName !== null,
+      () => this.fetchSchemaData()
+    );
   }
 
-  // private async _fetchSchemaDataFromStore() {
-  //   if (!this.schemaData) {
-  //     const schemaData = await fetchSchemaData(this.$modelId);
-  //     if (schemaData) {
-  //       runInAction(() => (this.schemaData = frozen(schemaData)));
-  //     }
-  //   }
-  // }
+  private async _fetchSchemaDataFromStore() {
+    if (!this.schemaData) {
+      const instanceState = findParent<InstanceState>(
+        this,
+        (parent) => parent instanceof InstanceState
+      )!;
+
+      const schemaData = await fetchSchemaData(
+        this.name,
+        instanceState.instanceName!
+      );
+      if (schemaData) {
+        console.log("fetched schema from cache");
+        runInAction(() => (this.schemaData = schemaData));
+      }
+    }
+  }
 
   @modelFlow
   fetchSchemaData = _async(function* (this: DatabaseState) {
@@ -104,7 +125,7 @@ export class DatabaseState extends Model({
             true
           )
           .then(({result}) => (result?.[0] ?? null) as string | null),
-        // this._fetchSchemaDataFromStore(),
+        this._fetchSchemaDataFromStore(),
       ])
     );
 
@@ -171,7 +192,12 @@ export class DatabaseState extends Model({
           extensions: new Set(rawTypes.extensions),
         };
 
-        // storeSchemaData(this.$modelId, schemaData);
+        const instanceState = findParent<InstanceState>(
+          this,
+          (parent) => parent instanceof InstanceState
+        )!;
+
+        storeSchemaData(this.name, instanceState.instanceName!, schemaData);
 
         this.schemaData = schemaData;
       } finally {

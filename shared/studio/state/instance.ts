@@ -10,6 +10,8 @@ import {
   AnyModel,
 } from "mobx-keystone";
 
+import {cleanupOldSchemaDataForInstance} from "../idbStore";
+
 import {DatabaseState} from "./database";
 import {Connection} from "./connection";
 
@@ -43,6 +45,11 @@ export class InstanceState extends Model({
         name: db.name,
       }));
     });
+
+    cleanupOldSchemaDataForInstance(
+      this.instanceName!,
+      this.databases!.map((db) => db.name)
+    );
   }
 
   onInit() {
