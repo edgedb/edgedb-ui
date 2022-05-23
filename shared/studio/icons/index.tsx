@@ -218,6 +218,67 @@ export function TabDataExplorerIcon(props: ActiveItem) {
   );
 }
 
+export function TabGraphQlIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="28"
+      height="29"
+      viewBox="0 0 28 29"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M14 3.29469L4 8.91969V20.0803L14 25.7053L24 20.0803V8.91969L14 3.29469ZM26 7.75L14 1L2 7.75V21.25L14 28L26 21.25V7.75Z"
+        fill={props?.active ? activeColor3 : undefined}
+      />
+      <circle
+        cx="14"
+        cy="3"
+        r="3"
+        fill={props?.active ? activeColor1 : undefined}
+      />
+      <circle
+        cx="14"
+        cy="26"
+        r="3"
+        fill={props?.active ? activeColor2 : undefined}
+      />
+      <circle
+        cx="3"
+        cy="21"
+        r="3"
+        fill={props?.active ? activeColor1 : undefined}
+      />
+      <circle
+        cx="25"
+        cy="21"
+        r="3"
+        fill={props?.active ? activeColor1 : undefined}
+      />
+      <circle
+        cx="3"
+        cy="8"
+        r="3"
+        fill={props?.active ? activeColor2 : undefined}
+      />
+      <circle
+        cx="25"
+        cy="8"
+        r="3"
+        fill={props?.active ? activeColor2 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M14 2C14.3484 2 14.6716 2.1813 14.8533 2.47855L25.8533 20.4785C26.0419 20.7872 26.0491 21.1737 25.8722 21.4892C25.6953 21.8047 25.3617 22 25 22H3C2.63827 22 2.30475 21.8047 2.1278 21.4892C1.95086 21.1737 1.9581 20.7872 2.14672 20.4785L13.1467 2.47855C13.3284 2.1813 13.6516 2 14 2ZM4.78306 20H23.2169L14 4.91773L4.78306 20Z"
+        fill={props?.active ? activeColor1 : undefined}
+      />
+    </svg>
+  );
+}
+
 export function TabSettingsIcon(props: ActiveItem) {
   return (
     <svg
