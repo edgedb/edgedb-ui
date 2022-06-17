@@ -16,7 +16,6 @@ import {dashboardTabSpec} from "@edgedb/studio/tabs/dashboard";
 import {replTabSpec} from "@edgedb/studio/tabs/repl";
 import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
-import {graphqlTabSpec} from "@edgedb/studio/tabs/graphql";
 
 import {useAppState} from "src/state/providers";
 
@@ -25,7 +24,6 @@ const tabs: DatabaseTabSpec[] = [
   replTabSpec,
   schemaTabSpec,
   dataviewTabSpec,
-  graphqlTabSpec,
 ];
 
 export default observer(function DatabasePage() {
