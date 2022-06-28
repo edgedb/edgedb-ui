@@ -8,6 +8,7 @@ export type SelectProps = {
   className?: string;
   titleClassName?: string;
   title?: string | JSX.Element;
+  rightAlign?: boolean;
   mainAction?: () => void;
   actions?: {label: string | JSX.Element; action: () => void}[];
 } & (
@@ -24,6 +25,7 @@ export function Select({
   className,
   titleClassName,
   title,
+  rightAlign,
   mainAction,
   actions,
   ...dropdown
@@ -83,6 +85,7 @@ export function Select({
             ref={dropdownRef}
             className={cn(styles.tabDropdown, {
               [styles.tabDropdownOpen]: dropdownOpen,
+              [styles.rightAlign]: !!rightAlign
             })}
             style={{maxHeight: maxHeight ?? maxHeight + "px"}}
           >

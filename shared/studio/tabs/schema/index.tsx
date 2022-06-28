@@ -17,13 +17,15 @@ import {
   schemaContext,
   useDebugState,
   DebugControls,
+  SchemaMinimap,
 } from "@edgedb/schema-graph";
-import SchemaSidepanel from "@edgedb/schema-graph/components/schemaSidepanel";
 
 import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 
 import {TabSchemaIcon} from "../../icons";
+
+import {SchemaTextView} from "./textView";
 
 export const SchemaView = observer(function SchemaView() {
   const schemaState = useTabState(Schema);
@@ -72,27 +74,6 @@ export const schemaTabSpec: DatabaseTabSpec = {
   element: <SchemaView />,
 };
 
-const SchemaTextView = observer(function SchemaTextView() {
-  const dbState = useDatabaseState();
-
-  const sdl = (dbState.schemaData?.sdl ?? "").replace(
-    /;\n(?!\s*}| {12})/g,
-    ";\n\n"
-  );
-
-  return (
-    <div className={styles.schemaTextView}>
-      <pre className={styles.lineNos}>
-        {Array(sdl.split("\n").length)
-          .fill(0)
-          .map((_, i) => i + 1)
-          .join("\n")}
-      </pre>
-      <CodeBlock code={sdl} />
-    </div>
-  );
-});
-
 const SchemaGraphView = observer(function SchemaGraphView() {
   const schemaState = useTabState(Schema);
 
@@ -107,7 +88,7 @@ const SchemaGraphView = observer(function SchemaGraphView() {
         />
       ) : null}
       <SchemaGraph debug={debugState[0]} />
-      <SchemaSidepanel />
+      <SchemaMinimap className={styles.minimap} />
     </div>
   );
 });

@@ -80,6 +80,11 @@
     pointer-events: auto;
     z-index: 200;
   }
+
+  &.rightAlign {
+    right: 0;
+    left: unset;
+  }
 }
 
 .dropdownItem {

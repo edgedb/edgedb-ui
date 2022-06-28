@@ -15,6 +15,7 @@ export const KnownScalarTypes = [
   "cal::local_time",
   "std::duration",
   "cal::relative_duration",
+  "cal::date_duration",
   "std::json",
   "std::bigint",
   "cfg::memory",

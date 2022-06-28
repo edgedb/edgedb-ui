@@ -1,8 +1,9 @@
-import {useEffect} from "react";
+import {DependencyList, useEffect} from "react";
 
 export function useResize(
   ref: React.RefObject<HTMLElement>,
-  onResize: (rect: DOMRect) => void
+  onResize: (rect: DOMRect) => void,
+  deps: DependencyList = []
 ): void {
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
@@ -18,5 +19,5 @@ export function useResize(
     return () => {
       resizeObserver.disconnect();
     };
-  }, [ref]);
+  }, [ref, ...deps]);
 }

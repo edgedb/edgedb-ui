@@ -1,6 +1,14 @@
 import {createContext, useContext} from "react";
 
-import {action, computed, observable, reaction, runInAction, when} from "mobx";
+import {
+  action,
+  autorun,
+  computed,
+  observable,
+  reaction,
+  runInAction,
+  when,
+} from "mobx";
 import {
   AnyModel,
   createContext as createMobxContext,
@@ -9,6 +17,7 @@ import {
   Model,
   model,
   modelAction,
+  ModelClass,
   modelFlow,
   ObjectMap,
   objectMap,
@@ -18,12 +27,8 @@ import {
 } from "mobx-keystone";
 
 import {
-  typesQuery,
-  functionsQuery,
-  constraintsQuery,
-  RawSchemaType,
-  RawFunctionType,
-  RawConstraintType,
+  RawIntrospectionResult,
+  introspectionQuery,
 } from "@edgedb/common/schemaData/queries";
 import {
   buildTypesGraph,
@@ -32,6 +37,11 @@ import {
   SchemaScalarType,
   SchemaFunction,
   SchemaConstraint,
+  SchemaPointer,
+  SchemaAbstractAnnotation,
+  SchemaExtension,
+  SchemaAlias,
+  SchemaGlobal,
 } from "@edgedb/common/schemaData";
 
 import {fetchSchemaData, storeSchemaData} from "../idbStore";
@@ -41,7 +51,10 @@ import {connCtx, Connection} from "./connection";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
+const SCHEMA_DATA_VERSION = 1;
+
 export interface SchemaData {
+  schemaDataVersion: number;
   migrationId: string | null;
   sdl: string;
   objects: Map<string, SchemaObjectType>;
@@ -50,7 +63,12 @@ export interface SchemaData {
   constraints: Map<string, SchemaConstraint>;
   scalars: Map<string, SchemaScalarType>;
   types: Map<string, SchemaType>;
-  extensions: Set<string>;
+  pointers: Map<string, SchemaPointer>;
+  aliases: Map<string, SchemaAlias>;
+  globals: Map<string, SchemaGlobal>;
+  annotations: Map<string, SchemaAbstractAnnotation>;
+  extensions: SchemaExtension[];
+  shortNamesByModule: Map<string, Set<string>>;
 }
 
 @model("DatabaseState")
@@ -132,10 +150,7 @@ export class DatabaseState extends Model({
         this.name,
         instanceState.instanceName!
       );
-      if (schemaData) {
-        console.log("fetched schema from cache");
-        runInAction(() => (this.schemaData = schemaData));
-      }
+      return schemaData;
     }
   }
 
@@ -143,7 +158,7 @@ export class DatabaseState extends Model({
   fetchSchemaData = _async(function* (this: DatabaseState) {
     const conn = this.connection;
 
-    const [migrationId] = yield* _await(
+    const [migrationId, schemaData] = yield* _await(
       Promise.all([
         conn
           .query(
@@ -151,8 +166,7 @@ export class DatabaseState extends Model({
               SELECT schema::Migration {
                 children := .<parents[IS schema::Migration]
               } FILTER NOT EXISTS .children
-            ).id;`,
-            true
+            ).id;`
           )
           .then(({result}) => (result?.[0] ?? null) as string | null),
         this._fetchSchemaDataFromStore(),
@@ -161,44 +175,43 @@ export class DatabaseState extends Model({
 
     this.migrationId = migrationId;
 
-    if (!this.schemaData || this.schemaData.migrationId !== migrationId) {
+    if (
+      schemaData &&
+      schemaData.migrationId === migrationId &&
+      schemaData.schemaDataVersion === SCHEMA_DATA_VERSION
+    ) {
+      console.log("fetched schema from cache");
+      this.schemaData = schemaData;
+    } else {
       this.fetchingSchemaData = true;
 
       try {
         const [sdl, rawTypes] = yield* _await(
           Promise.all([
-            conn
-              .query(`describe schema as sdl`, true)
-              .then(({result, duration}) => {
-                // console.log("describe", duration);
-                return result![0] as string;
-              }),
-            conn
-              .query(
-                `select {
-                  types := (${typesQuery}),
-                  functions := (${functionsQuery}),
-                  constraints := (${constraintsQuery}),
-                  extensions := (
-                    select schema::Extension.name
-                  )
-                }`
-              )
-              .then(({result, duration}) => {
-                // console.log("types", duration);
-                return result![0] as {
-                  types: RawSchemaType[];
-                  functions: RawFunctionType[];
-                  constraints: RawConstraintType[];
-                  extensions: string[];
-                };
-              }),
+            conn.query(`describe schema as sdl`).then(({result, duration}) => {
+              // console.log("describe", duration);
+              return result![0] as string;
+            }),
+            conn.query(introspectionQuery).then(({result, duration}) => {
+              // console.log("types", duration);
+              return result![0] as RawIntrospectionResult;
+            }),
           ])
         );
 
-        const {types, functions, constraints} = buildTypesGraph(rawTypes);
+        const {
+          types,
+          pointers,
+          functions,
+          constraints,
+          annotations,
+          aliases,
+          globals,
+          extensions,
+        } = buildTypesGraph(rawTypes);
 
         const schemaData: SchemaData = {
+          schemaDataVersion: SCHEMA_DATA_VERSION,
           migrationId,
           sdl,
           objects: new Map(
@@ -219,7 +232,28 @@ export class DatabaseState extends Model({
               .map((t) => [t.name, t as SchemaScalarType])
           ),
           types,
-          extensions: new Set(rawTypes.extensions),
+          pointers,
+          annotations,
+          aliases,
+          globals,
+          extensions,
+          shortNamesByModule: [
+            ...([...types.values()].filter(
+              (t) => t.schemaType === "Object" || t.schemaType === "Scalar"
+            ) as (SchemaObjectType | SchemaScalarType)[]),
+            ...[...pointers.values()].filter((p) => p.abstract),
+            ...functions.values(),
+            ...constraints.values(),
+            ...annotations.values(),
+            ...aliases.values(),
+            ...globals.values(),
+          ].reduce((modules, item) => {
+            if (!modules.has(item.module)) {
+              modules.set(item.module, new Set());
+            }
+            modules.get(item.module)!.add(item.shortName);
+            return modules;
+          }, new Map<string, Set<string>>()),
         };
 
         const instanceState = findParent<InstanceState>(

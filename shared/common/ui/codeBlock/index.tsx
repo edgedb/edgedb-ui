@@ -23,12 +23,14 @@ interface CodeBlockProps {
   code: string;
   language?: Language;
   customRanges?: CustomRange[] | ((tree: Tree) => CustomRange[]);
+  inline?: boolean;
 }
 
 export default function CodeBlock({
   code,
   language,
   customRanges,
+  inline,
   ...otherProps
 }: React.HTMLAttributes<HTMLPreElement> & CodeBlockProps) {
   const tree = (language ?? edgeqlLanguage).parser.parse(code);
@@ -146,5 +148,9 @@ export default function CodeBlock({
     );
   }
 
-  return <pre {...otherProps}>{html}</pre>;
+  return inline ? (
+    <span {...otherProps}>{html}</span>
+  ) : (
+    <pre {...otherProps}>{html}</pre>
+  );
 }

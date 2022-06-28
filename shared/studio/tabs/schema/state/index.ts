@@ -7,6 +7,8 @@ import {dbCtx} from "../../../state/database";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 
+import {SchemaTextView} from "./textView";
+
 export enum SchemaViewType {
   Text,
   Graph,
@@ -15,9 +17,10 @@ export enum SchemaViewType {
 
 @model("Schema")
 export class Schema extends Model({
-  viewType: prop<SchemaViewType>(SchemaViewType.Graph).withSetter(),
+  viewType: prop<SchemaViewType>(SchemaViewType.TextGraph).withSetter(),
 
-  splitView: prop(() => new SplitViewState({sizes: [35, 65]})),
+  splitView: prop(() => new SplitViewState({sizes: [50, 50]})),
+  textViewState: prop(() => new SchemaTextView({})),
 }) {
   schemaState = SchemaState.create();
 
