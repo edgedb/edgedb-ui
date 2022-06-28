@@ -28,7 +28,7 @@ export const GraphQLView = observer(function GraphQLView() {
   return (
     <div className={styles.graphql}>
       {dbState.schemaData ? (
-        dbState.schemaData.extensions.has("graphql") ? (
+        dbState.schemaData.extensions.some((ext) => ext.name === "graphql") ? (
           <_GraphQLView />
         ) : (
           <div className={styles.notEnabled}>

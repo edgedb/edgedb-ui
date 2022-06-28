@@ -5,12 +5,14 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .map {
   background: var(--schemaminimap-background);
   border-radius: 2px;
   max-height: 120px;
+  align-self: stretch;
 
   rect {
     fill: var(--schemaminimap-object);
@@ -30,6 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 110px;
 
   font-size: 14px;
   letter-spacing: 0.02em;

@@ -3,17 +3,22 @@
 .schema {
   display: flex;
   flex-grow: 1;
+  min-width: 0;
   flex-direction: column;
   margin-bottom: -16px;
 
-  --schemagraph-background: #e5e5e5;
+  & > * {
+    border-radius: 8px;
+  }
+
+  --schemagraph-background: #f5f5f5;
   --schemagraph-object-background: #ffffff;
   --schemagraph-object-colour: #333333;
   --schemagraph-object-header-background: #716fe1;
   --schemagraph-object-header-colour: #ffffff;
   --schemagraph-object-abstract-header-background: #999999;
   --schemagraph-object-selected-highlight: #047cff;
-  --schemagraph-object-links-background: #f5f5f5;
+  --schemagraph-object-links-background: #f0f0f0;
   --schemagraph-object-links-selected-background: #f3c8d7;
   --schemagraph-object-links-hover-background: rgba(243, 200, 215, 0.4);
   --schemagraph-linkprop-background: #ededed;
@@ -110,53 +115,48 @@
 .schemaGraphView {
   flex-grow: 1;
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
   overflow: hidden;
-
-  .schema > & {
-    border-radius: 8px;
-  }
 }
 
-.schemaTextView {
-  flex-grow: 1;
-  overflow: auto;
-  display: flex;
-  background: var(--app-panel-bg);
-  @include customScrollbar;
+.minimap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #f0f0f0;
+  border-radius: 0 0 0 8px;
+  padding: 12px !important;
+  width: 185px;
+  opacity: 0.4;
 
-  .schema > & {
-    border-radius: 8px;
+  button {
+    background: #f6f6f6;
+    height: 22px;
+    font-weight: 500;
+    font-size: 13px;
+    display: inline-flex;
+    border-radius: 12px;
+    padding: 0 10px;
+    align-items: center;
+    justify-content: center;
   }
 
-  pre {
-    font-family: Roboto Mono;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 20px;
-    margin: 0;
-    padding: 2rem 0;
-    height: max-content;
-    user-select: text;
+  & > div > div > button {
+    padding: 0;
+    height: 24px;
+    width: 24px;
 
-    &:first-child {
-      padding-left: 2rem;
-    }
     &:last-child {
-      padding-right: 2rem;
+      margin-left: 6px;
     }
   }
 
-  .lineNos {
-    color: #8c8c8c;
-    margin-right: 2rem;
-    text-align: right;
-    user-select: none;
+  &:hover {
+    opacity: 1;
+  }
 
-    @include darkTheme {
-      color: #4e4e4e;
-    }
+  @include darkTheme {
+    background: #272727;
   }
 }
 

@@ -16,42 +16,20 @@ export interface RawSchemaType {
   baseIds: string[];
   constraintIds: string[];
   element_type_id: string | null;
-  element_types:
-    | {
-        name: string;
-        type_id: string;
-      }[]
-    | null;
+  element_types: {name: string; type_id: string}[] | null;
+  named: boolean | null;
   enum_values: string[] | null;
   default: string | null;
   annotations: SchemaAnnotation[] | null;
   intersectionOfIds: string[] | null;
   unionOfIds: string[] | null;
-  pointers:
+  pointers: {id: string; "@owned": boolean}[] | null;
+  indexes:
     | {
-        type: string;
-        name: string;
-        targetId: string;
-        required: boolean;
-        readonly: boolean;
-        cardinality: SchemaCardinality;
-        default: string | null;
-        expr: string | null;
-        constraintIds: string[];
+        id: string;
+        expr: string;
+        "@owned": boolean;
         annotations: SchemaAnnotation[];
-        properties:
-          | {
-              name: string;
-              targetId: string;
-              required: boolean;
-              readonly: boolean;
-              cardinality: SchemaCardinality;
-              default: string | null;
-              expr: string | null;
-              constraintIds: string[];
-              annotations: SchemaAnnotation[];
-            }[]
-          | null;
       }[]
     | null;
 }
@@ -76,42 +54,97 @@ select Type {
     name,
     type_id := .type.id,
   } order by @index,
+  [is Tuple].named,
   [is ScalarType].enum_values,
   [is ScalarType].default,
-  # [is AnnotationSubject].annotations: {
-  #   name,
-  #   @value,
-  # },
+  [is AnnotationSubject].annotations: {
+    name,
+    @value,
+  },
   intersectionOfIds := [is ObjectType].intersection_of.id,
   unionOfIds := [is ObjectType].union_of.id,
   [is ObjectType].pointers: {
-    type := .__type__.name,
-    name,
-    targetId := .target.id,
-    required,
-    readonly,
-    cardinality,
-    default,
+    id,
+    @owned,
+  },
+  [is ObjectType].indexes: {
+    id,
     expr,
-    constraintIds := .constraints.id,
+    @owned,
     annotations: {
       name,
       @value,
     },
-    [is Link].properties: {
+  },
+}
+`;
+
+export type TargetDeleteAction =
+  | "Restrict"
+  | "DeleteSource"
+  | "Allow"
+  | "DeferredRestrict";
+export type SourceDeleteAction = "DeleteTarget" | "Allow";
+
+export interface RawPointerType {
+  id: string;
+  type: string;
+  name: string;
+  abstract: boolean;
+  builtin: boolean;
+  targetId: string | null;
+  baseIds: string[];
+  required: boolean;
+  readonly: boolean;
+  cardinality: SchemaCardinality;
+  default: string | null;
+  expr: string | null;
+  constraintIds: string[];
+  annotations: {id: string; "@value": string}[];
+  properties: {id: string; "@owned": boolean}[] | null;
+  on_target_delete: TargetDeleteAction | null;
+  on_source_delete: SourceDeleteAction | null;
+  indexes:
+    | {id: string; expr: string; annotations: SchemaAnnotation[]}[]
+    | null;
+}
+
+export const pointersQuery = `
+with module schema
+select Pointer {
+  id,
+  type := .__type__.name,
+  name,
+  abstract,
+  builtin,
+  targetId := .target.id,
+  baseIds := (
+    select .bases
+    order by @index
+  ).id,
+  required,
+  readonly,
+  cardinality,
+  default,
+  expr,
+  constraintIds := .constraints.id,
+  annotations: {
+    name,
+    @value,
+  },
+  [is Link].properties: {
+    id,
+    @owned,
+  },
+  [is Link].on_target_delete,
+  [is Link].on_source_delete,
+  [is Link].indexes: {
+    id,
+    expr,
+    annotations: {
       name,
-      targetId := .target.id,
-      required,
-      readonly,
-      cardinality,
-      default,
-      expr,
-      constraintIds := .constraints.id,
-      annotations: {
-        name,
-        @value,
-      },
-    }
+      @value,
+    },
   },
 }
 `;
@@ -137,11 +170,14 @@ export interface RawFunctionParamType {
 export interface RawFunctionType {
   id: string;
   name: string;
+  builtin: boolean;
   params: RawFunctionParamType[];
   returnTypeId: string;
   return_typemod: SchemaTypemod;
   volatility: SchemaVolatility;
-  annotations: SchemaAnnotation[] | null;
+  language: string;
+  body: string | null;
+  annotations: SchemaAnnotation[];
 }
 
 export const functionsQuery = `
@@ -149,6 +185,7 @@ with module schema
 select Function {
   id,
   name,
+  builtin,
   params: {
     name,
     typeId := .type.id,
@@ -160,6 +197,8 @@ select Function {
   returnTypeId := .return_type.id,
   return_typemod,
   volatility,
+  language,
+  body,
   annotations: {
     name,
     @value
@@ -170,11 +209,14 @@ export interface RawConstraintType {
   id: string;
   name: string;
   abstract: boolean;
+  builtin: boolean;
+  inherited_fields: string[];
   params: (RawFunctionParamType & {"@value": string})[];
   expr: string | null;
+  subjectexpr: string | null;
   delegated: boolean;
   errmessage: string;
-  annotations: SchemaAnnotation[] | null;
+  annotations: SchemaAnnotation[];
 }
 
 export const constraintsQuery = `
@@ -183,6 +225,8 @@ select Constraint {
   id,
   name,
   abstract,
+  builtin,
+  inherited_fields,
   params: {
     name,
     typeId := .type.id,
@@ -194,6 +238,7 @@ select Constraint {
   } filter .name != '__subject__'
     order by .num,
   expr,
+  subjectexpr,
   delegated,
   errmessage,
   annotations: {
@@ -202,3 +247,112 @@ select Constraint {
   },
 }
 `;
+
+export interface RawAbstractAnnotation {
+  id: string;
+  name: string;
+  builtin: boolean;
+  inheritable: boolean;
+  annotations: SchemaAnnotation[];
+}
+
+export const annotationsQuery = `
+with module schema
+select Annotation {
+  id,
+  name,
+  builtin,
+  inheritable,
+  annotations: {
+    name,
+    @value
+  },
+}
+`;
+
+export interface RawSchemaAlias {
+  id: string;
+  name: string;
+  builtin: boolean;
+  expr: string;
+  typeId: string;
+  annotations: SchemaAnnotation[];
+}
+
+export const aliasesQuery = `
+with module schema
+select Alias {
+  id,
+  name,
+  builtin,
+  expr,
+  typeId := .type.id,
+  annotations: {
+    name,
+    @value
+  },
+}
+`;
+
+export interface RawSchemaGlobal {
+  id: string;
+  name: string;
+  builtin: string;
+  required: boolean;
+  cardinality: SchemaCardinality;
+  expr: string | null;
+  targetId: string;
+  default: string;
+  annotations: SchemaAnnotation[];
+}
+
+export const globalsQuery = `
+select schema::Global {
+  id,
+  name,
+  builtin,
+  required,
+  cardinality,
+  expr,
+  targetId := .target.id,
+  default,
+  annotations: {
+    name,
+    @value
+  },
+}
+`;
+
+export interface RawSchemaExtension {
+  id: string;
+  name: string;
+}
+
+export const extensionsQuery = `
+select schema::Extension {
+  id,
+  name
+}
+`;
+
+export const introspectionQuery = `select {
+  types := (${typesQuery}),
+  pointers := (${pointersQuery}),
+  functions := (${functionsQuery}),
+  constraints := (${constraintsQuery}),
+  annotations := (${annotationsQuery}),
+  aliases := (${aliasesQuery}),
+  globals := (${globalsQuery}),
+  extensions := (${extensionsQuery}),
+}`;
+
+export interface RawIntrospectionResult {
+  types: RawSchemaType[];
+  pointers: RawPointerType[];
+  functions: RawFunctionType[];
+  constraints: RawConstraintType[];
+  annotations: RawAbstractAnnotation[];
+  aliases: RawSchemaAlias[];
+  globals: RawSchemaGlobal[];
+  extensions: RawSchemaExtension[];
+}

@@ -278,10 +278,17 @@ export function prettyPrintJSON(
       case "[":
         pretty +=
           "".padStart(indent * indentSpaces, " ") +
-          json.slice(lasti, i + 1).trim() +
-          "\n";
-        indent++;
+          json.slice(lasti, i + 1).trim();
         lasti = i + 1;
+
+        if (json[i + 1] === (json[i] === "{" ? "}" : "]")) {
+          pretty += "]";
+          lasti++;
+          i++;
+        } else {
+          pretty += "\n";
+          indent++;
+        }
         break;
       case "}":
       case "]":

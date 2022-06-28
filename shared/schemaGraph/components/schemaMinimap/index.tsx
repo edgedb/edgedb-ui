@@ -75,32 +75,27 @@ export default observer(function SchemaMinimap({
         ) : null}
       </svg>
       <div className={styles.controls}>
-        <div>
-          <button
-            className={
-              !schemaState.graph.viewport.canZoomOut ? styles.disabled : ""
-            }
-            onClick={() => schemaState.graph.viewport.setZoomLevelRel(-0.1)}
-            style={{marginRight: "2px"}}
-          >
-            <svg viewBox="0 0 12 12">
-              <path d="M 0 6 H 12" />
-            </svg>
-          </button>
-          <button
-            className={
-              !schemaState.graph.viewport.canZoomIn ? styles.disabled : ""
-            }
-            onClick={() => schemaState.graph.viewport.setZoomLevelRel(0.1)}
-          >
-            <svg viewBox="0 0 12 12">
-              <path d="M 6 0 V 12 M 0 6 H 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          className={
+            !schemaState.graph.viewport.canZoomOut ? styles.disabled : ""
+          }
+          onClick={() => schemaState.graph.viewport.setZoomLevelRel(-0.1)}
+          style={{marginRight: "2px"}}
+        >
+          <svg viewBox="0 0 12 12">
+            <path d="M 0 6 H 12" />
+          </svg>
+        </button>
         {(zoomLevel * 100).toFixed(0)}%
-        <button onClick={() => schemaState.graph.resetViewportPosition(true)}>
-          Reset
+        <button
+          className={
+            !schemaState.graph.viewport.canZoomIn ? styles.disabled : ""
+          }
+          onClick={() => schemaState.graph.viewport.setZoomLevelRel(0.1)}
+        >
+          <svg viewBox="0 0 12 12">
+            <path d="M 6 0 V 12 M 0 6 H 12" />
+          </svg>
         </button>
       </div>
     </div>
