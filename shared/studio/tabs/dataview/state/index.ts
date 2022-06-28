@@ -465,8 +465,10 @@ export class DataInspector extends Model({
   @modelFlow
   _updateRowCount = _async(function* (this: DataInspector) {
     const conn = connCtx.get(this)!;
+    const dbState = dbCtx.get(this)!;
 
     const {query, params} = this.getBaseObjectsQuery();
+    dbState.setLoadingTab(DataView, true);
     try {
       const data = yield* _await(
         conn.query(
@@ -481,6 +483,7 @@ export class DataInspector extends Model({
         this.rowCount = parseInt(data.result[0], 10);
       }
     } finally {
+      dbState.setLoadingTab(DataView, false);
     }
   });
 
@@ -548,7 +551,10 @@ export class DataInspector extends Model({
       return;
     }
 
+    const dbState = dbCtx.get(this)!;
+
     this.fetchingData = true;
+    dbState.setLoadingTab(DataView, true);
 
     let fetchNextOffset = false;
 
@@ -587,6 +593,7 @@ export class DataInspector extends Model({
       }
     } finally {
       this.fetchingData = false;
+      dbState.setLoadingTab(DataView, false);
     }
 
     if (fetchNextOffset) {

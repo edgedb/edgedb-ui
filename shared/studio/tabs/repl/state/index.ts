@@ -39,6 +39,7 @@ import {renderResultAsJson} from "../../../utils/renderJsonResult";
 
 import {splitQuery, Statement} from "./splitQuery";
 
+import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
@@ -326,6 +327,8 @@ export class Repl extends Model({
       this.scriptBlocks.push(scriptBlock);
     }
 
+    const dbState = dbCtx.get(this)!;
+    dbState.setLoadingTab(Repl, true);
     for (const statement of statements) {
       const success = yield* _await(
         this._runStatement(statement, scriptBlock)
@@ -341,5 +344,6 @@ export class Repl extends Model({
     }
 
     this.queryRunning = false;
+    dbState.setLoadingTab(Repl, false);
   });
 }

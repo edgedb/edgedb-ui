@@ -13,7 +13,7 @@ import {AnyModel, ModelClass} from "mobx-keystone";
 import cn from "@edgedb/common/utils/classNames";
 
 import {useInstanceState} from "../../state/instance";
-import {DatabaseStateContext} from "../../state/database";
+import {DatabaseStateContext, useDatabaseState} from "../../state/database";
 
 import styles from "./databasePage.module.scss";
 
@@ -66,29 +66,26 @@ const DatabasePageContent = observer(function DatabasePageContent({
 
   return (
     <div className={styles.databasePage}>
-      <TabBar tabs={tabs} />
-      <div className={styles.tabContent}>
-        <DatabaseStateContext.Provider value={dbState}>
+      <DatabaseStateContext.Provider value={dbState}>
+        <TabBar tabs={tabs} />
+        <div className={styles.tabContent}>
           {useRoutes([
             ...tabs,
             {path: "*", element: <Navigate to="" replace />},
           ])}
-        </DatabaseStateContext.Provider>
-      </div>
+        </div>
+      </DatabaseStateContext.Provider>
     </div>
   );
 });
 
 interface TabBarProps {
-  tabs: {
-    path: string;
-    label: string;
-    icon: (active: boolean) => JSX.Element;
-  }[];
+  tabs: DatabaseTabSpec[];
 }
 
-function TabBar({tabs}: TabBarProps) {
+const TabBar = observer(function TabBar({tabs}: TabBarProps) {
   const navigate = useNavigate();
+  const dbState = useDatabaseState();
 
   const currentTabId =
     useMatch(`${useResolvedPath("").pathname}/:tabId/*`)?.params.tabId ?? "";
@@ -123,47 +120,52 @@ function TabBar({tabs}: TabBarProps) {
   }, [currentTabId]);
 
   return (
-    <div className={styles.tabs}>
-      <div
-        className={cn(styles.tabs, {
-          [styles.showLabels]: showTabLabels,
-        })}
-      >
-        {tabs.map(({path, label, icon}) => (
-          <div
-            key={path}
-            className={cn(styles.tab, {
-              [styles.tabSelected]: path === currentTabId,
-            })}
-            onClick={() => navigate(path)}
-            onMouseEnter={() => {
-              if (tabMouseLeaveTimeout.current) {
-                clearTimeout(tabMouseLeaveTimeout.current);
-                tabMouseLeaveTimeout.current = null;
-              }
-              if (!tabMouseEnterTimeout.current) {
-                tabMouseEnterTimeout.current = setTimeout(() => {
-                  setShowTabLabels(true);
-                }, 500);
-              }
-            }}
-            onMouseLeave={() => {
-              if (!tabMouseLeaveTimeout.current) {
-                tabMouseLeaveTimeout.current = setTimeout(() => {
-                  if (tabMouseEnterTimeout.current) {
-                    clearTimeout(tabMouseEnterTimeout.current);
-                    tabMouseEnterTimeout.current = null;
-                  }
-                  setShowTabLabels(false);
-                }, 200);
-              }
-            }}
-          >
-            {icon(currentTabId === path)}
-            <div className={styles.tabLabel}>{label}</div>
-          </div>
-        ))}
-      </div>
+    <div
+      className={cn(styles.tabs, {
+        [styles.showLabels]: showTabLabels,
+      })}
+    >
+      {tabs.map(({path, label, icon, state}) => (
+        <div
+          key={path}
+          className={cn(styles.tab, {
+            [styles.tabSelected]: path === currentTabId,
+          })}
+          onClick={() => navigate(path)}
+          onMouseEnter={() => {
+            if (tabMouseLeaveTimeout.current) {
+              clearTimeout(tabMouseLeaveTimeout.current);
+              tabMouseLeaveTimeout.current = null;
+            }
+            if (!tabMouseEnterTimeout.current) {
+              tabMouseEnterTimeout.current = setTimeout(() => {
+                setShowTabLabels(true);
+              }, 500);
+            }
+          }}
+          onMouseLeave={() => {
+            if (!tabMouseLeaveTimeout.current) {
+              tabMouseLeaveTimeout.current = setTimeout(() => {
+                if (tabMouseEnterTimeout.current) {
+                  clearTimeout(tabMouseEnterTimeout.current);
+                  tabMouseEnterTimeout.current = null;
+                }
+                setShowTabLabels(false);
+              }, 200);
+            }
+          }}
+        >
+          {icon(currentTabId === path)}
+          <div className={styles.tabLabel}>{label}</div>
+          {state ? (
+            <div
+              className={cn(styles.loadingDot, {
+                [styles.active]: dbState.loadingTabs.get(state.name) === true,
+              })}
+            />
+          ) : null}
+        </div>
+      ))}
     </div>
   );
-}
+});
