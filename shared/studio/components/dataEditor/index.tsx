@@ -9,6 +9,8 @@ import {
 
 import cn from "@edgedb/common/utils/classNames";
 
+import {Select} from "@edgedb/common/ui/select";
+
 import {scalarItemToString} from "@edgedb/inspector/v2/buildScalar";
 
 import {
@@ -108,7 +110,7 @@ export function DataEditor({
   );
 }
 
-function getInputComponent(
+export function getInputComponent(
   type: SchemaType
 ): (props: {
   ref?: RefObject<HTMLElement>;
@@ -116,7 +118,9 @@ function getInputComponent(
   value: any;
   onChange: (val: any, error: boolean) => void;
   allowNull?: boolean;
+  stringMode?: boolean;
   depth?: number;
+  errorMessageAbove?: boolean;
 }) => JSX.Element {
   if (type.schemaType === "Scalar") {
     if (type.enum_values) {
@@ -143,12 +147,13 @@ function getInputComponent(
   return () => <></>;
 }
 
-const ArrayEditor = forwardRef(function ArrayEditor(
+export const ArrayEditor = forwardRef(function ArrayEditor(
   {
     type,
     value,
     onChange,
     allowNull,
+    stringMode,
     depth,
     isSetType,
   }: {
@@ -156,6 +161,7 @@ const ArrayEditor = forwardRef(function ArrayEditor(
     value: any[] | null;
     onChange: (val: any, error: boolean) => void;
     allowNull?: boolean;
+    stringMode?: boolean;
     depth: number;
     isSetType?: boolean;
   },
@@ -183,6 +189,7 @@ const ArrayEditor = forwardRef(function ArrayEditor(
             <Input
               ref={i === 0 ? (ref as any) : undefined}
               type={isSetType ? type : type.elementType}
+              stringMode={stringMode}
               depth={depth + 1}
               value={val}
               onChange={(val, err) => {
@@ -315,37 +322,41 @@ const EnumEditor = forwardRef(function EnumEditor(
   },
   ref
 ) {
+  const selectedIndex = type.enum_values!.indexOf(value);
   return (
-    <select
-      ref={ref as any}
-      value={value}
-      onChange={(e) => {
-        onChange(e.target.value, false);
-      }}
-    >
-      {type.enum_values!.map((enumOption, i) => (
-        <option key={i} value={enumOption}>
-          {enumOption}
-        </option>
-      ))}
-    </select>
+    <Select
+      title={selectedIndex === -1 ? "{ }" : value}
+      items={type.enum_values!.map((enumOpt) => ({
+        label: enumOpt,
+        action: () => onChange(enumOpt, false),
+      }))}
+      selectedItemIndex={selectedIndex}
+    />
   );
 });
 
 function BoolEditor({
   value,
   onChange,
+  stringMode,
 }: {
   value: boolean | null;
   onChange: (val: any, error: boolean) => void;
+  stringMode?: boolean;
 }) {
   return (
     <div className={styles.boolEditor}>
       {[true, false].map((bool, i) => (
         <div
           key={i}
-          className={cn({[styles.boolSelected]: value === bool})}
-          onClick={() => onChange(bool, false)}
+          className={cn({
+            [styles.boolSelected]: stringMode
+              ? ((value as any) === "true") === bool
+              : value === bool,
+          })}
+          onClick={() =>
+            onChange(stringMode ? (bool ? "true" : "false") : bool, false)
+          }
         >
           {bool ? "true" : "false"}
         </div>
@@ -360,30 +371,50 @@ const Textbox = forwardRef(function Textbox(
     value,
     onChange,
     allowNull,
+    stringMode,
     depth,
+    errorMessageAbove,
   }: {
     type: SchemaScalarType;
     value: any;
     onChange: (val: any, error: boolean) => void;
     allowNull?: boolean;
+    stringMode?: boolean;
     depth?: number;
+    errorMessageAbove?: boolean;
   },
   ref
 ) {
   const baseTypeName = (type.knownBaseType ?? type).name;
   const [val, setVal] = useState<string>(() =>
-    value ? scalarItemToString(value, baseTypeName) : ""
+    value ? (stringMode ? value : scalarItemToString(value, baseTypeName)) : ""
   );
-  const [err, setErr] = useState<string | null>(
-    allowNull || value !== null ? null : "Value is required"
-  );
+  const [err, setErr] = useState<string | null>(null);
 
   if (value === null && val !== "") {
     setVal("");
   }
 
+  useEffect(() => {
+    if ((value === null && !allowNull) || value.trim() === "") {
+      setErr("Value is required");
+      onChange(value as any, true);
+    } else if (value !== null) {
+      try {
+        parsers[baseTypeName](value);
+      } catch (e) {
+        setErr((e as Error).message);
+        onChange(value, true);
+      }
+    }
+  }, []);
+
   return (
-    <div className={styles.textbox}>
+    <div
+      className={cn(styles.textbox, {
+        [styles.errorMessageAbove]: !!errorMessageAbove,
+      })}
+    >
       <input
         className={cn({[styles.active]: depth === 0, [styles.error]: !!err})}
         placeholder={value === null ? "{}" : ""}
@@ -392,14 +423,18 @@ const Textbox = forwardRef(function Textbox(
         onChange={(e) => {
           let parsed: any = e.target.value;
           let err: string | null = null;
-          try {
-            parsed = parsers[baseTypeName](e.target.value);
-          } catch (e) {
-            err = (e as Error).message;
+          if (e.target.value.trim() === "") {
+            err = "Value is required";
+          } else {
+            try {
+              parsed = parsers[baseTypeName](e.target.value);
+            } catch (e) {
+              err = (e as Error).message;
+            }
           }
           setVal(e.target.value);
           setErr(err);
-          onChange(parsed, !!err);
+          onChange(stringMode ? e.target.value : parsed, !!err);
         }}
       />
       {err ? <div className={styles.errMessage}>{err}</div> : null}
@@ -414,22 +449,42 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
     onChange,
     allowNull,
     depth,
+    errorMessageAbove,
   }: {
     type: SchemaScalarType;
     value: string | null;
     onChange: (val: string, error: boolean) => void;
     allowNull?: boolean;
     depth?: number;
+    errorMessageAbove?: boolean;
   },
   ref
 ) {
   const baseTypeName = (type.knownBaseType ?? type).name;
-  const [err, setErr] = useState<string | null>(() =>
-    allowNull || value !== null ? null : "Value is required"
-  );
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (value === null) {
+      if (!allowNull) {
+        setErr("Value is required");
+        onChange(value as any, true);
+      }
+    } else if (baseTypeName === "std::json") {
+      try {
+        JSON.parse(value);
+      } catch {
+        setErr("Invalid JSON value");
+        onChange(value, true);
+      }
+    }
+  }, []);
 
   return (
-    <div className={styles.textbox}>
+    <div
+      className={cn(styles.textbox, {
+        [styles.errorMessageAbove]: !!errorMessageAbove,
+      })}
+    >
       <textarea
         className={cn({[styles.active]: depth === 0, [styles.error]: !!err})}
         ref={ref as RefObject<HTMLTextAreaElement>}
@@ -454,7 +509,10 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
   );
 });
 
-const parsers: {[typename: string]: (val: string) => any} = {
+export const parsers: {[typename: string]: (val: string) => any} = {
+  "std::bool": (val: string) => {
+    return val === "true";
+  },
   "std::int16": (val: string) => {
     if (!/^-?[0-9]+$/.test(val)) {
       throw new Error("Invalid integer");

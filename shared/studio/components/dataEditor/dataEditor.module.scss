@@ -8,42 +8,6 @@
   display: flex;
   z-index: 1;
   filter: drop-shadow(0px 2px 12px rgba(0, 0, 0, 0.25));
-
-  input,
-  textarea {
-    flex-grow: 1;
-    appearance: none;
-    box-sizing: border-box;
-    background: #fafafa;
-    outline: none;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    padding: 3px 6px;
-    margin: 0;
-    font-family: Roboto Mono;
-    font-size: 14px;
-    line-height: 22px;
-    min-height: 32px;
-    white-space: pre;
-    @include hideScrollbar;
-
-    &.active {
-      border-color: #047cff;
-    }
-
-    &.error {
-      border-color: #d78d87;
-    }
-
-    @include darkTheme {
-      background: #141414;
-      color: #adadad;
-
-      &.error {
-        border-color: #af6963;
-      }
-    }
-  }
 }
 
 .actions {
@@ -97,6 +61,48 @@
   display: flex;
   position: relative;
 
+  input,
+  textarea {
+    flex-grow: 1;
+    appearance: none;
+    box-sizing: border-box;
+    background: #fafafa;
+    outline: none;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    padding: 3px 6px;
+    margin: 0;
+    font-family: Roboto Mono;
+    font-size: 14px;
+    line-height: 22px;
+    min-height: 32px;
+    white-space: pre;
+    @include hideScrollbar;
+
+    &:focus,
+    &.active {
+      border-color: #047cff;
+    }
+
+    &.error {
+      border-color: #d78d87;
+    }
+
+    @include darkTheme {
+      background: #141414;
+      color: #adadad;
+
+      &:focus,
+      &.active {
+        border-color: #047cff;
+      }
+
+      &.error {
+        border-color: #af6963;
+      }
+    }
+  }
+
   input:focus + .errMessage,
   textarea:focus + .errMessage {
     display: block;
@@ -114,7 +120,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: 4px;
+  margin: 4px 0;
   background: #d78d87;
   color: #fff;
   border-radius: 4px;
@@ -126,6 +132,11 @@
   @include darkTheme {
     background: #af6963;
     color: #141414;
+  }
+
+  .errorMessageAbove & {
+    top: unset;
+    bottom: 100%;
   }
 }
 

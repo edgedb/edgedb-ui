@@ -40,7 +40,7 @@ import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
 import {SortIcon, SortedDescIcon} from "./icons";
 import {ChevronDownIcon, DeleteIcon, UndeleteIcon} from "../../icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
-import {DataEditor} from "./dataEditor";
+import {DataEditor} from "../../components/dataEditor";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;

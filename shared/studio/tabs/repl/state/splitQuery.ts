@@ -57,26 +57,14 @@ export function splitQuery(
         let paramName = getNodeText(query, paramNameNode).slice(1);
         paramNames.push(paramName);
 
-        const paramData = paramsData?.[paramName];
-
-        if (!paramData?.type) {
-          continue;
-        }
-
         // is positional param
         if (/^\d+$/.test(paramName)) {
           paramName = `__p${paramName}`;
         }
 
         expression +=
-          query.slice(offset, paramNode.from) +
-          (paramData.isArray
-            ? `<array<${paramData.type}>>`
-            : `<${paramData.type}>`) +
-          `<${paramData.isOptional ? "optional " : ""}${
-            paramData.isArray ? "array<str>" : "str"
-          }>$${paramName}`;
-        offset = paramNode.to;
+          query.slice(offset, paramNameNode.from) + `$${paramName}`;
+        offset = paramNameNode.to;
       }
 
       expression += query.slice(offset, statementNode.to);
