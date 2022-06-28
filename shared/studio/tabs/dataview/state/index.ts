@@ -467,18 +467,20 @@ export class DataInspector extends Model({
     const conn = connCtx.get(this)!;
 
     const {query, params} = this.getBaseObjectsQuery();
-    const data = yield* _await(
-      conn.query(
-        `SELECT count((${query}${
-          this.filter ? ` FILTER ${this.filter}` : ""
-        }))`,
-        true,
-        params
-      )
-    );
+    try {
+      const data = yield* _await(
+        conn.query(
+          `SELECT count((${query}${
+            this.filter ? ` FILTER ${this.filter}` : ""
+          }))`,
+          params
+        )
+      );
 
-    if (data.result) {
-      this.rowCount = parseInt(data.result[0], 10);
+      if (data.result) {
+        this.rowCount = parseInt(data.result[0], 10);
+      }
+    } finally {
     }
   });
 
@@ -559,7 +561,7 @@ export class DataInspector extends Model({
       if (dataQuery) {
         // console.log(`fetching ${offset}`);
         const data = yield* _await(
-          conn.query(dataQuery.query, true, {
+          conn.query(dataQuery.query, {
             offset: offset * fetchBlockSize,
             ...dataQuery.params,
           })
@@ -833,7 +835,7 @@ export class DataInspector extends Model({
     const conn = connCtx.get(this)!;
 
     try {
-      yield* _await(conn.prepare(filterCheckQuery, true));
+      yield* _await(conn.parse(filterCheckQuery));
     } catch (err: any) {
       const errMessage = String(err.message);
       this.filterError = /unexpected 'ORDER'/i.test(errMessage)
@@ -896,7 +898,6 @@ class ExpandedInspector extends Model({
       const conn = connCtx.get(this)!;
       const {result} = await conn.query(
         this.dataQuery,
-        true,
         {
           objectId: this.objectId,
         },
@@ -953,7 +954,6 @@ class ExpandedInspector extends Model({
 
     const {result} = await dbState.connection.query(
       query,
-      true,
       {
         id: parentObjectId,
       },

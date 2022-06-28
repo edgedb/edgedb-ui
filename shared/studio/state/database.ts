@@ -57,7 +57,6 @@ export interface SchemaData {
 export class DatabaseState extends Model({
   $modelId: idProp,
   name: prop<string>(),
-  serverUrl: prop<string>(),
 
   tabStates: prop<ObjectMap<AnyModel>>(),
 }) {
@@ -67,16 +66,18 @@ export class DatabaseState extends Model({
   @observable
   fetchingSchemaData = false;
 
-  connection = new Connection({
-    config: {database: this.name, serverUrl: this.serverUrl},
-  });
+  @observable.ref
+  connection: Connection = null!;
+
+  @observable
+  currentRole: string | null = null;
 
   @observable
   migrationId: string | null | undefined = undefined;
 
   onInit() {
     dbCtx.set(this, this);
-    connCtx.set(this, this.connection);
+    connCtx.setComputed(this, () => this.connection);
   }
 
   onAttachedToRootStore() {
@@ -85,10 +86,39 @@ export class DatabaseState extends Model({
       (parent) => parent instanceof InstanceState
     )!;
 
-    when(
-      () => instanceState.instanceName !== null,
+    const fetchSchemaDisposer = when(
+      () => this.connection !== null,
       () => this.fetchSchemaData()
     );
+
+    const roleUpdateDisposer = autorun(() => {
+      const roles = instanceState.roles;
+      if (roles && !roles.includes(this.currentRole!)) {
+        runInAction(() => (this.currentRole = roles[0]));
+      }
+    });
+
+    const connectionDisposer = autorun(() => {
+      if (this.currentRole) {
+        runInAction(
+          () =>
+            (this.connection = new Connection({
+              config: {
+                serverUrl: instanceState.serverUrl,
+                authToken: instanceState.authToken!,
+                database: this.name,
+                user: this.currentRole!,
+              },
+            }))
+        );
+      }
+    });
+
+    return () => {
+      fetchSchemaDisposer();
+      roleUpdateDisposer();
+      connectionDisposer();
+    };
   }
 
   private async _fetchSchemaDataFromStore() {

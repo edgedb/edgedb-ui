@@ -18,6 +18,7 @@ import {Connection} from "./connection";
 @model("InstanceState")
 export class InstanceState extends Model({
   serverUrl: prop<string>(),
+  authToken: prop<string | null>(),
 
   databasePageStates: prop(() => objectMap<DatabaseState>()),
 }) {
@@ -30,6 +31,8 @@ export class InstanceState extends Model({
         name: string;
       }[]
     | null = null;
+
+  @observable roles: string[] | null = null;
 
   defaultConnection: Connection | null = null;
 
@@ -44,6 +47,7 @@ export class InstanceState extends Model({
       this.databases = Object.values(data.databases).map((db: any) => ({
         name: db.name,
       }));
+      this.roles = data.roles;
     });
 
     cleanupOldSchemaDataForInstance(
@@ -57,12 +61,16 @@ export class InstanceState extends Model({
 
     when(
       () =>
-        this.defaultConnection === null && (this.databases?.length ?? 0) > 0,
+        this.defaultConnection === null &&
+        this.authToken != null &&
+        (this.databases?.length ?? 0) > 0,
       () => {
         this.defaultConnection = new Connection({
           config: {
-            database: this.databases![0].name,
             serverUrl: this.serverUrl,
+            authToken: this.authToken!,
+            database: this.databases![0].name,
+            user: this.roles![0],
           },
         });
       }
@@ -79,7 +87,6 @@ export class InstanceState extends Model({
         databaseName,
         new DatabaseState({
           name: databaseName,
-          serverUrl: this.serverUrl,
           tabStates: objectMap(
             tabs
               .filter((t) => t.state)
