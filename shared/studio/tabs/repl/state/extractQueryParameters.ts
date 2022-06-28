@@ -1,23 +1,25 @@
 import {SyntaxNode} from "@lezer/common";
 
 import {parser} from "@edgedb/lang-edgeql";
-import {SchemaScalarType, KnownScalarTypes} from "@edgedb/common/schemaData";
+import {
+  SchemaScalarType,
+  KnownScalarTypes,
+  SchemaType,
+} from "@edgedb/common/schemaData";
 
 import {getAllChildren, getNodeText} from "../../../utils/syntaxTree";
 
 interface ExtractedParameter {
   name: string;
-  type: string | null;
+  type: string;
   array: boolean;
   optional: boolean;
   error?: string;
 }
 
 export interface ResolvedParameter extends ExtractedParameter {
-  type: KnownScalarType | null;
+  resolvedBaseType: SchemaScalarType | null;
 }
-
-type KnownScalarType = typeof KnownScalarTypes[number];
 
 export function extractQueryParameters(
   query: string,
@@ -34,7 +36,7 @@ export function extractQueryParameters(
 
       const param: ExtractedParameter = {
         name: paramName,
-        type: null,
+        type: "",
         array: false,
         optional: false,
       };
@@ -95,43 +97,34 @@ export function extractQueryParameters(
 
     for (const param of extractedParams) {
       if (param.error) {
-        resolvedParams.set(param.name, {...param, type: null});
+        resolvedParams.set(param.name, {...param, resolvedBaseType: null});
         continue;
       }
 
-      let resolvedType: KnownScalarType | null = null;
-      if (
-        KnownScalarTypes.includes(param.type as any) ||
-        KnownScalarTypes.includes(`std::${param.type}` as any)
-      ) {
-        resolvedType = param.type as any;
-      } else {
-        let typeName = param.type!;
-        while (
-          schemaScalars.has(typeName) ||
-          schemaScalars.has(`default::${typeName}`)
-        ) {
-          const extendsTypeName = (schemaScalars.get(typeName) ??
-            schemaScalars.get(`default::${typeName}`))!.bases[0].name;
-          if (KnownScalarTypes.includes(extendsTypeName as any)) {
-            resolvedType = extendsTypeName as any;
-            break;
-          }
-          typeName = extendsTypeName;
-        }
-      }
+      const resolvedType =
+        schemaScalars.get(param.type) ??
+        schemaScalars.get(`default::${param.type}`) ??
+        schemaScalars.get(`std::${param.type}`);
 
-      if (!resolvedType) {
+      const resolvedBaseType = resolvedType?.knownBaseType ?? resolvedType;
+
+      console.log(resolvedBaseType);
+
+      if (
+        !resolvedBaseType ||
+        (!resolvedBaseType.enum_values &&
+          !KnownScalarTypes.includes(resolvedBaseType.name as any))
+      ) {
         resolvedParams.set(param.name, {
           ...param,
-          type: null,
+          resolvedBaseType: null,
           error: "Parameter cast does not resolve to a supported scalar type",
         });
       } else {
         const resolvedParam = resolvedParams.get(param.name);
         if (
           resolvedParam &&
-          (resolvedParam.type !== resolvedType ||
+          (resolvedParam.resolvedBaseType !== resolvedBaseType ||
             resolvedParam.array !== param.array ||
             resolvedParam.optional !== param.optional)
         ) {
@@ -140,7 +133,7 @@ export function extractQueryParameters(
         } else if (!resolvedParam) {
           resolvedParams.set(param.name, {
             ...param,
-            type: resolvedType,
+            resolvedBaseType,
           });
         }
       }

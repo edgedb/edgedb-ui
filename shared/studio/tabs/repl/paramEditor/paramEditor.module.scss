@@ -7,10 +7,9 @@
   border-radius: 8px;
   flex-shrink: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  overflow: auto;
+  @include customScrollbar;
 
   @include darkTheme {
     background: #363636;
@@ -23,8 +22,15 @@
   line-height: 13px;
   text-transform: uppercase;
   color: #9b9b9b;
-  margin: 16px;
-  margin-bottom: 1.5rem;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+
+  @include darkTheme {
+    background: #363636;
+  }
 }
 
 .paramsList {
@@ -33,9 +39,7 @@
   row-gap: 1.5rem;
   column-gap: 2rem;
   min-height: 0;
-  overflow: auto;
   padding: 0 16px 16px 16px;
-  @include customScrollbar;
 }
 
 .paramEditorItem {
@@ -101,50 +105,17 @@
 
 .paramData {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  justify-self: flex-start;
 
-  button {
-    background: #ebebeb;
-    border: 0;
-    outline: 0;
-    color: inherit;
-    font-family: inherit;
-    line-height: 26px;
-    text-transform: uppercase;
-    font-size: 12px;
-    border-radius: 16px;
-    width: max-content;
-    padding: 0 1.5rem;
-    margin: 3px 0;
-    cursor: pointer;
+  & > div {
+    & > input,
+    & > textarea {
+      border-color: #d0d0d0;
 
-    @include darkTheme {
-      background: #484848;
+      @include darkTheme {
+        border-color: #616161;
+      }
     }
-  }
-}
-
-.paramValue {
-  input {
-    font-family: Roboto Mono;
-    font-size: 14px;
-    line-height: 32px;
-    padding: 0 1rem;
-    color: #333;
-    border: 0;
-    background: #ebebeb;
-    border-radius: 4px;
-    outline: 0;
-
-    @include darkTheme {
-      background: #2a2a2a;
-      color: #c4c4c4;
-    }
-  }
-
-  button {
-    margin-left: 1rem;
   }
 }
 

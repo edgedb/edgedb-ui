@@ -124,7 +124,7 @@ export const unreserved_keywords = [
   "instance",
   "into",
   "isolation",
-  "json",
+  // "json",
   "last",
   "link",
   "migration",

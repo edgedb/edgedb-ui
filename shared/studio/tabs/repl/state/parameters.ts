@@ -15,33 +15,33 @@ import {
 
 import {Repl} from ".";
 import {dbCtx} from "../../../state/database";
+import {parsers} from "../../../components/dataEditor";
 
 export type {ResolvedParameter};
 
 @model("Repl/QueryParam")
 class ReplQueryParamData extends Model({
-  values: prop<[string, ...string[]]>(() => [""]),
+  values: prop<string[]>(() => [""]),
+  hasError: prop<boolean>(false).withSetter(),
   disabled: prop(false).withSetter(),
 }) {
   @modelAction
-  setValue(index: number, value: string) {
-    this.values[index] = value;
+  setSingleValue(value: string, err: boolean) {
+    this.values[0] = value;
+    this.hasError = err;
   }
 
   @modelAction
-  addNewValue() {
-    this.values.push("");
-  }
-
-  @modelAction
-  removeValue(index: number) {
-    this.values.splice(index, 1);
+  setArrayValues(values: string[], err: boolean) {
+    this.values = values;
+    this.hasError = err;
   }
 }
 
 export type ParamsData = {
   [key: string]: {
     type: string | null;
+    resolvedBaseTypeName: string | null;
     value: string | string[];
     disabled: boolean;
     isArray: boolean;
@@ -69,6 +69,17 @@ export class ReplQueryParamsEditor extends Model({
       }
     }
     return false;
+  }
+
+  @computed
+  get hasErrors() {
+    return [...this.currentParams.values()].some((param) => {
+      const paramData = this.paramData.get(param.name);
+      return (
+        (param.error || paramData?.hasError) &&
+        (!paramData || !paramData.disabled)
+      );
+    });
   }
 
   onAttachedToRootStore() {
@@ -103,9 +114,18 @@ export class ReplQueryParamsEditor extends Model({
 
   @modelAction
   updateCurrentParams(params: Map<string, ResolvedParameter>) {
-    for (const [key] of params) {
+    for (const [key, param] of params) {
       if (!this.paramData.has(key)) {
         this.paramData.set(key, new ReplQueryParamData({}));
+      } else {
+        const currentParam = this.currentParams.get(key);
+        if (
+          currentParam &&
+          (currentParam.resolvedBaseType !== param.resolvedBaseType ||
+            currentParam.array !== param.array)
+        ) {
+          this.paramData.get(key)?.setHasError(false);
+        }
       }
     }
     this.currentParams = params;
@@ -125,6 +145,7 @@ export class ReplQueryParamsEditor extends Model({
 
       data[param.name] = {
         type: param.type,
+        resolvedBaseTypeName: param.resolvedBaseType?.name ?? null,
         value: param.array ? [...paramData.values] : paramData.values[0],
         disabled: paramData.disabled,
         isArray: param.array,
@@ -144,9 +165,7 @@ export class ReplQueryParamsEditor extends Model({
           key,
           new ReplQueryParamData({
             ...param,
-            values: Array.isArray(param.value)
-              ? (param.value as [string, ...string[]])
-              : [param.value],
+            values: Array.isArray(param.value) ? param.value : [param.value],
           })
         );
       }
@@ -166,10 +185,16 @@ export function filterParamsData(
   paramNames: string[]
 ) {
   return paramNames.reduce((params, name) => {
+    const param = paramsData[name];
+    const parser = parsers[param.resolvedBaseTypeName!];
     const paramName = /^\d+$/.test(name) ? `__p${name}` : name;
-    params[paramName] = paramsData[name].disabled
+    params[paramName] = param.disabled
       ? null
-      : paramsData[name].value;
+      : parser
+      ? Array.isArray(param.value)
+        ? param.value.map(parser)
+        : parser(param.value)
+      : param.value;
 
     return params;
   }, {} as {[key: string]: string | string[] | null});

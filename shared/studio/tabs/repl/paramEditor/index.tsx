@@ -6,6 +6,8 @@ import {useTabState} from "../../../state";
 import {Repl} from "../state";
 import {ResolvedParameter} from "../state/parameters";
 
+import {ArrayEditor, getInputComponent} from "../../../components/dataEditor";
+
 import styles from "./paramEditor.module.scss";
 
 export default observer(function ParamEditorPanel() {
@@ -26,9 +28,15 @@ export default observer(function ParamEditorPanel() {
         </div>
       ) : (
         <div className={styles.paramsList}>
-          {[...paramEditorState.currentParams.values()].map((param) => (
-            <ParamEditor param={param} key={param.name} />
-          ))}
+          {[...paramEditorState.currentParams.values()].map(
+            (param, i, arr) => (
+              <ParamEditor
+                param={param}
+                lastParam={i === arr.length - 1}
+                key={param.name + param.type}
+              />
+            )
+          )}
         </div>
       )}
     </div>
@@ -37,14 +45,24 @@ export default observer(function ParamEditorPanel() {
 
 interface ParamEditorProps {
   param: ResolvedParameter;
+  lastParam: boolean;
 }
 
-const ParamEditor = observer(function ParamEditor({param}: ParamEditorProps) {
+const ParamEditor = observer(function ParamEditor({
+  param,
+  lastParam,
+}: ParamEditorProps) {
   const paramData = useTabState(Repl).queryParamsEditor.paramData.get(
     param.name
   )!;
 
-  const values = param.array ? paramData.values : paramData.values.slice(0, 1);
+  const Input = (
+    param.resolvedBaseType
+      ? param.array
+        ? ArrayEditor
+        : getInputComponent(param.resolvedBaseType)
+      : null
+  )!;
 
   return (
     <div
@@ -79,21 +97,22 @@ const ParamEditor = observer(function ParamEditor({param}: ParamEditorProps) {
         <div className={styles.paramError}>{param.error}</div>
       ) : (
         <div className={styles.paramData}>
-          {values.map((value, i) => (
-            <div className={styles.paramValue} key={i}>
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => paramData.setValue(i, e.target.value)}
-              />
-              {values.length > 1 ? (
-                <button onClick={() => paramData.removeValue(i)}>×</button>
-              ) : null}
-            </div>
-          ))}
-          {param.array ? (
-            <button onClick={() => paramData.addNewValue()}>Add</button>
-          ) : null}
+          <Input
+            type={param.resolvedBaseType as any}
+            isSetType={param.array}
+            stringMode
+            errorMessageAbove={lastParam}
+            value={
+              param.array
+                ? (paramData.values as any)
+                : paramData.values[0] ?? ""
+            }
+            depth={2}
+            onChange={(val, err) => {
+              if (param.array) paramData.setArrayValues(val, err);
+              else paramData.setSingleValue(val, err);
+            }}
+          />
         </div>
       )}
     </div>
