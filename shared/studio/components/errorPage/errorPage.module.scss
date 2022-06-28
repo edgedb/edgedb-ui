@@ -1,0 +1,48 @@
+@import "@edgedb/common/mixins.scss";
+
+.errorPage {
+  background-color: var(--app-panel-bg);
+  flex-grow: 1;
+  border-radius: 8px;
+  margin: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.errorBlock {
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 236px 202px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 236 202' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath fill-rule='evenodd' clip-rule='evenodd'%0Afill='rgba(175, 105, 99, 0.15)' d='M105.357 122.019H130.643V56.9208H105.357V122.019ZM105.357 166.73H130.643V143.67H105.357V166.73ZM232.991 170.009L137.226 10.6635C128.679 -3.55451 107.321 -3.55451 98.7744 10.6635L3.00861 170.009C-5.53798 184.227 5.14105 202 22.2343 202H213.766C230.859 202 241.538 184.227 232.991 170.009Z' /%3E%3C/svg%3E");
+  min-height: 202px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 32px;
+  color: #4f4f4f;
+
+  @include darkTheme {
+    color: #d8d8d8;
+  }
+}
+
+.title {
+  font-weight: 500;
+  font-size: 38px;
+  line-height: 32px;
+  color: #db5246;
+  margin-bottom: 18px;
+
+  @include darkTheme {
+    color: #af6963;
+  }
+}
+
+.errorActions {
+  margin-top: 108px;
+}
