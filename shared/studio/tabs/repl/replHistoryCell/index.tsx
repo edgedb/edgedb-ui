@@ -48,7 +48,7 @@ export default observer(function ReplHistoryCell({
       <div className={styles.blockBody}>
         {inScriptBlock && cell.isLastInScriptBlock ? (
           <div className={styles.scriptBlockHeader}>
-            <div className={styles.scriptBlockLabel}>Script</div>
+            <div className={styles.scriptBlockLabel}>Query Group</div>
             <button
               className={styles.smallButton}
               onClick={() => cell.scriptBlock!.edit()}
@@ -113,6 +113,7 @@ export default observer(function ReplHistoryCell({
                 <Inspector
                   className={styles.inspector}
                   state={cell.inspectorState}
+                  maxHeight={400}
                 />
               ) : null}
             </div>
