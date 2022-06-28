@@ -1801,6 +1801,7 @@ __metadata:
     fuse.js: ^6.6.2
     graphql: ^16.5.0
     idb: ^7.0.1
+    react-hook-form: ^7.32.2
   peerDependencies:
     edgedb: ^0.20.7
     mobx: ^6.5.0
@@ -10540,6 +10541,15 @@ __metadata:
   version: 6.0.10
   resolution: "react-error-overlay@npm:6.0.10"
   checksum: e7384f086a0162eecac8e081fe3c79b32f4ac8690c56bde35ab6b6380d10e6c8375bbb689a450902b6615261fcf6c95ea016fc0b200934667089ca83536bc4a7
+  languageName: node
+  linkType: hard
+
+"react-hook-form@npm:^7.32.2":
+  version: 7.32.2
+  resolution: "react-hook-form@npm:7.32.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17 || ^18
+  checksum: abe8ba146c313d206f99a01260457bc72af03b2c73d7bd4be5af11598140ec45ef1ef37bac64b80c4dbc298d6aa21af4caa259a133f305a04ddf583faa18e7d0
   languageName: node
   linkType: hard
 

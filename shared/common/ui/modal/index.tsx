@@ -1,6 +1,12 @@
-import {forwardRef, PropsWithChildren, useState} from "react";
+import {
+  forwardRef,
+  HTMLInputTypeAttribute,
+  InputHTMLAttributes,
+  PropsWithChildren,
+  useState,
+} from "react";
 
-import cn from '@edgedb/common/utils/classNames';
+import cn from "@edgedb/common/utils/classNames";
 
 import {CloseIcon} from "../icons";
 
@@ -81,22 +87,28 @@ export function Modal({
 interface ModalTextFieldProps {
   type?: "text" | "password";
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  error?: string;
 }
 export const ModalTextField = forwardRef(function ModalTextField(
-  {type, label, value, onChange}: ModalTextFieldProps,
+  {
+    type,
+    label,
+    error,
+    className,
+    ...props
+  }: ModalTextFieldProps & Omit<InputHTMLAttributes<HTMLInputElement>, "type">,
   ref
 ) {
   return (
-    <label className={styles.modalField}>
+    <label className={cn(styles.modalField, className)}>
       <span>{label}</span>
       <input
+        className={cn({[styles.fieldError]: !!error})}
         ref={ref as any}
         type={type ?? "text"}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        {...props}
       />
+      {error ? <span className={styles.errorMessage}>{error}</span> : null}
     </label>
   );
 });

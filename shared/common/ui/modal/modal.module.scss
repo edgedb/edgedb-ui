@@ -113,12 +113,23 @@
     background: var(--form-field-bg);
     border: none;
     outline: none;
-    height: 5rem;
+    height: 4.75rem;
     font-family: Roboto Mono;
     font-size: 14px;
     color: var(--form-field-text-colour);
     padding: 0 1.5rem;
+    border: 2px solid transparent;
     border-radius: 0.5rem;
     align-self: stretch;
+
+    &.fieldError {
+      border-color: #db5246;
+    }
+  }
+
+  .errorMessage {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    color: #db5246;
   }
 }
