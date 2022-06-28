@@ -28,7 +28,7 @@ import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
 //   removeReplResults,
 // } from "../../../idbStore";
 
-import {QueryDuration} from "../../../state/connection";
+import {QueryDuration, Capabilities} from "../../../state/connection";
 
 import {EdgeDBSet, decode} from "../../../utils/decodeRawBuffer";
 import {
@@ -41,6 +41,8 @@ import {splitQuery, Statement} from "./splitQuery";
 
 import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
+import {InstanceState} from "../../../state/instance";
+
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
   filterParamsData,
@@ -192,7 +194,11 @@ export class Repl extends Model({
 
   @computed
   get canRunQuery() {
-    return !this.queryRunning && !!this.currentQuery.toString().trim();
+    return (
+      !this.queryRunning &&
+      !!this.currentQuery.toString().trim() &&
+      !this.queryParamsEditor.hasErrors
+    );
   }
 
   onAttachedToRootStore() {
@@ -289,7 +295,7 @@ export class Repl extends Model({
         resultBuf,
         scriptBlock,
       });
-      return true;
+      return {success: true, capabilities, status};
     } catch (e: any) {
       this.addHistoryCell({
         statement,
@@ -299,12 +305,12 @@ export class Repl extends Model({
         scriptBlock,
       });
     }
-    return false;
+    return {success: false};
   });
 
   @modelFlow
   runQuery = _async(function* (this: Repl) {
-    if (this.queryRunning) {
+    if (this.queryRunning || !this.canRunQuery) {
       return;
     }
 
@@ -329,10 +335,18 @@ export class Repl extends Model({
 
     const dbState = dbCtx.get(this)!;
     dbState.setLoadingTab(Repl, true);
+
+    let allCapabilities = 0;
+    const statuses = new Set<string>();
+
     for (const statement of statements) {
-      const success = yield* _await(
+      const {success, capabilities, status} = yield* _await(
         this._runStatement(statement, scriptBlock)
       );
+      if (status) {
+        statuses.add(status.toLowerCase());
+        allCapabilities |= capabilities;
+      }
       if (!success) {
         error = true;
         break;
@@ -343,7 +357,25 @@ export class Repl extends Model({
       this.queryParamsEditor.clear();
     }
 
+    this.refreshCaches(allCapabilities, statuses);
+
     this.queryRunning = false;
     dbState.setLoadingTab(Repl, false);
   });
+
+  refreshCaches(capabilities: number, statuses: Set<string>) {
+    if (capabilities & Capabilities.DDL) {
+      if (statuses.has("create database") || statuses.has("drop database")) {
+        const instanceState = findParent(
+          this,
+          (p) => p instanceof InstanceState
+        ) as InstanceState;
+
+        instanceState.fetchInstanceInfo();
+      } else {
+        const dbState = dbCtx.get(this)!;
+        dbState.fetchSchemaData();
+      }
+    }
+  }
 }

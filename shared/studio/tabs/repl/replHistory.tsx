@@ -55,6 +55,10 @@ export default observer(function ReplHistory() {
 
   const listRef = useRef<List>(null);
 
+  useEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [queryHistory.length]);
+
   const getItem = useCallback(
     (index: number) => {
       return queryHistory[queryHistory.length - 1 - index];
