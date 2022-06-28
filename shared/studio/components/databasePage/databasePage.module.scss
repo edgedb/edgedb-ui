@@ -94,11 +94,16 @@
   font-style: italic;
 }
 
-.errorState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.greenButton {
+  --buttonBg: #49d8ad;
+  --buttonTextColour: #fff;
+
+  @include darkTheme {
+    --buttonBg: #29b189;
+    --buttonTextColour: #141414;
+  }
+}
+
 .loadingDot {
   position: absolute;
   width: 14px;

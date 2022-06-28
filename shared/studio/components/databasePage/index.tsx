@@ -11,11 +11,13 @@ import {
 import {AnyModel, ModelClass} from "mobx-keystone";
 
 import cn from "@edgedb/common/utils/classNames";
+import Button from "@edgedb/common/ui/button";
 
 import {useInstanceState} from "../../state/instance";
 import {DatabaseStateContext, useDatabaseState} from "../../state/database";
 
 import styles from "./databasePage.module.scss";
+import {ErrorPage} from "../errorPage";
 
 export interface DatabaseTabSpec {
   path: string;
@@ -34,6 +36,7 @@ export default observer(function DatabasePageLoadingWrapper({
   databaseName,
   tabs,
 }: DatabasePageProps) {
+  const navigate = useNavigate();
   const instanceState = useInstanceState();
 
   if (!instanceState?.databases) {
@@ -46,10 +49,20 @@ export default observer(function DatabasePageLoadingWrapper({
 
   if (!instanceState?.databases.find((db) => db.name === databaseName)) {
     return (
-      <div className={cn(styles.card, styles.errorState)}>
+      <ErrorPage
+        title="Database doesn't exist"
+        actions={
+          <Button
+            className={styles.greenButton}
+            label="Go back to database list"
+            onClick={() => navigate("..")}
+            style="square"
+            size="large"
+          />
+        }
+      >
         The database '{databaseName}' does not exist.
-        <Link to="..">Go back to database list</Link>
-      </div>
+      </ErrorPage>
     );
   }
 
