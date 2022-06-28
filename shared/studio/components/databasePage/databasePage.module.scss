@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .databasePage {
   flex-grow: 1;
   overflow: hidden;
@@ -7,7 +9,7 @@
 
 .tabs {
   flex-shrink: 0;
-  width: 72px;
+  width: 68px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,8 +18,8 @@
 
 .tab {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   margin-bottom: 4px;
   display: flex;
@@ -97,4 +99,39 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+.loadingDot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--app-bg);
+  bottom: -3px;
+  right: -3px;
+  transform: scale(0);
+  transition: transform 0.3s;
+
+  &:after {
+    display: block;
+    content: "";
+    width: 10px;
+    height: 10px;
+    margin: 2px;
+    border-radius: 5px;
+    animation: blink 1s infinite alternate-reverse;
+  }
+
+  &.active {
+    transform: scale(1);
+    transition-delay: 0.1s;
+  }
+}
+
+@keyframes blink {
+  from {
+    background: #0ccb93;
+  }
+
+  to {
+    background: #d0f9ed;
+  }
 }

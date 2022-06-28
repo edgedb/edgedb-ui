@@ -91,6 +91,14 @@ export class DatabaseState extends Model({
   currentRole: string | null = null;
 
   @observable
+  loadingTabs = new Map<string, boolean>();
+
+  @action
+  setLoadingTab(stateClass: ModelClass<any>, loading: boolean) {
+    this.loadingTabs.set(stateClass.name, loading);
+  }
+
+  @observable
   migrationId: string | null | undefined = undefined;
 
   onInit() {
