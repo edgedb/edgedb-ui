@@ -1,6 +1,4 @@
 export const schemaScript = `
-START TRANSACTION;
-
 CREATE TYPE default::Account {
   CREATE REQUIRED PROPERTY username -> std::str {
       CREATE CONSTRAINT std::exclusive;
@@ -801,6 +799,4 @@ insert default::Account {
   username := 'Dana',
   # no watchlist
 };
-
-COMMIT;
 `;

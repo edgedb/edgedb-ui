@@ -31,7 +31,9 @@
     "start": "BROWSER=none craco start",
     "build": "craco build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --admin-ui=enabled --jws-public-key-file=\"./devkeys/public.pem\" --jwe-private-key-file=\"./devkeys/private.pem\"",
+    "open-browser": "node openBrowser.js"
   },
   "eslintConfig": {
     "extends": [

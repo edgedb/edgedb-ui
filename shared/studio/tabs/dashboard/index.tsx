@@ -122,7 +122,7 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
               setRunning(true);
               setButtonLabel(`Setting up schema...`);
               const {schemaScript} = await import("./exampleSchema");
-              await dbState.connection.executeScript(schemaScript);
+              await dbState.connection.execute(schemaScript);
               setButtonLabel(`Updating schema...`);
               await dbState.fetchSchemaData();
             }}

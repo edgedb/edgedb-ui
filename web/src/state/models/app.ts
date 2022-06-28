@@ -9,11 +9,29 @@ const serverUrl =
       : "http://localhost:5656"
     : window.location.origin;
 
+const url = new URL(window.location.toString());
+
+let authToken: string | null = null;
+if (url.searchParams.has("authToken")) {
+  authToken = url.searchParams.get("authToken")!;
+  localStorage.setItem("edgedbAuthToken", authToken);
+
+  url.searchParams.delete("authToken");
+  window.history.replaceState(window.history.state, "", url);
+} else {
+  authToken = localStorage.getItem("edgedbAuthToken");
+}
+
+if (!authToken) {
+  url.pathname = "/ui/_login";
+  window.history.replaceState(null, "", url);
+}
+
 export const appCtx = createContext<App>();
 
 @model("App")
 export class App extends Model({
-  instanceState: prop(() => new InstanceState({serverUrl})),
+  instanceState: prop(() => new InstanceState({serverUrl, authToken})),
 }) {
   onInit() {
     appCtx.set(this, this);

@@ -1,5 +1,5 @@
 import {observer} from "mobx-react";
-import {BrowserRouter} from "react-router-dom";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -18,6 +18,7 @@ import {ModalProvider} from "@edgedb/common/hooks/useModal";
 
 import Header from "src/components/header";
 import Main from "src/components/main";
+import LoginPage from "src/components/loginPage";
 
 function App() {
   return (
@@ -48,8 +49,18 @@ const AppMain = observer(function _AppMain() {
               }
             }
           >
-            <Header />
-            <Main />
+            <Routes>
+              <Route path="_login" element={<LoginPage />} />
+              <Route
+                path="*"
+                element={
+                  <>
+                    <Header />
+                    <Main />
+                  </>
+                }
+              />
+            </Routes>
           </div>
         </ModalProvider>
       </div>

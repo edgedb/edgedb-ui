@@ -271,13 +271,13 @@ export class Repl extends Model({
 
     const timestamp = Date.now();
     try {
-      const {result, duration, outCodecBuf, resultBuf} = yield* _await(
-        conn.query(
-          statement.expression,
-          false,
-          paramsData && filterParamsData(paramsData, statement.params)
-        )
-      ) as any;
+      const {result, duration, outCodecBuf, resultBuf, capabilities, status} =
+        yield* _await(
+          conn.query(
+            statement.expression,
+            paramsData && filterParamsData(paramsData, statement.params)
+          )
+        );
 
       this.addHistoryCell({
         statement,

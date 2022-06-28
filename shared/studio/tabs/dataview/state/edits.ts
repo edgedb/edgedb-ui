@@ -456,7 +456,6 @@ set {
 
     await conn.query(
       query,
-      undefined,
       Object.keys(params).length
         ? Object.keys(params).reduce((args, key) => {
             args[key] = params[key].value;
