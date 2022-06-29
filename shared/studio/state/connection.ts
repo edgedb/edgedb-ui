@@ -68,7 +68,7 @@ type PendingQuery = {
 const queryOptions: QueryOptions = {
   injectTypenames: true,
   injectTypeids: true,
-  injectObjectIds: true,
+  injectObjectids: true,
 };
 
 @model("Connection")

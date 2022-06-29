@@ -1,4 +1,4 @@
-import {AnyModel, ModelClass} from "mobx-keystone";
+import {AnyModel, ModelClass, getTypeInfo, ModelTypeInfo} from "mobx-keystone";
 
 import {useDatabaseState} from "./database";
 
@@ -8,5 +8,6 @@ export {dbCtx} from "./database";
 export {useDatabaseState};
 
 export function useTabState<T extends AnyModel>(stateClass: ModelClass<T>): T {
-  return useDatabaseState().tabStates.get(stateClass.name) as T;
+  const modelType = (getTypeInfo(stateClass) as ModelTypeInfo).modelType;
+  return useDatabaseState().tabStates.get(modelType) as T;
 }

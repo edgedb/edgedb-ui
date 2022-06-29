@@ -90,7 +90,10 @@ export class InstanceState extends Model({
           tabStates: objectMap(
             tabs
               .filter((t) => t.state)
-              .map((t) => [t.state!.name, new t.state!({})])
+              .map((t) => {
+                const state = new t.state!({});
+                return [state.$modelType, state];
+              })
           ),
         })
       );
