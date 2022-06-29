@@ -16,6 +16,7 @@ export interface RawSchemaType {
   baseIds: string[];
   constraintIds: string[];
   element_type_id: string | null;
+  range_element_type_id: string | null;
   element_types: {name: string; type_id: string}[] | null;
   named: boolean | null;
   enum_values: string[] | null;
@@ -50,6 +51,7 @@ select Type {
   ).id,
   constraintIds := [is ConsistencySubject].constraints.id,
   element_type_id := [is Array].element_type.id,
+  range_element_type_id := [is Range].element_type.id,
   [is Tuple].element_types: {
     name,
     type_id := .type.id,

@@ -63,6 +63,7 @@ export interface SchemaRangeType {
   schemaType: "Range";
   id: string;
   name: string;
+  elementType: SchemaType;
 }
 
 interface _SchemaPointer {
@@ -299,7 +300,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           schemaType: "Range",
           id: type.id,
           name: type.name,
-        });
+        } as any);
         break;
       case "schema::ObjectType":
         types.set(type.id, {
@@ -563,6 +564,16 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           }
           return {type: elType, name: t.named ? el.name : null};
         });
+        break;
+      }
+      case "schema::Range": {
+        const elementType = types.get(type.range_element_type_id!);
+        if (!elementType) {
+          throw new Error(
+            `cannot find element type id: ${type.range_element_type_id} for range type ${type.name}`
+          );
+        }
+        (types.get(type.id) as SchemaRangeType).elementType = elementType;
         break;
       }
       case "schema::ObjectType": {

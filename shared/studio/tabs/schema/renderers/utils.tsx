@@ -24,7 +24,6 @@ import {SchemaItem} from "../state/textView";
 import {useSchemaTextState} from "../textView";
 import {useDatabaseState, useTabState} from "../../../state";
 import {Schema, SchemaViewType} from "../state";
-import {toSDL} from ".";
 
 export function Keyword({children}: PropsWithChildren<{}>) {
   return <span className={styles.kw}>{children}</span>;
@@ -114,6 +113,16 @@ export function TypeLink({
       return (
         <>
           <span className={styles.builtin}>array</span>
+          {"<"}
+          {wrapLink(type.elementType)}
+          {">"}
+        </>
+      );
+    }
+    if (type.schemaType === "Range") {
+      return (
+        <>
+          <span className={styles.builtin}>range</span>
           {"<"}
           {wrapLink(type.elementType)}
           {">"}
