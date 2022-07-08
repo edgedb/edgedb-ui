@@ -20,12 +20,12 @@ export default observer(function InstancePage() {
       <div className={styles.databases}>
         {instanceState.databases?.map((db) => (
           <div
-            key={db.name}
+            key={db}
             className={styles.databaseCard}
-            onClick={() => navigate(db.name)}
+            onClick={() => navigate(db)}
           >
             <HeaderDatabaseIcon />
-            <span>{db.name}</span>
+            <span>{db}</span>
           </div>
         ))}
 

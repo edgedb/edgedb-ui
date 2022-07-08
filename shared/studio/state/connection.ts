@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import {action, computed} from "mobx";
 import {
   createContext,
   model,
@@ -8,16 +8,16 @@ import {
   _await,
 } from "mobx-keystone";
 
+import {Session} from "edgedb/dist/options";
 import LRU from "edgedb/dist/primitives/lru";
 import {Capabilities} from "edgedb/dist/baseConn";
-import {AdminFetchConnection} from "edgedb/dist/fetchConn";
+import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
 import {QueryOptions} from "edgedb/dist/ifaces";
 
 import {
   decode,
   EdgeDBSet,
   QueryParams,
-  encodeArgs,
   codecsRegistry,
 } from "../utils/decodeRawBuffer";
 
@@ -75,7 +75,7 @@ const queryOptions: QueryOptions = {
 export class Connection extends Model({
   config: prop<ConnectConfig>(),
 }) {
-  conn = AdminFetchConnection.create(
+  conn = AdminUIFetchConnection.create(
     {
       address: this.config.serverUrl,
       database: this.config.database,
@@ -91,6 +91,12 @@ export class Connection extends Model({
     capacity: 200,
   });
   private _queryQueue: PendingQuery[] = [];
+
+  @computed
+  get _state() {
+    let state = Session.defaults();
+    return state;
+  }
 
   query(
     query: string,
@@ -159,7 +165,8 @@ export class Connection extends Model({
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
     if (kind === "execute") {
-      return await this.conn.rawExecute(queryString);
+      await this.conn.rawExecute(queryString, this._state);
+      return;
     }
 
     const startTime = performance.now();
@@ -168,10 +175,10 @@ export class Connection extends Model({
 
     if (this._codecCache.has(queryString)) {
       [inCodec, outCodec, outCodecBuf, capabilities] =
-        this._codecCache.get(queryString);
+        this._codecCache.get(queryString)!;
     } else {
       [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
-        await this.conn.rawParse(queryString, queryOptions);
+        await this.conn.rawParse(queryString, this._state, queryOptions);
       this._codecCache.set(queryString, [
         inCodec,
         outCodec,
@@ -188,6 +195,7 @@ export class Connection extends Model({
 
     const resultBuf = await this.conn.rawExecute(
       queryString,
+      this._state,
       outCodec,
       queryOptions,
       inCodec,
@@ -207,7 +215,7 @@ export class Connection extends Model({
       outCodecBuf,
       resultBuf,
       capabilities,
-      status: this.conn.lastStatus,
+      status: (this.conn as any).lastStatus,
     };
   }
 }

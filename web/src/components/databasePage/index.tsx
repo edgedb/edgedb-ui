@@ -39,14 +39,12 @@ export default observer(function DatabasePage() {
         title={params.databaseName}
         icon={<HeaderDatabaseIcon />}
         selectedItemIndex={
-          appState.instanceState.databases?.findIndex(
-            (db) => db.name === params.databaseName
-          )!
+          appState.instanceState.databases?.indexOf(params.databaseName!)!
         }
         items={
           appState.instanceState.databases?.map((db) => ({
-            label: db.name,
-            action: () => navigate(`/${db.name}`),
+            label: db,
+            action: () => navigate(`/${db}`),
           }))!
         }
         actions={[

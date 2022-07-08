@@ -153,7 +153,6 @@ export class DataInspector extends Model({
   $modelId: idProp,
   objectTypeId: prop<string>(),
   parentObject: prop<ParentObject | null>(null),
-  fields: prop<ObjectField[] | null>(null),
 
   scrollPos: prop<[number, number]>(() => [0, 0]).withSetter(),
 
@@ -169,6 +168,9 @@ export class DataInspector extends Model({
 
   @observable.ref
   filterEditStr = Text.of(["filter "]);
+
+  @observable.ref
+  fields: ObjectField[] | null = null;
 
   @action
   setFilterEditStr(filterStr: Text) {

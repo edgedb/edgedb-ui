@@ -47,7 +47,7 @@ export default observer(function DatabasePageLoadingWrapper({
     );
   }
 
-  if (!instanceState?.databases.find((db) => db.name === databaseName)) {
+  if (!instanceState?.databases.includes(databaseName)) {
     return (
       <ErrorPage
         title="Database doesn't exist"

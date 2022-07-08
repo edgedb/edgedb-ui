@@ -14,7 +14,7 @@
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",
     "buffer": "^6.0.3",
-    "edgedb": "^0.21.0-alpha.2",
+    "edgedb": "^0.21.0-alpha.3",
     "mobx": "^6.5.0",
     "mobx-keystone": "^0.67.2",
     "mobx-react-lite": "^3.3.0",
@@ -32,7 +32,7 @@
     "build": "craco build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --admin-ui=enabled --jws-public-key-file=\"./devkeys/public.pem\" --jwe-private-key-file=\"./devkeys/private.pem\"",
+    "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --jws-key-file=\"./devkeys/public.pem\" --jwe-key-file=\"./devkeys/private.pem\"",
     "open-browser": "node openBrowser.js"
   },
   "eslintConfig": {

@@ -10,6 +10,11 @@ import {
   AnyModel,
 } from "mobx-keystone";
 
+import {Session} from "edgedb/dist/options";
+import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
+import {OutputFormat, Cardinality} from "edgedb/dist/ifaces";
+import {codecsRegistry} from "../utils/decodeRawBuffer";
+
 import {cleanupOldSchemaDataForInstance} from "../idbStore";
 
 import {DatabaseState} from "./database";
@@ -22,38 +27,42 @@ export class InstanceState extends Model({
 
   databasePageStates: prop(() => objectMap<DatabaseState>()),
 }) {
-  @observable
-  instanceName: string | null = null;
-
-  @observable
-  databases:
-    | {
-        name: string;
-      }[]
-    | null = null;
-
+  @observable instanceName: string | null = null;
+  @observable databases: string[] | null = null;
   @observable roles: string[] | null = null;
 
   defaultConnection: Connection | null = null;
 
   async fetchInstanceInfo() {
-    const res = await fetch(`${this.serverUrl}/ui/instance-info`);
-    const data = await res.json();
-
-    // console.log(data);
+    const client = AdminUIFetchConnection.create(
+      {
+        address: this.serverUrl,
+        database: "__edgedbsys__",
+        user: "edgedb",
+        token: this.authToken!,
+      },
+      codecsRegistry
+    );
+    const data = await client.fetch(
+      `
+      select {
+        instanceName := sys::get_instance_name(),
+        databases := sys::Database.name,
+        roles := sys::Role.name,
+      }`,
+      null,
+      OutputFormat.BINARY,
+      Cardinality.ONE,
+      Session.defaults()
+    );
 
     runInAction(() => {
-      this.instanceName = data.instance_name ?? "_localdev";
-      this.databases = Object.values(data.databases).map((db: any) => ({
-        name: db.name,
-      }));
+      this.instanceName = data.instanceName ?? "_localdev";
+      this.databases = data.databases;
       this.roles = data.roles;
     });
 
-    cleanupOldSchemaDataForInstance(
-      this.instanceName!,
-      this.databases!.map((db) => db.name)
-    );
+    cleanupOldSchemaDataForInstance(this.instanceName!, this.databases!);
   }
 
   onInit() {
@@ -69,7 +78,7 @@ export class InstanceState extends Model({
           config: {
             serverUrl: this.serverUrl,
             authToken: this.authToken!,
-            database: this.databases![0].name,
+            database: this.databases![0],
             user: this.roles![0],
           },
         });

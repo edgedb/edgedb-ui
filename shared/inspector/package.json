@@ -14,7 +14,7 @@
   "dependencies": {
     "@types/react-window": "^1.8.3",
     "assert-never": "^1.2.1",
-    "edgedb": "^0.21.0-alpha.2",
+    "edgedb": "^0.21.0-alpha.3",
     "mobx": "^6.5.0",
     "mobx-keystone": "^0.67.2",
     "mobx-react-lite": "^3.3.0",
