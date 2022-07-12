@@ -73,30 +73,35 @@ export type ListItem = {
   matches?: readonly Fuse.FuseResultMatch[];
 };
 
-const fuseOptions: Fuse.IFuseOptions<SchemaItem> = {
-  includeMatches: true,
-  ignoreLocation: true,
-  threshold: 0.4,
-  includeScore: true,
-  keys: [
-    {
-      name: "name",
-      getFn: (item) =>
-        item.schemaType !== "Extension" ? item.shortName : item.name,
-    },
-    {
-      name: "module",
-      weight: 0.4,
-      getFn: (item) => (item.schemaType !== "Extension" ? item.module : ""),
-    },
-    {
-      name: "pointers",
-      weight: 0.8,
-      getFn: (item) =>
-        item.schemaType === "Object" ? item.pointers.map((p) => p.name) : [],
-    },
-  ],
-};
+type searchPointers = {[key: string]: {key: string; name: string}[]};
+
+function getFuseOptions(
+  pointers: searchPointers
+): Fuse.IFuseOptions<SchemaItem> {
+  return {
+    includeMatches: true,
+    ignoreLocation: true,
+    threshold: 0.4,
+    includeScore: true,
+    keys: [
+      {
+        name: "name",
+        getFn: (item) =>
+          item.schemaType !== "Extension" ? item.shortName : item.name,
+      },
+      {
+        name: "module",
+        weight: 0.4,
+        getFn: (item) => (item.schemaType !== "Extension" ? item.module : ""),
+      },
+      {
+        name: "pointers",
+        weight: 0.8,
+        getFn: (item) => pointers[item.id]?.map((p) => p.name) ?? [],
+      },
+    ],
+  };
+}
 
 @model("SchemaTextView")
 export class SchemaTextView extends Model({
@@ -118,15 +123,33 @@ export class SchemaTextView extends Model({
     }
   }
 
+  searchPointerCache: searchPointers = {};
   @observable.ref
-  fuse = new Fuse<SchemaItem>([], fuseOptions);
+  fuse = new Fuse<SchemaItem>([], getFuseOptions({}));
 
   onAttachedToRootStore() {
     const disposeFuseUpdate = autorun(() => {
-      console.log("fuse updated");
-      const fuse = new Fuse(this.moduleGroupItems, fuseOptions);
+      const searchPointers = this.moduleGroupItems.reduce((pointers, item) => {
+        if (item.schemaType === "Object") {
+          pointers[item.id] = item.pointers.flatMap((p) => [
+            {key: p.name, name: p.name},
+            ...(p.type === "Link"
+              ? Object.values(p.properties).map((lp) => ({
+                  key: `${p.name}.${lp.name}`,
+                  name: lp.name,
+                }))
+              : []),
+          ]);
+        }
+        return pointers;
+      }, {} as searchPointers);
       runInAction(() => {
-        this.fuse = fuse;
+        console.log("fuse updated");
+        this.searchPointerCache = searchPointers;
+        this.fuse = new Fuse(
+          this.moduleGroupItems,
+          getFuseOptions(searchPointers)
+        );
       });
     });
 

@@ -43,11 +43,13 @@ const InheritedGroup = observer(function InheritedGroup({
   type,
   matches,
   parentModule,
+  ignorePointerNames,
 }: {
   baseId: string;
   type: SchemaObjectType;
   matches?: Fuse.FuseResultMatch[];
   parentModule: string;
+  ignorePointerNames: Set<string>;
 }) {
   const pointers = [
     ...Object.values(type.properties),
@@ -63,18 +65,19 @@ const InheritedGroup = observer(function InheritedGroup({
         <TypeLink type={type} parentModule={parentModule} />
       </div>
 
-      {pointers.map((pointer) => (
-        <PointerRenderer
-          key={pointer.id}
-          id={baseId + pointer.id}
-          pointer={pointer}
-          match={matches?.find(
-            (m) => m.key === "pointers" && m.value === pointer.name
-          )}
-          parentModule={parentModule}
-          defaultCollapsed
-        />
-      ))}
+      {pointers.map((pointer) =>
+        ignorePointerNames.has(pointer.name) ? null : (
+          <PointerRenderer
+            key={pointer.id}
+            id={baseId + pointer.id}
+            pointer={pointer}
+            matches={matches}
+            parentModule={parentModule}
+            parentObjectId={baseId}
+            defaultCollapsed
+          />
+        )
+      )}
     </div>
   );
 });
@@ -135,6 +138,9 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
                   type={ancestor}
                   matches={matches}
                   parentModule={type.module}
+                  ignorePointerNames={
+                    new Set(ownedPointers.map((p) => p.name))
+                  }
                 />
               ))}
               {type.annotations.map((anno, i) => (
@@ -146,10 +152,9 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
                   <PointerRenderer
                     key={pointer.id}
                     pointer={pointer}
-                    match={matches?.find(
-                      (m) => m.key === "pointers" && m.value === pointer.name
-                    )}
+                    matches={matches}
                     parentModule={type.module}
+                    parentObjectId={type.id}
                   />
                 ))}
               {type.constraints.map((constraint) => (

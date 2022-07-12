@@ -8,6 +8,7 @@ import {
   SchemaConstraint,
   SchemaParam,
   SchemaPointer,
+  SchemaProperty,
 } from "@edgedb/common/schemaData";
 
 import {SchemaModule} from "../state/textView";
@@ -61,17 +62,19 @@ export const PointerRenderer = observer(function _PointerRenderer({
   id,
   pointer,
   className,
-  overloaded,
-  match,
+  matches,
   parentModule,
+  parentObjectId,
+  linkName,
   defaultCollapsed = false,
 }: {
   id?: string;
   pointer: SchemaPointer;
   className?: string;
-  overloaded?: boolean;
-  match?: Fuse.FuseResultMatch;
+  matches?: Fuse.FuseResultMatch[];
   parentModule: string;
+  parentObjectId?: string;
+  linkName?: string;
   defaultCollapsed?: boolean;
 }) {
   const state = useSchemaTextState();
@@ -87,8 +90,20 @@ export const PointerRenderer = observer(function _PointerRenderer({
         pointer.onTargetDelete !== "Restrict" ||
         pointer.onSourceDelete !== "Allow"));
 
+  const bases = (pointer.bases as SchemaPointer[]).filter((p) => !p.source);
+  const overloaded = pointer.bases.length !== bases.length;
+
   const collapsed =
     defaultCollapsed !== state.toggledItems.has(id ?? pointer.id);
+
+  const searchPointers = state.searchPointerCache[parentObjectId!];
+  const pointerPath = linkName ? `${linkName}.${pointer.name}` : pointer.name;
+  const match =
+    searchPointers &&
+    matches?.find(
+      (m) =>
+        m.key === "pointers" && searchPointers[m.refIndex!].key === pointerPath
+    );
 
   return (
     <Copyable>
@@ -120,11 +135,11 @@ export const PointerRenderer = observer(function _PointerRenderer({
             {match
               ? highlightString(pointer.name, match.indices)
               : pointer.name}
-            {pointer.bases.length ? (
+            {bases.length ? (
               <>
                 {" "}
                 <Keyword>extending</Keyword>{" "}
-                {mapTypeLinkList(pointer.bases, parentModule)}
+                {mapTypeLinkList(bases, parentModule)}
               </>
             ) : null}
             {pointer.abstract ? null : pointer.expr && !hasBody ? (
@@ -215,6 +230,9 @@ export const PointerRenderer = observer(function _PointerRenderer({
                       key={prop.id}
                       pointer={prop}
                       parentModule={parentModule}
+                      parentObjectId={parentObjectId}
+                      linkName={pointer.name}
+                      matches={matches}
                     />
                   ))
                 : null}
@@ -236,10 +254,7 @@ export const PointerRenderer = observer(function _PointerRenderer({
   );
 });
 
-export function pointerToSDL(
-  pointer: SchemaPointer,
-  overloaded = false
-): string {
+export function pointerToSDL(pointer: SchemaPointer): string {
   const hasBody =
     pointer.default ||
     pointer.readonly ||
@@ -251,6 +266,9 @@ export function pointerToSDL(
         pointer.onTargetDelete !== "Restrict" ||
         pointer.onSourceDelete !== "Allow"));
 
+  const bases = (pointer.bases as SchemaPointer[]).filter((p) => !p.source);
+  const overloaded = pointer.bases.length !== bases.length;
+
   return `${
     pointer.abstract
       ? "abstract "
@@ -258,9 +276,7 @@ export function pointerToSDL(
           pointer.required ? "required " : ""
         }${pointer.cardinality === "Many" ? "multi " : ""}`
   }${pointer.type === "Property" ? "property" : "link"} ${pointer.name}${
-    pointer.bases.length
-      ? " " + pointer.bases.map((p) => p.name).join(", ")
-      : ""
+    bases.length ? " extending " + bases.map((p) => p.name).join(", ") : ""
   }${
     pointer.abstract
       ? ""
