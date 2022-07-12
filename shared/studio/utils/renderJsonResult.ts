@@ -35,6 +35,23 @@ function _renderToJson(val: any, codec: ICodec, depth: string): string {
           return JSON.stringify(scalarItemToString(val, typename));
       }
     }
+    case "range": {
+      if (val.isEmpty) {
+        return `{"empty": true}`;
+      }
+      const subcodec = codec.getSubcodecs()[0];
+      return `{"lower": ${_renderToJson(
+        val.lower,
+        subcodec,
+        depth
+      )}, "upper": ${_renderToJson(
+        val.upper,
+        subcodec,
+        depth
+      )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
+        val.incUpper ? "true" : "false"
+      }}`;
+    }
     case "set":
     case "array":
     case "tuple": {
@@ -82,5 +99,7 @@ function _renderToJson(val: any, codec: ICodec, depth: string): string {
         )
         .join(",\n")}\n${depth}}`;
     }
+    case "sparse_object":
+      throw new Error("unexpected sparse_object");
   }
 }

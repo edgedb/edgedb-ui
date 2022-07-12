@@ -154,6 +154,7 @@ function renderParam({
       value,
       type.name,
       type.schemaType === "Scalar" && !!type.enum_values,
+      type.schemaType === "Range" ? type.elementType.name : undefined,
       false
     ).body;
   }

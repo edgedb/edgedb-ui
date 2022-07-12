@@ -1,9 +1,10 @@
 import React, {PropsWithChildren} from "react";
-import {LocalDateTime, _ICodec} from "edgedb";
+import {LocalDateTime, _ICodec, Range} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import {EnumCodec} from "edgedb/dist/codecs/enum";
+import {RangeCodec} from "edgedb/dist/codecs/range";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -23,7 +24,10 @@ export function buildScalarItem(
   const {body, height} = renderValue(
     data,
     base.codec.getKnownTypeName(),
-    base.codec instanceof EnumCodec
+    base.codec instanceof EnumCodec,
+    base.codec instanceof RangeCodec
+      ? base.codec.getSubcodecs()[0].getKnownTypeName()
+      : undefined
   );
 
   return {
@@ -58,6 +62,7 @@ export function renderValue(
   value: any,
   knownTypeName: string,
   isEnum: boolean,
+  rangeKnownTypeName?: string,
   showTypeTag: boolean = true,
   overrideStyles: {[key: string]: string} = {}
 ): {body: JSX.Element; height?: number} {
@@ -149,6 +154,34 @@ export function renderValue(
     }
   }
 
+  if (value instanceof Range) {
+    return {
+      body: (
+        <span>
+          range({renderValue(value.lower, rangeKnownTypeName!, false).body}
+          {value.isEmpty ? (
+            <>
+              , empty := <span className={styles.scalar_boolean}>true</span>
+            </>
+          ) : (
+            <>
+              , {renderValue(value.upper, rangeKnownTypeName!, false).body},
+              inc_lower :={" "}
+              <span className={styles.scalar_boolean}>
+                {JSON.stringify(value.incLower)}
+              </span>
+              , inc_upper :={" "}
+              <span className={styles.scalar_boolean}>
+                {JSON.stringify(value.incUpper)}
+              </span>
+            </>
+          )}
+          )
+        </span>
+      ),
+    };
+  }
+
   if (value instanceof Buffer) {
     return {
       body: (
@@ -216,7 +249,7 @@ function formatDatetime(date: LocalDateTime): string {
 }
 
 function bufferToString(buf: Buffer): string {
-  const res = [];
+  const res: string[] = [];
   for (let i = 0; i < buf.length; i++) {
     const char = buf[i];
     if (char < 32 || char > 126) {
@@ -249,7 +282,7 @@ function strToString(value: string): string {
       return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     }
 
-    const ret = [];
+    const ret: string[] = [];
     for (let i = 0; i < split.length; i++) {
       if (i % 2) {
         ret.push(split[i]);

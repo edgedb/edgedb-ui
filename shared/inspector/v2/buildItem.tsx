@@ -285,7 +285,10 @@ export function expandItem(
 }
 
 const itemTypes: {
-  [key in CodecKind]: {type: ItemType; brackets: string};
+  [key in Exclude<CodecKind, "range" | "sparse_object">]: {
+    type: ItemType;
+    brackets: string;
+  };
 } = {
   set: {type: ItemType.Set, brackets: "{}"},
   array: {type: ItemType.Array, brackets: "[]"},
@@ -317,7 +320,7 @@ export function buildItem(
       ? "set"
       : base.codec.getKind();
 
-  if (codecKind === "scalar") {
+  if (codecKind === "scalar" || codecKind === "range") {
     return buildScalarItem(base, data, comma);
   }
 
