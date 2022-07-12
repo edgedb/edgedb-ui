@@ -114,7 +114,8 @@ export class ReplExpandableCell extends ExtendedModel(ReplHistoryCell, {
 
 @model("Repl/ResultCell")
 export class ReplResultCell extends ExtendedModel(ReplExpandableCell, {
-  inspectorState: prop<InspectorState>(),
+  inspectorState: prop<InspectorState | null>(),
+  status: prop<string>(),
 }) {
   @observable.ref
   _result: EdgeDBSet | null = null;
@@ -224,6 +225,7 @@ export class Repl extends Model({
         result: EdgeDBSet | null;
         outCodecBuf: Buffer;
         resultBuf: Buffer;
+        status: string;
       }
     | {
         error: ErrorDetails;
@@ -246,10 +248,10 @@ export class Repl extends Model({
     } else {
       historyCell = new ReplResultCell({
         ...historyCellData,
-        inspectorState: new InspectorState({}),
-        expanded: !!data.result,
+        inspectorState: data.result ? new InspectorState({}) : null,
+        expanded: true,
+        status: data.status,
       });
-
       if (data.result) {
         (historyCell as ReplResultCell).setResult(data.result);
         // storeReplResult(historyCell.$modelId, {
@@ -294,6 +296,7 @@ export class Repl extends Model({
         outCodecBuf,
         resultBuf,
         scriptBlock,
+        status,
       });
       return {success: true, capabilities, status};
     } catch (e: any) {

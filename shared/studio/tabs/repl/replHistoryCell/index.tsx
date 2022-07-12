@@ -95,7 +95,7 @@ export default observer(function ReplHistoryCell({
                   </div>
                 ) : null}
                 <div className={styles.info}>
-                  {cell instanceof ReplResultCell ? (
+                  {cell instanceof ReplResultCell && cell._result ? (
                     <button
                       className={styles.smallButton}
                       onClick={() => cell.copyAsJson()}
@@ -110,11 +110,15 @@ export default observer(function ReplHistoryCell({
               </div>
 
               {cell instanceof ReplResultCell ? (
-                <Inspector
-                  className={styles.inspector}
-                  state={cell.inspectorState}
-                  maxHeight={400}
-                />
+                cell.inspectorState ? (
+                  <Inspector
+                    className={styles.inspector}
+                    state={cell.inspectorState}
+                    maxHeight={400}
+                  />
+                ) : (
+                  <div className={styles.queryStatus}>OK: {cell.status}</div>
+                )
               ) : null}
             </div>
           ) : null}
