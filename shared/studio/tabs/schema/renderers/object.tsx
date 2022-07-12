@@ -88,11 +88,9 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
 }) {
   const state = useSchemaTextState();
 
-  const pointers = [
-    ...Object.values(type.properties),
-    ...Object.values(type.links),
-  ];
   const extendingTypes = type.bases.filter((t) => t.name !== "std::Object");
+
+  const ownedPointers = type.pointers.filter((pointer) => pointer["@owned"]);
 
   const collapsed = state.toggledItems.has(type.id);
 
@@ -142,8 +140,8 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
               {type.annotations.map((anno, i) => (
                 <AnnotationRenderer key={i} annotation={anno} />
               ))}
-              {pointers
-                .filter((pointer) => pointer["@owned"])
+              {ownedPointers
+                .filter((pointer) => !(pointer.isDeprecated && type.builtin))
                 .map((pointer) => (
                   <PointerRenderer
                     key={pointer.id}

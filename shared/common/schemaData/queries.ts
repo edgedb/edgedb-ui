@@ -102,7 +102,7 @@ export interface RawPointerType {
   default: string | null;
   expr: string | null;
   constraintIds: string[];
-  annotations: {id: string; "@value": string}[];
+  annotations: SchemaAnnotation[];
   properties: {id: string; "@owned": boolean}[] | null;
   on_target_delete: TargetDeleteAction | null;
   on_source_delete: SourceDeleteAction | null;

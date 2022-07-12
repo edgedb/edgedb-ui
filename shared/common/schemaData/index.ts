@@ -37,6 +37,7 @@ export interface SchemaScalarType {
   bases: SchemaScalarType[];
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaArrayType {
@@ -85,6 +86,7 @@ interface _SchemaPointer {
   expr: string | null;
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaProperty extends _SchemaPointer {
@@ -120,6 +122,7 @@ export interface SchemaObjectType {
   descendents: SchemaObjectType[];
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
   insectionOf: SchemaObjectType[] | null;
   unionOf: SchemaObjectType[] | null;
   properties: {[name: string]: SchemaProperty};
@@ -160,6 +163,7 @@ export interface SchemaFunction {
   language: string;
   body: string | null;
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaConstraint {
@@ -177,12 +181,14 @@ export interface SchemaConstraint {
   delegated: boolean;
   errmessage: string;
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaAbstractAnnotation extends RawAbstractAnnotation {
   schemaType: "AbstractAnnotation";
   module: string;
   shortName: string;
+  isDeprecated: boolean;
 }
 
 export interface SchemaIndex {
@@ -190,6 +196,7 @@ export interface SchemaIndex {
   expr: string;
   "@owned": boolean;
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaAlias {
@@ -202,6 +209,7 @@ export interface SchemaAlias {
   expr: string;
   type: SchemaType;
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaGlobal {
@@ -217,6 +225,7 @@ export interface SchemaGlobal {
   target: SchemaType;
   default: string;
   annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
 }
 
 export interface SchemaExtension extends RawSchemaExtension {
@@ -228,6 +237,10 @@ const knownTypes = new Set<string>(KnownScalarTypes);
 function splitName(typeName: string) {
   const [module, shortName] = typeName.split("::");
   return {module, shortName};
+}
+
+function isDeprecated(annotations: SchemaAnnotation[] | null): boolean {
+  return annotations?.some((anno) => anno.name === "std::deprecated") ?? false;
 }
 
 export function buildTypesGraph(data: RawIntrospectionResult): {
@@ -278,6 +291,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           default: type.default,
           enum_values: type.enum_values,
           annotations: type.annotations,
+          isDeprecated: isDeprecated(type.annotations),
         } as any);
         break;
       case "schema::Array":
@@ -313,10 +327,14 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           from_alias: type.from_alias,
           expr: type.expr,
           annotations: type.annotations,
+          isDeprecated: isDeprecated(type.annotations),
           properties: {},
           links: {},
           pointers: [],
-          indexes: type.indexes,
+          indexes: type.indexes?.map((i) => ({
+            ...i,
+            isDeprecated: isDeprecated(i.annotations),
+          })),
         } as any);
         for (const baseId of type.baseIds) {
           if (!extendedBy.has(baseId)) {
@@ -371,6 +389,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       language: func.language,
       body: func.body,
       annotations: func.annotations,
+      isDeprecated: isDeprecated(func.annotations),
     });
   }
 
@@ -400,6 +419,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       delegated: constraint.delegated,
       errmessage: constraint.errmessage,
       annotations: constraint.annotations,
+      isDeprecated: isDeprecated(constraint.annotations),
     });
   }
 
@@ -442,9 +462,13 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         return constraint;
       }),
       annotations: pointer.annotations,
+      isDeprecated: isDeprecated(pointer.annotations),
       onTargetDelete: pointer.on_target_delete,
       onSourceDelete: pointer.on_source_delete,
-      indexes: pointer.indexes,
+      indexes: pointer.indexes?.map((i) => ({
+        ...i,
+        isDeprecated: isDeprecated(i.annotations),
+      })),
     } as SchemaPointer);
   }
 
@@ -498,6 +522,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       expr: alias.expr,
       type,
       annotations: alias.annotations,
+      isDeprecated: isDeprecated(alias.annotations),
     });
   }
 
@@ -518,6 +543,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       target,
       default: global.default,
       annotations: global.annotations,
+      isDeprecated: isDeprecated(global.annotations),
     });
   }
 
@@ -690,6 +716,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           schemaType: "AbstractAnnotation",
           ...anno,
           ...splitName(anno.name),
+          isDeprecated: isDeprecated(anno.annotations),
         },
       ])
     ),

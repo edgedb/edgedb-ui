@@ -248,12 +248,18 @@ export class SchemaTextView extends Model({
         ];
       case ModuleGroup.Stdlib:
         return items.filter(
-          (type) => type.builtin && stdlibModules.has(type.module)
+          (type) =>
+            type.builtin &&
+            stdlibModules.has(type.module) &&
+            !type.isDeprecated
         );
 
       case ModuleGroup.System:
         return items.filter(
-          (type) => type.builtin && !stdlibModules.has(type.module)
+          (type) =>
+            type.builtin &&
+            !stdlibModules.has(type.module) &&
+            !type.isDeprecated
         );
     }
   }
