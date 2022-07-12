@@ -17,7 +17,9 @@ import {useInstanceState} from "../../state/instance";
 import {DatabaseStateContext, useDatabaseState} from "../../state/database";
 
 import styles from "./databasePage.module.scss";
+
 import {ErrorPage} from "../errorPage";
+import {SessionState} from "../sessionState";
 
 export interface DatabaseTabSpec {
   path: string;
@@ -78,17 +80,21 @@ const DatabasePageContent = observer(function DatabasePageContent({
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
 
   return (
-    <div className={styles.databasePage}>
-      <DatabaseStateContext.Provider value={dbState}>
-        <TabBar tabs={tabs} />
-        <div className={styles.tabContent}>
-          {useRoutes([
-            ...tabs,
-            {path: "*", element: <Navigate to="" replace />},
-          ])}
-        </div>
-      </DatabaseStateContext.Provider>
-    </div>
+    <>
+      <SessionState dbState={dbState} />
+
+      <div className={styles.databasePage}>
+        <DatabaseStateContext.Provider value={dbState}>
+          <TabBar tabs={tabs} />
+          <div className={styles.tabContent}>
+            {useRoutes([
+              ...tabs,
+              {path: "*", element: <Navigate to="" replace />},
+            ])}
+          </div>
+        </DatabaseStateContext.Provider>
+      </div>
+    </>
   );
 });
 

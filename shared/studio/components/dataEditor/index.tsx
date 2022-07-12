@@ -396,7 +396,7 @@ const Textbox = forwardRef(function Textbox(
   }
 
   useEffect(() => {
-    if ((value === null && !allowNull) || value.trim() === "") {
+    if ((value === null && !allowNull) || val.trim() === "") {
       setErr("Value is required");
       onChange(value as any, true);
     } else if (value !== null) {

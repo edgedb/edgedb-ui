@@ -485,3 +485,21 @@ export function CopyIcon() {
     </svg>
   );
 }
+
+export function PlusIcon() {
+  return (
+    <svg
+      width="19"
+      height="18"
+      viewBox="-1 -1 19 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9.5 1C9.5 0.447715 9.05229 0 8.5 0C7.94772 0 7.5 0.447715 7.5 1V7H1.5C0.947715 7 0.5 7.44772 0.5 8C0.5 8.55229 0.947715 9 1.5 9H7.5V15C7.5 15.5523 7.94772 16 8.5 16C9.05229 16 9.5 15.5523 9.5 15V9H15.5C16.0523 9 16.5 8.55229 16.5 8C16.5 7.44772 16.0523 7 15.5 7H9.5V1Z"
+      />
+    </svg>
+  );
+}

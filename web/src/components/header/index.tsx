@@ -1,6 +1,7 @@
 import {observer} from "mobx-react";
 
 import {HeaderTabs} from "@edgedb/studio/components/headerTabs";
+import {SessionStateControls} from "@edgedb/studio/components/sessionState";
 import {useTheme, Theme} from "@edgedb/common/hooks/useTheme";
 
 import {useAppState} from "src/state/providers";
@@ -22,6 +23,8 @@ export default observer(function Header() {
       </div>
 
       <HeaderTabs />
+
+      <SessionStateControls />
 
       <div
         className={styles.themeSwitcher}

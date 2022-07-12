@@ -74,6 +74,9 @@ const queryOptions: QueryOptions = {
 @model("Connection")
 export class Connection extends Model({
   config: prop<ConnectConfig>(),
+  sessionGlobals: prop(
+    () => ({} as {[key: string]: {value: any; typeId: string}})
+  ).withSetter(),
 }) {
   conn = AdminUIFetchConnection.create(
     {
@@ -95,6 +98,14 @@ export class Connection extends Model({
   @computed
   get _state() {
     let state = Session.defaults();
+    const items = Object.entries(this.sessionGlobals);
+    const globals = items.reduce((g, [name, {value}]) => {
+      g[name] = value;
+      return g;
+    }, {} as {[key: string]: any});
+    if (items.length) {
+      state = state.withGlobals(globals);
+    }
     return state;
   }
 
