@@ -108,14 +108,6 @@ const DataInspectorView = observer(function DataInspectorView({
             >
               <BackArrowIcon />
             </div>
-            {stack.length > 2 ? (
-              <div
-                className={styles.upButton}
-                onClick={() => dataviewState.closeAllNestedViews()}
-              >
-                <BackArrowIcon />
-              </div>
-            ) : null}
             <div className={styles.nestedPathSteps}>
               <div className={styles.nestedPathStep}>
                 <div className={styles.pathStepName}>
@@ -141,7 +133,8 @@ const DataInspectorView = observer(function DataInspectorView({
           </>
         )}
 
-        {inspectorState.parentObject ? (
+        {inspectorState.parentObject &&
+        !inspectorState.parentObject.isComputedLink ? (
           <div
             className={styles.headerButton}
             onClick={() => inspectorState.toggleEditLinkMode()}
