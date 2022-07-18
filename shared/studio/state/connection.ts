@@ -58,6 +58,7 @@ type PendingQuery = {
   query: string;
   params?: QueryParams;
   newCodec: boolean;
+  disableAccessPolicies: boolean;
   reject: (error: Error) => void;
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
@@ -112,9 +113,16 @@ export class Connection extends Model({
   query(
     query: string,
     params?: QueryParams,
-    newCodec?: boolean
+    newCodec?: boolean,
+    disableAccessPolicies?: boolean
   ): Promise<QueryResult> {
-    return this._addQueryToQueue("query", query, params, newCodec);
+    return this._addQueryToQueue(
+      "query",
+      query,
+      params,
+      newCodec,
+      disableAccessPolicies
+    );
   }
 
   parse(query: string): Promise<ParseResult> {
@@ -129,7 +137,8 @@ export class Connection extends Model({
     kind: QueryKind,
     query: string,
     params?: QueryParams,
-    newCodec: boolean = false
+    newCodec: boolean = false,
+    disableAccessPolicies: boolean = false
   ) {
     return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
@@ -137,6 +146,7 @@ export class Connection extends Model({
         query,
         params,
         newCodec,
+        disableAccessPolicies,
         resolve,
         reject,
       });
@@ -157,6 +167,7 @@ export class Connection extends Model({
           query.kind,
           query.query,
           query.newCodec,
+          query.disableAccessPolicies,
           query.params
         );
         query.resolve(result as any);
@@ -173,10 +184,17 @@ export class Connection extends Model({
     kind: QueryKind,
     queryString: string,
     newCodec: boolean,
+    disableAccessPolicies: boolean,
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
+    const state = disableAccessPolicies
+      ? this._state.withConfigs({
+          apply_access_policies: false,
+        })
+      : this._state;
+
     if (kind === "execute") {
-      await this.conn.rawExecute(queryString, this._state);
+      await this.conn.rawExecute(queryString, state);
       return;
     }
 
@@ -189,7 +207,7 @@ export class Connection extends Model({
         this._codecCache.get(queryString)!;
     } else {
       [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
-        await this.conn.rawParse(queryString, this._state, queryOptions);
+        await this.conn.rawParse(queryString, state, queryOptions);
       this._codecCache.set(queryString, [
         inCodec,
         outCodec,
@@ -206,7 +224,7 @@ export class Connection extends Model({
 
     const resultBuf = await this.conn.rawExecute(
       queryString,
-      this._state,
+      state,
       outCodec,
       queryOptions,
       inCodec,

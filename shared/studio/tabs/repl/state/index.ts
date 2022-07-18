@@ -180,6 +180,7 @@ export class Repl extends Model({
 
   splitView: prop(() => new SplitViewState({})),
   persistQuery: prop<boolean>(false).withSetter(),
+  disableAccessPolicies: prop<boolean>(false).withSetter(),
 
   historyScrollPos: prop<number>(0).withSetter(),
 }) {
@@ -284,7 +285,9 @@ export class Repl extends Model({
         yield* _await(
           conn.query(
             statement.expression,
-            paramsData && filterParamsData(paramsData, statement.params)
+            paramsData && filterParamsData(paramsData, statement.params),
+            false,
+            this.disableAccessPolicies
           )
         );
 
