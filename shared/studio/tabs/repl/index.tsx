@@ -1,4 +1,4 @@
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -19,7 +19,8 @@ import Button from "@edgedb/common/ui/button";
 
 import ReplHistory from "./replHistory";
 import ParamEditorPanel from "./paramEditor";
-import {TabReplIcon} from "../../icons";
+import {KebabMenuIcon, TabReplIcon} from "../../icons";
+import {useResize} from "@edgedb/common/hooks/useResize";
 
 export const ReplView = observer(function ReplView() {
   const dbState = useDatabaseState();
@@ -58,6 +59,7 @@ export const ReplView = observer(function ReplView() {
               />
               <div className={styles.replEditorOverlays}>
                 <div className={styles.controls}>
+                  <QueryOptions />
                   <Button
                     className={styles.runButton}
                     label="Run"
@@ -67,16 +69,6 @@ export const ReplView = observer(function ReplView() {
                     loading={replState.queryRunning}
                     onClick={() => replState.runQuery()}
                   />
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={replState.persistQuery}
-                      onChange={(e) => {
-                        replState.setPersistQuery(e.target.checked);
-                      }}
-                    />
-                    Persist Query
-                  </label>
                 </div>
                 <ParamEditorPanel />
               </div>
@@ -98,3 +90,73 @@ export const replTabSpec: DatabaseTabSpec = {
   state: Repl,
   element: <ReplView />,
 };
+
+const QueryOptions = observer(function QueryOptions() {
+  const replState = useTabState(Repl);
+
+  const [collapsed, setCollapsed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const innerWidth = useRef(0);
+
+  useResize(
+    ref,
+    (rect) => {
+      if (!collapsed) {
+        innerWidth.current = ref.current!.children[0].clientWidth;
+      }
+      const overflow = rect.width < innerWidth.current;
+      if (collapsed !== overflow) {
+        setCollapsed(overflow);
+        setMenuOpen(false);
+      }
+    },
+    [collapsed]
+  );
+
+  return (
+    <div
+      ref={ref}
+      className={cn(styles.queryOptions, {
+        [styles.collapsed]: collapsed,
+      })}
+    >
+      <div
+        className={cn(styles.queryOptionsWrapper, {
+          [styles.menuOpen]: menuOpen,
+        })}
+      >
+        <label>
+          <input
+            type="checkbox"
+            checked={replState.disableAccessPolicies}
+            onChange={(e) => {
+              replState.setDisableAccessPolicies(e.target.checked);
+            }}
+          />
+          Disable Access Policies
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={replState.persistQuery}
+            onChange={(e) => {
+              replState.setPersistQuery(e.target.checked);
+            }}
+          />
+          Persist Query
+        </label>
+      </div>
+      {collapsed ? (
+        <div
+          className={styles.overflowMenu}
+          onClick={() => {
+            setMenuOpen(!menuOpen);
+          }}
+        >
+          <KebabMenuIcon />
+        </div>
+      ) : null}
+    </div>
+  );
+});

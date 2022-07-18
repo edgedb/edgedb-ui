@@ -76,6 +76,7 @@
   margin: 8px;
   display: flex;
   align-items: center;
+  justify-content: end;
 
   label {
     display: flex;
@@ -85,6 +86,7 @@
     padding: 6px 10px;
     cursor: pointer;
     border-radius: 16px;
+    flex-shrink: 0;
 
     &:hover {
       background: rgba(0, 0, 0, 0.05);
@@ -96,20 +98,22 @@
 
     input {
       appearance: none;
-      border: 1px solid rgb(143, 143, 143, 0.7);
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
+      outline: 1px solid #d3d3d3;
+      outline-offset: 1px;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
       margin: 4px;
+      margin-right: 8px;
+      flex-shrink: 0;
       cursor: inherit;
 
       &:checked {
         background-color: #49d8ad;
-        background-size: 12px 12px;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 6L9 17L4 12' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
-        border: none;
+      }
+
+      @include darkTheme {
+        outline-color: #989898;
       }
     }
   }
@@ -120,7 +124,60 @@
   --buttonTextColour: #0a4634;
   align-self: flex-start;
   flex-shrink: 0;
-  margin-right: auto;
+}
+
+.queryOptions {
+  display: flex;
+  flex-grow: 1;
+  justify-content: end;
+  position: relative;
+  min-width: 0;
+
+  .queryOptionsWrapper {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .overflowMenu {
+    display: flex;
+    cursor: pointer;
+
+    svg {
+      width: 24px;
+      height: 23px;
+      fill: #b3b3b3;
+    }
+  }
+
+  &.collapsed {
+    .queryOptionsWrapper {
+      flex-direction: column;
+      position: absolute;
+      background: #fff;
+      bottom: calc(100% + 8px);
+      border-radius: 18px;
+      padding: 4px;
+      display: none;
+
+      label {
+        margin: 0;
+      }
+
+      &.menuOpen {
+        display: flex;
+      }
+    }
+  }
+
+  @include darkTheme {
+    .overflowMenu svg {
+      fill: #626262;
+    }
+
+    &.collapsed .queryOptionsWrapper {
+      background: #353535;
+    }
+  }
 }
 
 .replHistory {
