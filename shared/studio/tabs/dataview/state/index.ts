@@ -14,6 +14,8 @@ import {
 
 import {VariableSizeGrid as Grid} from "react-window";
 
+import {NavigateFunction} from "react-router";
+
 import {Text} from "@codemirror/state";
 
 import {_ICodec} from "edgedb";
@@ -102,6 +104,82 @@ export class DataView extends Model({
     for (const view of [...this.inspectorStack].reverse()) {
       view._refreshData(true);
     }
+  }
+
+  @modelAction
+  updateFromPath(path: string): string | null {
+    const [rootObjectTypeName, ...nestedParts] = path.split("/");
+    console.log(rootObjectTypeName, ...nestedParts);
+    if (rootObjectTypeName !== this.inspectorStack[0].objectType?.name) {
+      const objTypeId = this.objectTypes.find(
+        (obj) => obj.name === rootObjectTypeName
+      )?.id;
+      if (objTypeId) {
+        this.selectObject(objTypeId);
+      } else {
+        this.selectObject(this.objectTypes[0].id);
+        return this.objectTypes[0].name;
+      }
+    }
+    let i = 0;
+    let parentSchemaObject = dbCtx
+      .get(this)!
+      .schemaData!.objectsByName.get(rootObjectTypeName)!;
+    const depth = Math.floor(nestedParts.length / 2);
+    while (i < depth) {
+      let objId: string | number = nestedParts[i * 2];
+      let pointerName = nestedParts[i * 2 + 1];
+      let subtypeName: undefined | string = undefined;
+
+      if (!/^[0-9a-fA-F]{32}$/.test(objId.replace(/-/g, ""))) {
+        objId = parseInt(objId);
+      }
+      if (pointerName.startsWith("[")) {
+        [subtypeName, pointerName] = pointerName.slice(1).split("]");
+      }
+
+      const stackItem = this.inspectorStack[i + 1];
+      const pointer = parentSchemaObject.pointers?.find(
+        (p) => p.name === pointerName
+      );
+
+      if (
+        !pointer ||
+        (typeof objId === "number" && objId !== stackItem?.parentObject!.id)
+      ) {
+        this.inspectorStack = this.inspectorStack.slice(0, i + 1);
+        return [rootObjectTypeName, ...nestedParts.slice(0, i * 2)].join("/");
+      } else {
+        if (
+          objId !== stackItem?.parentObject!.id ||
+          pointerName !== stackItem?.parentObject!.fieldName
+        ) {
+          this.inspectorStack[i + 1] = new DataInspector({
+            objectTypeId: pointer.target!.id,
+            parentObject: {
+              editMode: false,
+              objectTypeId: parentSchemaObject.id,
+              objectTypeName: parentSchemaObject.name,
+              subtypeName,
+              id: objId,
+              fieldName: pointer.name,
+              linkId: `${objId}__${pointer.name}`,
+              isMultiLink:
+                pointer.type === "Link"
+                  ? pointer.cardinality === "Many"
+                  : false,
+              isComputedLink: !!pointer.expr,
+            },
+          });
+        }
+        parentSchemaObject = pointer.target as any;
+      }
+      i++;
+    }
+    if (this.inspectorStack.length > i + 1) {
+      this.inspectorStack = this.inspectorStack.slice(0, i + 1);
+    }
+    return null;
   }
 }
 
@@ -192,6 +270,8 @@ export class DataInspector extends Model({
   }
 
   openNestedView(
+    basePath: string,
+    navigate: NavigateFunction,
     objectId: string | number,
     subtypeName: string,
     field: ObjectField,
@@ -202,6 +282,9 @@ export class DataInspector extends Model({
       (parent) => parent instanceof DataView
     )!;
 
+    navigate(
+      `${basePath}/${objectId}/${field.subtypeName ?? ""}${field.name}`
+    );
     dataView.openNestedView(field.typeid, {
       editMode,
       objectTypeId: this.objectTypeId,

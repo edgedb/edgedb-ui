@@ -1,4 +1,6 @@
+import {useEffect} from "react";
 import {observer} from "mobx-react";
+import {useParams, useNavigate} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -29,8 +31,25 @@ import Button from "@edgedb/common/ui/button";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
+  const state = useTabState(DataViewState);
+  const params = useParams();
+  const navigate = useNavigate();
 
-  const stack = useTabState(DataViewState).inspectorStack;
+  const stack = state.inspectorStack;
+
+  const path = params["*"];
+  useEffect(() => {
+    if (stack.length) {
+      if (!path) {
+        navigate(stack[0].objectType!.name, {replace: true});
+      } else {
+        const updatedPath = state.updateFromPath(path);
+        if (updatedPath) {
+          navigate(updatedPath, {replace: true});
+        }
+      }
+    }
+  }, [path, stack.length]);
 
   return (
     <div className={styles.dataview}>
@@ -50,6 +69,7 @@ export const DataView = observer(function DataView() {
 
 export const dataviewTabSpec: DatabaseTabSpec = {
   path: "data",
+  allowNested: true,
   label: "Data Explorer",
   icon: (active) => <TabDataExplorerIcon active={active} />,
   state: DataViewState,
@@ -65,6 +85,8 @@ const DataInspectorView = observer(function DataInspectorView({
 }: DataInspectorViewProps) {
   const dataviewState = useTabState(DataViewState);
   const {openModal} = useModal();
+  const navigate = useNavigate();
+  const path = useParams()["*"]!;
 
   const stack = dataviewState.inspectorStack;
 
@@ -92,7 +114,10 @@ const DataInspectorView = observer(function DataInspectorView({
                       {typeName}
                     </>
                   ),
-                  action: () => dataviewState.selectObject(id),
+                  action: () => {
+                    navigate(name);
+                    dataviewState.selectObject(id);
+                  },
                 };
               })}
               selectedItemIndex={dataviewState.objectTypes.indexOf(
@@ -104,7 +129,10 @@ const DataInspectorView = observer(function DataInspectorView({
           <>
             <div
               className={styles.backButton}
-              onClick={() => dataviewState.closeLastNestedView()}
+              onClick={() => {
+                navigate(path.split("/").slice(0, -2).join("/"));
+                dataviewState.closeLastNestedView();
+              }}
             >
               <BackArrowIcon />
             </div>
