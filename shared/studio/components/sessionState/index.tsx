@@ -125,48 +125,55 @@ const SessionGlobalsPanel = observer(function SessionGlobalsPanel({
 
   return (
     <>
-      {[...(dbState.schemaData?.globals.values() ?? [])].map((g, i) => {
-        const Input = getInputComponent(g.target)!;
+      {[...(dbState.schemaData?.globals.values() ?? [])]
+        .filter((g) => !g.expr)
+        .map((g, i) => {
+          const Input = getInputComponent(g.target)!;
 
-        return (
-          <div className={styles.globalItem} key={i}>
-            <div className={styles.globalName}>
-              {g.module !== "default" ? <span>{g.module}::</span> : null}
-              {g.shortName}
-            </div>
-            <div className={styles.globalInput}>
-              {values[g.name] !== undefined ? (
-                <>
-                  <Input
-                    type={g.target}
-                    // errorMessageAbove={lastParam}
-                    value={values[g.name]!.value}
-                    depth={2}
-                    onChange={(value, err) => {
-                      setValues({...values, [g.name]: {value, err}});
-                    }}
-                  />
+          return (
+            <div className={styles.globalItem} key={i}>
+              <div className={styles.globalName}>
+                {g.module !== "default" ? <span>{g.module}::</span> : null}
+                {g.shortName}
+              </div>
+              <div className={styles.globalInput}>
+                {values[g.name] !== undefined ? (
+                  <>
+                    <Input
+                      type={g.target}
+                      // errorMessageAbove={lastParam}
+                      value={values[g.name]!.value}
+                      depth={2}
+                      onChange={(value, err) => {
+                        setValues({...values, [g.name]: {value, err}});
+                      }}
+                    />
+                    <button
+                      className={styles.button}
+                      onClick={() =>
+                        setValues({...values, [g.name]: undefined})
+                      }
+                    >
+                      <DeleteIcon />
+                    </button>
+                  </>
+                ) : (
                   <button
                     className={styles.button}
-                    onClick={() => setValues({...values, [g.name]: undefined})}
+                    onClick={() =>
+                      setValues({
+                        ...values,
+                        [g.name]: {value: null, err: true},
+                      })
+                    }
                   >
-                    <DeleteIcon />
+                    <PlusIcon />
                   </button>
-                </>
-              ) : (
-                <button
-                  className={styles.button}
-                  onClick={() =>
-                    setValues({...values, [g.name]: {value: null, err: true}})
-                  }
-                >
-                  <PlusIcon />
-                </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
     </>
   );
 });
