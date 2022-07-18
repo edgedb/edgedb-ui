@@ -7,6 +7,12 @@ import {
   useState,
 } from "react";
 import {observer} from "mobx-react-lite";
+import {
+  useLocation,
+  useNavigate,
+  createSearchParams,
+  NavigateFunction,
+} from "react-router-dom";
 import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -20,7 +26,12 @@ import styles from "../textView.module.scss";
 
 import {ArrowRight, ChevronDownIcon, CopyIcon} from "../../../icons";
 
-import {SchemaItem} from "../state/textView";
+import {
+  getModuleGroup,
+  ModuleGroup,
+  SchemaItem,
+  SchemaTextView,
+} from "../state/textView";
 import {useSchemaTextState} from "../textView";
 import {useDatabaseState, useTabState} from "../../../state";
 import {Schema, SchemaViewType} from "../state";
@@ -80,6 +91,19 @@ export function highlightString(
   return highlighted;
 }
 
+function goToItem(
+  navigate: NavigateFunction,
+  state: SchemaTextView,
+  item: Exclude<SchemaItem, SchemaExtension>
+) {
+  const moduleGroup = getModuleGroup(item);
+  navigate({
+    pathname: moduleGroup === ModuleGroup.user ? "" : ModuleGroup[moduleGroup],
+    search: createSearchParams({focus: item.name}).toString(),
+  });
+  state.goToItem(item);
+}
+
 export function TypeLink({
   type,
   parentModule,
@@ -89,6 +113,7 @@ export function TypeLink({
 }) {
   const schemaData = useDatabaseState().schemaData!;
   const state = useSchemaTextState();
+  const navigate = useNavigate();
 
   function wrapLink(type: SchemaItem | SchemaType): JSX.Element {
     if (type.schemaType === "Pseudo" || type.schemaType === "Extension") {
@@ -131,7 +156,12 @@ export function TypeLink({
     }
 
     return (
-      <span className={styles.typeLink} onClick={() => state.goToItem(type)}>
+      <span
+        className={styles.typeLink}
+        onClick={() => {
+          goToItem(navigate, state, type);
+        }}
+      >
         {type.module === parentModule ||
         (type.module === "std" &&
           !schemaData.shortNamesByModule
@@ -210,11 +240,12 @@ export const ShowInGraphButton = observer(function ShowInGraphButton({
 }) {
   const tabState = useTabState(Schema);
   const state = useSchemaTextState();
+  const navigate = useNavigate();
 
   return !type.builtin && tabState.viewType === SchemaViewType.TextGraph ? (
     <div
       className={cn(styles.showInGraphButton)}
-      onClick={() => state.goToItem(type, true)}
+      onClick={() => goToItem(navigate, state, type)}
     >
       Show in Graph <ArrowRight />
     </div>

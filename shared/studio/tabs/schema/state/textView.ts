@@ -35,18 +35,18 @@ import {dbCtx} from "../../../state";
 import {Schema} from ".";
 
 export enum ModuleGroup {
-  User,
-  Stdlib,
-  System,
+  user,
+  stdlib,
+  system,
 }
 
 export enum TypeFilter {
-  Objects,
-  Functions,
-  Scalars,
-  Constraints,
-  Aliases,
-  Other,
+  objects,
+  functions,
+  scalars,
+  constraints,
+  aliases,
+  other,
 }
 
 const stdlibModules = new Set(["std", "cal", "math"]);
@@ -66,6 +66,14 @@ export interface SchemaModule {
   schemaType: "Module";
   module: string;
   isEnd?: boolean;
+}
+
+export function getModuleGroup(item: Exclude<SchemaItem, SchemaExtension>) {
+  return item.builtin
+    ? stdlibModules.has(item.module)
+      ? ModuleGroup.stdlib
+      : ModuleGroup.system
+    : ModuleGroup.user;
 }
 
 export type ListItem = {
@@ -106,7 +114,7 @@ function getFuseOptions(
 @model("SchemaTextView")
 export class SchemaTextView extends Model({
   searchText: prop<string>("").withSetter(),
-  selectedModuleGroup: prop<ModuleGroup>(ModuleGroup.User).withSetter(),
+  selectedModuleGroup: prop<ModuleGroup>(ModuleGroup.user).withSetter(),
   selectedTypeFilter: prop<TypeFilter | null>(null).withSetter(),
   toggledItems: prop(() => arraySet<string>()),
 }) {
@@ -160,15 +168,19 @@ export class SchemaTextView extends Model({
     );
 
     const schemaState = getParent<Schema>(this)!.schemaState;
-    const disposeSelectedGraphObject = autorun(() => {
-      const selectedObjName = schemaState.selectedObjectName;
-      const schemaType = dbCtx
-        .get(this)!
-        .schemaData?.objectsByName.get(selectedObjName);
-      if (schemaType) {
-        this.goToItem(schemaType, false);
+    const disposeSelectedGraphObject = reaction(
+      () => schemaState.selectedObjectName,
+      (selectedObjName) => {
+        if (selectedObjName !== (this.highlightedItem ?? "")) {
+          const schemaType = dbCtx
+            .get(this)!
+            .schemaData?.objectsByName.get(selectedObjName);
+          if (schemaType) {
+            this.goToItem(schemaType, false);
+          }
+        }
       }
-    });
+    );
 
     return () => {
       disposeFuseUpdate();
@@ -187,17 +199,21 @@ export class SchemaTextView extends Model({
   }
 
   @observable.ref
-  highlightedItem: SchemaItem | null = null;
+  highlightedItem: string | null = null;
+
+  @action
+  setHighlightedItem(name: string | null) {
+    this.highlightedItem = name;
+    const schemaState = getParent<Schema>(this)!.schemaState;
+
+    schemaState.selectObject(name ?? "", true);
+  }
 
   @action
   async goToItem(item: SchemaItem, updateGraph = true) {
     if (item.schemaType === "Extension") return;
 
-    const moduleGroup = item.builtin
-      ? stdlibModules.has(item.module)
-        ? ModuleGroup.Stdlib
-        : ModuleGroup.System
-      : ModuleGroup.User;
+    const moduleGroup = getModuleGroup(item);
     if (
       moduleGroup !== this.selectedModuleGroup ||
       this.searchText ||
@@ -216,7 +232,7 @@ export class SchemaTextView extends Model({
     );
 
     if (listIndex !== -1) {
-      runInAction(() => (this.highlightedItem = item));
+      runInAction(() => (this.highlightedItem = item.name));
       this.listRef?.scrollToItem(listIndex, "center");
 
       if (updateGraph) {
@@ -264,12 +280,12 @@ export class SchemaTextView extends Model({
     ];
 
     switch (this.selectedModuleGroup) {
-      case ModuleGroup.User:
+      case ModuleGroup.user:
         return [
           ...schemaData.extensions,
           ...items.filter((type) => !type.builtin),
         ];
-      case ModuleGroup.Stdlib:
+      case ModuleGroup.stdlib:
         return items.filter(
           (type) =>
             type.builtin &&
@@ -277,7 +293,7 @@ export class SchemaTextView extends Model({
             !type.isDeprecated
         );
 
-      case ModuleGroup.System:
+      case ModuleGroup.system:
         return items.filter(
           (type) =>
             type.builtin &&
@@ -302,33 +318,33 @@ export class SchemaTextView extends Model({
 
     const groups = {
       all: items,
-      [TypeFilter.Objects]: [] as ListItem[],
-      [TypeFilter.Functions]: [] as ListItem[],
-      [TypeFilter.Scalars]: [] as ListItem[],
-      [TypeFilter.Constraints]: [] as ListItem[],
-      [TypeFilter.Aliases]: [] as ListItem[],
-      [TypeFilter.Other]: [] as ListItem[],
+      [TypeFilter.objects]: [] as ListItem[],
+      [TypeFilter.functions]: [] as ListItem[],
+      [TypeFilter.scalars]: [] as ListItem[],
+      [TypeFilter.constraints]: [] as ListItem[],
+      [TypeFilter.aliases]: [] as ListItem[],
+      [TypeFilter.other]: [] as ListItem[],
     };
 
     for (const item of items) {
       switch (item.item.schemaType) {
         case "Object":
-          groups[TypeFilter.Objects].push(item);
+          groups[TypeFilter.objects].push(item);
           break;
         case "Function":
-          groups[TypeFilter.Functions].push(item);
+          groups[TypeFilter.functions].push(item);
           break;
         case "Scalar":
-          groups[TypeFilter.Scalars].push(item);
+          groups[TypeFilter.scalars].push(item);
           break;
         case "Constraint":
-          groups[TypeFilter.Constraints].push(item);
+          groups[TypeFilter.constraints].push(item);
           break;
         case "Alias":
-          groups[TypeFilter.Aliases].push(item);
+          groups[TypeFilter.aliases].push(item);
           break;
         default:
-          groups[TypeFilter.Other].push(item);
+          groups[TypeFilter.other].push(item);
       }
     }
 

@@ -68,6 +68,7 @@ export const SchemaView = observer(function SchemaView() {
 
 export const schemaTabSpec: DatabaseTabSpec = {
   path: "schema",
+  allowNested: true,
   label: "Schema",
   icon: (active) => <TabSchemaIcon active={active} />,
   state: Schema,
