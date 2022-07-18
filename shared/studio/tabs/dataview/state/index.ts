@@ -126,7 +126,6 @@ export type ObjectField = {
   subtypeName?: string;
   name: string;
   queryName: string;
-  width: number;
   typeid: string;
   typename: string;
   required: boolean;
@@ -158,6 +157,7 @@ export class DataInspector extends Model({
   scrollPos: prop<[number, number]>(() => [0, 0]).withSetter(),
 
   sortBy: prop<SortBy | null>(null),
+  fieldWidths: prop<number[]>(() => []),
   expandedInspectors: prop(() => objectMap<ExpandedInspector>()),
 
   filter: prop<string>(""),
@@ -247,20 +247,19 @@ export class DataInspector extends Model({
         subtypeName,
         name: pointer.name,
         queryName: queryNamePrefix + pointer.name,
-        typeid: pointer.target.id,
-        typename: pointer.target.name,
+        typeid: pointer.target!.id,
+        typename: pointer.target!.name,
         required: pointer.required,
         multi: pointer.cardinality === "Many",
         computedExpr: pointer.expr,
         readonly: pointer.readonly,
-        width: 180,
       };
 
       if (type === ObjectFieldType.property) {
         return {
           type,
           ...baseField,
-          schemaType: pointer.target,
+          schemaType: pointer.target!,
           default: pointer.default?.replace(/^select/i, "").trim() ?? null,
         };
       }
@@ -303,6 +302,7 @@ export class DataInspector extends Model({
       });
 
     this.fields = [...baseFields, ...subtypeFields];
+    this.fieldWidths = Array(this.fields.length).fill(180);
   }
 
   @computed
@@ -352,15 +352,17 @@ export class DataInspector extends Model({
     const ranges = new Map<string, {left: number; width: number}>();
 
     let left = 0;
+    let i = 0;
     for (const field of this.fields ?? []) {
+      const fieldWidth = this.fieldWidths[i++];
       if (field.subtypeName) {
         if (!ranges.has(field.subtypeName)) {
-          ranges.set(field.subtypeName, {left, width: field.width});
+          ranges.set(field.subtypeName, {left, width: fieldWidth});
         } else {
-          ranges.get(field.subtypeName)!.width += field.width;
+          ranges.get(field.subtypeName)!.width += fieldWidth;
         }
       }
-      left += field.width;
+      left += fieldWidth;
     }
 
     return ranges;
@@ -887,9 +889,14 @@ export class DataInspector extends Model({
   }
 
   @modelAction
-  setFieldWidth(field: ObjectField, width: number) {
+  setInitialFieldWidths(width: number) {
     this.fieldWidthsUpdated = true;
-    field.width = Math.max(width, 100);
+    this.fieldWidths = new Array(this.fields!.length).fill(width);
+  }
+
+  @modelAction
+  setFieldWidth(fieldIndex: number, width: number) {
+    this.fieldWidths[fieldIndex] = Math.max(width, 100);
   }
 }
 
@@ -950,7 +957,7 @@ class ExpandedInspector extends Model({
       );
     }
 
-    const objectType = parentObjectType.links[fieldName].target;
+    const objectType = parentObjectType.links[fieldName].target!;
 
     const query = `with parentObj := (select ${parentObjectTypeName} filter .id = <uuid><str>$id)
       select parentObj.${fieldName} {
@@ -1038,8 +1045,8 @@ class ExpandedInspector extends Model({
         ...Object.values(objectType.links).map((link) => {
           const linkSelect = `${link.name}: {
       ${[
-        ...Object.values(link.target.properties),
-        ...Object.values(link.target.links),
+        ...Object.values(link.target!.properties),
+        ...Object.values(link.target!.links),
       ]
         .map((subField) =>
           subField.type === "Property"

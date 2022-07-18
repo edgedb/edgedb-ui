@@ -110,9 +110,7 @@ export default observer(function DataInspectorTable({
         Math.floor((availableWidth - 200) / state.fields.length),
         350
       );
-      for (const field of state.fields) {
-        state.setFieldWidth(field, newWidth);
-      }
+      state.setInitialFieldWidths(newWidth);
       gridRef.current?.resetAfterColumnIndex(0);
     }
   }, []);
@@ -140,7 +138,8 @@ export default observer(function DataInspectorTable({
           {
             "--rowIndexCharWidth": rowIndexCharWidth,
             "--gridWidth":
-              (state.fields?.reduce((sum, f) => sum + f.width, 0) ?? 0) + "px",
+              (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
+                0) + "px",
             "--gridBottomPadding":
               containerSize[1] -
               (state.hasSubtypeFields ? 64 : 48) -
@@ -162,7 +161,7 @@ export default observer(function DataInspectorTable({
           }}
           columnCount={state.fields?.length ?? 0}
           estimatedColumnWidth={180}
-          columnWidth={(index) => state.fields![index].width}
+          columnWidth={(index) => state.fieldWidths![index]}
           rowCount={state.gridRowCount}
           estimatedRowHeight={40}
           rowHeight={(rowIndex) =>
@@ -492,6 +491,7 @@ const FieldHeader = observer(function FieldHeader({
   field,
 }: FieldHeaderProps) {
   const {state} = useDataInspectorState();
+  const fieldWidth = state.fieldWidths[colIndex];
 
   const resizeHandler = useDragHandler(() => {
     let initialWidth: number;
@@ -500,11 +500,11 @@ const FieldHeader = observer(function FieldHeader({
     return {
       onStart(initialMousePos: Position) {
         initialPos = initialMousePos;
-        initialWidth = field.width;
+        initialWidth = state.fieldWidths[colIndex];
       },
       onMove(currentMousePos: Position) {
         const xDelta = currentMousePos.x - initialPos.x;
-        state.setFieldWidth(field, initialWidth + xDelta);
+        state.setFieldWidth(colIndex, initialWidth + xDelta);
         state.gridRef?.resetAfterColumnIndex(colIndex);
       },
     };
@@ -514,7 +514,7 @@ const FieldHeader = observer(function FieldHeader({
     state.sortBy?.fieldIndex === colIndex && state.sortBy.direction;
 
   return (
-    <div className={styles.headerField} style={{width: field.width + "px"}}>
+    <div className={styles.headerField} style={{width: fieldWidth + "px"}}>
       <div className={styles.fieldTitle}>
         <div className={styles.fieldName}>
           {field.name}
