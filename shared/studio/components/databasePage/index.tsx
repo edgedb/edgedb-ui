@@ -23,6 +23,7 @@ import {SessionState} from "../sessionState";
 
 export interface DatabaseTabSpec {
   path: string;
+  allowNested?: boolean;
   label: string;
   icon: (active: boolean) => JSX.Element;
   state?: ModelClass<AnyModel>;
@@ -88,7 +89,10 @@ const DatabasePageContent = observer(function DatabasePageContent({
           <TabBar tabs={tabs} />
           <div className={styles.tabContent}>
             {useRoutes([
-              ...tabs,
+              ...tabs.map((t) => ({
+                path: t.path + (t.allowNested ? "/*" : ""),
+                element: t.element,
+              })),
               {path: "*", element: <Navigate to="" replace />},
             ])}
           </div>

@@ -9,6 +9,15 @@ import {
 } from "react";
 import {observer} from "mobx-react-lite";
 import {VariableSizeList as List, ListChildComponentProps} from "react-window";
+import {
+  useMatch,
+  useLocation,
+  useParams,
+  useNavigate,
+  useSearchParams,
+  createSearchParams,
+  Location,
+} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 import {useResize} from "@edgedb/common/hooks/useResize";
@@ -34,13 +43,65 @@ import {ModuleHeaders} from "./renderers/module";
 const schemaModuleGroups = Object.values(ModuleGroup).filter(
   (v) => typeof v === "number"
 ) as ModuleGroup[];
+const moduleGroupNames = new Set(
+  schemaModuleGroups.map((mg) => ModuleGroup[mg])
+);
 
 const typeFilters = Object.values(TypeFilter).filter(
   (v) => typeof v === "number"
 ) as TypeFilter[];
 
+const scrollOffsetCache = new Map<string, number>();
+
 export const SchemaTextView = observer(function SchemaTextView() {
-  const schemaTextState = useTabState(Schema).textViewState;
+  const state = useTabState(Schema).textViewState;
+  const location = useLocation();
+  const params = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const selectedModuleGroup = params["*"]?.toLowerCase() ?? "";
+
+  useLayoutEffect(() => {
+    if (
+      selectedModuleGroup !== "" &&
+      (selectedModuleGroup === "user" ||
+        !moduleGroupNames.has(selectedModuleGroup))
+    ) {
+      navigate("", {replace: true});
+    } else {
+      state.setSelectedModuleGroup(
+        ModuleGroup[selectedModuleGroup || ("user" as any)] as any
+      );
+    }
+  }, [selectedModuleGroup, navigate]);
+
+  useLayoutEffect(() => {
+    const typeFilter = searchParams.get("type");
+    if (typeFilter !== state.selectedTypeFilter) {
+      state.setSelectedTypeFilter(
+        typeFilter ? (TypeFilter[typeFilter as any] as any) : null
+      );
+    }
+    const search = searchParams.get("search");
+    if (search !== state.searchText) {
+      state.setSearchText(search ?? "");
+    }
+  }, [searchParams]);
+
+  useLayoutEffect(() => {
+    const scrollOffset = scrollOffsetCache.get(location.key);
+    if (scrollOffset !== undefined) {
+      state.listRef?.scrollTo(scrollOffset);
+    }
+
+    const focusedName = searchParams.get("focus");
+    state.setHighlightedItem(focusedName ?? null);
+
+    return () => {
+      scrollOffsetCache.set(location.key, state.scrollPos);
+    };
+  }, [location]);
 
   const filtersRef = useRef<HTMLDivElement>(null);
   const [narrowLayout, setNarrowLayout] = useState(true);
@@ -71,11 +132,13 @@ export const SchemaTextView = observer(function SchemaTextView() {
                   </span>
                 ),
                 action: () => {
-                  schemaTextState.setSelectedModuleGroup(group);
+                  navigate(
+                    group === ModuleGroup.user ? "" : ModuleGroup[group]
+                  );
                 },
               }))}
               selectedItemIndex={schemaModuleGroups.indexOf(
-                schemaTextState.selectedModuleGroup
+                state.selectedModuleGroup
               )}
             />
           </div>
@@ -88,19 +151,24 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 items={[
                   {
                     label: "Everything",
-                    action: () => schemaTextState.setSelectedTypeFilter(null),
+                    action: () => {
+                      const params = createSearchParams(searchParams);
+                      params.delete("type");
+                      setSearchParams(params);
+                    },
                   },
                   ...typeFilters.map((typeFilter) => ({
                     label: TypeFilter[typeFilter],
                     action: () => {
-                      schemaTextState.setSelectedTypeFilter(typeFilter);
+                      const params = createSearchParams(searchParams);
+                      params.set("type", TypeFilter[typeFilter]);
+                      setSearchParams(params);
                     },
                   })),
                 ]}
                 selectedItemIndex={
-                  schemaTextState.selectedTypeFilter !== null
-                    ? typeFilters.indexOf(schemaTextState.selectedTypeFilter) +
-                      1
+                  state.selectedTypeFilter !== null
+                    ? typeFilters.indexOf(state.selectedTypeFilter) + 1
                     : 0
                 }
               />
@@ -110,8 +178,20 @@ export const SchemaTextView = observer(function SchemaTextView() {
             <SearchIcon />
             <input
               placeholder="search..."
-              value={schemaTextState.searchText}
-              onChange={(e) => schemaTextState.setSearchText(e.target.value)}
+              value={state.searchText}
+              onChange={(e) => {
+                const searchVal = e.target.value;
+                state.setSearchText(searchVal);
+                const params = createSearchParams(searchParams);
+                if (searchVal) {
+                  params.set("search", searchVal);
+                } else {
+                  params.delete("search");
+                }
+                setSearchParams(params, {
+                  replace: !!searchParams.get("search") && !!searchVal,
+                });
+              }}
             />
           </div>
         </div>
@@ -119,9 +199,9 @@ export const SchemaTextView = observer(function SchemaTextView() {
           <div className={styles.typeFilters}>
             <div
               className={cn(styles.typeFilter, {
-                [styles.active]: schemaTextState.selectedTypeFilter === null,
+                [styles.active]: state.selectedTypeFilter === null,
               })}
-              onClick={() => schemaTextState.setSelectedTypeFilter(null)}
+              onClick={() => state.setSelectedTypeFilter(null)}
             >
               All
             </div>
@@ -130,17 +210,13 @@ export const SchemaTextView = observer(function SchemaTextView() {
               <div
                 key={typeFilter}
                 className={cn(styles.typeFilter, {
-                  [styles.empty]:
-                    schemaTextState.filteredItems[typeFilter].length === 0,
-                  [styles.active]:
-                    schemaTextState.selectedTypeFilter === typeFilter,
+                  [styles.empty]: state.filteredItems[typeFilter].length === 0,
+                  [styles.active]: state.selectedTypeFilter === typeFilter,
                 })}
-                onClick={() =>
-                  schemaTextState.setSelectedTypeFilter(typeFilter)
-                }
+                onClick={() => state.setSelectedTypeFilter(typeFilter)}
               >
                 {TypeFilter[typeFilter]} ·{" "}
-                {schemaTextState.filteredItems[typeFilter].length}
+                {state.filteredItems[typeFilter].length}
               </div>
             ))}
           </div>
@@ -178,7 +254,8 @@ const ListItemRenderer = observer(function ListItemRenderer({
     <div style={{position: "relative", height: "0px", top: style.top}}>
       <div
         className={cn(styles.listItem, {
-          [styles.highlightedItem]: state.highlightedItem === item,
+          [styles.highlightedItem]:
+            state.highlightedItem === (item as any).name,
         })}
         ref={resizeRef}
       >
