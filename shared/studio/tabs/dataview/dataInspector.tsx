@@ -516,7 +516,10 @@ const FieldHeader = observer(function FieldHeader({
   return (
     <div className={styles.headerField} style={{width: field.width + "px"}}>
       <div className={styles.fieldTitle}>
-        <div className={styles.fieldName}>{field.name}</div>
+        <div className={styles.fieldName}>
+          {field.name}
+          {field.computedExpr ? <span>:=</span> : null}
+        </div>
         <div className={styles.fieldTypename}>
           {field.multi ? "multi " : ""}
           {field.typename}
@@ -620,21 +623,6 @@ const DataRowIndex = observer(function DataRowIndex({
         <div className={styles.rowActions}>
           {dataIndex === null || data ? (
             <>
-              <div
-                className={styles.deleteRowAction}
-                onClick={() => {
-                  if (dataIndex !== null) {
-                    edits.toggleRowDelete(data.id, data.__tname__);
-                    if (state.expandedInspectors.has(data.id)) {
-                      state.toggleRowExpanded(rowDataIndex);
-                    }
-                  } else {
-                    edits.removeInsertedRow(state.insertedRows[rowIndex]);
-                  }
-                }}
-              >
-                {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
-              </div>
               {state.parentObject?.editMode ? (
                 <label className={styles.selectLinkAction}>
                   {state.parentObject.isMultiLink ? (
@@ -728,7 +716,23 @@ const DataRowIndex = observer(function DataRowIndex({
                     />
                   )}
                 </label>
-              ) : null}
+              ) : (
+                <div
+                  className={styles.deleteRowAction}
+                  onClick={() => {
+                    if (dataIndex !== null) {
+                      edits.toggleRowDelete(data.id, data.__tname__);
+                      if (state.expandedInspectors.has(data.id)) {
+                        state.toggleRowExpanded(rowDataIndex);
+                      }
+                    } else {
+                      edits.removeInsertedRow(state.insertedRows[rowIndex]);
+                    }
+                  }}
+                >
+                  {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
+                </div>
+              )}
             </>
           ) : null}
         </div>

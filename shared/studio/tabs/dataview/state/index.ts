@@ -46,6 +46,7 @@ type ParentObject = {
   fieldName: string;
   linkId: string;
   isMultiLink: boolean;
+  isComputedLink: boolean;
 };
 
 @model("DataView")
@@ -210,6 +211,7 @@ export class DataInspector extends Model({
       fieldName: field.name,
       linkId: `${objectId}__${field.name}`,
       isMultiLink: field.type === ObjectFieldType.link ? field.multi : false,
+      isComputedLink: !!field.computedExpr,
     });
   }
 
