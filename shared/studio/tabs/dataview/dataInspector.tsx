@@ -10,6 +10,7 @@ import {
 } from "react";
 import {observer} from "mobx-react";
 import {VariableSizeGrid as Grid} from "react-window";
+import {useNavigate, useParams} from "react-router-dom";
 
 import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
@@ -294,6 +295,8 @@ const GridCell = observer(function GridCell({
   rowIndex: number;
 }) {
   const {state, edits} = useDataInspectorState();
+  const navigate = useNavigate();
+  const basePath = useParams()["*"]!;
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
 
@@ -434,7 +437,13 @@ const GridCell = observer(function GridCell({
       })}
       onClick={() => {
         if (field.type === ObjectFieldType.link) {
-          state.openNestedView(data.id, data.__tname__, field);
+          state.openNestedView(
+            basePath,
+            navigate,
+            data.id,
+            data.__tname__,
+            field
+          );
         }
       }}
       onDoubleClick={() => {
@@ -442,7 +451,14 @@ const GridCell = observer(function GridCell({
           if (field.type === ObjectFieldType.property) {
             edits.startEditingCell(data.id, field.name);
           } else {
-            state.openNestedView(data.id, data.__tname__, field, true);
+            state.openNestedView(
+              basePath,
+              navigate,
+              data.id,
+              data.__tname__,
+              field,
+              true
+            );
           }
         }
       }}
@@ -779,6 +795,8 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
   styleTop: any;
 }) {
   const {state} = useDataInspectorState();
+  const basePath = useParams()["*"]!;
+  const navigate = useNavigate();
   const item = rowData.state.getItems()?.[rowData.index];
 
   return (
@@ -798,6 +816,8 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
               className={styles.viewInTableButton}
               onClick={() =>
                 state.openNestedView(
+                  basePath,
+                  navigate,
                   rowData.state.objectId,
                   rowData.state.objectTypeName,
                   state.fields!.find((field) => field.name === item.fieldName)!
