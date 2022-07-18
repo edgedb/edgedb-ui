@@ -11,7 +11,7 @@
     border-radius: 8px;
   }
 
-  --schemagraph-background: #f5f5f5;
+  // --schemagraph-background: #f5f5f5;
   --schemagraph-object-background: #ffffff;
   --schemagraph-object-colour: #333333;
   --schemagraph-object-header-background: #716fe1;
@@ -61,7 +61,7 @@
   --schemaminimap-button-background: #d4d4d4;
 
   @include darkTheme {
-    --schemagraph-background: #1f1f1f;
+    // --schemagraph-background: #1f1f1f;
     --schemagraph-object-background: #313131;
     --schemagraph-object-colour: #c4c4c4;
     --schemagraph-object-header-background: #1b4584;
@@ -117,6 +117,11 @@
   position: relative;
   display: flex;
   overflow: hidden;
+  background-image: url(data:png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA7SURBVHgB7cyhEQAgDEPRgur+Q2aGOFAIuIMcRdJvol4KgGbBqj2UeImkhfCAp4Mtdvdpr7CCEqt+xB0XnQzPyC3maAAAAABJRU5ErkJggg==);
+
+  @include darkTheme {
+    background-image: url(data:png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA7SURBVHgB7cwhDgAgDEPRQbKb9P4XrACFgAQahmTfVL0WAM2CVXso8RJJC+EBTwdb7O7TXmEFJVb9iDsGOAqJmekB+AAAAABJRU5ErkJggg==);
+  }
 }
 
 .minimap {

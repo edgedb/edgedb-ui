@@ -28,7 +28,7 @@ import {useDatabaseState, useTabState} from "../../state";
 
 import styles from "./textView.module.scss";
 
-import {SearchIcon} from "../../icons";
+import {CloseIcon, SearchIcon} from "../../icons";
 
 import {
   ModuleGroup,
@@ -193,6 +193,17 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 });
               }}
             />
+            <div
+              className={styles.clearSearch}
+              onClick={() => {
+                state.setSearchText("");
+                const params = createSearchParams(searchParams);
+                params.delete("search");
+                setSearchParams(params);
+              }}
+            >
+              <CloseIcon />
+            </div>
           </div>
         </div>
         {!narrowLayout ? (

@@ -61,7 +61,7 @@ const InheritedGroup = observer(function InheritedGroup({
   return (
     <div className={styles.inheritedBlock}>
       <div className={styles.inheritedFrom}>
-        <span>inherited from </span>{" "}
+        <span>Inherited from </span>{" "}
         <TypeLink type={type} parentModule={parentModule} />
       </div>
 
