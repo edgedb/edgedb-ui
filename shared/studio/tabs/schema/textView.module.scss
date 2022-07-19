@@ -126,9 +126,22 @@
   }
 
   @include darkTheme {
+    & > svg {
+      stroke: #6b6b6b;
+    }
+
     input {
       background: #242424;
       color: #cacaca;
+
+      &:focus {
+        background: #b5b5b5;
+        color: #141414;
+      }
+    }
+
+    .clearSearch svg {
+      color: #6b6b6b;
     }
   }
 }

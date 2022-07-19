@@ -23,7 +23,12 @@ import {
 import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 
-import {TabSchemaIcon} from "../../icons";
+import {
+  SchemaViewGraphIcon,
+  SchemaViewTextGraphIcon,
+  SchemaViewTextIcon,
+  TabSchemaIcon,
+} from "../../icons";
 
 import {SchemaTextView} from "./textView";
 
@@ -52,9 +57,29 @@ export const SchemaView = observer(function SchemaView() {
           <div className={styles.viewSwitcher}>
             <SwitcherButton
               items={[
-                {id: SchemaViewType.Text, label: "Text"},
-                {id: SchemaViewType.Graph, label: "Graph"},
-                {id: SchemaViewType.TextGraph, label: "Text/Graph"},
+                {
+                  id: SchemaViewType.Text,
+                  label: "Text",
+                  icon: (
+                    <SchemaViewTextIcon className={styles.viewSwitcherIcon} />
+                  ),
+                },
+                {
+                  id: SchemaViewType.Graph,
+                  label: "Graph",
+                  icon: (
+                    <SchemaViewGraphIcon className={styles.viewSwitcherIcon} />
+                  ),
+                },
+                {
+                  id: SchemaViewType.TextGraph,
+                  label: "Text/Graph",
+                  icon: (
+                    <SchemaViewTextGraphIcon
+                      className={styles.viewSwitcherIcon}
+                    />
+                  ),
+                },
               ]}
               selected={schemaState.viewType}
               onChange={(type) => schemaState.setViewType(type)}
