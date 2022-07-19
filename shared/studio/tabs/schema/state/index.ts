@@ -30,7 +30,10 @@ export class Schema extends Model({
       if (schemaData) {
         this.schemaState.updateSchema(
           [...schemaData.objects.values()]
-            .filter((o) => !o.builtin && !o.insectionOf && !o.unionOf)
+            .filter(
+              (o) =>
+                !o.builtin && !o.insectionOf && !o.unionOf && !o.from_alias
+            )
             .map((o) => ({
               name: o.name,
               is_abstract: o.abstract,
