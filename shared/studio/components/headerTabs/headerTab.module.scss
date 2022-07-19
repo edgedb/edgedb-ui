@@ -1,5 +1,6 @@
 .tabs {
   display: flex;
+  align-items: center;
   margin-left: 58px;
 
   font-family: "Inter", sans-serif;
@@ -21,4 +22,6 @@
 
 .tabSep {
   margin: 0 8px;
+  margin-left: 2px;
+  opacity: 0.5;
 }
