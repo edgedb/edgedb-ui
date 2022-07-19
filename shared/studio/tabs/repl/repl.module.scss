@@ -76,7 +76,7 @@
   margin: 8px;
   display: flex;
   align-items: center;
-  justify-content: end;
+  justify-content: flex-end;
 
   label {
     display: flex;
@@ -129,7 +129,7 @@
 .queryOptions {
   display: flex;
   flex-grow: 1;
-  justify-content: end;
+  justify-content: flex-end;
   position: relative;
   min-width: 0;
 
