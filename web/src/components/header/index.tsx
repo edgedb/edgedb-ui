@@ -3,16 +3,12 @@ import {observer} from "mobx-react";
 import {HeaderTabs} from "@edgedb/studio/components/headerTabs";
 import {SessionStateControls} from "@edgedb/studio/components/sessionState";
 
-import {useAppState} from "src/state/providers";
-
 import {Logo} from "@edgedb/common/ui/icons/logo";
 import {ThemeSwitcher} from "@edgedb/common/ui/themeSwitcher";
 
 import styles from "./header.module.scss";
 
 export default observer(function Header() {
-  const appState = useAppState();
-
   return (
     <div className={styles.header}>
       <div className={styles.title}>
