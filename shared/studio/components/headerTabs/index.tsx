@@ -56,7 +56,7 @@ function TabSep() {
   return (
     <svg
       width="16"
-      height="30"
+      height="24"
       viewBox="0 0 16 30"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -64,7 +64,7 @@ function TabSep() {
     >
       <path
         d="M 1,29 L 15,1"
-        stroke="#848484"
+        stroke="currentColor"
         strokeWidth={1.5}
         strokeLinecap="round"
       />
