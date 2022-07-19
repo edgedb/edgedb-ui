@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {observer} from "mobx-react-lite";
 import {useNavigate} from "react-router-dom";
 
@@ -16,11 +16,23 @@ import {
 
 import Button from "@edgedb/common/ui/button";
 
-import {HeaderDatabaseIcon, TabDashboardIcon} from "../../icons";
+import {
+  HeaderDatabaseIcon,
+  TabDashboardIcon,
+  TabDataExplorerIcon,
+  TabReplIcon,
+  TabSchemaIcon,
+} from "../../icons";
 
 export const DatabaseDashboard = observer(function DatabaseDashboard() {
   const dbState = useDatabaseState();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (dbState.migrationId != undefined) {
+      dbState.updateObjectCount();
+    }
+  }, [dbState.migrationId]);
 
   if (dbState.migrationId === undefined) {
     return <div className={styles.dashboard} />;
@@ -39,25 +51,49 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
       <div className={styles.buttons}>
         <Button
+          className={styles.button}
           label="Open REPL"
           size="large"
-          style="square"
+          icon={<TabReplIcon />}
+          leftIcon
           onClick={() => navigate("repl")}
         ></Button>
 
         <Button
+          className={styles.button}
           label="Browse Schema"
           size="large"
-          style="square"
+          icon={<TabSchemaIcon />}
+          leftIcon
           onClick={() => navigate("schema")}
         ></Button>
 
         <Button
+          className={styles.button}
           label="Browse Data"
           size="large"
-          style="square"
+          icon={<TabDataExplorerIcon />}
+          leftIcon
           onClick={() => navigate("data")}
         ></Button>
+      </div>
+
+      <div className={styles.stats}>
+        <div className={styles.stat}>
+          <div className={styles.statValue}>{dbState.objectCount ?? "-"}</div>
+          <div className={styles.statLabel}>objects</div>
+        </div>
+
+        <div className={styles.stat}>
+          <div className={styles.statValue}>
+            {dbState.schemaData
+              ? [...dbState.schemaData.objects.values()].filter(
+                  (o) => !o.builtin
+                ).length
+              : "-"}
+          </div>
+          <div className={styles.statLabel}>object types</div>
+        </div>
       </div>
 
       <div className={styles.docButtons}>
