@@ -425,7 +425,11 @@ const GridCell = observer(function GridCell({
         [styles.isDeleted]:
           isDeletedRow ||
           editedLinkChange?.kind === UpdateLinkChangeKind.Remove,
-        [styles.editableCell]: !isDeletedRow && isEditable,
+        [styles.editableCell]:
+          !isDeletedRow &&
+          isEditable &&
+          field.type === ObjectFieldType.property,
+        [styles.linkCell]: field.type === ObjectFieldType.link,
         [styles.hasEdits]:
           !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
         [styles.hasErrors]:

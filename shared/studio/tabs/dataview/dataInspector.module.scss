@@ -312,6 +312,27 @@
   }
 }
 
+.linkCell:hover {
+  cursor: pointer;
+
+  .linkObjName {
+    background: #0ccb93;
+    color: #fafafa;
+
+    span {
+      background: #0db181;
+    }
+
+    @include darkTheme {
+      background: #29b189;
+
+      span {
+        background: #049067;
+      }
+    }
+  }
+}
+
 .emptySubtypeField {
   color: #747474;
 }
