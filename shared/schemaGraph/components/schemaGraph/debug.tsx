@@ -8,7 +8,7 @@ export function useDebugState() {
     showMargins: false,
     show: false,
     showOOBMarkers: false,
-    zoomFactor: 200,
+    zoomFactor: 600,
   });
 }
 
