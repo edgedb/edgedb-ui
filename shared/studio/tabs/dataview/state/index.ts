@@ -109,7 +109,6 @@ export class DataView extends Model({
   @modelAction
   updateFromPath(path: string): string | null {
     const [rootObjectTypeName, ...nestedParts] = path.split("/");
-    console.log(rootObjectTypeName, ...nestedParts);
     if (rootObjectTypeName !== this.inspectorStack[0].objectType?.name) {
       const objTypeId = this.objectTypes.find(
         (obj) => obj.name === rootObjectTypeName
@@ -405,7 +404,7 @@ export class DataInspector extends Model({
 
     return resolveObjectTypeUnion(objectType)
       .flatMap((type) => [type, ...type.descendents])
-      .filter((type) => !type.abstract)
+      .filter((type) => !type.abstract && !type.from_alias)
       .map((type) => type.name);
   }
 

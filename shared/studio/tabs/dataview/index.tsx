@@ -104,7 +104,7 @@ const DataInspectorView = observer(function DataInspectorView({
         {!nestedPath ? (
           <>
             <Select
-              className={styles.objectSelect}
+              className={cn(styles.headerSelect, styles.objectSelect)}
               items={dataviewState.objectTypes.map(({id, name}) => {
                 const [modName, typeName] = name.split(/::/);
                 return {
@@ -192,16 +192,28 @@ const DataInspectorView = observer(function DataInspectorView({
           {inspectorState.insertTypeNames.length &&
           (!inspectorState.parentObject ||
             inspectorState.parentObject.editMode) ? (
-            <Select
-              title="Insert..."
-              items={null}
-              actions={inspectorState.insertTypeNames.map((name) => ({
-                label: name,
-                action: () => {
-                  dataviewState.edits.createNewRow(name);
-                },
-              }))}
-            />
+            inspectorState.insertTypeNames.length > 1 ? (
+              <Select
+                className={styles.headerSelect}
+                title="Insert..."
+                items={null}
+                actions={inspectorState.insertTypeNames.map((name) => ({
+                  label: name,
+                  action: () => dataviewState.edits.createNewRow(name),
+                }))}
+              />
+            ) : (
+              <div
+                className={styles.headerButton}
+                onClick={() =>
+                  dataviewState.edits.createNewRow(
+                    inspectorState.insertTypeNames[0]
+                  )
+                }
+              >
+                Insert {inspectorState.insertTypeNames[0].split("::")[1]}
+              </div>
+            )
           ) : null}
 
           <div
