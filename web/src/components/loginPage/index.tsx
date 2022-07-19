@@ -1,19 +1,16 @@
+import {ErrorPage} from "@edgedb/studio/components/errorPage";
 import styles from "./loginPage.module.scss";
 
 export default function LoginPage() {
   return (
     <div className={styles.loginPage}>
-      <form>
-        <label>
-          <span>User</span>
-          <input />
-        </label>
-        <label>
-          <span>Password</span>
-          <input type="password" />
-        </label>
-        <button>Login</button>
-      </form>
+      <ErrorPage
+        className={styles.loginMessage}
+        title="Authentication Required"
+      >
+        To authenticate, open the UI with the terminal command:
+        <pre>edgedb ui</pre>
+      </ErrorPage>
     </div>
   );
 }

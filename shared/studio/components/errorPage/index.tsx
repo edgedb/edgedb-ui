@@ -1,19 +1,23 @@
 import {PropsWithChildren} from "react";
 
+import cn from "@edgedb/common/utils/classNames";
+
 import styles from "./errorPage.module.scss";
 
 interface ErrorPageProps {
+  className?: string;
   title: string;
-  actions: JSX.Element;
+  actions?: JSX.Element;
 }
 
 export function ErrorPage({
+  className,
   title,
   children,
   actions,
 }: PropsWithChildren<ErrorPageProps>) {
   return (
-    <div className={styles.errorPage}>
+    <div className={cn(className, styles.errorPage)}>
       <div className={styles.errorBlock}>
         <div className={styles.title}>{title}</div>
         {children}

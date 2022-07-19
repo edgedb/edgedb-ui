@@ -1,12 +1,23 @@
 .loginPage {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  display: contents;
+}
 
-  form {
-    display: flex;
-    flex-direction: column;
+.loginMessage {
+  margin: 0;
+  border-radius: 0;
+
+  pre {
+    background: #1d1d1d;
+    color: #eaeaea;
+    margin: 18px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    user-select: text;
+
+    &:before {
+      content: "$ ";
+      opacity: 0.5;
+      pointer-events: none;
+    }
   }
 }
