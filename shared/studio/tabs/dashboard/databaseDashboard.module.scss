@@ -2,6 +2,7 @@
 .firstDashboard {
   background-color: var(--app-panel-bg);
   border-radius: 8px;
+  overflow: auto;
 
   flex-grow: 1;
   display: flex;
@@ -43,9 +44,23 @@
     justify-content: center;
   }
 
+  .button.button {
+    margin: 4px;
+
+    & > div {
+      padding: 25px 42px;
+      border-radius: 8px;
+    }
+
+    svg {
+      fill: currentColor;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
   .docButtons {
-    margin-top: 50px;
-    padding: 50px;
+    padding: 40px;
 
     display: flex;
     flex-flow: row wrap;
@@ -56,9 +71,7 @@
     a {
       padding: 20px;
       margin: 10px;
-      border: 2px solid var(--app-card-bg);
-      border-radius: 8px;
-      min-width: 190px;
+      min-width: 175px;
 
       text-decoration: none;
       outline: none;
@@ -66,32 +79,55 @@
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
 
       svg {
-        color: var(--app-accent-green);
+        color: #adadad;
+        width: 24px;
       }
 
       span {
         display: inline-block;
         font-size: 18px;
+        line-height: 32px;
         font-weight: bold;
         color: var(--app-text-colour);
       }
 
       &:hover {
-        border-color: var(--app-accent-green);
-        background-color: var(--app-accent-green);
-
-        svg {
-          color: white;
-        }
-
+        svg,
         span {
-          color: white;
+          color: #0ccb93;
         }
       }
     }
+  }
+}
+
+.stats {
+  display: flex;
+  gap: 90px;
+  margin-top: 20px;
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+  }
+
+  .statValue {
+    font-weight: 700;
+    font-size: 48px;
+    line-height: 48px;
+  }
+
+  .statLabel {
+    font-family: "Roboto Mono", monospace;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 24px;
+    opacity: 0.55;
   }
 }
 

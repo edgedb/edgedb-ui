@@ -101,6 +101,9 @@ export class DatabaseState extends Model({
   @observable
   migrationId: string | null | undefined = undefined;
 
+  @observable
+  objectCount: number | null = null;
+
   onInit() {
     dbCtx.set(this, this);
     connCtx.setComputed(this, () => this.connection);
@@ -145,6 +148,15 @@ export class DatabaseState extends Model({
       roleUpdateDisposer();
       connectionDisposer();
     };
+  }
+
+  async updateObjectCount() {
+    const {result} = await this.connection.query(`select count(std::Object)`);
+    if (result) {
+      runInAction(() => {
+        this.objectCount = Number(result[0]);
+      });
+    }
   }
 
   private async _fetchSchemaDataFromStore() {
