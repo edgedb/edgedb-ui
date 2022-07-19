@@ -12,6 +12,16 @@
   }
 }
 
+.switcherLabel {
+  display: flex;
+  flex-direction: column;
+
+  :not(.selected) {
+    visibility: hidden;
+    height: 0;
+  }
+}
+
 .popup {
   position: absolute;
   background: #fff;

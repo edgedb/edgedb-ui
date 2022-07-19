@@ -521,3 +521,59 @@ export function KebabMenuIcon() {
     </svg>
   );
 }
+
+export function SchemaViewGraphIcon(props: IconProps) {
+  return (
+    <svg
+      {...props}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58173 12.4183 0 8 0C3.58167 0 0 3.58173 0 8C0 12.4183 3.58167 16 8 16ZM4 5H8V3H4V5ZM4 13H8V11H4V13ZM8 9H4V7H8V9ZM10 9H14V7H10V9Z"
+      />
+    </svg>
+  );
+}
+
+export function SchemaViewTextIcon(props: IconProps) {
+  return (
+    <svg
+      {...props}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 8C16 12.4183 12.4183 16 8 16C3.58167 16 0 12.4183 0 8C0 3.58173 3.58167 0 8 0C12.4183 0 16 3.58173 16 8ZM2.58582 8L5.29297 5.29291C5.68347 4.90234 6.31665 4.90234 6.70715 5.29291C7.09766 5.68341 7.09766 6.31659 6.70715 6.70709L5.41418 8L6.70715 9.29291C7.09766 9.68341 7.09766 10.3166 6.70715 10.7071C6.31665 11.0977 5.68347 11.0977 5.29297 10.7071L2.58582 8ZM10.707 5.29291L13.4142 8L10.707 10.7071C10.3165 11.0977 9.68335 11.0977 9.29285 10.7071C8.90234 10.3166 8.90234 9.68341 9.29285 9.29291L10.5858 8L9.29285 6.70709C8.90234 6.31659 8.90234 5.68341 9.29285 5.29291C9.68335 4.90234 10.3165 4.90234 10.707 5.29291Z"
+      />
+    </svg>
+  );
+}
+export function SchemaViewTextGraphIcon(props: IconProps) {
+  return (
+    <svg
+      {...props}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 8C16 12.4183 12.4183 16 8 16C3.58167 16 0 12.4183 0 8C0 3.58173 3.58167 0 8 0C12.4183 0 16 3.58173 16 8ZM12 5H8V3H12V5ZM12 13H8V11H12V13ZM8 9H12V7H8V9ZM4.29297 5.29291L1.58582 8L4.29297 10.7071C4.68347 11.0977 5.31665 11.0977 5.70715 10.7071C6.09766 10.3166 6.09766 9.68341 5.70715 9.29291L4.41418 8L5.70715 6.70709C6.09766 6.31659 6.09766 5.68341 5.70715 5.29291C5.31665 4.90234 4.68347 4.90234 4.29297 5.29291Z"
+      />
+    </svg>
+  );
+}

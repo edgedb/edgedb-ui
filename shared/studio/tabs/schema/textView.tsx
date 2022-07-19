@@ -193,17 +193,19 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 });
               }}
             />
-            <div
-              className={styles.clearSearch}
-              onClick={() => {
-                state.setSearchText("");
-                const params = createSearchParams(searchParams);
-                params.delete("search");
-                setSearchParams(params);
-              }}
-            >
-              <CloseIcon />
-            </div>
+            {searchParams.has("search") ? (
+              <div
+                className={styles.clearSearch}
+                onClick={() => {
+                  state.setSearchText("");
+                  const params = createSearchParams(searchParams);
+                  params.delete("search");
+                  setSearchParams(params);
+                }}
+              >
+                <CloseIcon />
+              </div>
+            ) : null}
           </div>
         </div>
         {!narrowLayout ? (

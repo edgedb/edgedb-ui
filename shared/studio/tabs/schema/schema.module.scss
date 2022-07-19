@@ -14,10 +14,10 @@
   // --schemagraph-background: #f5f5f5;
   --schemagraph-object-background: #ffffff;
   --schemagraph-object-colour: #333333;
-  --schemagraph-object-header-background: #716fe1;
+  --schemagraph-object-header-background: #056bca;
   --schemagraph-object-header-colour: #ffffff;
   --schemagraph-object-abstract-header-background: #999999;
-  --schemagraph-object-selected-highlight: #047cff;
+  --schemagraph-object-selected-highlight: #1f8aed;
   --schemagraph-object-links-background: #f0f0f0;
   --schemagraph-object-links-selected-background: #f3c8d7;
   --schemagraph-object-links-hover-background: rgba(243, 200, 215, 0.4);
@@ -177,5 +177,8 @@
   text-transform: uppercase;
   color: #6b6b6b;
   margin-left: auto;
-  margin-right: 1.5rem;
+}
+
+.viewSwitcherIcon {
+  fill: #808080;
 }

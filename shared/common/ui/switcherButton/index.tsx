@@ -11,6 +11,7 @@ interface SwitcherButtonProps<T extends string | number> {
   items: {
     id: T;
     label: string;
+    icon: JSX.Element;
   }[];
   selected: T;
   onChange: (id: T) => void;
@@ -41,10 +42,24 @@ export default function SwitcherButton<T extends string | number>({
     }
   }, [popupOpen]);
 
+  const selectedItem = items.find((item) => item.id === selected);
+
   return (
     <div className={cn(styles.switcherButton, className)}>
       <Button
-        label={items.find((item) => item.id === selected)?.label ?? ""}
+        label={
+          <div className={styles.switcherLabel}>
+            {items.map((item) => (
+              <div
+                className={item === selectedItem ? styles.selected : undefined}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+        }
+        icon={selectedItem?.icon}
+        leftIcon
         onClick={() => setPopupOpen(true)}
       />
       {popupOpen ? (
