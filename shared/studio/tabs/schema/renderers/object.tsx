@@ -1,15 +1,18 @@
+import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
   SchemaAbstractAnnotation,
+  SchemaAccessPolicy,
   SchemaAnnotation,
   SchemaConstraint,
   SchemaObjectType,
   SchemaParam,
   SchemaPointer,
 } from "@edgedb/common/schemaData";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import {SchemaModule} from "../state/textView";
 
@@ -168,6 +171,9 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
                 .map((index) => (
                   <IndexRenderer key={index.id} index={index} />
                 ))}
+              {type.accessPolicies.map((policy) => (
+                <AccessPolicyRenderer key={policy.name} type={policy} />
+              ))}
             </div>
             <div>
               <CopyHighlight>
@@ -180,6 +186,90 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
     </Copyable>
   );
 });
+
+function getAccessKindsList(type: SchemaAccessPolicy): string[] {
+  if (type.access_kinds.length === 5) {
+    return ["all"];
+  }
+  const kinds = [];
+  let updateIndex: number | null = null;
+  for (const kind of type.access_kinds) {
+    if (kind === "UpdateRead" || kind === "UpdateWrite") {
+      if (updateIndex !== null) {
+        kinds[updateIndex] = "update";
+      } else {
+        updateIndex = kinds.length;
+        kinds.push("update " + kind.slice(6).toLowerCase());
+      }
+    } else {
+      kinds.push(kind.toLowerCase());
+    }
+  }
+  return kinds;
+}
+
+function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
+  const hasBody = !!type.annotations.length;
+
+  return (
+    <Copyable>
+      <div>
+        <ItemHeader
+          actions={<CopyButton getSDL={() => accessPolicyToSDL(type)} />}
+        >
+          <CopyHighlight>
+            <Keyword>access policy</Keyword> {type.name}
+          </CopyHighlight>
+        </ItemHeader>
+        <div className={styles.indentedBlock}>
+          {type.condition ? (
+            <div>
+              <CopyHighlight>
+                <Keyword>when</Keyword> <Punc>{"("}</Punc>
+                <CodeBlock code={type.condition} inline />
+                <Punc>{")"}</Punc>
+              </CopyHighlight>
+            </div>
+          ) : null}
+          <div>
+            <CopyHighlight>
+              <Keyword>{type.action.toLowerCase()}</Keyword>{" "}
+              {getAccessKindsList(type).map((kind, i) => (
+                <Fragment key={i}>
+                  {i !== 0 ? ", " : null}
+                  <Keyword>{kind.toLowerCase()}</Keyword>
+                </Fragment>
+              ))}{" "}
+              <Keyword>using</Keyword> <Punc>{"("}</Punc>
+            </CopyHighlight>
+            <div className={styles.indentedBlock}>
+              <CopyHighlight>
+                <CodeBlock code={type.expr} inline />
+              </CopyHighlight>
+            </div>
+            <CopyHighlight>
+              <Punc>{hasBody ? ") {" : ");"}</Punc>
+            </CopyHighlight>
+          </div>
+          {hasBody ? (
+            <>
+              <div className={styles.indentedBlock}>
+                {type.annotations?.map((anno, i) => (
+                  <AnnotationRenderer key={i} annotation={anno} />
+                ))}
+              </div>
+              <div>
+                <CopyHighlight>
+                  <Punc>{"};"}</Punc>
+                </CopyHighlight>
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </Copyable>
+  );
+}
 
 export function objectToSDL(type: SchemaObjectType) {
   const pointers = [
@@ -194,7 +284,8 @@ export function objectToSDL(type: SchemaObjectType) {
     type.annotations.length ||
     pointers.length ||
     type.constraints.length ||
-    indexes.length;
+    indexes.length ||
+    type.accessPolicies.length;
 
   return `${type.abstract ? "abstract " : ""}type ${type.name}${
     extendingTypes.length
@@ -210,7 +301,24 @@ export function objectToSDL(type: SchemaObjectType) {
           .map((constraint) => indent(constraintToSDL(constraint)) + "\n")
           .join("")}${indexes
           .map((index) => indent(indexToSDL(index)) + "\n")
+          .join("")}${type.accessPolicies
+          .map((policy) => indent(accessPolicyToSDL(policy) + "\n"))
           .join("")}}`
       : ""
   };`;
+}
+
+export function accessPolicyToSDL(type: SchemaAccessPolicy) {
+  const hasBody = !!type.annotations.length;
+  return `access policy ${type.name}\n  ${
+    type.condition ? `when (${type.condition})\n  ` : ""
+  }${type.action.toLowerCase()} ${getAccessKindsList(type).join(
+    ", "
+  )} using (\n    ${type.expr}\n  )${
+    hasBody
+      ? ` {\n${type.annotations
+          .map((anno) => "    " + annotationToSDL(anno) + "\n")
+          .join("")}  };`
+      : ";"
+  }`;
 }

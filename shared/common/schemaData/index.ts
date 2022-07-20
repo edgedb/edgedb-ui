@@ -9,12 +9,13 @@ import {
   RawIntrospectionResult,
   TargetDeleteAction,
   SourceDeleteAction,
+  SchemaAccessPolicy,
 } from "./queries";
 import {KnownScalarTypes} from "./knownTypes";
 import {paramToSDL} from "./utils";
 
 export {KnownScalarTypes};
-export type {SchemaAnnotation};
+export type {SchemaAnnotation, SchemaAccessPolicy};
 
 export interface SchemaPseudoType {
   schemaType: "Pseudo";
@@ -129,6 +130,7 @@ export interface SchemaObjectType {
   links: {[name: string]: SchemaLink};
   pointers: SchemaPointer[];
   indexes: SchemaIndex[];
+  accessPolicies: SchemaAccessPolicy[];
 }
 
 export type SchemaType =
@@ -335,6 +337,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
             ...i,
             isDeprecated: isDeprecated(i.annotations),
           })),
+          accessPolicies: type.access_policies,
         } as any);
         for (const baseId of type.baseIds) {
           if (!extendedBy.has(baseId)) {
@@ -504,7 +507,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           }
 
           return linkProps;
-        }, {});
+        }, {} as any);
     }
   }
 

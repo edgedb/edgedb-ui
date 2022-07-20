@@ -4,6 +4,22 @@ export interface SchemaAnnotation {
 }
 
 export type SchemaCardinality = "One" | "Many";
+export type SchemaAccessKind =
+  | "Select"
+  | "UpdateRead"
+  | "UpdateWrite"
+  | "Delete"
+  | "Insert";
+export type SchemaAccessPolicyAction = "Allow" | "Deny";
+
+export interface SchemaAccessPolicy {
+  name: string;
+  access_kinds: SchemaAccessKind[];
+  condition: string | null;
+  action: SchemaAccessPolicyAction;
+  expr: string;
+  annotations: SchemaAnnotation[];
+}
 
 export interface RawSchemaType {
   type: string;
@@ -33,6 +49,7 @@ export interface RawSchemaType {
         annotations: SchemaAnnotation[];
       }[]
     | null;
+  access_policies: SchemaAccessPolicy[] | null;
 }
 
 export const typesQuery = `
@@ -77,6 +94,17 @@ select Type {
       name,
       @value,
     },
+  },
+  [is ObjectType].access_policies: {
+    name,
+    access_kinds,
+    condition,
+    action,
+    expr,
+    annotations: {
+      name,
+      @value,
+    }
   },
 }
 `;
