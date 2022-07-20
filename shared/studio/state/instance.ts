@@ -109,9 +109,31 @@ export class InstanceState extends Model({
     }
     return this.databasePageStates.get(databaseName)!;
   }
+
+  @observable creatingExampleDB = false;
+
+  async createExampleDatabase(exampleSchema: Promise<string>) {
+    runInAction(() => (this.creatingExampleDB = true));
+    try {
+      const schemaScript = await exampleSchema;
+      await this.defaultConnection!.execute(`create database _example`);
+      const exampleConn = new Connection({
+        config: {
+          serverUrl: this.serverUrl,
+          authToken: this.authToken!,
+          database: "_example",
+          user: this.roles![0],
+        },
+      });
+      await exampleConn.execute(schemaScript);
+      await this.fetchInstanceInfo();
+    } finally {
+      runInAction(() => (this.creatingExampleDB = false));
+    }
+  }
 }
 
-export const InstanceStateContext = createContext<InstanceState | null>(null);
+export const InstanceStateContext = createContext<InstanceState>(null!);
 
 export function useInstanceState() {
   return useContext(InstanceStateContext);

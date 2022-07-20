@@ -49,8 +49,9 @@ export default function SwitcherButton<T extends string | number>({
       <Button
         label={
           <div className={styles.switcherLabel}>
-            {items.map((item) => (
+            {items.map((item, i) => (
               <div
+                key={i}
                 className={item === selectedItem ? styles.selected : undefined}
               >
                 {item.label}
