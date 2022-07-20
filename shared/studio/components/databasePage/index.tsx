@@ -42,7 +42,7 @@ export default observer(function DatabasePageLoadingWrapper({
   const navigate = useNavigate();
   const instanceState = useInstanceState();
 
-  if (!instanceState?.databases) {
+  if (!instanceState.databases) {
     return (
       <div className={cn(styles.card, styles.loadingState)}>
         Fetching instance info...
@@ -50,7 +50,7 @@ export default observer(function DatabasePageLoadingWrapper({
     );
   }
 
-  if (!instanceState?.databases.includes(databaseName)) {
+  if (!instanceState.databases.includes(databaseName)) {
     return (
       <ErrorPage
         title="Database doesn't exist"
@@ -76,7 +76,7 @@ const DatabasePageContent = observer(function DatabasePageContent({
   databaseName,
   tabs,
 }: DatabasePageProps) {
-  const instanceState = useInstanceState()!;
+  const instanceState = useInstanceState();
 
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
 

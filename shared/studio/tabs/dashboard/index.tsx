@@ -4,6 +4,7 @@ import {useNavigate} from "react-router-dom";
 
 import styles from "./databaseDashboard.module.scss";
 
+import {useInstanceState} from "../../state/instance";
 import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 
@@ -132,9 +133,11 @@ export const dashboardTabSpec: DatabaseTabSpec = {
 };
 
 const FirstRunDashboard = observer(function FirstRunDashboard() {
+  const instanceState = useInstanceState();
   const dbState = useDatabaseState();
-  const [buttonLabel, setButtonLabel] = useState<string>("");
-  const [running, setRunning] = useState(false);
+  const navigate = useNavigate();
+
+  const exampleDBExists = instanceState.databases?.includes("_example");
 
   return (
     <div className={styles.firstDashboard}>
@@ -145,23 +148,37 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
       <div className={styles.congrats}>Your new database is ready!</div>
 
       <div className={styles.importData}>
-        <h3>Use our example "movies" schema and data set</h3>
-        <p>Import our example schema and play with the web REPL right away.</p>
+        <h3>First time using EdgeDB?</h3>
+        <p>
+          {exampleDBExists ? "Switch to the" : "Create an"} example database
+          with our "movies" schema and data set, and play with the web UI right
+          away.
+        </p>
         <div>
           <Button
-            label={buttonLabel || `Setup example schema & data`}
-            loading={running}
-            disabled={running}
+            label={
+              instanceState.creatingExampleDB
+                ? "Creating example database..."
+                : exampleDBExists
+                ? "Switch to example database"
+                : "Create example database"
+            }
+            loading={instanceState.creatingExampleDB}
+            disabled={instanceState.creatingExampleDB}
             size="large"
             style="square"
-            onClick={async () => {
-              setRunning(true);
-              setButtonLabel(`Setting up schema...`);
-              const {schemaScript} = await import("./exampleSchema");
-              await dbState.connection.execute(schemaScript);
-              setButtonLabel(`Updating schema...`);
-              await dbState.fetchSchemaData();
-            }}
+            onClick={
+              exampleDBExists
+                ? () => navigate("/_example")
+                : async () => {
+                    await instanceState.createExampleDatabase(
+                      import("./exampleSchema").then(
+                        ({schemaScript}) => schemaScript
+                      )
+                    );
+                    navigate("/_example");
+                  }
+            }
           ></Button>
         </div>
       </div>
