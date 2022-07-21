@@ -12,7 +12,7 @@ export interface ThemeSwitcherProps {
 }
 
 export function ThemeSwitcher({className}: ThemeSwitcherProps) {
-  const [theme, setTheme] = useTheme();
+  const [theme, _, setTheme] = useTheme();
 
   const [popupOpen, setPopupOpen] = useState(false);
   const [openProgress, setOpenProgress] = useState(0);
