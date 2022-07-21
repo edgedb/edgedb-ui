@@ -412,6 +412,24 @@ export function UndoChangesIcon() {
   );
 }
 
+export function SubmitChangesIcon() {
+  return (
+    <svg
+      width="17"
+      height="10"
+      viewBox="0 0 17 10"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.2929 0.292893C10.9024 0.683417 10.9024 1.31658 11.2929 1.70711L13.5858 4H1C0.447715 4 0 4.44772 0 5C0 5.55228 0.447715 6 1 6H13.5858L11.2929 8.29289C10.9024 8.68342 10.9024 9.31658 11.2929 9.70711C11.6834 10.0976 12.3166 10.0976 12.7071 9.70711L16.7071 5.70711C17.0976 5.31658 17.0976 4.68342 16.7071 4.29289L12.7071 0.292893C12.3166 -0.0976311 11.6834 -0.0976311 11.2929 0.292893Z"
+      />
+    </svg>
+  );
+}
+
 export function WarningIcon() {
   return (
     <svg

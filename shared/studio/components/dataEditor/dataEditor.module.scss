@@ -17,6 +17,8 @@
   left: 100%;
   display: flex;
   align-items: center;
+  background: #fff;
+  border-radius: 0 4px 4px 0;
 
   .action {
     width: 32px;
@@ -33,16 +35,23 @@
     &:last-child {
       border-radius: 0 4px 4px 0;
     }
+
+    &.actionDisabled {
+      pointer-events: none;
+      opacity: 0.4;
+    }
   }
 
   .emptySetAction {
     background: #e5c18c;
   }
-  .clearChangesAction {
-    background: #d78d87;
+  .submitChangesAction {
+    background: #49d8ad;
   }
 
   @include darkTheme {
+    background: #141414;
+
     .action svg {
       fill: #141414;
     }
@@ -50,8 +59,8 @@
     .emptySetAction {
       background: #a1843d;
     }
-    .clearChangesAction {
-      background: #af6963;
+    .submitChangesAction {
+      background: #29b189;
     }
   }
 }

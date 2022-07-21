@@ -242,6 +242,10 @@
 }
 
 .editableCell {
+  &.hasEdits {
+    padding-right: 32px;
+  }
+
   &:hover:after {
     content: "";
     position: absolute;
@@ -252,6 +256,7 @@
     border: 2px solid #047cff;
     border-radius: 4px;
     opacity: 0.5;
+    pointer-events: none;
   }
 }
 
@@ -282,6 +287,26 @@
 
 .isDeleted {
   opacity: 0.5;
+}
+
+.undoCellChanges {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 4px;
+  right: 0;
+  cursor: pointer;
+
+  svg {
+    fill: #ffa900;
+
+    @include darkTheme {
+      fill: #e5c18c;
+    }
+  }
 }
 
 .linkObjName {
