@@ -144,7 +144,7 @@ export class DataView extends Model({
 
       if (
         !pointer ||
-        (typeof objId === "number" && objId !== stackItem?.parentObject!.id)
+        (typeof objId === "number" && !this.edits.insertEdits.has(objId))
       ) {
         this.inspectorStack = this.inspectorStack.slice(0, i + 1);
         return [rootObjectTypeName, ...nestedParts.slice(0, i * 2)].join("/");
