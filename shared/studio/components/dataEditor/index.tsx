@@ -21,7 +21,7 @@ import {
 } from "@edgedb/common/schemaData";
 
 import styles from "./dataEditor.module.scss";
-import {EmptySetIcon, UndoChangesIcon} from "../../icons";
+import {EmptySetIcon, SubmitChangesIcon} from "../../icons";
 
 export interface DataEditorProps<T = any> {
   type: SchemaType;
@@ -30,7 +30,6 @@ export interface DataEditorProps<T = any> {
   value: T;
   onChange: (val: T) => void;
   onClose: () => void;
-  onClearEdit: () => void;
   style?: any;
 }
 
@@ -41,7 +40,6 @@ export function DataEditor({
   value,
   onChange,
   onClose,
-  onClearEdit,
   style,
 }: DataEditorProps) {
   const inputRef = useRef<HTMLElement>(null);
@@ -65,6 +63,27 @@ export function DataEditor({
     };
   }, []);
 
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !hasError) {
+        onChange(val);
+        onClose();
+        return;
+      }
+    };
+    editorRef.current?.addEventListener("keydown", listener, {capture: true});
+
+    return () => {
+      editorRef.current?.removeEventListener("keydown", listener, {
+        capture: true,
+      });
+    };
+  }, [val, hasError]);
+
   const Input = isMulti ? ArrayEditor : getInputComponent(type);
 
   return (
@@ -78,9 +97,6 @@ export function DataEditor({
         onChange={(val, err) => {
           setVal(val);
           setError(err);
-          if (!err) {
-            onChange(val);
-          }
         }}
         allowNull={!isRequired}
       />
@@ -99,10 +115,15 @@ export function DataEditor({
           </div>
         ) : null}
         <div
-          className={cn(styles.action, styles.clearChangesAction)}
-          onClick={onClearEdit}
+          className={cn(styles.action, styles.submitChangesAction, {
+            [styles.actionDisabled]: hasError,
+          })}
+          onClick={() => {
+            onChange(val);
+            onClose();
+          }}
         >
-          <UndoChangesIcon />
+          <SubmitChangesIcon />
         </div>
       </div>
       {/* {err ? <div className={styles.errMessage}>{err}</div> : null} */}
@@ -706,7 +727,7 @@ export const parsers: {[typename: string]: (val: string) => any} = {
       throw new Error("Invalid duration");
     }
     for (const field of ["years", "months", "weeks", "days"]) {
-      if (duration[field] !== 0) {
+      if ((duration as any)[field] !== 0) {
         throw new Error(`duration cannot contain ${field}`);
       }
     }

@@ -40,7 +40,12 @@ import {
 import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
 
 import {SortIcon, SortedDescIcon} from "./icons";
-import {ChevronDownIcon, DeleteIcon, UndeleteIcon} from "../../icons";
+import {
+  ChevronDownIcon,
+  DeleteIcon,
+  UndeleteIcon,
+  UndoChangesIcon,
+} from "../../icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
 import {DataEditor} from "../../components/dataEditor";
 
@@ -348,7 +353,6 @@ const GridCell = observer(function GridCell({
           edits.updateCellEdit(data?.id, data.__tname__, field.name, val)
         }
         onClose={() => edits.finishEditingCell()}
-        onClearEdit={() => edits.clearPropertyEdit(data?.id, field.name)}
       />
     );
   }
@@ -367,7 +371,19 @@ const GridCell = observer(function GridCell({
       } else {
         const codec = state.dataCodecs?.[columnIndex];
         if (codec) {
-          content = renderCellValue(cellEditState?.value ?? value, codec);
+          content = (
+            <>
+              {renderCellValue(cellEditState?.value ?? value, codec)}
+              {!isDeletedRow && !!cellEditState ? (
+                <div
+                  className={styles.undoCellChanges}
+                  onClick={() => edits.clearPropertyEdit(data?.id, field.name)}
+                >
+                  <UndoChangesIcon />
+                </div>
+              ) : null}
+            </>
+          );
         }
       }
     } else {
