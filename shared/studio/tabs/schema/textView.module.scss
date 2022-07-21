@@ -575,5 +575,9 @@
 .inheritedBlock {
   .copyHighlight {
     background: none;
+
+    @include darkTheme {
+      background: none;
+    }
   }
 }
