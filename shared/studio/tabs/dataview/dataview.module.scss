@@ -189,6 +189,18 @@
   height: 28px;
   border-radius: 14px;
   padding: 0 12px;
+
+  &:hover {
+    background: #cecece;
+  }
+
+  @include darkTheme {
+    background: #141414;
+
+    &:hover {
+      background: #2a2a2a;
+    }
+  }
 }
 
 .headerSelect {
@@ -196,6 +208,10 @@
   height: 28px;
   border-radius: 14px;
   padding: 0 8px;
+
+  @include darkTheme {
+    background: #141414;
+  }
 }
 
 .filterButton {
@@ -271,5 +287,20 @@
     color: #f13f4a;
     font-family: Roboto Mono;
     font-size: 14px;
+    margin-right: 16px;
+  }
+
+  @include darkTheme {
+    --buttonTextColour: #1f1f1f;
+
+    .clearFilterButton {
+      --buttonBg: #b6635c;
+    }
+    .disableFilterButton {
+      --buttonBg: #a1843d;
+    }
+    .applyFilterButton {
+      --buttonBg: #29b189;
+    }
   }
 }

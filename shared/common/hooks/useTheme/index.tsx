@@ -12,7 +12,9 @@ export enum Theme {
   system = "system",
 }
 
-const themeContext = createContext<[Theme, (val: Theme) => void]>(null!);
+const themeContext = createContext<
+  [Theme, Theme.light | Theme.dark, (val: Theme) => void]
+>(null!);
 
 const prefersDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -56,6 +58,7 @@ export function ThemeProvider({
       <themeContext.Provider
         value={[
           theme,
+          resolvedTheme,
           (theme) => {
             localStorage.setItem(localStorageKey ?? "appTheme", theme);
             setTheme(theme);

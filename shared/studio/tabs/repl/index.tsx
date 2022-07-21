@@ -26,7 +26,7 @@ export const ReplView = observer(function ReplView() {
   const dbState = useDatabaseState();
   const replState = useTabState(Repl);
 
-  const [theme] = useTheme();
+  const [_, theme] = useTheme();
 
   const codeEditorRef = useRef<CodeEditorRef>();
 

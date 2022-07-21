@@ -252,7 +252,7 @@ interface FilterPanelProps {
 }
 
 const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
-  const [theme] = useTheme();
+  const [_, theme] = useTheme();
 
   return (
     <div className={styles.filterPanel}>
