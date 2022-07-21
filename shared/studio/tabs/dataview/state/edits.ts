@@ -291,6 +291,8 @@ export class DataEditingManager extends Model({}) {
     const statements: {code: string; varName: string; error?: string}[] = [];
     const params: {[key: string]: {type: SchemaType; value: any}} = {};
 
+    const deletedIds = new Set(this.deleteEdits.keys());
+
     function generatePropUpdate(
       objectTypeName: string,
       propName: string,
@@ -299,7 +301,7 @@ export class DataEditingManager extends Model({}) {
       const type =
         schemaData.objectsByName.get(objectTypeName)?.properties[propName];
       return `${propName} := ${generateParamExpr(
-        schemaData.types.get(type!.target.id)!,
+        schemaData.types.get(type!.target!.id)!,
         val,
         params,
         type!.cardinality === "Many"
@@ -321,17 +323,19 @@ export class DataEditingManager extends Model({}) {
       ...this.linkEdits.values(),
     ]) {
       if (typeof edit.objectId === "string") {
-        if (!updateEdits.has(edit.objectId)) {
-          updateEdits.set(edit.objectId, {
-            objectTypeName: edit.objectTypeName,
-            props: [],
-            links: [],
-          });
-        }
-        if (edit.kind === EditKind.UpdateProperty) {
-          updateEdits.get(edit.objectId)!.props.push(edit);
-        } else {
-          updateEdits.get(edit.objectId)!.links.push(edit);
+        if (!this.deleteEdits.has(edit.objectId)) {
+          if (!updateEdits.has(edit.objectId)) {
+            updateEdits.set(edit.objectId, {
+              objectTypeName: edit.objectTypeName,
+              props: [],
+              links: [],
+            });
+          }
+          if (edit.kind === EditKind.UpdateProperty) {
+            updateEdits.get(edit.objectId)!.props.push(edit);
+          } else {
+            updateEdits.get(edit.objectId)!.links.push(edit);
+          }
         }
       } else {
         if (!insertLinkEdits.has(edit.objectId)) {
@@ -359,7 +363,15 @@ export class DataEditingManager extends Model({}) {
       const linkEdits = insertLinkEdits.get(insertEdit.id) ?? [];
 
       for (const linkEdit of linkEdits) {
-        fields.push(generateLinkUpdate(linkEdit, deps, true));
+        const linkUpdate = generateLinkUpdate(
+          linkEdit,
+          deletedIds,
+          deps,
+          true
+        );
+        if (linkUpdate) {
+          fields.push(linkUpdate);
+        }
       }
 
       const setLinks = new Set(
@@ -415,23 +427,27 @@ export class DataEditingManager extends Model({}) {
         );
       }
       for (const linkEdit of edits.links) {
-        editLines.push(
-          generateLinkUpdate(
-            linkEdit,
-            undefined,
-            type.links[linkEdit.fieldName]!.cardinality === "One"
-          )
+        const linkUpdate = generateLinkUpdate(
+          linkEdit,
+          deletedIds,
+          undefined,
+          type.links[linkEdit.fieldName]!.cardinality === "One"
         );
+        if (linkUpdate) {
+          editLines.push(linkUpdate);
+        }
       }
 
-      statements.push({
-        varName: `update${updateCount++}`,
-        code: `update ${edits.objectTypeName}
+      if (editLines.length) {
+        statements.push({
+          varName: `update${updateCount++}`,
+          code: `update ${edits.objectTypeName}
 filter .id = <uuid>'${objectId}'
 set {
   ${editLines.join(",\n  ")}
 }`,
-      });
+        });
+      }
     }
 
     let deleteCount = 1;
@@ -479,12 +495,16 @@ select {\n  ${statements.map(({varName}) => varName).join(",\n  ")}\n}`;
 
 function generateLinkUpdate(
   linkEdits: UpdateLinkEdit,
+  deletedIds: Set<string>,
   deps?: number[],
   forceLinkSet?: boolean
-): string {
+): string | null {
   const links: string[] = [];
   let op = ":=";
-  const changes = [...linkEdits.changes.values()];
+  const changes = [...linkEdits.changes.values()].filter(
+    (change) =>
+      !(change.kind === UpdateLinkChangeKind.Add && deletedIds.has(change.id))
+  );
   let addCount = 0,
     removeCount = 0;
   for (const change of changes) {
@@ -527,6 +547,10 @@ function generateLinkUpdate(
     links.push(
       ...[...linkEdits.inserts.values()].map(({id}) => `insert${id}`)
     );
+  }
+
+  if (links.length === 0) {
+    return null;
   }
 
   return `${linkEdits.fieldName} ${op} ${
