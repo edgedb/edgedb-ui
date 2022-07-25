@@ -149,6 +149,41 @@ export class Repl extends Model({
     };
   }
 
+  historyCursor = -1;
+  draftQuery = Text.empty;
+  draftParams: ParamsData | null = null;
+
+  navigateQueryHistory(direction: 1 | -1) {
+    if (!this.queryHistory.length) {
+      return;
+    }
+
+    const cursor = Math.max(
+      -1,
+      Math.min(this.historyCursor + direction, this.queryHistory.length - 1)
+    );
+
+    if (cursor !== this.historyCursor) {
+      if (this.historyCursor === -1) {
+        this.draftQuery = this.currentQuery;
+        this.draftParams = this.queryParamsEditor.getParamsData();
+      }
+
+      this.historyCursor = cursor;
+      if (cursor === -1) {
+        this.setCurrentQuery(this.draftQuery);
+        this.queryParamsEditor.restoreParamsData(
+          this.draftParams ?? undefined
+        );
+      } else {
+        const historyItem =
+          this.queryHistory[this.queryHistory.length - 1 - cursor];
+        this.setCurrentQuery(Text.of(historyItem.query.split("\n")));
+        this.queryParamsEditor.restoreParamsData(historyItem.paramsData?.data);
+      }
+    }
+  }
+
   @modelAction
   addHistoryCell({
     query,
@@ -280,6 +315,7 @@ export class Repl extends Model({
     if (success && !this.persistQuery) {
       this.currentQuery = Text.empty;
       this.queryParamsEditor.clear();
+      this.historyCursor = -1;
     }
 
     this.refreshCaches(allCapabilities, statuses);
