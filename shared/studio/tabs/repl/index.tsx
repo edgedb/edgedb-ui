@@ -53,6 +53,20 @@ export const ReplView = observer(function ReplView() {
                     },
                     preventDefault: true,
                   },
+                  {
+                    key: "Mod-ArrowUp",
+                    run: () => {
+                      replState.navigateQueryHistory(1);
+                      return true;
+                    },
+                  },
+                  {
+                    key: "Mod-ArrowDown",
+                    run: () => {
+                      replState.navigateQueryHistory(-1);
+                      return true;
+                    },
+                  },
                 ]}
                 useDarkTheme={theme === Theme.dark}
                 schemaObjects={dbState.schemaData?.objectsByName}
