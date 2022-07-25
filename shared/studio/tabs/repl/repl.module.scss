@@ -109,7 +109,7 @@
       cursor: inherit;
 
       &:checked {
-        background-color: #49d8ad;
+        background-color: var(--app-accent-green);
       }
 
       @include darkTheme {
