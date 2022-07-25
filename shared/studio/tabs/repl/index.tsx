@@ -111,22 +111,40 @@ const QueryOptions = observer(function QueryOptions() {
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const innerWidth = useRef(0);
 
   useResize(
     ref,
     (rect) => {
-      if (!collapsed) {
-        innerWidth.current = ref.current!.children[0].clientWidth;
-      }
-      const overflow = rect.width < innerWidth.current;
-      if (collapsed !== overflow) {
-        setCollapsed(overflow);
-        setMenuOpen(false);
+      if (ref.current) {
+        if (!collapsed) {
+          innerWidth.current = ref.current!.children[0].clientWidth;
+        }
+        const overflow = rect.width < innerWidth.current;
+        if (collapsed !== overflow) {
+          setCollapsed(overflow);
+          setMenuOpen(false);
+        }
       }
     },
     [collapsed]
   );
+
+  useEffect(() => {
+    if (menuOpen) {
+      const listener = (e: MouseEvent) => {
+        if (!menuRef.current?.contains(e.target as Node)) {
+          setMenuOpen(false);
+        }
+      };
+      window.addEventListener("click", listener, {capture: true});
+
+      return () => {
+        window.removeEventListener("click", listener, {capture: true});
+      };
+    }
+  }, [menuOpen]);
 
   return (
     <div
@@ -136,6 +154,7 @@ const QueryOptions = observer(function QueryOptions() {
       })}
     >
       <div
+        ref={menuRef}
         className={cn(styles.queryOptionsWrapper, {
           [styles.menuOpen]: menuOpen,
         })}
