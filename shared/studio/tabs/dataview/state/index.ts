@@ -264,14 +264,20 @@ export class DataInspector extends Model({
 
     const updateFieldDisposer = reaction(
       () => this.objectType,
-      () => {
-        this._updateFields();
-        this._refreshData();
+      (objectType) => {
+        if (objectType) {
+          this._updateFields();
+          this._refreshData();
+        }
       }
     );
     const refreshDataDisposer = reaction(
-      () => connCtx.get(this)!.sessionGlobals,
-      () => this._refreshData(true)
+      () => connCtx.get(this)?.sessionGlobals,
+      (globals) => {
+        if (globals) {
+          this._refreshData(true);
+        }
+      }
     );
 
     return () => {
@@ -282,7 +288,7 @@ export class DataInspector extends Model({
 
   @computed
   get objectType() {
-    return dbCtx.get(this)!.schemaData!.objects.get(this.objectTypeId);
+    return dbCtx.get(this)?.schemaData!.objects.get(this.objectTypeId);
   }
 
   openNestedView(
