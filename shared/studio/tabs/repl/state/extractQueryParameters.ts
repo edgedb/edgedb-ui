@@ -108,8 +108,6 @@ export function extractQueryParameters(
 
       const resolvedBaseType = resolvedType?.knownBaseType ?? resolvedType;
 
-      console.log(resolvedBaseType);
-
       if (
         !resolvedBaseType ||
         (!resolvedBaseType.enum_values &&
