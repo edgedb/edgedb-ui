@@ -8,7 +8,6 @@ import styles from "./replHistoryCell.module.scss";
 
 import {
   ReplErrorCell,
-  ReplExpandableCell,
   ReplHistoryCell as ReplHistoryCellState,
   ReplResultCell,
 } from "../state";
@@ -27,47 +26,23 @@ interface ReplHistoryCellProps {
 export default observer(function ReplHistoryCell({
   cell,
 }: ReplHistoryCellProps) {
-  const cellExpanded = cell instanceof ReplExpandableCell && cell.expanded;
-
-  const inScriptBlock = (cell.scriptBlock?.cells.length ?? 0) > 1;
+  const cellExpanded = cell.expanded;
 
   return (
     <div
-      className={cn(
-        styles.historyBlock,
-
-        {
-          [styles.insideScriptBlock]: inScriptBlock,
-          [styles.scriptBlockFirst]:
-            inScriptBlock && cell.isFirstInScriptBlock,
-          [styles.scriptBlockLast]: inScriptBlock && cell.isLastInScriptBlock,
-
-          [styles.expanded]: cellExpanded,
-        }
-      )}
+      className={cn(styles.historyBlock, {
+        [styles.expanded]: cellExpanded,
+      })}
     >
       <div className={styles.blockBody}>
-        {inScriptBlock && cell.isLastInScriptBlock ? (
-          <div className={styles.scriptBlockHeader}>
-            <div className={styles.scriptBlockLabel}>Query Group</div>
-            <button
-              className={styles.smallButton}
-              onClick={() => cell.scriptBlock!.edit()}
-            >
-              Edit
-            </button>
-            <CopyButton action={() => cell.scriptBlock!.copyToClipboard()} />
-          </div>
-        ) : null}
         <div className={cn(styles.cell)}>
-          {cell instanceof ReplExpandableCell ? (
-            <div
-              className={styles.collapse}
-              onClick={() => cell.toggleExpanded()}
-            >
-              <ChevronIcon className={styles.collapseIcon} />
-            </div>
-          ) : null}
+          <div
+            className={styles.collapse}
+            onClick={() => cell.toggleExpanded()}
+          >
+            <ChevronIcon className={styles.collapseIcon} />
+          </div>
+
           <div className={styles.inputBlock}>
             <ReplCellHeader cell={cell} expanded={cellExpanded} />
           </div>

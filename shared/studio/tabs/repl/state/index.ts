@@ -5,14 +5,11 @@ import {
   ExtendedModel,
   prop,
   modelAction,
-  rootRef,
-  Ref,
   modelFlow,
   _async,
   _await,
   findParent,
   ModelCreationData,
-  getRefsResolvingTo,
   Frozen,
   frozen,
   idProp,
@@ -37,15 +34,13 @@ import {
 } from "../../../utils/extractErrorDetails";
 import {renderResultAsJson} from "../../../utils/renderJsonResult";
 
-import {splitQuery, Statement} from "./splitQuery";
-
 import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {InstanceState} from "../../../state/instance";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
-  filterParamsData,
+  serialiseParamsData,
   ParamsData,
   ReplQueryParamsEditor,
 } from "./parameters";
@@ -54,66 +49,31 @@ import {
 export class ReplHistoryCell extends Model({
   $modelId: idProp,
   query: prop<string>(),
+  paramsData: prop<Frozen<ParamsData> | null>(null),
   timestamp: prop<number>(),
   duration: prop<number | QueryDuration>(),
-  renderHeight: prop<number>(64).withSetter(),
-}) {
-  edit() {
-    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
-    repl.setCurrentQuery(Text.of(this.query.split("\n")));
-
-    repl.queryParamsEditor.restoreParamsData(
-      this.scriptBlock?.paramsData?.data
-    );
-  }
-
-  copyToClipboard() {
-    navigator.clipboard?.writeText(this.query);
-  }
-
-  @computed
-  get scriptBlock() {
-    const ref = getRefsResolvingTo(this, scriptBlockCellRef).values().next()
-      .value as Ref<ReplHistoryCell> | undefined;
-    return (
-      ref &&
-      findParent<ReplHistoryScriptBlock>(
-        ref,
-        (parent) => parent instanceof ReplHistoryScriptBlock
-      )
-    );
-  }
-
-  @computed
-  get isFirstInScriptBlock() {
-    if (this.scriptBlock) {
-      return this.scriptBlock.cells[0]?.current === this;
-    }
-    return false;
-  }
-
-  @computed
-  get isLastInScriptBlock() {
-    if (this.scriptBlock) {
-      const cells = this.scriptBlock.cells;
-      return cells[cells.length - 1].current === this;
-    }
-    return false;
-  }
-}
-
-@model("Repl/ExpandableCell")
-export class ReplExpandableCell extends ExtendedModel(ReplHistoryCell, {
   expanded: prop(false),
+  renderHeight: prop<number>(64).withSetter(),
 }) {
   @modelAction
   toggleExpanded() {
     this.expanded = !this.expanded;
   }
+
+  edit() {
+    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
+    repl.setCurrentQuery(Text.of(this.query.split("\n")));
+
+    repl.queryParamsEditor.restoreParamsData(this.paramsData?.data);
+  }
+
+  copyToClipboard() {
+    navigator.clipboard?.writeText(this.query);
+  }
 }
 
 @model("Repl/ResultCell")
-export class ReplResultCell extends ExtendedModel(ReplExpandableCell, {
+export class ReplResultCell extends ExtendedModel(ReplHistoryCell, {
   inspectorState: prop<InspectorState | null>(),
   status: prop<string>(),
 }) {
@@ -147,28 +107,9 @@ export class ReplResultCell extends ExtendedModel(ReplExpandableCell, {
 }
 
 @model("Repl/ErrorCell")
-export class ReplErrorCell extends ExtendedModel(ReplExpandableCell, {
+export class ReplErrorCell extends ExtendedModel(ReplHistoryCell, {
   error: prop<Frozen<ErrorDetails>>(),
 }) {}
-
-const scriptBlockCellRef = rootRef<ReplHistoryCell>("Repl/ScriptBlockCellRef");
-
-@model("Repl/HistoryScriptBlock")
-export class ReplHistoryScriptBlock extends Model({
-  query: prop<string>(),
-  paramsData: prop<Frozen<ParamsData> | null>(null),
-  cells: prop<Ref<ReplHistoryCell>[]>(() => []),
-}) {
-  edit() {
-    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
-    repl.setCurrentQuery(Text.of(this.query.split("\n")));
-    repl.queryParamsEditor.restoreParamsData(this.paramsData?.data);
-  }
-
-  copyToClipboard() {
-    navigator.clipboard?.writeText(this.query);
-  }
-}
 
 @model("Repl")
 export class Repl extends Model({
@@ -176,7 +117,6 @@ export class Repl extends Model({
   queryParamsEditor: prop(() => new ReplQueryParamsEditor({})),
 
   queryHistory: prop<ReplHistoryCell[]>(() => []),
-  scriptBlocks: prop<ReplHistoryScriptBlock[]>(() => []),
 
   splitView: prop(() => new SplitViewState({})),
   persistQuery: prop<boolean>(false).withSetter(),
@@ -211,16 +151,16 @@ export class Repl extends Model({
 
   @modelAction
   addHistoryCell({
-    statement,
+    query,
+    paramsData,
     timestamp,
     duration,
-    scriptBlock,
     ...data
   }: {
-    statement: Statement;
+    query: string;
+    paramsData: ParamsData | null;
     timestamp: number;
     duration: number | QueryDuration;
-    scriptBlock: ReplHistoryScriptBlock | null;
   } & (
     | {
         result: EdgeDBSet | null;
@@ -233,7 +173,8 @@ export class Repl extends Model({
       }
   )) {
     const historyCellData: ModelCreationData<ReplHistoryCell> = {
-      query: statement.displayExpression,
+      query,
+      paramsData: paramsData ? frozen(paramsData) : null,
       timestamp,
       duration,
     };
@@ -264,51 +205,46 @@ export class Repl extends Model({
     }
 
     this.queryHistory.push(historyCell);
-    if (scriptBlock) {
-      scriptBlock.cells.push(scriptBlockCellRef(historyCell));
-    }
   }
 
   @modelFlow
   _runStatement = _async(function* (
     this: Repl,
-    statement: Statement,
-    scriptBlock: ReplHistoryScriptBlock | null = null
+    query: string,
+    paramsData: ParamsData | null
   ) {
     const conn = connCtx.get(this)!;
-
-    const paramsData = scriptBlock?.paramsData?.data;
 
     const timestamp = Date.now();
     try {
       const {result, duration, outCodecBuf, resultBuf, capabilities, status} =
         yield* _await(
           conn.query(
-            statement.expression,
-            paramsData && filterParamsData(paramsData, statement.params),
+            query,
+            paramsData ? serialiseParamsData(paramsData) : undefined,
             false,
             this.disableAccessPolicies
           )
         );
 
       this.addHistoryCell({
-        statement,
+        query,
+        paramsData,
         timestamp,
         duration,
         result,
         outCodecBuf,
         resultBuf,
-        scriptBlock,
         status,
       });
       return {success: true, capabilities, status};
     } catch (e: any) {
       this.addHistoryCell({
-        statement,
+        query,
+        paramsData,
         timestamp,
         duration: Date.now() - timestamp,
-        error: extractErrorDetails(e, statement.expression),
-        scriptBlock,
+        error: extractErrorDetails(e, query),
       });
     }
     return {success: false};
@@ -324,20 +260,8 @@ export class Repl extends Model({
     if (!query) return;
 
     this.queryRunning = true;
-    let error = false;
 
     const paramsData = this.queryParamsEditor.getParamsData();
-
-    const statements = splitQuery(query, paramsData);
-
-    let scriptBlock: ReplHistoryScriptBlock | null = null;
-    if (statements.length > 1 || paramsData !== null) {
-      scriptBlock = new ReplHistoryScriptBlock({
-        query,
-        paramsData: paramsData ? frozen(paramsData) : null,
-      });
-      this.scriptBlocks.push(scriptBlock);
-    }
 
     const dbState = dbCtx.get(this)!;
     dbState.setLoadingTab(Repl, true);
@@ -345,20 +269,15 @@ export class Repl extends Model({
     let allCapabilities = 0;
     const statuses = new Set<string>();
 
-    for (const statement of statements) {
-      const {success, capabilities, status} = yield* _await(
-        this._runStatement(statement, scriptBlock)
-      );
-      if (status) {
-        statuses.add(status.toLowerCase());
-        allCapabilities |= capabilities;
-      }
-      if (!success) {
-        error = true;
-        break;
-      }
+    const {success, capabilities, status} = yield* _await(
+      this._runStatement(query, paramsData)
+    );
+    if (status) {
+      statuses.add(status.toLowerCase());
+      allCapabilities |= capabilities;
     }
-    if (!error && !this.persistQuery) {
+
+    if (success && !this.persistQuery) {
       this.currentQuery = Text.empty;
       this.queryParamsEditor.clear();
     }

@@ -180,22 +180,22 @@ export class ReplQueryParamsEditor extends Model({
   }
 }
 
-export function filterParamsData(
-  paramsData: ParamsData,
-  paramNames: string[]
-) {
-  return paramNames.reduce((params, name) => {
-    const param = paramsData[name];
-    const parser = parsers[param.resolvedBaseTypeName!];
-    const paramName = /^\d+$/.test(name) ? `__p${name}` : name;
-    params[paramName] = param.disabled
-      ? null
-      : parser
-      ? Array.isArray(param.value)
-        ? param.value.map(parser)
-        : parser(param.value)
-      : param.value;
+export function serialiseParamsData(paramsData: ParamsData) {
+  const entries = Object.entries(paramsData);
+  const isPositional = entries.every(([name]) => /^\d+$/.test(name));
+  return entries.reduce(
+    (params, [name, param]) => {
+      const parser = parsers[param.resolvedBaseTypeName!];
+      params[name] = param.disabled
+        ? null
+        : parser
+        ? Array.isArray(param.value)
+          ? param.value.map(parser)
+          : parser(param.value)
+        : param.value;
 
-    return params;
-  }, {} as {[key: string]: string | string[] | null});
+      return params;
+    },
+    isPositional ? [] : ({} as {[key: string]: any})
+  );
 }
