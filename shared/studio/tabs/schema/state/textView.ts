@@ -16,7 +16,7 @@ import {
   objectMap,
   prop,
 } from "mobx-keystone";
-import Fuse from "fuse.js";
+import Fuzzysort from "fuzzysort";
 import type {VariableSizeList as List} from "react-window";
 
 import {
@@ -76,39 +76,46 @@ export function getModuleGroup(item: Exclude<SchemaItem, SchemaExtension>) {
     : ModuleGroup.user;
 }
 
+export type SearchMatches = {[path: string]: readonly number[]};
 export type ListItem = {
   item: SchemaItem | SchemaModule;
-  matches?: readonly Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
 };
 
-type searchPointers = {[key: string]: {key: string; name: string}[]};
+const fuzzysortOptions = {
+  key: "target",
+};
 
-function getFuseOptions(
-  pointers: searchPointers
-): Fuse.IFuseOptions<SchemaItem> {
-  return {
-    includeMatches: true,
-    ignoreLocation: true,
-    threshold: 0.4,
-    includeScore: true,
-    keys: [
-      {
-        name: "name",
-        getFn: (item) =>
-          item.schemaType !== "Extension" ? item.shortName : item.name,
-      },
-      {
-        name: "module",
-        weight: 0.4,
-        getFn: (item) => (item.schemaType !== "Extension" ? item.module : ""),
-      },
-      {
-        name: "pointers",
-        weight: 0.8,
-        getFn: (item) => pointers[item.id]?.map((p) => p.name) ?? [],
-      },
-    ],
-  };
+interface FuzzysortIndexItem {
+  target: Fuzzysort.Prepared;
+  item: SchemaItem;
+  path?: string;
+  inherited?: boolean;
+}
+type FuzzysortIndex = FuzzysortIndexItem[];
+
+function buildSearchIndex(items: SchemaItem[]): FuzzysortIndex {
+  return items.flatMap((item) => [
+    {target: Fuzzysort.prepare(item.name), item},
+    ...(item.schemaType === "Object"
+      ? item.pointers.flatMap((p) => [
+          {
+            target: Fuzzysort.prepare(p.name),
+            item,
+            path: p.name,
+            inherited: !p["@owned"],
+          },
+          ...(p.type === "Link"
+            ? Object.values(p.properties).map((lp) => ({
+                target: Fuzzysort.prepare(lp.name),
+                item,
+                path: `${p.name}.${lp.name}`,
+                inherited: !p["@owned"],
+              }))
+            : []),
+        ])
+      : []),
+  ]);
 }
 
 @model("SchemaTextView")
@@ -131,33 +138,14 @@ export class SchemaTextView extends Model({
     }
   }
 
-  searchPointerCache: searchPointers = {};
   @observable.ref
-  fuse = new Fuse<SchemaItem>([], getFuseOptions({}));
+  fuzzysortIndex: FuzzysortIndex = [];
 
   onAttachedToRootStore() {
-    const disposeFuseUpdate = autorun(() => {
-      const searchPointers = this.moduleGroupItems.reduce((pointers, item) => {
-        if (item.schemaType === "Object") {
-          pointers[item.id] = item.pointers.flatMap((p) => [
-            {key: p.name, name: p.name},
-            ...(p.type === "Link"
-              ? Object.values(p.properties).map((lp) => ({
-                  key: `${p.name}.${lp.name}`,
-                  name: lp.name,
-                }))
-              : []),
-          ]);
-        }
-        return pointers;
-      }, {} as searchPointers);
+    const disposeIndexUpdate = autorun(() => {
+      const index = buildSearchIndex(this.moduleGroupItems);
       runInAction(() => {
-        console.log("fuse updated");
-        this.searchPointerCache = searchPointers;
-        this.fuse = new Fuse(
-          this.moduleGroupItems,
-          getFuseOptions(searchPointers)
-        );
+        this.fuzzysortIndex = index;
       });
     });
 
@@ -183,7 +171,7 @@ export class SchemaTextView extends Model({
     );
 
     return () => {
-      disposeFuseUpdate();
+      disposeIndexUpdate();
       disposeScrollReset();
       disposeSelectedGraphObject();
     };
@@ -248,7 +236,6 @@ export class SchemaTextView extends Model({
 
   @computed
   get moduleGroupItems(): SchemaItem[] {
-    console.log("getting module group items");
     const schemaData = dbCtx.get(this)!.schemaData;
     if (!schemaData) return [];
 
@@ -305,15 +292,51 @@ export class SchemaTextView extends Model({
 
   @computed
   get searchFilteredItems(): ListItem[] {
-    console.log("search filter");
-    return this.searchText
-      ? this.fuse.search(this.searchText)
-      : this.moduleGroupItems.map((item) => ({item}));
+    if (this.searchText) {
+      const results = Fuzzysort.go(
+        this.searchText,
+        this.fuzzysortIndex,
+        fuzzysortOptions
+      );
+      return [
+        ...results
+          .reduce(
+            (items, result) => {
+              if (!items.has(result.obj.item)) {
+                items.set(result.obj.item, {
+                  item: result.obj.item,
+                  matches: {},
+                  score: -Infinity,
+                });
+              }
+              const item = items.get(result.obj.item)!;
+              item.matches[result.obj.path ?? ""] = Fuzzysort.indexes(
+                result
+              ) as number[];
+              const score = result.obj.inherited
+                ? result.score - 1
+                : result.score;
+              item.score = item.score > score ? item.score : score;
+              return items;
+            },
+            new Map<
+              SchemaItem,
+              {
+                item: SchemaItem;
+                matches: SearchMatches;
+                score: number;
+              }
+            >()
+          )
+          .values(),
+      ].sort((a, b) => b.score - a.score);
+    } else {
+      return this.moduleGroupItems.map((item) => ({item}));
+    }
   }
 
   @computed
   get filteredItems() {
-    console.log("filtered items");
     const items = this.searchFilteredItems;
 
     const groups = {

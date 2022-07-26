@@ -1,5 +1,4 @@
 import {observer} from "mobx-react-lite";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -18,6 +17,7 @@ import {
   TypeName,
 } from "./utils";
 import {useSchemaTextState} from "../textView";
+import {SearchMatches} from "../state/textView";
 
 import styles from "../textView.module.scss";
 
@@ -29,7 +29,7 @@ export const AliasRenderer = observer(function AliasRenderer({
   matches,
 }: {
   type: SchemaAlias;
-  matches: Fuse.FuseResultMatch[];
+  matches: SearchMatches;
 }) {
   const state = useSchemaTextState();
 
