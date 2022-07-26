@@ -46,10 +46,17 @@ const sourceDeleteKeywords = {
 };
 
 export const AbstractPointerRenderer = observer(
-  function AbstractPointerRenderer({type}: {type: SchemaPointer}) {
+  function AbstractPointerRenderer({
+    type,
+    matches,
+  }: {
+    type: SchemaPointer;
+    matches: SearchMatches;
+  }) {
     return (
       <PointerRenderer
         pointer={type}
+        matches={matches}
         className={styles.typeItem}
         parentModule={type.module}
       />
@@ -95,7 +102,11 @@ export const PointerRenderer = observer(function _PointerRenderer({
   const collapsed =
     defaultCollapsed !== state.toggledItems.has(id ?? pointer.id);
 
-  const pointerPath = linkName ? `${linkName}.${pointer.name}` : pointer.name;
+  const pointerPath = pointer.abstract
+    ? ""
+    : linkName
+    ? `${linkName}.${pointer.name}`
+    : pointer.name;
   const match = matches?.[pointerPath];
 
   return (
