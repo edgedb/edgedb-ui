@@ -294,8 +294,6 @@ const innerElementType = forwardRef<HTMLDivElement>(
 const SchemaTypesList = observer(function SchemaTypesList() {
   const state = useTabState(Schema).textViewState;
 
-  console.log("rerender");
-
   const listItems = state.renderListItems;
 
   const [containerHeight, setContainerHeight] = useState<number>(0);

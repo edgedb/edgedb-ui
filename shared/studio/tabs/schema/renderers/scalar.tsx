@@ -1,5 +1,4 @@
 import {observer} from "mobx-react-lite";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {SchemaScalarType} from "@edgedb/common/schemaData";
@@ -21,6 +20,8 @@ import {
 
 import styles from "../textView.module.scss";
 
+import {SearchMatches} from "../state/textView";
+
 import {AnnotationRenderer, annotationToSDL} from "./annotation";
 import {ConstraintRenderer, constraintToSDL} from "./constraint";
 
@@ -29,7 +30,7 @@ export const ScalarTypeRenderer = observer(function ScalarTypeRenderer({
   matches,
 }: {
   type: SchemaScalarType;
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
 }) {
   const state = useSchemaTextState();
 

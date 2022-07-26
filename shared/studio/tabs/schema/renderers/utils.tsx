@@ -13,7 +13,6 @@ import {
   createSearchParams,
   NavigateFunction,
 } from "react-router-dom";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
@@ -31,6 +30,7 @@ import {
   ModuleGroup,
   SchemaItem,
   SchemaTextView,
+  SearchMatches,
 } from "../state/textView";
 import {useSchemaTextState} from "../textView";
 import {useDatabaseState, useTabState} from "../../../state";
@@ -71,23 +71,35 @@ export function CollapseArrow({
   );
 }
 
-export function highlightString(
-  str: string,
-  indices: readonly [number, number][]
-) {
-  const highlighted: (string | JSX.Element)[] = [];
-  let cursor = 0;
-  for (const [start, end] of indices) {
-    highlighted.push(str.slice(cursor, start));
-
-    highlighted.push(
-      <span key={highlighted.length} className={styles.searchMatch}>
-        {str.slice(start, end + 1)}
-      </span>
-    );
-    cursor = end + 1;
+export function highlightString(str: string, indices: readonly number[]) {
+  if (!indices.length) {
+    return str;
   }
-  highlighted.push(str.slice(cursor));
+  const highlighted: (string | JSX.Element)[] = [str.slice(0, indices[0])];
+  let rangeStart = indices[0];
+  let lastInd = rangeStart;
+  for (const ind of indices.slice(1)) {
+    if (ind === lastInd + 1) {
+      lastInd++;
+    } else {
+      highlighted.push(
+        <span key={highlighted.length} className={styles.searchMatch}>
+          {str.slice(rangeStart, lastInd + 1)}
+        </span>,
+        str.slice(lastInd + 1, ind)
+      );
+      rangeStart = ind;
+      lastInd = ind;
+    }
+  }
+
+  highlighted.push(
+    <span key={highlighted.length} className={styles.searchMatch}>
+      {str.slice(rangeStart, lastInd + 1)}
+    </span>,
+    str.slice(lastInd + 1)
+  );
+
   return highlighted;
 }
 
@@ -182,21 +194,26 @@ export function TypeName({
   matches,
 }: {
   type: {module: string; shortName: string};
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
 }) {
   if (matches) {
-    const modMatch = matches.find((match) => match.key === "module");
-    const nameMatch = matches.find((match) => match.key === "name");
+    const match = matches[""];
+    const modLength = type.module.length + 2;
     return (
       <>
         <span className={styles.mod}>
-          {modMatch
-            ? highlightString(type.module, modMatch.indices)
-            : type.module}
-          ::
+          {match
+            ? highlightString(
+                `${type.module}::`,
+                match.filter((n) => n < modLength)
+              )
+            : `${type.module}::`}
         </span>
-        {nameMatch
-          ? highlightString(type.shortName, nameMatch.indices)
+        {match
+          ? highlightString(
+              type.shortName,
+              match.map((n) => n - modLength).filter((n) => n >= 0)
+            )
           : type.shortName}
       </>
     );

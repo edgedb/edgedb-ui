@@ -1,5 +1,4 @@
 import {observer} from "mobx-react-lite";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
@@ -11,7 +10,7 @@ import {
   SchemaProperty,
 } from "@edgedb/common/schemaData";
 
-import {SchemaModule} from "../state/textView";
+import {SchemaModule, SearchMatches} from "../state/textView";
 
 import {
   Arrow,
@@ -71,7 +70,7 @@ export const PointerRenderer = observer(function _PointerRenderer({
   id?: string;
   pointer: SchemaPointer;
   className?: string;
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
   parentModule: string;
   parentObjectId?: string;
   linkName?: string;
@@ -96,14 +95,8 @@ export const PointerRenderer = observer(function _PointerRenderer({
   const collapsed =
     defaultCollapsed !== state.toggledItems.has(id ?? pointer.id);
 
-  const searchPointers = state.searchPointerCache[parentObjectId!];
   const pointerPath = linkName ? `${linkName}.${pointer.name}` : pointer.name;
-  const match =
-    searchPointers &&
-    matches?.find(
-      (m) =>
-        m.key === "pointers" && searchPointers[m.refIndex!].key === pointerPath
-    );
+  const match = matches?.[pointerPath];
 
   return (
     <Copyable>
@@ -132,9 +125,7 @@ export const PointerRenderer = observer(function _PointerRenderer({
             <Keyword>
               {pointer.type === "Property" ? "property" : "link"}
             </Keyword>{" "}
-            {match
-              ? highlightString(pointer.name, match.indices)
-              : pointer.name}
+            {match ? highlightString(pointer.name, match) : pointer.name}
             {bases.length ? (
               <>
                 {" "}

@@ -1,5 +1,5 @@
+import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
@@ -23,10 +23,11 @@ import {
   TypeName,
 } from "./utils";
 
+import {SearchMatches} from "../state/textView";
+
 import styles from "../textView.module.scss";
 import {AnnotationRenderer, annotationToSDL} from "./annotation";
 import {paramToSDL} from "@edgedb/common/schemaData/utils";
-import {Fragment} from "react";
 
 export function SchemaParamRenderer({
   param,
@@ -59,7 +60,7 @@ export const FunctionTypeRenderer = observer(function FunctionTypeRenderer({
   matches,
 }: {
   type: SchemaFunction;
-  matches: Fuse.FuseResultMatch[];
+  matches: SearchMatches;
 }) {
   const hasBody = type.volatility !== "Volatile" || type.annotations?.length;
 

@@ -1,5 +1,3 @@
-import Fuse from "fuse.js";
-
 import cn from "@edgedb/common/utils/classNames";
 import {SchemaExtension} from "@edgedb/common/schemaData";
 
@@ -13,6 +11,8 @@ import {
   Punc,
 } from "./utils";
 
+import {SearchMatches} from "../state/textView";
+
 import styles from "../textView.module.scss";
 
 export function ExtensionRenderer({
@@ -20,9 +20,9 @@ export function ExtensionRenderer({
   matches,
 }: {
   type: SchemaExtension;
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
 }) {
-  const nameMatch = matches?.find((match) => match.key === "name");
+  const nameMatch = matches?.[""];
 
   return (
     <Copyable>
@@ -32,9 +32,7 @@ export function ExtensionRenderer({
         >
           <CopyHighlight>
             <Keyword>using extension</Keyword>{" "}
-            {nameMatch
-              ? highlightString(type.name, nameMatch.indices)
-              : type.name}
+            {nameMatch ? highlightString(type.name, nameMatch) : type.name}
             <Punc>;</Punc>
           </CopyHighlight>
         </ItemHeader>

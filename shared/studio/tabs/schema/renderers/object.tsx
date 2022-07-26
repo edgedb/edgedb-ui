@@ -1,6 +1,5 @@
 import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
-import Fuse from "fuse.js";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
@@ -14,7 +13,7 @@ import {
 } from "@edgedb/common/schemaData";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
-import {SchemaModule} from "../state/textView";
+import {SchemaModule, SearchMatches} from "../state/textView";
 
 import {
   Arrow,
@@ -50,7 +49,7 @@ const InheritedGroup = observer(function InheritedGroup({
 }: {
   baseId: string;
   type: SchemaObjectType;
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
   parentModule: string;
   ignorePointerNames: Set<string>;
 }) {
@@ -90,7 +89,7 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
   matches,
 }: {
   type: SchemaObjectType;
-  matches?: Fuse.FuseResultMatch[];
+  matches?: SearchMatches;
 }) {
   const state = useSchemaTextState();
 
