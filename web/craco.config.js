@@ -33,6 +33,9 @@ module.exports = {
       webpackConfig.resolve.fallback["node-fetch"] = false;
       webpackConfig.resolve.fallback.buffer = require.resolve("buffer/");
 
+      webpackConfig.optimization.minimizer[0].options.minimizer.options.keep_fnames =
+        /Error$/;
+
       return webpackConfig;
     },
   },
