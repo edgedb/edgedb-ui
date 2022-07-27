@@ -109,6 +109,7 @@ export function DataEditor({
               setVal(null);
               setError(false);
               onChange(null);
+              onClose();
             }}
           >
             <EmptySetIcon />

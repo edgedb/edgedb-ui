@@ -362,11 +362,24 @@ const GridCell = observer(function GridCell({
     content = <span className={styles.emptySubtypeField}>-</span>;
   } else if (data) {
     if (field.type === ObjectFieldType.property) {
+      const undoEdit =
+        !isDeletedRow && !!cellEditState ? (
+          <div
+            className={styles.undoCellChanges}
+            onClick={() => edits.clearPropertyEdit(data?.id, field.name)}
+          >
+            <UndoChangesIcon />
+          </div>
+        ) : null;
+
       if ((!rowData && field.name === "id") || value === null) {
         content = (
-          <span className={styles.emptySet}>
-            {(!rowData ? field.default ?? field.computedExpr : null) ?? "{}"}
-          </span>
+          <>
+            <span className={styles.emptySet}>
+              {(!rowData ? field.default ?? field.computedExpr : null) ?? "{}"}
+            </span>
+            {undoEdit}
+          </>
         );
       } else {
         const codec = state.dataCodecs?.[columnIndex];
@@ -374,14 +387,7 @@ const GridCell = observer(function GridCell({
           content = (
             <>
               {renderCellValue(cellEditState?.value ?? value, codec)}
-              {!isDeletedRow && !!cellEditState ? (
-                <div
-                  className={styles.undoCellChanges}
-                  onClick={() => edits.clearPropertyEdit(data?.id, field.name)}
-                >
-                  <UndoChangesIcon />
-                </div>
-              ) : null}
+              {undoEdit}
             </>
           );
         }
