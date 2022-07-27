@@ -490,7 +490,11 @@ export function generateQueryFromStatements(
   return `with\n${statements
     .map(({varName, code}) => `${varName} := (${code})`)
     .join(",\n")}
-select {\n  ${statements.map(({varName}) => varName).join(",\n  ")}\n}`;
+select ${
+    statements.length === 1
+      ? statements[0].varName
+      : `{\n  ${statements.map(({varName}) => varName).join(",\n  ")}\n}`
+  }`;
 }
 
 function generateLinkUpdate(
