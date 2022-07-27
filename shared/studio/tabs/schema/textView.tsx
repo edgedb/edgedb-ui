@@ -257,11 +257,15 @@ const ListItemRenderer = observer(function ListItemRenderer({
   const {item, matches} = state.renderListItems[index];
   const TypeRenderer = renderers[item.schemaType] as any;
 
-  useResize(resizeRef, ({height}) => {
-    if (height && item.schemaType !== "Module") {
-      state.setRenderHeight(index, item, height);
-    }
-  });
+  useResize(
+    resizeRef,
+    ({height}) => {
+      if (height && item.schemaType !== "Module") {
+        state.setRenderHeight(index, item, height);
+      }
+    },
+    [item, index]
+  );
 
   return (
     <div style={{position: "relative", height: "0px", top: style.top}}>
