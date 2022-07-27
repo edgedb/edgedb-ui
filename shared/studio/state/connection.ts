@@ -188,7 +188,7 @@ export class Connection extends Model({
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
     const state = disableAccessPolicies
-      ? this._state.withConfigs({
+      ? this._state.withConfig({
           apply_access_policies: false,
         })
       : this._state;

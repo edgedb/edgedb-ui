@@ -12,6 +12,7 @@ function newCodecsRegistry() {
     decimal_string: true,
     int64_bigint: true,
     datetime_localDatetime: true,
+    json_string: true,
   });
   return registry;
 }
@@ -27,7 +28,7 @@ export function decode(
     newCodec ? newCodecsRegistry() : codecsRegistry,
     typedArrayToBuffer(outCodecBuf),
     typedArrayToBuffer(resultBuf),
-    [0, 13]
+    [1, 0]
   );
 }
 
@@ -36,7 +37,7 @@ export type QueryParams = QueryArgs;
 export function encodeArgs(inCodecBuf: Uint8Array, queryParams: QueryParams) {
   const inCodec = codecsRegistry.buildCodec(
     typedArrayToBuffer(inCodecBuf),
-    [0, 13]
+    [1, 0]
   );
 
   if (!(inCodec instanceof NamedTupleCodec || inCodec instanceof TupleCodec)) {
