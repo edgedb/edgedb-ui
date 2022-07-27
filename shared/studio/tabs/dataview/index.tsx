@@ -4,8 +4,6 @@ import {useParams, useNavigate} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {formatUUID} from "@edgedb/inspector/v2/buildScalar";
-
 import styles from "./dataview.module.scss";
 
 import {useModal} from "@edgedb/common/hooks/useModal";
@@ -143,7 +141,7 @@ const DataInspectorView = observer(function DataInspectorView({
                 </div>
                 <div className={styles.pathStepIdent}>
                   {typeof nestedPath.parentObject!.id === "string" ? (
-                    <span>{formatUUID(nestedPath.parentObject!.id)}</span>
+                    <span>{nestedPath.parentObject!.id}</span>
                   ) : (
                     <span style={{fontStyle: "italic"}}>new object</span>
                   )}

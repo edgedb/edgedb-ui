@@ -116,7 +116,7 @@ export function renderValue(
         body: (
           <Tag name="uuid">
             <span className={cn(styles.scalar_string, overrideStyles.uuid)}>
-              {formatUUID(value.toString())}
+              {value.toString()}
             </span>
           </Tag>
         ),
@@ -217,8 +217,6 @@ export function renderValue(
 
 export function scalarItemToString(item: any, typename: string): string {
   switch (typename) {
-    case "std::uuid":
-      return formatUUID(item);
     case "std::bytes":
       return bufferToString(item);
     case "std::json":
@@ -228,20 +226,6 @@ export function scalarItemToString(item: any, typename: string): string {
     default:
       return item.toString();
   }
-}
-
-export function formatUUID(uuid: string): string {
-  return (
-    uuid.slice(0, 8) +
-    "-" +
-    uuid.slice(8, 12) +
-    "-" +
-    uuid.slice(12, 16) +
-    "-" +
-    uuid.slice(16, 20) +
-    "-" +
-    uuid.slice(20)
-  );
 }
 
 function formatDatetime(date: LocalDateTime): string {
