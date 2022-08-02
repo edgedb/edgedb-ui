@@ -37,17 +37,13 @@ export const DataView = observer(function DataView() {
 
   const path = params["*"];
   useEffect(() => {
-    if (stack.length) {
-      if (!path) {
-        navigate(stack[0].objectType!.name, {replace: true});
-      } else {
-        const updatedPath = state.updateFromPath(path);
-        if (updatedPath) {
-          navigate(updatedPath, {replace: true});
-        }
+    if (dbState.schemaData) {
+      const updatedPath = state.updateFromPath(path ?? "");
+      if (updatedPath !== null) {
+        navigate(updatedPath, {replace: true});
       }
     }
-  }, [path, stack.length]);
+  }, [path, dbState.schemaData]);
 
   return (
     <div className={styles.dataview}>

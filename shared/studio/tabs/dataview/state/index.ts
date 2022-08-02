@@ -69,20 +69,19 @@ export class DataView extends Model({
   }
 
   onAttachedToRootStore() {
-    when(
-      () => this.objectTypes.length !== 0,
+    return reaction(
+      () => dbCtx.get(this)!.schemaData,
       () => {
-        const id = this.objectTypes[0].id;
-        if (!this.inspectorStack.length && id) {
-          this.selectObject(id);
-        }
+        this.edits.cleanupPendingEdits();
       }
     );
   }
 
   @modelAction
-  selectObject(objectTypeId: string) {
-    this.inspectorStack = [new DataInspector({objectTypeId})];
+  selectObject(objectTypeId: string | undefined) {
+    this.inspectorStack = objectTypeId
+      ? [new DataInspector({objectTypeId})]
+      : [];
   }
 
   @modelAction
@@ -109,15 +108,15 @@ export class DataView extends Model({
   @modelAction
   updateFromPath(path: string): string | null {
     const [rootObjectTypeName, ...nestedParts] = path.split("/");
-    if (rootObjectTypeName !== this.inspectorStack[0].objectType?.name) {
+    if (rootObjectTypeName !== this.inspectorStack[0]?.objectType?.name) {
       const objTypeId = this.objectTypes.find(
         (obj) => obj.name === rootObjectTypeName
       )?.id;
       if (objTypeId) {
         this.selectObject(objTypeId);
       } else {
-        this.selectObject(this.objectTypes[0].id);
-        return this.objectTypes[0].name;
+        this.selectObject(this.objectTypes[0]?.id);
+        return this.objectTypes[0]?.name ?? "";
       }
     }
     let i = 0;

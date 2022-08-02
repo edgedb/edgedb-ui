@@ -285,6 +285,32 @@ export class DataEditingManager extends Model({}) {
     this.deleteEdits.clear();
   }
 
+  @action
+  cleanupPendingEdits() {
+    const schemaData = dbCtx.get(this)!.schemaData!;
+
+    for (const [key, propEdit] of this.propertyEdits) {
+      if (!schemaData.objectsByName.has(propEdit.objectTypeName)) {
+        this.propertyEdits.delete(key);
+      }
+    }
+    for (const [key, linkEdit] of this.linkEdits) {
+      if (!schemaData.objectsByName.has(linkEdit.objectTypeName)) {
+        this.linkEdits.delete(key);
+      }
+    }
+    for (const [key, insertEdit] of this.insertEdits) {
+      if (!schemaData.objectsByName.has(insertEdit.objectTypeName)) {
+        this.insertEdits.delete(key);
+      }
+    }
+    for (const [key, deleteEdit] of this.deleteEdits) {
+      if (!schemaData.objectsByName.has(deleteEdit.objectTypeName)) {
+        this.deleteEdits.delete(key);
+      }
+    }
+  }
+
   generateStatements() {
     const schemaData = dbCtx.get(this)!.schemaData!;
 
