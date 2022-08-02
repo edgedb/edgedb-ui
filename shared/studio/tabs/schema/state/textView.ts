@@ -138,6 +138,13 @@ export class SchemaTextView extends Model({
     }
   }
 
+  getRenderHeight(index: number) {
+    const item = this.renderListItems[index].item;
+    return item.schemaType === "Module"
+      ? 42
+      : this.renderHeights.get(item.id) ?? 42;
+  }
+
   @observable.ref
   fuzzysortIndex: FuzzysortIndex = [];
 

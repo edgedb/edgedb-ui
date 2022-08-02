@@ -340,10 +340,7 @@ const SchemaTypesList = observer(function SchemaTypesList() {
               : item.id;
           }}
           itemSize={(index) => {
-            const item = listItems[index].item;
-            return item.schemaType === "Module"
-              ? 42
-              : state.renderHeights.get(item.id) ?? 42;
+            return state.getRenderHeight(index);
           }}
         >
           {ListItemRenderer}
