@@ -238,17 +238,28 @@ function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
                   {i !== 0 ? ", " : null}
                   <Keyword>{kind.toLowerCase()}</Keyword>
                 </Fragment>
-              ))}{" "}
-              <Keyword>using</Keyword> <Punc>{"("}</Punc>
+              ))}
+              {type.expr ? (
+                <>
+                  {" "}
+                  <Keyword>using</Keyword> <Punc>{"("}</Punc>
+                </>
+              ) : (
+                <Punc>{hasBody ? " {" : ";"}</Punc>
+              )}
             </CopyHighlight>
-            <div className={styles.indentedBlock}>
-              <CopyHighlight>
-                <CodeBlock code={type.expr} inline />
-              </CopyHighlight>
-            </div>
-            <CopyHighlight>
-              <Punc>{hasBody ? ") {" : ");"}</Punc>
-            </CopyHighlight>
+            {type.expr ? (
+              <>
+                <div className={styles.indentedBlock}>
+                  <CopyHighlight>
+                    <CodeBlock code={type.expr} inline />
+                  </CopyHighlight>
+                </div>
+                <CopyHighlight>
+                  <Punc>{hasBody ? ") {" : ");"}</Punc>
+                </CopyHighlight>
+              </>
+            ) : null}
           </div>
           {hasBody ? (
             <>
