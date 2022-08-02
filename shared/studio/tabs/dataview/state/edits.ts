@@ -382,6 +382,7 @@ export class DataEditingManager extends Model({}) {
           (prop) =>
             prop.required &&
             !prop.default &&
+            !prop.expr &&
             insertEdit.data[prop.name] == null
         ),
 
@@ -392,9 +393,9 @@ export class DataEditingManager extends Model({}) {
 
       inserts.set(insertEdit.id, {
         id: insertEdit.id,
-        statement: `insert ${insertEdit.objectTypeName} {\n  ${fields.join(
-          ",\n  "
-        )}\n}`,
+        statement: `insert ${insertEdit.objectTypeName} {${
+          fields.length ? `\n  ${fields.join(",\n  ")}\n` : ""
+        }}`,
         deps: new Set(deps),
         error: missingFields.length
           ? `Values are missing for required fields: ${missingFields
