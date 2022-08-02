@@ -458,6 +458,7 @@ const GridCell = observer(function GridCell({
           !rowData &&
           isEditable &&
           field.required &&
+          !field.hasDefault &&
           value === null &&
           !linkEditState,
       })}

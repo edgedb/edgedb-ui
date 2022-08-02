@@ -206,6 +206,7 @@ export type ObjectField = {
   typeid: string;
   typename: string;
   required: boolean;
+  hasDefault: boolean;
   computedExpr: string | null;
   readonly: boolean;
   multi: boolean;
@@ -355,6 +356,7 @@ export class DataInspector extends Model({
         typeid: pointer.target!.id,
         typename: pointer.target!.name,
         required: pointer.required,
+        hasDefault: !!pointer.default,
         multi: pointer.cardinality === "Many",
         computedExpr: pointer.expr,
         readonly: pointer.readonly,
