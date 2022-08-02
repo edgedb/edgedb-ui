@@ -17,7 +17,7 @@ export interface SchemaAccessPolicy {
   access_kinds: SchemaAccessKind[];
   condition: string | null;
   action: SchemaAccessPolicyAction;
-  expr: string;
+  expr: string | null;
   annotations: SchemaAnnotation[];
 }
 
