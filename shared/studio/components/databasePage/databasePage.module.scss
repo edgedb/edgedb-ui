@@ -140,3 +140,56 @@
     background: #d0f9ed;
   }
 }
+
+.errorFallback {
+  background: var(--app-panel-bg);
+  flex-grow: 1;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+
+  h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #db5246;
+
+    svg {
+      fill: currentColor;
+      margin-right: 12px;
+      margin-bottom: -2px;
+    }
+  }
+
+  .errorDetails {
+    display: flex;
+    font-style: italic;
+    padding: 6px 0;
+
+    button {
+      margin-left: auto;
+      background: rgba(0, 0, 0, 0.1);
+      border: 0;
+      color: inherit;
+      padding: 4px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+  }
+
+  pre {
+    overflow: auto;
+    background: var(--app-card-bg);
+    padding: 16px;
+    border-radius: 6px;
+    margin: 0;
+    user-select: text;
+  }
+}
