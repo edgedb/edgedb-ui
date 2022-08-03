@@ -2,7 +2,7 @@ import {createContext, Model, model, prop} from "mobx-keystone";
 
 import {InstanceState} from "@edgedb/studio/state/instance";
 
-const serverUrl =
+export const serverUrl =
   process.env.NODE_ENV === "development"
     ? process.env.REACT_APP_EDGEDB_SERVER
       ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
@@ -25,6 +25,12 @@ if (url.searchParams.has("authToken")) {
 if (!authToken) {
   url.pathname = "/ui/_login";
   window.history.replaceState(null, "", url);
+}
+
+export function setAuthToken(token: string) {
+  localStorage.setItem("edgedbAuthToken", token);
+  window.history.replaceState(null, "", "/ui");
+  window.location.reload();
 }
 
 export const appCtx = createContext<App>();

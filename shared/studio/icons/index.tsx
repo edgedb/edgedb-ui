@@ -467,9 +467,10 @@ export function SearchIcon() {
   );
 }
 
-export function ArrowRight() {
+export function ArrowRight(props: IconProps) {
   return (
     <svg
+      {...props}
       width="12"
       height="12"
       viewBox="0 0 12 12"

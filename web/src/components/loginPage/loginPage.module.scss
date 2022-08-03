@@ -1,23 +1,61 @@
+@import "@edgedb/common/mixins";
+
 .loginPage {
-  display: contents;
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  align-items: center;
 }
 
-.loginMessage {
-  margin: 0;
-  border-radius: 0;
+.title {
+  position: absolute;
+  top: 16px;
+  left: 24px;
+}
 
-  pre {
-    background: #1d1d1d;
-    color: #eaeaea;
-    margin: 18px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    user-select: text;
+.loginForm {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
 
-    &:before {
-      content: "$ ";
-      opacity: 0.5;
-      pointer-events: none;
+  @include darkTheme {
+    input {
+      background: #282828;
     }
+  }
+
+  .loginButton {
+    --buttonBg: var(--app-accent-green);
+    --buttonTextColour: #fff;
+    align-self: flex-end;
+    padding: 0;
+
+    & > div {
+      padding: 6px 16px;
+      border-radius: 18px;
+      font-weight: 600;
+    }
+
+    .loginButtonIcon {
+      stroke: currentColor;
+      height: 14px;
+    }
+  }
+}
+
+.loginError {
+  color: #db5246;
+  background: rgba(219, 82, 70, 0.1);
+  padding: 12px 16px;
+  border-radius: 6px;
+  position: absolute;
+  top: 100%;
+  margin-top: 16px;
+  left: 0;
+  right: 0;
+
+  span {
+    font-weight: 600;
   }
 }
