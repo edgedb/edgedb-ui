@@ -5,7 +5,7 @@ import * as Hmac from "hash.js/lib/hash/hmac";
 
 import {ProtocolError} from "edgedb";
 
-const AUTH_ENDPOINT = "/auth/scram";
+const AUTH_ENDPOINT = "/auth/token";
 const RAW_NONCE_LENGTH = 18;
 
 export async function SCRAMAuth(
