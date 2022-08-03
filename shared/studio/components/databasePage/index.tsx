@@ -9,6 +9,7 @@ import {
   useRoutes,
 } from "react-router-dom";
 import {AnyModel, ModelClass} from "mobx-keystone";
+import {ErrorBoundary, FallbackProps} from "react-error-boundary";
 
 import cn from "@edgedb/common/utils/classNames";
 import Button from "@edgedb/common/ui/button";
@@ -20,6 +21,7 @@ import styles from "./databasePage.module.scss";
 
 import {ErrorPage} from "../errorPage";
 import {SessionState} from "../sessionState";
+import {WarningIcon} from "../../icons";
 
 export interface DatabaseTabSpec {
   path: string;
@@ -72,6 +74,33 @@ export default observer(function DatabasePageLoadingWrapper({
   return <DatabasePageContent databaseName={databaseName} tabs={tabs} />;
 });
 
+function ErrorFallback({error}: FallbackProps) {
+  const errorDetails = `${error.name}: ${error.message}\n\nTraceback:\n${error.stack}`;
+
+  return (
+    <div className={styles.errorFallback}>
+      <h2>
+        <WarningIcon />
+        Something went wrong rendering this view
+      </h2>
+      <p>
+        Please consider opening an issue at{" "}
+        <a href="https://github.com/edgedb/edgedb-studio/issues/new">
+          https://github.com/edgedb/edgedb-studio/issues/new
+        </a>{" "}
+        with the error details below.
+      </p>
+      <div className={styles.errorDetails}>
+        Error Details:
+        <button onClick={() => navigator.clipboard?.writeText(errorDetails)}>
+          Copy
+        </button>
+      </div>
+      <pre>{errorDetails}</pre>
+    </div>
+  );
+}
+
 const DatabasePageContent = observer(function DatabasePageContent({
   databaseName,
   tabs,
@@ -91,7 +120,14 @@ const DatabasePageContent = observer(function DatabasePageContent({
             {useRoutes([
               ...tabs.map((t) => ({
                 path: t.path + (t.allowNested ? "/*" : ""),
-                element: t.element,
+                element: (
+                  <ErrorBoundary
+                    key={t.path}
+                    FallbackComponent={ErrorFallback}
+                  >
+                    {t.element}
+                  </ErrorBoundary>
+                ),
               })),
               {path: "*", element: <Navigate to="" replace />},
             ])}
