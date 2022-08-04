@@ -998,7 +998,9 @@ export class DataInspector extends Model({
   @modelAction
   setInitialFieldWidths(width: number) {
     this.fieldWidthsUpdated = true;
-    this.fieldWidths = new Array(this.fields!.length).fill(width);
+    this.fieldWidths = new Array(this.fields!.length).fill(
+      Math.max(width, 100)
+    );
   }
 
   @modelAction
