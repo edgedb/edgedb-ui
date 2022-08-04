@@ -1,6 +1,7 @@
 import {action, computed} from "mobx";
 import {
   createContext,
+  findParent,
   model,
   Model,
   prop,
@@ -8,6 +9,7 @@ import {
   _await,
 } from "mobx-keystone";
 
+import {AuthenticationError} from "edgedb";
 import {Session} from "edgedb/dist/options";
 import LRU from "edgedb/dist/primitives/lru";
 import {Capabilities} from "edgedb/dist/baseConn";
@@ -20,6 +22,7 @@ import {
   QueryParams,
   codecsRegistry,
 } from "../utils/decodeRawBuffer";
+import {instanceCtx, InstanceState} from "./instance";
 
 export {Capabilities};
 export type {QueryParams};
@@ -187,64 +190,71 @@ export class Connection extends Model({
     disableAccessPolicies: boolean,
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
-    const state = disableAccessPolicies
-      ? this._state.withConfig({
-          apply_access_policies: false,
-        })
-      : this._state;
+    try {
+      const state = disableAccessPolicies
+        ? this._state.withConfig({
+            apply_access_policies: false,
+          })
+        : this._state;
 
-    if (kind === "execute") {
-      await this.conn.rawExecute(queryString, state);
-      return;
-    }
+      if (kind === "execute") {
+        await this.conn.rawExecute(queryString, state);
+        return;
+      }
 
-    const startTime = performance.now();
+      const startTime = performance.now();
 
-    let inCodec, outCodec, outCodecBuf, capabilities, _;
+      let inCodec, outCodec, outCodecBuf, capabilities, _;
 
-    if (this._codecCache.has(queryString)) {
-      [inCodec, outCodec, outCodecBuf, capabilities] =
-        this._codecCache.get(queryString)!;
-    } else {
-      [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
-        await this.conn.rawParse(queryString, state, queryOptions);
-      this._codecCache.set(queryString, [
-        inCodec,
+      if (this._codecCache.has(queryString)) {
+        [inCodec, outCodec, outCodecBuf, capabilities] =
+          this._codecCache.get(queryString)!;
+      } else {
+        [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
+          await this.conn.rawParse(queryString, state, queryOptions);
+        this._codecCache.set(queryString, [
+          inCodec,
+          outCodec,
+          outCodecBuf,
+          capabilities,
+        ]);
+      }
+
+      const parseEndTime = performance.now();
+
+      if (kind === "parse") {
+        return {outCodecBuf, duration: Math.round(parseEndTime - startTime)};
+      }
+
+      const resultBuf = await this.conn.rawExecute(
+        queryString,
+        state,
         outCodec,
+        queryOptions,
+        inCodec,
+        params
+      );
+
+      const executeEndTime = performance.now();
+
+      const duration = {
+        prepare: Math.round(parseEndTime - startTime),
+        execute: Math.round(executeEndTime - parseEndTime),
+      };
+
+      return {
+        result: decode(outCodecBuf, resultBuf, newCodec),
+        duration,
         outCodecBuf,
+        resultBuf,
         capabilities,
-      ]);
+        status: (this.conn as any).lastStatus,
+      };
+    } catch (err) {
+      if (err instanceof AuthenticationError) {
+        instanceCtx.get(this)!._refreshAuthToken?.();
+      }
+      throw err;
     }
-
-    const parseEndTime = performance.now();
-
-    if (kind === "parse") {
-      return {outCodecBuf, duration: Math.round(parseEndTime - startTime)};
-    }
-
-    const resultBuf = await this.conn.rawExecute(
-      queryString,
-      state,
-      outCodec,
-      queryOptions,
-      inCodec,
-      params
-    );
-
-    const executeEndTime = performance.now();
-
-    const duration = {
-      prepare: Math.round(parseEndTime - startTime),
-      execute: Math.round(executeEndTime - parseEndTime),
-    };
-
-    return {
-      result: decode(outCodecBuf, resultBuf, newCodec),
-      duration,
-      outCodecBuf,
-      resultBuf,
-      capabilities,
-      status: (this.conn as any).lastStatus,
-    };
   }
 }

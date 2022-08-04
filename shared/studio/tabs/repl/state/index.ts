@@ -36,7 +36,7 @@ import {renderResultAsJson} from "../../../utils/renderJsonResult";
 
 import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
-import {InstanceState} from "../../../state/instance";
+import {instanceCtx} from "../../../state/instance";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
@@ -327,12 +327,7 @@ export class Repl extends Model({
   refreshCaches(capabilities: number, statuses: Set<string>) {
     if (capabilities & Capabilities.DDL) {
       if (statuses.has("create database") || statuses.has("drop database")) {
-        const instanceState = findParent(
-          this,
-          (p) => p instanceof InstanceState
-        ) as InstanceState;
-
-        instanceState.fetchInstanceInfo();
+        instanceCtx.get(this)!.fetchInstanceInfo();
       } else {
         const dbState = dbCtx.get(this)!;
         dbState.fetchSchemaData();

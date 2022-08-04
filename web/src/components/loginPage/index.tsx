@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError(null);
     try {
       const authToken = await SCRAMAuth(serverUrl, username, password);
-      setAuthToken(authToken);
+      setAuthToken(username, authToken);
     } catch (err) {
       setError(err as Error);
       console.error(err);

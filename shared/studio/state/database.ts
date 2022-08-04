@@ -12,7 +12,6 @@ import {
 import {
   AnyModel,
   createContext as createMobxContext,
-  findParent,
   idProp,
   Model,
   model,
@@ -46,7 +45,7 @@ import {
 
 import {fetchSchemaData, storeSchemaData} from "../idbStore";
 
-import {InstanceState} from "./instance";
+import {instanceCtx} from "./instance";
 import {connCtx, Connection} from "./connection";
 
 export const dbCtx = createMobxContext<DatabaseState>();
@@ -76,6 +75,7 @@ export class DatabaseState extends Model({
   $modelId: idProp,
   name: prop<string>(),
 
+  connection: prop<Connection>(null!).withSetter(),
   tabStates: prop<ObjectMap<AnyModel>>(),
 }) {
   @observable.ref
@@ -83,9 +83,6 @@ export class DatabaseState extends Model({
 
   @observable
   fetchingSchemaData = false;
-
-  @observable.ref
-  connection: Connection = null!;
 
   @observable
   currentRole: string | null = null;
@@ -110,10 +107,7 @@ export class DatabaseState extends Model({
   }
 
   onAttachedToRootStore() {
-    const instanceState = findParent<InstanceState>(
-      this,
-      (parent) => parent instanceof InstanceState
-    )!;
+    const instanceState = instanceCtx.get(this)!;
 
     const fetchSchemaDisposer = when(
       () => this.connection !== null,
@@ -121,24 +115,27 @@ export class DatabaseState extends Model({
     );
 
     const roleUpdateDisposer = autorun(() => {
-      const roles = instanceState.roles;
-      if (roles && !roles.includes(this.currentRole!)) {
-        runInAction(() => (this.currentRole = roles[0]));
+      if (instanceState.authUsername) {
+        runInAction(() => (this.currentRole = instanceState.authUsername));
+      } else {
+        const roles = instanceState.roles;
+        if (roles && !roles.includes(this.currentRole!)) {
+          runInAction(() => (this.currentRole = roles[0]));
+        }
       }
     });
 
     const connectionDisposer = autorun(() => {
       if (this.currentRole) {
-        runInAction(
-          () =>
-            (this.connection = new Connection({
-              config: {
-                serverUrl: instanceState.serverUrl,
-                authToken: instanceState.authToken!,
-                database: this.name,
-                user: this.currentRole!,
-              },
-            }))
+        this.setConnection(
+          new Connection({
+            config: {
+              serverUrl: instanceState.serverUrl,
+              authToken: instanceState.authToken!,
+              database: this.name,
+              user: this.currentRole,
+            },
+          })
         );
       }
     });
@@ -161,10 +158,7 @@ export class DatabaseState extends Model({
 
   private async _fetchSchemaDataFromStore() {
     if (!this.schemaData) {
-      const instanceState = findParent<InstanceState>(
-        this,
-        (parent) => parent instanceof InstanceState
-      )!;
+      const instanceState = instanceCtx.get(this)!;
 
       const schemaData = await fetchSchemaData(
         this.name,
@@ -276,10 +270,7 @@ export class DatabaseState extends Model({
           }, new Map<string, Set<string>>()),
         };
 
-        const instanceState = findParent<InstanceState>(
-          this,
-          (parent) => parent instanceof InstanceState
-        )!;
+        const instanceState = instanceCtx.get(this)!;
 
         storeSchemaData(this.name, instanceState.instanceName!, schemaData);
 

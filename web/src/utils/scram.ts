@@ -29,6 +29,9 @@ export async function SCRAMAuth(
     throw new Error(`Server doesn't support HTTP SCRAM authentication`);
   }
   const firstAttrs = parseHeaders(serverFirstRes.headers, "WWW-Authenticate");
+  if (firstAttrs.size === 0) {
+    throw new Error("Invalid credentials");
+  }
   if (!firstAttrs.has("sid") || !firstAttrs.has("data")) {
     throw new ProtocolError(
       `server response doesn't contain '${
@@ -104,10 +107,12 @@ function parseHeaders(headers: Headers, headerName: string, checkAlgo = true) {
     rawAttrs = header;
   }
   return new Map(
-    rawAttrs.split(",").map((attr) => {
-      const [key, val] = attr.split("=", 2);
-      return [key.trim(), val.trim()];
-    })
+    rawAttrs
+      ? rawAttrs.split(",").map((attr) => {
+          const [key, val] = attr.split("=", 2);
+          return [key.trim(), val.trim()];
+        })
+      : []
   );
 }
 
