@@ -152,7 +152,18 @@
 .boolEditor {
   display: flex;
   align-items: center;
-  height: 30px;
+  height: 32px;
+
+  &.topLevel {
+    background: #fafafa;
+    flex-grow: 1;
+    padding: 0 6px;
+    border-radius: 4px 0 0 4px;
+
+    @include darkTheme {
+      background: #141414;
+    }
+  }
 
   div {
     font-family: Roboto Mono;
@@ -165,6 +176,10 @@
 
     &:not(:last-child) {
       margin-right: 6px;
+    }
+
+    @include darkTheme {
+      border-color: rgba(255, 255, 255, 0.5);
     }
   }
 
@@ -324,6 +339,25 @@
 
     &:not(:last-child) {
       margin-bottom: 6px;
+    }
+  }
+}
+
+.enumSelect {
+  background: #fafafa;
+  flex-grow: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+
+  &:hover {
+    background: #fafafa !important;
+  }
+
+  @include darkTheme {
+    background: #141414;
+
+    &:hover {
+      background: #141414 !important;
     }
   }
 }

@@ -150,7 +150,7 @@ export function getInputComponent(
     }
     const typeName = (type.knownBaseType ?? type).name;
     if (typeName === "std::bool") {
-      return BoolEditor;
+      return BoolEditor as any;
     }
     if (typeName === "std::str" || typeName === "std::json") {
       return ExpandingTextbox as any;
@@ -347,6 +347,7 @@ const EnumEditor = forwardRef(function EnumEditor(
   const selectedIndex = type.enum_values!.indexOf(value);
   return (
     <Select
+      className={styles.enumSelect}
       title={selectedIndex === -1 ? "{ }" : value}
       items={type.enum_values!.map((enumOpt) => ({
         label: enumOpt,
@@ -361,13 +362,15 @@ function BoolEditor({
   value,
   onChange,
   stringMode,
+  depth,
 }: {
   value: boolean | null;
   onChange: (val: any, error: boolean) => void;
   stringMode?: boolean;
+  depth?: number;
 }) {
   return (
-    <div className={styles.boolEditor}>
+    <div className={cn(styles.boolEditor, {[styles.topLevel]: depth === 0})}>
       {[true, false].map((bool, i) => (
         <div
           key={i}
@@ -409,7 +412,11 @@ const Textbox = forwardRef(function Textbox(
 ) {
   const baseTypeName = (type.knownBaseType ?? type).name;
   const [val, setVal] = useState<string>(() =>
-    value ? (stringMode ? value : scalarItemToString(value, baseTypeName)) : ""
+    value !== null
+      ? stringMode
+        ? value
+        : scalarItemToString(value, baseTypeName)
+      : ""
   );
   const [err, setErr] = useState<string | null>(null);
 
@@ -423,7 +430,7 @@ const Textbox = forwardRef(function Textbox(
       onChange(value as any, true);
     } else if (value !== null) {
       try {
-        parsers[baseTypeName](value);
+        parsers[baseTypeName](val);
       } catch (e) {
         setErr((e as Error).message);
         onChange(value, true);
@@ -645,7 +652,9 @@ export const parsers: {[typename: string]: (val: string) => any} = {
       /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(?:Z|[+-]\d{2}(?::\d{2})?)$/
     );
     if (Number.isNaN(date.getTime()) || !match) {
-      throw new Error("Invalid datetime");
+      throw new Error(
+        "Invalid datetime, expected format: [YYYY]-[MM]-[DD]T[HH]:[MM]:[SS][+|-][HH]:[MM]"
+      );
     }
     const year = date.getUTCFullYear();
     if (year < 1 || year > 9999) {
@@ -670,7 +679,9 @@ export const parsers: {[typename: string]: (val: string) => any} = {
         /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?$/
       ) ?? [];
     if (!_match) {
-      throw new Error("invalid local datetime");
+      throw new Error(
+        "invalid local datetime, expected format: [YYYY]-[MM]-[DD]T[HH]:[MM]:[SS]"
+      );
     }
     const fSeconds = (_fSeconds ?? "").padEnd(6, "0");
     const year = Number(_year);
@@ -694,7 +705,7 @@ export const parsers: {[typename: string]: (val: string) => any} = {
     const [_match, _year, month, day] =
       val.match(/^(\d{4})-(\d{2})-(\d{2})$/) ?? [];
     if (!_match) {
-      throw new Error("invalid local date");
+      throw new Error("invalid local date, expected format: [YYYY]-[MM]-[DD]");
     }
     const year = Number(_year);
 
@@ -708,7 +719,7 @@ export const parsers: {[typename: string]: (val: string) => any} = {
     const [_match, hour, minute, second, _fSeconds] =
       val.match(/^(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?$/) ?? [];
     if (!_match) {
-      throw new Error("invalid local time");
+      throw new Error("invalid local time, expected format: [HH]:[MM]:[SS]");
     }
     const fSeconds = (_fSeconds ?? "").padEnd(6, "0");
 
