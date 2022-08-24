@@ -31,6 +31,7 @@
   line-height: 32px;
   color: var(--header-tab-text-colour);
   padding: 0 6px;
+  flex-grow: 1;
 
   &.hasAction {
     cursor: pointer;
@@ -59,6 +60,7 @@
   position: absolute;
   top: 0;
   left: 0;
+  min-width: 100%;
   display: flex;
   flex-direction: column;
   background: var(--header-dropdown-bg);
