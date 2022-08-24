@@ -39,6 +39,7 @@ export class InspectorState extends Model({
 
   autoExpandDepth: prop<number | null>(null),
   countPrefix: prop<string | null>(null),
+  ignorePrefix: prop<string | null>(null),
 }) {
   @observable.shallow
   _items: Item[] = [];
@@ -119,6 +120,7 @@ export class InspectorState extends Model({
       this.expanded!,
       expandLevels,
       this.countPrefix,
+      this.ignorePrefix,
       this.loadNestedData,
       this
     );

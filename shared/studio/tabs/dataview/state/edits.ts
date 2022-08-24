@@ -515,7 +515,11 @@ export function generateQueryFromStatements(
   statements: {varName: string; code: string}[]
 ) {
   return `with\n${statements
-    .map(({varName, code}) => `${varName} := (${code})`)
+    .map(
+      ({varName, code}) =>
+        `${varName} := assert_exists((${code}),` +
+        ` message := '${varName} was blocked by access policy')`
+    )
     .join(",\n")}
 select ${
     statements.length === 1

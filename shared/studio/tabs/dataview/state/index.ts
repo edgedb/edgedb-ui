@@ -217,12 +217,19 @@ export type ObjectField = {
     }
   | {
       type: ObjectFieldType.link;
+      targetHasSelectAccessPolicy: boolean;
     }
 );
 
 interface SortBy {
   fieldIndex: number;
   direction: "ASC" | "DESC";
+}
+
+function pointerTargetHasSelectAccessPolicy(pointer: SchemaLink) {
+  return !!pointer.target!.accessPolicies.some((ap) =>
+    ap.access_kinds.includes("Select")
+  );
 }
 
 @model("DataInspector")
@@ -343,11 +350,6 @@ export class DataInspector extends Model({
       subtypeName?: string,
       queryNamePrefix: string = ""
     ): ObjectField {
-      const type =
-        pointer.type === "Property"
-          ? ObjectFieldType.property
-          : ObjectFieldType.link;
-
       const baseField = {
         subtypeName,
         name: pointer.name,
@@ -361,19 +363,21 @@ export class DataInspector extends Model({
         readonly: pointer.readonly,
       };
 
-      if (type === ObjectFieldType.property) {
+      if (pointer.type === "Property") {
         return {
-          type,
+          type: ObjectFieldType.property,
           ...baseField,
           schemaType: pointer.target!,
           default: pointer.default?.replace(/^select/i, "").trim() ?? null,
         };
+      } else {
+        return {
+          type: ObjectFieldType.link,
+          ...baseField,
+          targetHasSelectAccessPolicy:
+            pointerTargetHasSelectAccessPolicy(pointer),
+        };
       }
-
-      return {
-        type,
-        ...baseField,
-      };
     }
 
     const baseFields = [
@@ -778,11 +782,10 @@ export class DataInspector extends Model({
 
   get _baseObjectsQuery() {
     if (this.parentObject && typeof this.parentObject.id === "string") {
-      return `(SELECT ${
-        this.parentObject.subtypeName ?? this.parentObject.objectTypeName
-      } FILTER .id = <uuid>'${this.parentObject.id}').${
-        this.parentObject.fieldName
-      }`;
+      return (
+        `(select ${this._getObjectTypeQuery} ` +
+        `filter .<${this.parentObject.fieldName}.id = <uuid>'${this.parentObject.id}')`
+      );
     }
 
     const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
@@ -884,7 +887,15 @@ export class DataInspector extends Model({
             }`;
           } else {
             return `__count_${field.queryName} := (for g in (
-              group ${selectName}
+              group ${
+                field.targetHasSelectAccessPolicy && field.required
+                  ? `(
+                with sourceId := .id
+                select ${field.typename}
+                filter .<${field.name}.id = sourceId
+              )`
+                  : selectName
+              }
               using typename := .__type__.name
               by typename
             ) union {
@@ -1015,7 +1026,12 @@ class ExpandedInspector extends Model({
   objectTypeName: prop<string>(),
 
   state: prop<InspectorState>(
-    () => new InspectorState({autoExpandDepth: 3, countPrefix: "__count_"})
+    () =>
+      new InspectorState({
+        autoExpandDepth: 3,
+        countPrefix: "__count_",
+        ignorePrefix: "__",
+      })
   ),
 }) {
   onInit() {
@@ -1152,21 +1168,44 @@ class ExpandedInspector extends Model({
           return prop.name;
         }),
         ...Object.values(objectType.links).map((link) => {
-          const linkSelect = `${link.name}: {
-      ${[
-        ...Object.values(link.target!.properties),
-        ...Object.values(link.target!.links),
-      ]
-        .map((subField) =>
-          subField.type === "Property"
-            ? subField.name
-            : `${subField.name} limit 0,
-            __count_${subField.name} := count(.${subField.name})`
-        )
-        .join(",\n")}
-    } limit 10`;
+          const accessPolicyWorkaround =
+            link.required && pointerTargetHasSelectAccessPolicy(link);
+          const singleLink = link.cardinality === "One";
+          const linkName = accessPolicyWorkaround
+            ? `__${link.name}`
+            : link.name;
+          const linkSelect = `${
+            accessPolicyWorkaround
+              ? `${linkName} := ${singleLink ? "assert_single(" : ""}(
+                with sourceId := .id
+                select ${link.target!.name}
+                filter .<${link.name}.id = sourceId
+                limit 10
+              )${singleLink ? ")" : ""}`
+              : `${linkName}: `
+          } {
+          ${[
+            ...Object.values(link.target!.properties),
+            ...Object.values(link.target!.links),
+          ]
+            .map((subField) =>
+              subField.type === "Property"
+                ? subField.name
+                : `${subField.name} limit 0,
+                __count_${subField.name} := count(.${subField.name})`
+            )
+            .join(",\n")}
+        }${accessPolicyWorkaround ? "" : " limit 10"}`;
           return `${linkSelect},
-    __count_${link.name} := count(.${link.name})`;
+        __count_${linkName} := count(${
+            accessPolicyWorkaround
+              ? `(
+          with sourceId := .id
+          select ${link.target!.name}
+          filter .<${link.name}.id = sourceId
+        )`
+              : `.${linkName}`
+          })`;
         }),
       ].join(",\n")}
     } filter .id = <uuid><str>$objectId`;
