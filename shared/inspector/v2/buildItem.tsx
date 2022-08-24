@@ -53,6 +53,7 @@ export function expandItem(
   expanded: Set<string>,
   expandLevels: number | undefined,
   countPrefix: string | null,
+  ignorePrefix: string | null,
   loadNestedData: NestedDataGetter | null,
   state: InspectorState
 ): Item[] {
@@ -98,6 +99,7 @@ export function expandItem(
                     expanded,
                     expandLevels,
                     countPrefix,
+                    ignorePrefix,
                     loadNestedData,
                     state
                   )
@@ -200,7 +202,11 @@ export function expandItem(
                 level: item.level + 1,
                 label: (
                   <>
-                    <span>{field.name}</span>
+                    <span>
+                      {ignorePrefix && field.name.startsWith(ignorePrefix)
+                        ? field.name.slice(ignorePrefix.length)
+                        : field.name}
+                    </span>
                     <span>: </span>
                   </>
                 ),
@@ -222,6 +228,7 @@ export function expandItem(
                     expanded,
                     expandLevels,
                     countPrefix,
+                    ignorePrefix,
                     loadNestedData,
                     state
                   )
@@ -266,6 +273,7 @@ export function expandItem(
                     expanded,
                     expandLevels,
                     countPrefix,
+                    ignorePrefix,
                     loadNestedData,
                     state
                   )
