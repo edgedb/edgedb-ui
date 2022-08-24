@@ -235,6 +235,43 @@ select Function {
   },
 }`;
 
+export type SchemaOperatorKind = "Infix" | "Postfix" | "Prefix" | "Ternary";
+
+export interface RawOperatorType {
+  id: string;
+  name: string;
+  builtin: boolean;
+  operator_kind: SchemaOperatorKind;
+  params: RawFunctionParamType[];
+  returnTypeId: string;
+  return_typemod: SchemaTypemod;
+  annotations: SchemaAnnotation[];
+}
+
+export const operatorsQuery = `
+with module schema
+select Operator {
+  id,
+  name,
+  builtin,
+  operator_kind,
+  params: {
+    name,
+    typeId := .type.id,
+    default,
+    kind,
+    num,
+    typemod,
+  } order by .num,
+  returnTypeId := .return_type.id,
+  return_typemod,
+  annotations: {
+    name,
+    @value
+  },
+}
+`;
+
 export interface RawConstraintType {
   id: string;
   name: string;
@@ -369,6 +406,7 @@ export const introspectionQuery = `select {
   types := (${typesQuery}),
   pointers := (${pointersQuery}),
   functions := (${functionsQuery}),
+  operators := (${operatorsQuery}),
   constraints := (${constraintsQuery}),
   annotations := (${annotationsQuery}),
   aliases := (${aliasesQuery}),
@@ -380,6 +418,7 @@ export interface RawIntrospectionResult {
   types: RawSchemaType[];
   pointers: RawPointerType[];
   functions: RawFunctionType[];
+  operators: RawOperatorType[];
   constraints: RawConstraintType[];
   annotations: RawAbstractAnnotation[];
   aliases: RawSchemaAlias[];
