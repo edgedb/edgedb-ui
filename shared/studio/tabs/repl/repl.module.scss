@@ -70,6 +70,7 @@
   display: flex;
   flex-direction: column;
   max-height: 50%;
+  pointer-events: none;
 }
 
 .controls {
@@ -124,6 +125,7 @@
   --buttonTextColour: #0a4634;
   align-self: flex-start;
   flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .queryOptions {
@@ -136,11 +138,13 @@
   .queryOptionsWrapper {
     display: flex;
     flex-shrink: 0;
+    pointer-events: auto;
   }
 
   .overflowMenu {
     display: flex;
     cursor: pointer;
+    pointer-events: auto;
 
     svg {
       width: 24px;
