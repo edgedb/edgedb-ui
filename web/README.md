@@ -1,5 +1,12 @@
-Development
-===========
+# EdgeDB UI web app
+
+Note: If you are just looking to use EdgeDB UI, then you don't need to do any of
+these steps, just run the `edgedb ui` command from your project directory.
+
+## Development
+
+> Prerequisites: You will need to have Yarn 2+ installed, and have run the
+> `yarn` command to install the workspace's dependencies.
 
 To start the UI dev server:
 
@@ -20,7 +27,7 @@ env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --admin-ui=enabled
 env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edgedb instance start --foreground <instance-name>
 ```
 
-To customize the EdgeDB server address (if it's not running at the 
+To customize the EdgeDB server address (if it's not running at the
 default of `localhost:5656`):
 
 ```sh
