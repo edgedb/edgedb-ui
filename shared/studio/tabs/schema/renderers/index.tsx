@@ -6,6 +6,7 @@ import {FunctionTypeRenderer} from "./function";
 import {GlobalRenderer} from "./global";
 import {ModuleRenderer} from "./module";
 import {ObjectTypeRenderer} from "./object";
+import {OperatorTypeRenderer} from "./operator";
 import {AbstractPointerRenderer} from "./pointer";
 import {ScalarTypeRenderer} from "./scalar";
 
@@ -17,6 +18,7 @@ export const renderers = {
   Pointer: AbstractPointerRenderer,
   Constraint: AbstractConstraintRenderer,
   Function: FunctionTypeRenderer,
+  Operator: OperatorTypeRenderer,
   Alias: AliasRenderer,
   Global: GlobalRenderer,
   AbstractAnnotation: AbstractAnnotationRenderer,
