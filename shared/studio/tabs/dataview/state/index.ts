@@ -138,9 +138,12 @@ export class DataView extends Model({
       }
 
       const stackItem = this.inspectorStack[i + 1];
-      const pointer = parentSchemaObject.pointers?.find(
-        (p) => p.name === pointerName
-      );
+      const pointers = subtypeName
+        ? parentSchemaObject.descendents.find(
+            (desc) => desc.name === subtypeName
+          )?.pointers
+        : parentSchemaObject.pointers;
+      const pointer = pointers?.find((p) => p.name === pointerName);
 
       if (
         !pointer ||
@@ -318,7 +321,9 @@ export class DataInspector extends Model({
     )!;
 
     navigate(
-      `${basePath}/${objectId}/${field.subtypeName ?? ""}${field.name}`
+      `${basePath}/${objectId}/${
+        field.subtypeName ? `[${field.subtypeName}]` : ""
+      }${field.name}`
     );
     dataView.openNestedView(field.typeid, {
       editMode,
