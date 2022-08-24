@@ -56,6 +56,7 @@ export class DataView extends Model({
   inspectorStack: prop<DataInspector[]>(() => []),
 
   edits: prop(() => new DataEditingManager({})),
+  showSubtypeFields: prop(() => false).withSetter(),
 }) {
   @computed
   get objectTypes() {
@@ -263,18 +264,23 @@ export class DataInspector extends Model({
   }
 
   onAttachedToRootStore() {
+    const dataView = findParent<DataView>(
+      this,
+      (parent) => parent instanceof DataView
+    )!;
+
     if (!this.fields) {
-      this._updateFields();
+      this._updateFields(dataView.showSubtypeFields);
     }
 
     this._updateRowCount();
 
     const updateFieldDisposer = reaction(
-      () => this.objectType,
-      (objectType) => {
+      () => [this.objectType, dataView.showSubtypeFields] as const,
+      ([objectType, showSubtypeFields]) => {
         if (objectType) {
-          this._updateFields();
-          this._refreshData();
+          this._updateFields(showSubtypeFields);
+          this._refreshData(false, true);
         }
       }
     );
@@ -337,8 +343,26 @@ export class DataInspector extends Model({
 
   // fields
 
+  @computed
+  get subTypes() {
+    const obj = this.objectType;
+    if (!obj) {
+      return [];
+    }
+    return obj.unionOf
+      ? [
+          ...new Set(
+            resolveObjectTypeUnion(obj).flatMap((type) => [
+              type,
+              ...type.descendents,
+            ])
+          ),
+        ]
+      : obj.descendents;
+  }
+
   @modelAction
-  _updateFields() {
+  _updateFields(showSubtypeFields: boolean) {
     const obj = this.objectType;
 
     if (!obj) {
@@ -387,29 +411,22 @@ export class DataInspector extends Model({
 
     const baseFieldNames = new Set(baseFields.map((field) => field.name));
 
-    const subTypes = obj.unionOf
-      ? new Set(
-          resolveObjectTypeUnion(obj).flatMap((type) => [
-            type,
-            ...type.descendents,
-          ])
-        )
-      : obj.descendents;
+    const subtypeFields = showSubtypeFields
+      ? this.subTypes
+          .filter((subType) => !subType.abstract && !subType.from_alias)
+          .flatMap((subtypeObj) => {
+            const queryNamePrefix = `__${subtypeObj.name.replace(/:/g, "")}_`;
 
-    const subtypeFields = [...subTypes]
-      .filter((subType) => !subType.abstract && !subType.from_alias)
-      .flatMap((subtypeObj) => {
-        const queryNamePrefix = `__${subtypeObj.name.replace(/:/g, "")}_`;
-
-        return [
-          ...Object.values(subtypeObj.properties),
-          ...Object.values(subtypeObj.links),
-        ]
-          .filter((pointer) => !baseFieldNames.has(pointer.name))
-          .map((pointer) =>
-            createField(pointer, subtypeObj.name, queryNamePrefix)
-          );
-      });
+            return [
+              ...Object.values(subtypeObj.properties),
+              ...Object.values(subtypeObj.links),
+            ]
+              .filter((pointer) => !baseFieldNames.has(pointer.name))
+              .map((pointer) =>
+                createField(pointer, subtypeObj.name, queryNamePrefix)
+              );
+          })
+      : [];
 
     this.fields = [...baseFields, ...subtypeFields];
     this.fieldWidths = Array(this.fields.length).fill(180);
@@ -752,8 +769,11 @@ export class DataInspector extends Model({
   }
 
   @modelAction
-  _refreshData(updateCount: boolean = false) {
+  _refreshData(updateCount: boolean = false, fieldsChanged: boolean = false) {
     this.data.clear();
+    if (fieldsChanged) {
+      this.dataCodecs = null;
+    }
     this.expandedRows = [];
     this.gridRef?.resetAfterRowIndex(0);
     this._pendingOffsets = [...this.visibleOffsets];

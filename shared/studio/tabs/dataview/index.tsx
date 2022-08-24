@@ -170,6 +170,18 @@ const DataInspectorView = observer(function DataInspectorView({
         <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
 
         <div className={styles.headerButtons}>
+          {inspectorState.subTypes.length ? (
+            <label className={styles.headerToggle}>
+              <input
+                type="checkbox"
+                checked={dataviewState.showSubtypeFields}
+                onChange={(e) =>
+                  dataviewState.setShowSubtypeFields(e.target.checked)
+                }
+              />
+              Show subtype fields
+            </label>
+          ) : null}
           {dataviewState.edits.hasPendingEdits ? (
             <>
               <div

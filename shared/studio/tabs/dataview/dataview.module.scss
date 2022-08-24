@@ -232,6 +232,55 @@
   }
 }
 
+.headerToggle {
+  height: 28px;
+  margin: 4px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  input {
+    position: relative;
+    appearance: none;
+    height: 22px;
+    width: 40px;
+    background: #e5e5e5;
+    border-radius: 11px;
+    margin: 5px;
+    cursor: pointer;
+
+    &:after {
+      position: absolute;
+      content: "";
+      top: 2px;
+      left: 2px;
+      height: 18px;
+      width: 18px;
+      border-radius: 9px;
+      background: #c8c8c8;
+      transition: left 0.1s, background 0.1s;
+    }
+
+    &:checked:after {
+      left: 20px;
+      background: #9d9d9d;
+    }
+
+    @include darkTheme {
+      background: #111;
+
+      &:after {
+        background: #3c3c3c;
+      }
+
+      &:checked:after {
+        background: #767676;
+      }
+    }
+  }
+}
+
 .filterButton {
   align-self: stretch;
   display: flex;
