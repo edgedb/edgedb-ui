@@ -29,6 +29,7 @@ import {
   SchemaExtension,
   SchemaAlias,
   SchemaGlobal,
+  SchemaOperator,
 } from "@edgedb/common/schemaData";
 
 import {dbCtx} from "../../../state";
@@ -55,6 +56,7 @@ export type SchemaItem =
   | SchemaObjectType
   | SchemaScalarType
   | SchemaFunction
+  | SchemaOperator
   | SchemaConstraint
   | SchemaPointer
   | SchemaAbstractAnnotation
@@ -271,6 +273,9 @@ export class SchemaTextView extends Model({
       ...[...schemaData.constraints.values()]
         .filter((t) => t.abstract)
         .sort((a, b) => a.name.localeCompare(b.name)),
+      ...[...schemaData.operators.values()].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      ),
     ];
 
     switch (this.selectedModuleGroup) {

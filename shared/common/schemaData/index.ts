@@ -10,6 +10,7 @@ import {
   TargetDeleteAction,
   SourceDeleteAction,
   SchemaAccessPolicy,
+  SchemaOperatorKind,
 } from "./queries";
 import {KnownScalarTypes} from "./knownTypes";
 import {paramToSDL} from "./utils";
@@ -168,6 +169,22 @@ export interface SchemaFunction {
   isDeprecated: boolean;
 }
 
+export interface SchemaOperator {
+  schemaType: "Operator";
+  id: string;
+  name: string;
+  module: string;
+  shortName: string;
+  builtin: boolean;
+  operatorKind: SchemaOperatorKind;
+  params: SchemaParam[];
+  wrapParams: boolean;
+  returnType: SchemaType;
+  returnTypemod: SchemaTypemod;
+  annotations: SchemaAnnotation[];
+  isDeprecated: boolean;
+}
+
 export interface SchemaConstraint {
   schemaType: "Constraint";
   id: string;
@@ -249,6 +266,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
   types: Map<string, SchemaType>;
   pointers: Map<string, SchemaPointer>;
   functions: Map<string, SchemaFunction>;
+  operators: Map<string, SchemaOperator>;
   constraints: Map<string, SchemaConstraint>;
   annotations: Map<string, SchemaAbstractAnnotation>;
   aliases: Map<string, SchemaAlias>;
@@ -258,6 +276,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
   const types = new Map<string, SchemaType>();
   const pointers = new Map<string, SchemaPointer>();
   const functions = new Map<string, SchemaFunction>();
+  const operators = new Map<string, SchemaOperator>();
   const constraints = new Map<string, SchemaConstraint>();
   const aliases = new Map<string, SchemaAlias>();
   const globals = new Map<string, SchemaGlobal>();
@@ -395,6 +414,51 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       isDeprecated: isDeprecated(func.annotations),
     });
   }
+
+  for (const op of data.operators) {
+    const params = op.params.map((param) => ({
+      name: param.name,
+      kind: param.kind,
+      num: param.num,
+      type: getType(
+        param.typeId,
+        `cannot find type id: ${param.typeId} for param ${param.name} of operator ${op.name}`
+      ),
+      typemod: param.typemod,
+      default: param.default,
+    }));
+
+    let wrapParams = false;
+    let paramsLen = 0;
+    for (let i = 0; i < params.length; i++) {
+      paramsLen +=
+        paramToSDL(params[i]).length + (i !== params.length - 1 ? 2 : 0);
+      if (paramsLen > 30) {
+        wrapParams = true;
+        break;
+      }
+    }
+
+    operators.set(op.id, {
+      schemaType: "Operator",
+      id: op.id,
+      name: op.name,
+      ...splitName(op.name),
+      builtin: op.builtin,
+      operatorKind: op.operator_kind,
+      params,
+      wrapParams,
+      returnType: getType(
+        op.returnTypeId,
+        `cannot find type id: ${op.returnTypeId} for return type of operator ${op.name}`
+      ),
+      returnTypemod: op.return_typemod,
+      annotations: op.annotations,
+      isDeprecated: isDeprecated(op.annotations),
+    });
+  }
+
+  console.log(data.operators.filter((op) => !op.name.startsWith("std::")));
 
   for (const constraint of data.constraints) {
     constraints.set(constraint.id, {
@@ -711,6 +775,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
     types,
     pointers,
     functions,
+    operators,
     constraints,
     annotations: new Map(
       data.annotations.map((anno) => [

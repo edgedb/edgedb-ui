@@ -41,6 +41,7 @@ import {
   SchemaExtension,
   SchemaAlias,
   SchemaGlobal,
+  SchemaOperator,
 } from "@edgedb/common/schemaData";
 
 import {fetchSchemaData, storeSchemaData} from "../idbStore";
@@ -50,7 +51,7 @@ import {connCtx, Connection} from "./connection";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 1;
+const SCHEMA_DATA_VERSION = 2;
 
 export interface SchemaData {
   schemaDataVersion: number;
@@ -59,6 +60,7 @@ export interface SchemaData {
   objects: Map<string, SchemaObjectType>;
   objectsByName: Map<string, SchemaObjectType>;
   functions: Map<string, SchemaFunction>;
+  operators: Map<string, SchemaOperator>;
   constraints: Map<string, SchemaConstraint>;
   scalars: Map<string, SchemaScalarType>;
   types: Map<string, SchemaType>;
@@ -217,6 +219,7 @@ export class DatabaseState extends Model({
           types,
           pointers,
           functions,
+          operators,
           constraints,
           annotations,
           aliases,
@@ -239,6 +242,7 @@ export class DatabaseState extends Model({
               .map((t) => [t.name, t as SchemaObjectType])
           ),
           functions,
+          operators,
           constraints,
           scalars: new Map(
             [...types.values()]
