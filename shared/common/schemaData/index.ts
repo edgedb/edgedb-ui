@@ -1,4 +1,9 @@
 import {
+  reserved_keywords,
+  // @ts-ignore
+} from "@edgedb/lang-edgeql/meta";
+
+import {
   RawAbstractAnnotation,
   RawSchemaExtension,
   SchemaAnnotation,
@@ -27,6 +32,7 @@ export interface SchemaScalarType {
   schemaType: "Scalar";
   id: string;
   name: string;
+  escapedName: string;
   module: string;
   shortName: string;
   abstract: boolean;
@@ -73,6 +79,7 @@ interface _SchemaPointer {
   id: string;
   type: string;
   name: string;
+  escapedName: string;
   module: string;
   shortName: string;
   abstract: boolean;
@@ -111,6 +118,7 @@ export interface SchemaObjectType {
   schemaType: "Object";
   id: string;
   name: string;
+  escapedName: string;
   module: string;
   shortName: string;
   abstract: boolean;
@@ -241,6 +249,22 @@ function splitName(typeName: string) {
   return {module, shortName};
 }
 
+const keywords = new Set(reserved_keywords);
+
+function escape(name: string): string {
+  return !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) || keywords.has(name)
+    ? "`" + name + "`"
+    : name;
+}
+
+export function escapeName(typeName: string, hasModule: boolean): string {
+  if (hasModule) {
+    const {module, shortName} = splitName(typeName);
+    return `${escape(module)}::${escape(shortName)}`;
+  }
+  return escape(typeName);
+}
+
 function isDeprecated(annotations: SchemaAnnotation[] | null): boolean {
   return annotations?.some((anno) => anno.name === "std::deprecated") ?? false;
 }
@@ -286,6 +310,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           schemaType: "Scalar",
           id: type.id,
           name: type.name,
+          escapedName: escapeName(type.name, true),
           ...splitName(type.name),
           abstract: type.abstract,
           builtin: type.builtin,
@@ -323,6 +348,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           schemaType: "Object",
           id: type.id,
           name: type.name,
+          escapedName: escapeName(type.name, true),
           ...splitName(type.name),
           abstract: type.abstract,
           builtin: type.builtin,
@@ -434,6 +460,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       id: pointer.id,
       type: pointer.type === "schema::Link" ? "Link" : "Property",
       name: pointer.name,
+      escapedName: escapeName(pointer.name, pointer.abstract),
       ...((pointer.abstract
         ? splitName(pointer.name)
         : {module: null, shortName: pointer.name}) as any),

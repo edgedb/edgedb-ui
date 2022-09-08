@@ -46,6 +46,7 @@ type ParentObject = {
   subtypeName?: string;
   id: string | number;
   fieldName: string;
+  escapedFieldName: string;
   linkId: string;
   isMultiLink: boolean;
   isComputedLink: boolean;
@@ -165,6 +166,7 @@ export class DataView extends Model({
               subtypeName,
               id: objId,
               fieldName: pointer.name,
+              escapedFieldName: pointer.escapedName,
               linkId: `${objId}__${pointer.name}`,
               isMultiLink:
                 pointer.type === "Link"
@@ -204,10 +206,13 @@ export enum ObjectFieldType {
 
 export type ObjectField = {
   subtypeName?: string;
+  escapedSubtypeName?: string;
   name: string;
+  escapedName: string;
   queryName: string;
   typeid: string;
   typename: string;
+  escapedTypename: string;
   required: boolean;
   hasDefault: boolean;
   computedExpr: string | null;
@@ -332,6 +337,7 @@ export class DataInspector extends Model({
       subtypeName,
       id: objectId,
       fieldName: field.name,
+      escapedFieldName: field.escapedName,
       linkId: `${objectId}__${field.name}`,
       isMultiLink: field.type === ObjectFieldType.link ? field.multi : false,
       isComputedLink: !!field.computedExpr,
@@ -374,17 +380,30 @@ export class DataInspector extends Model({
       throw new Error(`Cannot find schema object id: ${this.objectTypeId}`);
     }
 
+    let i = 0;
     function createField(
       pointer: SchemaProperty | SchemaLink,
       subtypeName?: string,
+      escapedSubtypeName?: string,
       queryNamePrefix: string = ""
     ): ObjectField {
       const baseField = {
         subtypeName,
+        escapedSubtypeName,
         name: pointer.name,
-        queryName: queryNamePrefix + pointer.name,
+        escapedName: pointer.escapedName,
+        queryName:
+          pointer.name === "id"
+            ? "id"
+            : queryNamePrefix +
+              pointer.name.replace(/^[^A-Za-z_]|[^A-Za-z0-9_]/g, "") +
+              `_${i++}`,
         typeid: pointer.target!.id,
         typename: pointer.target!.name,
+        escapedTypename:
+          "escapedName" in pointer.target!
+            ? pointer.target!.escapedName
+            : pointer.target!.name,
         required: pointer.required,
         hasDefault: !!pointer.default,
         multi: pointer.cardinality === "Many",
@@ -428,7 +447,12 @@ export class DataInspector extends Model({
             ]
               .filter((pointer) => !baseFieldNames.has(pointer.name))
               .map((pointer) =>
-                createField(pointer, subtypeObj.name, queryNamePrefix)
+                createField(
+                  pointer,
+                  subtypeObj.name,
+                  subtypeObj.escapedName,
+                  queryNamePrefix
+                )
               );
           })
       : [];
@@ -797,7 +821,7 @@ export class DataInspector extends Model({
 
   get _getObjectTypeQuery() {
     const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
-      (t) => t.name
+      (t) => t.escapedName
     );
 
     return typeUnionNames.length > 1
@@ -809,12 +833,12 @@ export class DataInspector extends Model({
     if (this.parentObject && typeof this.parentObject.id === "string") {
       return (
         `(select ${this._getObjectTypeQuery} ` +
-        `filter .<${this.parentObject.fieldName}.id = <uuid>'${this.parentObject.id}')`
+        `filter .<${this.parentObject.escapedFieldName}.id = <uuid>'${this.parentObject.id}')`
       );
     }
 
     const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
-      (t) => t.name
+      (t) => t.escapedName
     );
 
     return this.parentObject
@@ -889,9 +913,11 @@ export class DataInspector extends Model({
       this.filter ? `FILTER ${this.filter}` : ""
     } ORDER BY ${inEditMode ? `.__isLinked DESC THEN` : ""}${
         sortField
-          ? `${sortField.subtypeName ? `[IS ${sortField.subtypeName}]` : ""}.${
-              sortField.name
-            } ${this.sortBy!.direction} THEN`
+          ? `${
+              sortField.escapedSubtypeName
+                ? `[IS ${sortField.escapedSubtypeName}]`
+                : ""
+            }.${sortField.escapedName} ${this.sortBy!.direction} THEN`
           : ""
       } .id OFFSET <int32>$offset LIMIT ${fetchBlockSize})
     SELECT rows {
@@ -901,8 +927,8 @@ export class DataInspector extends Model({
         .filter((field) => field.name !== "id")
         .map((field) => {
           const selectName = `${
-            field.subtypeName ? `[IS ${field.subtypeName}]` : ""
-          }.${field.name}`;
+            field.subtypeName ? `[IS ${field.escapedSubtypeName}]` : ""
+          }.${field.escapedName}`;
 
           if (field.type === ObjectFieldType.property) {
             return `${field.queryName} := ${
@@ -916,8 +942,8 @@ export class DataInspector extends Model({
                 field.targetHasSelectAccessPolicy && field.required
                   ? `(
                 with sourceId := .id
-                select ${field.typename}
-                filter .<${field.name}.id = sourceId
+                select ${field.escapedTypename}
+                filter .<${field.escapedName}.id = sourceId
               )`
                   : selectName
               }
