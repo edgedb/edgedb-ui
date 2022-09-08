@@ -132,6 +132,10 @@ export const dashboardTabSpec: DatabaseTabSpec = {
   element: <DatabaseDashboard />,
 };
 
+export function fetchExampleSchema(): Promise<string> {
+  return import("./exampleSchema").then(({schemaScript}) => schemaScript);
+}
+
 const FirstRunDashboard = observer(function FirstRunDashboard() {
   const instanceState = useInstanceState();
   const dbState = useDatabaseState();
@@ -172,9 +176,7 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
                 ? () => navigate("/_example")
                 : async () => {
                     await instanceState.createExampleDatabase(
-                      import("./exampleSchema").then(
-                        ({schemaScript}) => schemaScript
-                      )
+                      fetchExampleSchema()
                     );
                     navigate("/_example");
                   }
