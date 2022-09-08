@@ -1,7 +1,11 @@
 import {action, computed, observable, runInAction} from "mobx";
 import {model, Model} from "mobx-keystone";
 
-import {getNameOfSchemaType, SchemaType} from "@edgedb/common/schemaData";
+import {
+  getNameOfSchemaType,
+  SchemaType,
+  escapeName,
+} from "@edgedb/common/schemaData";
 
 import {connCtx, dbCtx} from "../../../state";
 
@@ -16,6 +20,7 @@ interface UpdatePropertyEdit {
   kind: EditKind.UpdateProperty;
   objectId: string;
   objectTypeName: string;
+  escapedObjectTypeName: string;
   fieldName: string;
   value: any;
 }
@@ -35,8 +40,11 @@ interface UpdateLinkEdit {
   kind: EditKind.UpdateLink;
   objectId: string | number;
   objectTypeName: string;
+  escapedObjectTypeName: string;
   fieldName: string;
+  escapedFieldName: string;
   linkTypeName: string;
+  escapedLinkTypeName: string;
   changes: Map<string, UpdateLinkChange>;
   inserts: Set<InsertObjectEdit>;
 }
@@ -45,6 +53,7 @@ interface InsertObjectEdit {
   kind: EditKind.InsertObject;
   id: number;
   objectTypeName: string;
+  escapedObjectTypeName: string;
   data: {[fieldName: string]: any};
 }
 
@@ -52,6 +61,7 @@ interface DeleteObjectEdit {
   kind: EditKind.DeleteObject;
   objectId: string;
   objectTypeName: string;
+  escapedObjectTypeName: string;
 }
 
 let insertEditId = 0;
@@ -104,6 +114,7 @@ export class DataEditingManager extends Model({}) {
           kind: EditKind.UpdateProperty,
           objectId,
           objectTypeName,
+          escapedObjectTypeName: escapeName(objectTypeName, true),
           fieldName,
           value,
         });
@@ -140,6 +151,7 @@ export class DataEditingManager extends Model({}) {
       kind: EditKind.InsertObject,
       id: insertId,
       objectTypeName,
+      escapedObjectTypeName: escapeName(objectTypeName, true),
       data: {
         id: insertId,
         __tname__: objectTypeName,
@@ -167,6 +179,7 @@ export class DataEditingManager extends Model({}) {
         kind: EditKind.DeleteObject,
         objectId,
         objectTypeName,
+        escapedObjectTypeName: escapeName(objectTypeName, true),
       });
     }
   }
@@ -196,8 +209,11 @@ export class DataEditingManager extends Model({}) {
         kind: EditKind.UpdateLink,
         objectId,
         objectTypeName,
+        escapedObjectTypeName: escapeName(objectTypeName, true),
         fieldName,
+        escapedFieldName: escapeName(fieldName, false),
         linkTypeName,
+        escapedLinkTypeName: escapeName(linkTypeName, true),
         changes: new Map(),
         inserts: new Set(),
       });
@@ -253,8 +269,11 @@ export class DataEditingManager extends Model({}) {
         kind: EditKind.UpdateLink,
         objectId,
         objectTypeName,
+        escapedObjectTypeName: escapeName(objectTypeName, true),
         fieldName,
+        escapedFieldName: escapeName(fieldName, false),
         linkTypeName,
+        escapedLinkTypeName: escapeName(linkTypeName, true),
         changes: new Map(),
         inserts: new Set(),
       });
@@ -326,7 +345,7 @@ export class DataEditingManager extends Model({}) {
     ) {
       const type =
         schemaData.objectsByName.get(objectTypeName)?.properties[propName];
-      return `${propName} := ${generateParamExpr(
+      return `${escapeName(propName, false)} := ${generateParamExpr(
         schemaData.types.get(type!.target!.id)!,
         val,
         params,
@@ -338,6 +357,7 @@ export class DataEditingManager extends Model({}) {
       string,
       {
         objectTypeName: string;
+        escapedObjectTypeName: string;
         props: UpdatePropertyEdit[];
         links: UpdateLinkEdit[];
       }
@@ -353,6 +373,7 @@ export class DataEditingManager extends Model({}) {
           if (!updateEdits.has(edit.objectId)) {
             updateEdits.set(edit.objectId, {
               objectTypeName: edit.objectTypeName,
+              escapedObjectTypeName: edit.escapedObjectTypeName,
               props: [],
               links: [],
             });
@@ -419,7 +440,7 @@ export class DataEditingManager extends Model({}) {
 
       inserts.set(insertEdit.id, {
         id: insertEdit.id,
-        statement: `insert ${insertEdit.objectTypeName} {${
+        statement: `insert ${insertEdit.escapedObjectTypeName} {${
           fields.length ? `\n  ${fields.join(",\n  ")}\n` : ""
         }}`,
         deps: new Set(deps),
@@ -468,7 +489,7 @@ export class DataEditingManager extends Model({}) {
       if (editLines.length) {
         statements.push({
           varName: `update${updateCount++}`,
-          code: `update ${edits.objectTypeName}
+          code: `update ${edits.escapedObjectTypeName}
 filter .id = <uuid>'${objectId}'
 set {
   ${editLines.join(",\n  ")}
@@ -481,7 +502,7 @@ set {
     for (const deleteEdit of this.deleteEdits.values()) {
       statements.push({
         varName: `delete${deleteCount++}`,
-        code: `delete ${deleteEdit.objectTypeName} filter .id = <uuid>'${deleteEdit.objectId}'`,
+        code: `delete ${deleteEdit.escapedObjectTypeName} filter .id = <uuid>'${deleteEdit.objectId}'`,
       });
     }
 
@@ -551,11 +572,13 @@ function generateLinkUpdate(
   }
   if (addCount + linkEdits.inserts.size > 0 && removeCount > 0) {
     links.push(
-      `(select .${linkEdits.fieldName} filter .id not in <uuid>{${changes
+      `(select .${
+        linkEdits.escapedFieldName
+      } filter .id not in <uuid>{${changes
         .filter((change) => change.kind === UpdateLinkChangeKind.Remove)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`,
-      `(select ${linkEdits.linkTypeName} filter .id in <uuid>{${changes
+      `(select ${linkEdits.escapedLinkTypeName} filter .id in <uuid>{${changes
         .filter((change) => change.kind === UpdateLinkChangeKind.Add)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`
@@ -569,7 +592,7 @@ function generateLinkUpdate(
         : ":=";
     if (changes.length) {
       links.push(
-        `(select ${linkEdits.linkTypeName} filter .id ${
+        `(select ${linkEdits.escapedLinkTypeName} filter .id ${
           changes.length === 1
             ? `= <uuid>'${changes[0].id}'`
             : `in <uuid>{${changes.map(({id}) => `'${id}'`).join(", ")}}`
@@ -588,7 +611,7 @@ function generateLinkUpdate(
     return null;
   }
 
-  return `${linkEdits.fieldName} ${op} ${
+  return `${escapeName(linkEdits.fieldName, false)} ${op} ${
     links.length > 1
       ? `distinct {\n    ${links.join(",\n    ")}\n  }`
       : links[0]
