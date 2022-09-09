@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .dashboard,
 .firstDashboard {
   background-color: var(--app-panel-bg);
@@ -42,6 +44,10 @@
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
+
+    @include darkTheme {
+      --buttonTextColour: #1d1d1d;
+    }
   }
 
   .button.button {
