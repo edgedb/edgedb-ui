@@ -1135,13 +1135,17 @@ class ExpandedInspector extends Model({
 
     const objectType = parentObjectType.links[fieldName].target!;
 
-    const query = `with parentObj := (select ${parentObjectTypeName} filter .id = <uuid><str>$id)
-      select parentObj.${fieldName} {
+    const query = `with parentObj := (select ${
+      parentObjectType.escapedName
+    } filter .id = <uuid><str>$id)
+      select parentObj.\`${fieldName}\` {
         ${[
-          ...Object.values(objectType.properties).map((prop) => prop.name),
+          ...Object.values(objectType.properties).map(
+            (prop) => prop.escapedName
+          ),
           ...Object.values(objectType.links).map(
-            (link) => `${link.name} limit 0,
-        __count_${link.name} := count(.${link.name})`
+            (link) => `${link.escapedName} limit 0,
+        \`__count_${link.name}\` := count(.${link.escapedName})`
           ),
         ].join(",\n")}
       }`;
@@ -1213,10 +1217,10 @@ class ExpandedInspector extends Model({
       );
     }
 
-    return `select ${this.objectTypeName} {
+    return `select ${objectType.escapedName} {
       ${[
         ...Object.values(objectType.properties).map((prop) => {
-          return prop.name;
+          return prop.escapedName;
         }),
         ...Object.values(objectType.links).map((link) => {
           const accessPolicyWorkaround =
@@ -1227,13 +1231,13 @@ class ExpandedInspector extends Model({
             : link.name;
           const linkSelect = `${
             accessPolicyWorkaround
-              ? `${linkName} := ${singleLink ? "assert_single(" : ""}(
+              ? `\`${linkName}\` := ${singleLink ? "assert_single(" : ""}(
                 with sourceId := .id
-                select ${link.target!.name}
-                filter .<${link.name}.id = sourceId
+                select ${link.target!.escapedName}
+                filter .<${link.escapedName}.id = sourceId
                 limit 10
               )${singleLink ? ")" : ""}`
-              : `${linkName}: `
+              : `\`${linkName}\`: `
           } {
           ${[
             ...Object.values(link.target!.properties),
@@ -1241,21 +1245,21 @@ class ExpandedInspector extends Model({
           ]
             .map((subField) =>
               subField.type === "Property"
-                ? subField.name
-                : `${subField.name} limit 0,
-                __count_${subField.name} := count(.${subField.name})`
+                ? subField.escapedName
+                : `${subField.escapedName} limit 0,
+                \`__count_${subField.name}\` := count(.${subField.escapedName})`
             )
             .join(",\n")}
         }${accessPolicyWorkaround ? "" : " limit 10"}`;
           return `${linkSelect},
-        __count_${linkName} := count(${
+        \`__count_${linkName}\` := count(${
             accessPolicyWorkaround
               ? `(
           with sourceId := .id
-          select ${link.target!.name}
-          filter .<${link.name}.id = sourceId
+          select ${link.target!.escapedName}
+          filter .<${link.escapedName}.id = sourceId
         )`
-              : `.${linkName}`
+              : `.\`${linkName}\``
           })`;
         }),
       ].join(",\n")}
