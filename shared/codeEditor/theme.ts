@@ -107,7 +107,7 @@ export const darkTheme = EditorView.theme(
       backgroundColor: "rgba(255,255,255,0.04)",
     },
     "&.cm-focused .cm-selectionBackground": {
-      backgroundColor: "rgba(255,255,255,0.04)",
+      backgroundColor: "hsla(0,0%,96%,0.11)",
     },
     ".cm-cursor": {
       borderLeftColor: "#4a96e6",
