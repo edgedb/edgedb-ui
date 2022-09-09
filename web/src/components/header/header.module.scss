@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .header {
   flex-shrink: 0;
   height: 56px;
@@ -20,12 +22,20 @@
   display: flex;
   font-family: "EdgeDB";
   font-style: normal;
-  font-weight: 500;
-  font-size: 18px;
-  color: #999999;
+  font-weight: 600;
+  font-size: 19px;
+  color: #848484;
   margin-left: 8px;
+
+  @include darkTheme {
+    color: #7d7d7d;
+  }
 }
 
 .logo {
-  fill: #4c4c4c;
+  fill: #4f4f4f;
+
+  @include darkTheme {
+    fill: #f7f7f7;
+  }
 }
