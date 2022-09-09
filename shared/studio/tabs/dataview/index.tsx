@@ -37,7 +37,9 @@ export const DataView = observer(function DataView() {
 
   const path = params["*"];
   useEffect(() => {
-    if (dbState.schemaData) {
+    if (!path && state.lastSelectedPath) {
+      navigate(state.lastSelectedPath, {replace: true});
+    } else if (dbState.schemaData) {
       const updatedPath = state.updateFromPath(path ?? "");
       if (updatedPath !== null) {
         navigate(updatedPath, {replace: true});

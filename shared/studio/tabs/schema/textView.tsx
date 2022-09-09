@@ -100,8 +100,20 @@ export const SchemaTextView = observer(function SchemaTextView() {
 
     return () => {
       scrollOffsetCache.set(location.key, state.scrollPos);
+      state.lastLocation = {
+        pathname: location.pathname,
+        search: location.search,
+        scrollPos: state.scrollPos,
+      };
     };
   }, [location]);
+
+  useEffect(() => {
+    if (state.lastLocation && !scrollOffsetCache.has(location.key)) {
+      navigate(state.lastLocation, {replace: true});
+      state.listRef?.scrollTo(state.lastLocation.scrollPos);
+    }
+  }, []);
 
   const filtersRef = useRef<HTMLDivElement>(null);
   const [narrowLayout, setNarrowLayout] = useState(true);

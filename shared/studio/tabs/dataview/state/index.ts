@@ -59,6 +59,8 @@ export class DataView extends Model({
   edits: prop(() => new DataEditingManager({})),
   showSubtypeFields: prop(() => false).withSetter(),
 }) {
+  lastSelectedPath: string = "";
+
   @computed
   get objectTypes() {
     const objects = dbCtx.get(this)!.schemaData?.objects;
@@ -109,6 +111,7 @@ export class DataView extends Model({
 
   @modelAction
   updateFromPath(path: string): string | null {
+    this.lastSelectedPath = path;
     const [rootObjectTypeName, ...nestedParts] = path.split("/");
     if (rootObjectTypeName !== this.inspectorStack[0]?.objectType?.name) {
       const objTypeId = this.objectTypes.find(
