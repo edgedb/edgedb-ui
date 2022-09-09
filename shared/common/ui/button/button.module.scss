@@ -4,6 +4,7 @@
   border: none;
   outline: none;
   cursor: pointer;
+  font-family: Roboto, sans-serif;
 
   .inner {
     height: 24px;
@@ -13,7 +14,7 @@
     display: flex;
     align-items: center;
     font-style: normal;
-    font-weight: 400;
+    font-weight: 500;
     font-size: 12px;
     text-transform: uppercase;
     white-space: nowrap;
