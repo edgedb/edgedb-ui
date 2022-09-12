@@ -172,7 +172,7 @@
     border-radius: 14px;
     padding: 0 8px;
     cursor: pointer;
-    opacity: 0.6;
+    opacity: 0.8;
 
     &:not(:last-child) {
       margin-right: 6px;
@@ -242,6 +242,10 @@
 
   &:hover {
     opacity: 1;
+  }
+
+  @include darkTheme {
+    border-color: rgba(255, 255, 255, 0.5);
   }
 }
 
@@ -339,6 +343,76 @@
 
     &:not(:last-child) {
       margin-bottom: 6px;
+    }
+  }
+}
+
+.rangeEditor {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+
+  &:before {
+    content: "range(";
+    position: relative;
+    display: block;
+    top: -2px;
+    left: -10px;
+  }
+
+  .rangeBound {
+    display: flex;
+    align-items: center;
+    line-height: 30px;
+    margin-right: -12px;
+
+    & > span {
+      opacity: 0.7;
+      margin: 0 3px;
+      align-self: flex-end;
+      width: 4px;
+    }
+
+    &:not(:last-child) {
+      margin-bottom: 6px;
+    }
+  }
+
+  .incBounds {
+    line-height: 30px;
+
+    & > span {
+      font-family: Roboto Mono, monospace;
+      opacity: 0.7;
+    }
+
+    label {
+      input {
+        display: none;
+      }
+
+      span:before {
+        content: "false";
+        font-family: Roboto Mono;
+        line-height: 22px;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        border-radius: 14px;
+        padding: 0 8px;
+        cursor: pointer;
+        opacity: 0.8;
+        margin: 0 3px;
+
+        @include darkTheme {
+          border-color: rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      input:checked + span:before {
+        content: "true";
+        background: var(--app-accent-green);
+        border-color: transparent;
+        color: #fff;
+      }
     }
   }
 }

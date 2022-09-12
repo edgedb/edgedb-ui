@@ -35,12 +35,16 @@ tupleType {
   ">"
 }
 
+rangeType {
+  BuiltinName { @specialize<shortName, "range"> } castStart Name ">"
+}
+
 CompoundTypeName { arrayType | tupleType }
 
-Cast { castStart ( Name | CompoundTypeName ) ~cast ">" }
+Cast { castStart ( Name | CompoundTypeName | rangeType ) ~cast ">" }
 
 QueryParameter[@dynamicPrecedence=1] {
-  Cast { castStart Keyword? (Name | arrayType) ~cast ">"}
+  Cast { castStart Keyword? (Name | arrayType | rangeType) ~cast ">"}
   QueryParameterName
 }
 

@@ -634,7 +634,7 @@ function generateParamExpr(
       .join(", ")}}`;
   }
 
-  if (type.schemaType === "Scalar") {
+  if (type.schemaType === "Scalar" || type.schemaType === "Range") {
     const paramName = `p${Object.keys(params).length}`;
     params[paramName] = {type, value: data};
     return `<${type.name}>$${paramName}`;
