@@ -23,7 +23,12 @@ import DataInspectorTable from "./dataInspector";
 import {ReviewEditsModal} from "./reviewEditsModal";
 
 import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
-import {ChevronDownIcon, FilterIcon, TabDataExplorerIcon} from "../../icons";
+import {
+  ChevronDownIcon,
+  FilterIcon,
+  TabDataExplorerIcon,
+  WarningIcon,
+} from "../../icons";
 import {Select} from "@edgedb/common/ui/select";
 import Button from "@edgedb/common/ui/button";
 
@@ -251,6 +256,15 @@ const DataInspectorView = observer(function DataInspectorView({
         state={inspectorState}
         edits={dataviewState.edits}
       />
+
+      <div
+        className={cn(styles.dataFetchingError, {
+          [styles.showError]: inspectorState.dataFetchingError !== null,
+        })}
+      >
+        <WarningIcon />
+        Failed to fetch data
+      </div>
     </div>
   );
 });

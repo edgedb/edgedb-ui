@@ -45,6 +45,7 @@ import {
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
+  WarningIcon,
 } from "../../icons";
 import {InspectorRow} from "@edgedb/inspector/v2";
 import {DataEditor} from "../../components/dataEditor";
@@ -393,42 +394,46 @@ const GridCell = observer(function GridCell({
         }
       }
     } else {
-      const counts: {[typename: string]: number} =
-        data?.[`__count_${field.queryName}`]?.reduce(
-          (counts: any, {typename, count}: any) => {
+      const countData = data?.[`__count_${field.queryName}`];
+      if (countData !== null) {
+        const counts: {[typename: string]: number} =
+          countData.reduce((counts: any, {typename, count}: any) => {
             counts[typename] = count;
             return counts;
-          },
-          {}
-        ) ?? {};
+          }, {}) ?? {};
 
-      if (linkEditState) {
-        for (const change of linkEditState.changes.values()) {
-          counts[change.typename] =
-            change.kind === UpdateLinkChangeKind.Set
-              ? 1
-              : (counts[change.typename] ?? 0) +
-                (change.kind === UpdateLinkChangeKind.Add ? 1 : -1);
+        if (linkEditState) {
+          for (const change of linkEditState.changes.values()) {
+            counts[change.typename] =
+              change.kind === UpdateLinkChangeKind.Set
+                ? 1
+                : (counts[change.typename] ?? 0) +
+                  (change.kind === UpdateLinkChangeKind.Add ? 1 : -1);
+          }
+          for (const insert of linkEditState.inserts.values()) {
+            counts[insert.objectTypeName] =
+              (counts[insert.objectTypeName] ?? 0) + 1;
+          }
         }
-        for (const insert of linkEditState.inserts.values()) {
-          counts[insert.objectTypeName] =
-            (counts[insert.objectTypeName] ?? 0) + 1;
-        }
-      }
 
-      if (Object.keys(counts).length === 0) {
-        content = <span className={styles.emptySet}>{"{}"}</span>;
-      } else {
-        content = (
-          <div className={styles.linksCell}>
-            {Object.entries(counts).map(([typename, count], i) => (
-              <div className={styles.linkObjName} key={i}>
-                {typename}
-                <span>{count}</span>
-              </div>
-            ))}
-          </div>
-        );
+        if (Object.keys(counts).length === 0) {
+          content = (
+            <span className={styles.emptySet}>
+              {field.required ? "hidden by access policy" : "{}"}
+            </span>
+          );
+        } else {
+          content = (
+            <div className={styles.linksCell}>
+              {Object.entries(counts).map(([typename, count], i) => (
+                <div className={styles.linkObjName} key={i}>
+                  {typename}
+                  <span>{count}</span>
+                </div>
+              ))}
+            </div>
+          );
+        }
       }
     }
   }
@@ -463,7 +468,7 @@ const GridCell = observer(function GridCell({
           !linkEditState,
       })}
       onClick={() => {
-        if (field.type === ObjectFieldType.link) {
+        if (field.type === ObjectFieldType.link && content !== null) {
           state.openNestedView(
             basePath,
             navigate,
@@ -517,7 +522,12 @@ const FieldHeaders = observer(function FieldHeaders() {
           )
         )}
         {state.fields?.map((field, i) => (
-          <FieldHeader key={field.queryName} colIndex={i} field={field} />
+          <FieldHeader
+            key={field.queryName}
+            colIndex={i}
+            field={field}
+            isOmitted={state.omittedLinks.has(field.name)}
+          />
         ))}
       </div>
     </div>
@@ -527,11 +537,13 @@ const FieldHeaders = observer(function FieldHeaders() {
 interface FieldHeaderProps {
   colIndex: number;
   field: ObjectField;
+  isOmitted: boolean;
 }
 
 const FieldHeader = observer(function FieldHeader({
   colIndex,
   field,
+  isOmitted,
 }: FieldHeaderProps) {
   const {state} = useDataInspectorState();
   const fieldWidth = state.fieldWidths[colIndex];
@@ -558,6 +570,15 @@ const FieldHeader = observer(function FieldHeader({
 
   return (
     <div className={styles.headerField} style={{width: fieldWidth + "px"}}>
+      {isOmitted ? (
+        <div className={styles.fieldWarning}>
+          <WarningIcon />
+          <div>
+            Cannot fetch link data: target of required link is hidden by access
+            policy
+          </div>
+        </div>
+      ) : null}
       <div className={styles.fieldTitle}>
         <div className={styles.fieldName}>
           {field.name}
