@@ -114,6 +114,35 @@
     }
   }
 
+  .fieldWarning {
+    position: relative;
+    display: flex;
+
+    & > div {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: -16px;
+      min-width: 140px;
+      font-family: Inter;
+      background: #de5353;
+      color: rgba(255, 255, 255, 0.9);
+      padding: 8px;
+      border-radius: 6px;
+      z-index: 1;
+    }
+
+    svg {
+      fill: #de5353;
+      width: 16px;
+      margin-right: 6px;
+    }
+
+    &:hover > div {
+      display: block;
+    }
+  }
+
   @include darkTheme {
     .fieldName {
       color: #c5c5c5;

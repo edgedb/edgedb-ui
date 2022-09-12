@@ -18,7 +18,7 @@ import {NavigateFunction} from "react-router";
 
 import {Text} from "@codemirror/state";
 
-import {_ICodec} from "edgedb";
+import {CardinalityViolationError, _ICodec} from "edgedb";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {EdgeDBSet} from "../../../utils/decodeRawBuffer";
@@ -239,8 +239,11 @@ interface SortBy {
 }
 
 function pointerTargetHasSelectAccessPolicy(pointer: SchemaLink) {
-  return !!pointer.target!.accessPolicies.some((ap) =>
-    ap.access_kinds.includes("Select")
+  return (
+    pointer.expr == null &&
+    !!pointer.target!.accessPolicies.some((ap) =>
+      ap.access_kinds.includes("Select")
+    )
   );
 }
 
@@ -291,6 +294,7 @@ export class DataInspector extends Model({
       ([objectType, showSubtypeFields]) => {
         if (objectType) {
           this._updateFields(showSubtypeFields);
+          this.omittedLinks.clear();
           this._refreshData(false, true);
         }
       }
@@ -299,6 +303,7 @@ export class DataInspector extends Model({
       () => connCtx.get(this)?.sessionGlobals,
       (globals) => {
         if (globals) {
+          this.omittedLinks.clear();
           this._refreshData(true);
         }
       }
@@ -464,6 +469,9 @@ export class DataInspector extends Model({
     this.fieldWidths = Array(this.fields.length).fill(180);
     this.gridRef?.resetAfterColumnIndex(0);
   }
+
+  @observable
+  omittedLinks = new Set<string>();
 
   @computed
   get hasSubtypeFields() {
@@ -648,6 +656,9 @@ export class DataInspector extends Model({
       if (data.result) {
         this.rowCount = parseInt(data.result[0], 10);
       }
+    } catch (err) {
+      this.dataFetchingError = err as Error;
+      console.error(err);
     } finally {
       dbState.setLoadingTab(DataView, false);
     }
@@ -709,6 +720,9 @@ export class DataInspector extends Model({
 
   discardLastFetch = false;
 
+  @observable.ref
+  dataFetchingError: Error | null = null;
+
   @modelFlow
   _fetchData = _async(function* (this: DataInspector) {
     const offset = this._pendingOffsets[0];
@@ -739,6 +753,8 @@ export class DataInspector extends Model({
           })
         );
 
+        this.dataFetchingError = null;
+
         // console.log(offset, data.duration);
 
         if (!this.discardLastFetch) {
@@ -756,6 +772,22 @@ export class DataInspector extends Model({
         }
 
         fetchNextOffset = true;
+      }
+    } catch (err) {
+      if (err instanceof CardinalityViolationError) {
+        const match = err.message.match(
+          /^required link '.+' of object type '.+' is hidden by access policy \(while evaluating computed link '(.+)' of object type '.+'\)$/
+        );
+        if (match) {
+          this.omittedLinks.add(match[1]);
+          fetchNextOffset = true;
+        } else {
+          this.dataFetchingError = err;
+          console.error(err);
+        }
+      } else {
+        this.dataFetchingError = err as Error;
+        console.error(err);
       }
     } finally {
       this.fetchingData = false;
@@ -834,10 +866,14 @@ export class DataInspector extends Model({
 
   get _baseObjectsQuery() {
     if (this.parentObject && typeof this.parentObject.id === "string") {
-      return (
-        `(select ${this._getObjectTypeQuery} ` +
-        `filter .<${this.parentObject.escapedFieldName}.id = <uuid>'${this.parentObject.id}')`
-      );
+      return this.parentObject.isComputedLink
+        ? `(SELECT ${
+            this.parentObject.subtypeName ?? this.parentObject.objectTypeName
+          } FILTER .id = <uuid>'${this.parentObject.id}').${
+            this.parentObject.escapedFieldName
+          }`
+        : `(select ${this._getObjectTypeQuery} ` +
+            `filter .<${this.parentObject.escapedFieldName}.id = <uuid>'${this.parentObject.id}')`;
     }
 
     const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
@@ -940,6 +976,9 @@ export class DataInspector extends Model({
                 : selectName
             }`;
           } else {
+            if (this.omittedLinks.has(field.name)) {
+              return `__count_${field.queryName} := <int64>{}`;
+            }
             return `__count_${field.queryName} := (for g in (
               group ${
                 field.targetHasSelectAccessPolicy && field.required
@@ -1220,12 +1259,21 @@ class ExpandedInspector extends Model({
       );
     }
 
+    const dataInspector = findParent<DataInspector>(
+      this,
+      (parent) => parent instanceof DataInspector
+    )!;
+
     return `select ${objectType.escapedName} {
       ${[
         ...Object.values(objectType.properties).map((prop) => {
           return prop.escapedName;
         }),
         ...Object.values(objectType.links).map((link) => {
+          if (dataInspector.omittedLinks.has(link.name)) {
+            return `\`__${link.name}\` := <std::Object>{},
+              \`__count___${link.name}\` := 0`;
+          }
           const accessPolicyWorkaround =
             link.required && pointerTargetHasSelectAccessPolicy(link);
           const singleLink = link.cardinality === "One";

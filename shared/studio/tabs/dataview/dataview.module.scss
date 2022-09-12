@@ -371,3 +371,30 @@
     }
   }
 }
+
+.dataFetchingError {
+  position: absolute;
+  background: #de5353;
+  bottom: 24px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0 10px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  left: 50%;
+  transform: translate(-50%, 30px);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+
+  svg {
+    fill: currentColor;
+    width: 16px;
+    margin-right: 6px;
+  }
+
+  &.showError {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
