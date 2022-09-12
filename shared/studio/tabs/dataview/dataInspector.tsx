@@ -221,6 +221,7 @@ function GridCellWrapper({
 function renderCellValue(value: any, codec: ICodec): JSX.Element {
   switch (codec.getKind()) {
     case "scalar":
+    case "range":
       return renderValue(
         value,
         codec.getKnownTypeName(),

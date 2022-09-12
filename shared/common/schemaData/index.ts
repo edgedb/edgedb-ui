@@ -776,6 +776,8 @@ export function getNameOfSchemaType(type: SchemaType): string {
             )}`
         )
         .join(", ")}>`;
+    case "Range":
+      return `range<${type.elementType.name}>`
     default:
       throw new Error(`unknown schema type: ${(type as any).schemaType}`);
   }

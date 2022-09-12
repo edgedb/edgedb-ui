@@ -2,11 +2,11 @@
 export const
   RawStringPrefix = 1,
   ByteStringPrefix = 2,
-  dollarString = 45,
-  opHack = 46,
+  dollarString = 46,
+  opHack = 47,
   BigNumberPostfix = 3,
-  reservedKeyword = 47,
-  unreservedKeyword = 48,
+  reservedKeyword = 48,
+  unreservedKeyword = 49,
   BuiltinName = 4,
   Bool = 5,
   Comment = 6,
@@ -23,5 +23,5 @@ export const
   Punctuation = 18,
   Cast = 19,
   CompoundTypeName = 20,
-  QueryParameter = 23,
-  QueryParameterName = 25
+  QueryParameter = 24,
+  QueryParameterName = 26

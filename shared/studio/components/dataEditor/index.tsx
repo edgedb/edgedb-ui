@@ -5,6 +5,7 @@ import {
   LocalTime,
   Duration,
   ConfigMemory,
+  Range,
 } from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -15,6 +16,7 @@ import {scalarItemToString} from "@edgedb/inspector/v2/buildScalar";
 
 import {
   SchemaArrayType,
+  SchemaRangeType,
   SchemaScalarType,
   SchemaTupleType,
   SchemaType,
@@ -165,6 +167,9 @@ export function getInputComponent(
   }
   if (type.schemaType === "Tuple") {
     return TupleEditor as any;
+  }
+  if (type.schemaType === "Range") {
+    return RangeEditor as any;
   }
   return () => <></>;
 }
@@ -328,6 +333,125 @@ const TupleEditor = forwardRef(function TupleEditor(
           );
         })
       )}
+    </div>
+  );
+});
+
+export const RangeEditor = forwardRef(function RangeEditor(
+  {
+    type,
+    value,
+    onChange,
+    allowNull,
+    depth,
+  }: {
+    type: SchemaRangeType;
+    value: Range<any> | null;
+    onChange: (val: any, error: boolean) => void;
+    allowNull?: boolean;
+    depth: number;
+  },
+  ref
+) {
+  const [errs, setErrs] = useState<boolean[]>([false, false]);
+  const Input = getInputComponent(type.elementType);
+
+  if (value === null && !allowNull) {
+    onChange(new Range(null, null), false);
+  }
+
+  return (
+    <div
+      className={cn(styles.rangeEditor, styles.panel, {
+        [styles.panelNested]: depth % 2 !== 0,
+      })}
+    >
+      {[value?.lower, value?.upper].map((bound, i) => {
+        return (
+          <div key={i} className={styles.rangeBound}>
+            <Input
+              ref={i === 0 ? (ref as any) : undefined}
+              type={type.elementType}
+              depth={depth + 1}
+              value={bound ?? null}
+              allowNull
+              onChange={(val, err) => {
+                const newVal = new Range(
+                  i === 0 ? val : value?.lower ?? null,
+                  i === 1 ? val : value?.upper ?? null,
+                  value?.incLower,
+                  value?.incUpper
+                );
+                const newErrs = [...errs];
+                newErrs[i] = err;
+                setErrs(newErrs);
+                onChange(newVal, newErrs.includes(true));
+              }}
+            />
+            <span>,</span>
+            <div
+              className={styles.button}
+              onClick={() => {
+                const newVal = new Range(
+                  i === 0 ? null : value?.lower ?? null,
+                  i === 1 ? null : value?.upper ?? null,
+                  value?.incLower,
+                  value?.incUpper
+                );
+                const newErrs = [...errs];
+                newErrs[i] = false;
+                setErrs(newErrs);
+                onChange(newVal, newErrs.includes(true));
+              }}
+            >
+              {"{ }"}
+            </div>
+          </div>
+        );
+      })}
+      <div className={styles.incBounds}>
+        <span>inc_lower</span> <span>:=</span>{" "}
+        <label>
+          <input
+            type="checkbox"
+            checked={value?.incLower ?? false}
+            onChange={(e) => {
+              onChange(
+                new Range(
+                  value?.lower ?? null,
+                  value?.upper ?? null,
+                  e.target.checked,
+                  value?.incUpper
+                ),
+                errs.includes(true)
+              );
+            }}
+          />
+          <span />
+        </label>
+        <span>,</span>
+        <br />
+        <span>inc_upper</span> <span>:=</span>{" "}
+        <label>
+          <input
+            type="checkbox"
+            checked={value?.incUpper ?? false}
+            onChange={(e) => {
+              onChange(
+                new Range(
+                  value?.lower ?? null,
+                  value?.upper ?? null,
+                  value?.incLower,
+                  e.target.checked
+                ),
+                errs.includes(true)
+              );
+            }}
+          />
+          <span />
+        </label>
+        <span>)</span>
+      </div>
     </div>
   );
 });
