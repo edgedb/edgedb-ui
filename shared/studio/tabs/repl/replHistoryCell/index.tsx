@@ -52,6 +52,12 @@ export default observer(function ReplHistoryCell({
                 <div className={styles.blockLabel}>
                   {cell instanceof ReplResultCell ? "Output" : "Error"}
                 </div>
+                {cell.accessPoliciesDisabled &&
+                cell instanceof ReplResultCell ? (
+                  <span className={styles.configNote}>
+                    access policies disabled
+                  </span>
+                ) : null}
                 {cell instanceof ReplErrorCell ? (
                   <div className={styles.queryError}>
                     <span className={styles.errorName}>
