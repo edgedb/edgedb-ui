@@ -50,6 +50,7 @@ export class ReplHistoryCell extends Model({
   $modelId: idProp,
   query: prop<string>(),
   paramsData: prop<Frozen<ParamsData> | null>(null),
+  accessPoliciesDisabled: prop<boolean>(),
   timestamp: prop<number>(),
   duration: prop<number | QueryDuration>(),
   expanded: prop(false),
@@ -187,12 +188,14 @@ export class Repl extends Model({
   addHistoryCell({
     query,
     paramsData,
+    accessPoliciesDisabled,
     timestamp,
     duration,
     ...data
   }: {
     query: string;
     paramsData: ParamsData | null;
+    accessPoliciesDisabled: boolean;
     timestamp: number;
     duration: number | QueryDuration;
   } & (
@@ -209,6 +212,7 @@ export class Repl extends Model({
     const historyCellData: ModelCreationData<ReplHistoryCell> = {
       query,
       paramsData: paramsData ? frozen(paramsData) : null,
+      accessPoliciesDisabled,
       timestamp,
       duration,
     };
@@ -250,6 +254,7 @@ export class Repl extends Model({
     const conn = connCtx.get(this)!;
 
     const timestamp = Date.now();
+    const accessPoliciesDisabled = conn.disableAccessPolicies;
     try {
       const {result, duration, outCodecBuf, resultBuf, capabilities, status} =
         yield* _await(
@@ -263,6 +268,7 @@ export class Repl extends Model({
       this.addHistoryCell({
         query,
         paramsData,
+        accessPoliciesDisabled,
         timestamp,
         duration,
         result,
@@ -275,6 +281,7 @@ export class Repl extends Model({
       this.addHistoryCell({
         query,
         paramsData,
+        accessPoliciesDisabled,
         timestamp,
         duration: Date.now() - timestamp,
         error: extractErrorDetails(e, query),
