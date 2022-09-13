@@ -1,8 +1,16 @@
 @import "@edgedb/common/mixins.scss";
 
-.globals {
-  position: relative;
+.sessionState {
+  display: flex;
   margin-left: 58px;
+}
+
+.sessionStateOptions {
+  position: relative;
+
+  &:not(:last-child) {
+    margin-right: 8px;
+  }
 
   &.disabled {
     opacity: 0.5;
@@ -10,7 +18,7 @@
   }
 }
 
-.globalsButton {
+.stateButton {
   height: 28px;
   display: flex;
   align-items: center;
@@ -44,21 +52,26 @@
   }
 }
 
-.globalsPanel {
+.statePanel {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
     0px 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
   padding: 12px;
   z-index: 101;
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 8px 12px;
 
   @include darkTheme {
     background: #353535;
   }
+}
+
+.globalsGrid {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 8px 12px;
 }
 
 .globalItem {
@@ -88,5 +101,15 @@
       fill: #9c9c9c;
       width: 18px;
     }
+  }
+}
+
+.configItem {
+  display: flex;
+  width: max-content;
+  align-items: center;
+
+  input {
+    margin-right: 8px;
   }
 }

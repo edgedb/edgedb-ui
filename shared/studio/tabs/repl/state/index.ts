@@ -256,8 +256,7 @@ export class Repl extends Model({
           conn.query(
             query,
             paramsData ? serialiseParamsData(paramsData) : undefined,
-            false,
-            settingsState.disableAccessPolicies
+            false
           )
         );
 

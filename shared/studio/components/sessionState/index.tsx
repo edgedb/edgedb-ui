@@ -1,4 +1,12 @@
-import {useRef, useState, useEffect} from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  ForwardedRef,
+  useCallback,
+} from "react";
 import {createPortal} from "react-dom";
 import {observer} from "mobx-react-lite";
 
@@ -21,39 +29,55 @@ export const SessionState = observer(function ({
 }) {
   const targetEl = document.getElementById("sessionStateControls");
 
-  if (targetEl && dbState.schemaData?.globals.size) {
-    return createPortal(<SessionGlobals dbState={dbState} />, targetEl);
+  if (targetEl) {
+    return createPortal(
+      <div className={styles.sessionState}>
+        {dbState.schemaData?.globals.size ? (
+          <SessionGlobals dbState={dbState} />
+        ) : null}
+        <SessionConfig dbState={dbState} />
+      </div>,
+      targetEl
+    );
   }
   return null;
 });
 
-const SessionGlobals = observer(function SessionGlobals({
-  dbState,
-}: {
-  dbState: DatabaseState;
-}) {
+interface PanelRef {
+  cancelOpenPanel: () => void;
+}
+
+const Panel = forwardRef(function (
+  {
+    label,
+    content,
+    onOpen,
+    onClose,
+    disabled,
+  }: {
+    label: string | JSX.Element;
+    content: JSX.Element;
+    onOpen?: () => void;
+    onClose: () => void;
+    disabled?: boolean;
+  },
+  ref: ForwardedRef<PanelRef>
+) {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  const dataGetter = useRef<() => typeof dbState.connection.sessionGlobals>();
 
-  const fetchingSchemaData = dbState.fetchingSchemaData;
-
-  function closePanel() {
-    dbState.connection.setSessionGlobals(dataGetter.current!());
-    setPanelOpen(false);
-  }
-
-  useEffect(() => {
-    if (fetchingSchemaData) {
+  useImperativeHandle(ref, () => ({
+    cancelOpenPanel() {
       setPanelOpen(false);
-    }
-  }, [fetchingSchemaData]);
+    },
+  }));
 
   useEffect(() => {
     if (panelOpen) {
       const listener = (e: MouseEvent) => {
         if (!panelRef.current?.contains(e.target as Node)) {
-          closePanel();
+          onClose();
+          setPanelOpen(false);
         }
       };
 
@@ -63,29 +87,70 @@ const SessionGlobals = observer(function SessionGlobals({
         window.removeEventListener("mousedown", listener, {capture: true});
       };
     }
-  }, [panelOpen]);
+  }, [panelOpen, onClose]);
+
+  return (
+    <div
+      className={cn(styles.sessionStateOptions, {
+        [styles.disabled]: disabled ?? false,
+      })}
+    >
+      <div
+        className={styles.stateButton}
+        onClick={() => {
+          onOpen?.();
+          setPanelOpen(true);
+        }}
+      >
+        {label}
+        <ChevronDownIcon />
+      </div>
+      {panelOpen ? (
+        <div ref={panelRef} className={styles.statePanel}>
+          {content}
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+const SessionGlobals = observer(function SessionGlobals({
+  dbState,
+}: {
+  dbState: DatabaseState;
+}) {
+  const dataGetter = useRef<() => typeof dbState.connection.sessionGlobals>();
+  const ref = useRef<PanelRef>(null);
+
+  const fetchingSchemaData = dbState.fetchingSchemaData;
+
+  useEffect(() => {
+    if (fetchingSchemaData) {
+      ref.current?.cancelOpenPanel();
+    }
+  }, [fetchingSchemaData]);
 
   const globalsCount = Object.keys(dbState.connection.sessionGlobals).length;
 
   return (
-    <div
-      className={cn(styles.globals, {
-        [styles.disabled]: fetchingSchemaData,
-      })}
-    >
-      <div className={styles.globalsButton} onClick={() => setPanelOpen(true)}>
-        Globals {globalsCount ? <span>&nbsp;· {globalsCount}</span> : null}
-        <ChevronDownIcon />
-      </div>
-      {panelOpen ? (
-        <div ref={panelRef} className={styles.globalsPanel}>
-          <SessionGlobalsPanel
-            dbState={dbState}
-            setDataGetter={(getter) => (dataGetter.current = getter)}
-          />
-        </div>
-      ) : null}
-    </div>
+    <Panel
+      ref={ref}
+      label={
+        <>
+          Globals {globalsCount ? <span>&nbsp;· {globalsCount}</span> : null}
+        </>
+      }
+      content={
+        <SessionGlobalsPanel
+          dbState={dbState}
+          setDataGetter={(getter) => (dataGetter.current = getter)}
+        />
+      }
+      onClose={() => {
+        dbState.connection.setSessionGlobals(dataGetter.current!());
+      }}
+      disabled={fetchingSchemaData}
+    />
   );
 });
 
@@ -124,7 +189,7 @@ const SessionGlobalsPanel = observer(function SessionGlobalsPanel({
   }, [values]);
 
   return (
-    <>
+    <div className={styles.globalsGrid}>
       {[...(dbState.schemaData?.globals.values() ?? [])]
         .filter((g) => !g.expr)
         .map((g, i) => {
@@ -174,6 +239,53 @@ const SessionGlobalsPanel = observer(function SessionGlobalsPanel({
             </div>
           );
         })}
-    </>
+    </div>
+  );
+});
+
+interface SessionConfig {
+  disableAccessPolicies: boolean;
+}
+
+const SessionConfig = observer(function SessionConfig({
+  dbState,
+}: {
+  dbState: DatabaseState;
+}) {
+  const [config, setConfig] = useState<SessionConfig>(() => ({
+    disableAccessPolicies: dbState.connection.disableAccessPolicies,
+  }));
+
+  return (
+    <Panel
+      label="Config"
+      content={
+        <>
+          <label className={styles.configItem}>
+            <input
+              type="checkbox"
+              checked={config.disableAccessPolicies}
+              onChange={(e) => {
+                setConfig({
+                  ...config,
+                  disableAccessPolicies: e.target.checked,
+                });
+              }}
+            />
+            Disable Access Policies
+          </label>
+        </>
+      }
+      onOpen={() => {
+        setConfig({
+          disableAccessPolicies: dbState.connection.disableAccessPolicies,
+        });
+      }}
+      onClose={() => {
+        dbState.connection.setDisableAccessPolicies(
+          config.disableAccessPolicies
+        );
+      }}
+    />
   );
 });
