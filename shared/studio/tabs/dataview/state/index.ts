@@ -300,12 +300,13 @@ export class DataInspector extends Model({
       }
     );
     const refreshDataDisposer = reaction(
-      () => connCtx.get(this)?.sessionGlobals,
-      (globals) => {
-        if (globals) {
-          this.omittedLinks.clear();
-          this._refreshData(true);
-        }
+      () => {
+        const conn = connCtx.get(this);
+        return [conn?.sessionGlobals, conn?.disableAccessPolicies];
+      },
+      () => {
+        this.omittedLinks.clear();
+        this._refreshData(true);
       }
     );
 
