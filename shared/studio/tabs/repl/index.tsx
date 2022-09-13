@@ -162,16 +162,6 @@ const QueryOptions = observer(function QueryOptions() {
         <label>
           <input
             type="checkbox"
-            checked={replState.disableAccessPolicies}
-            onChange={(e) => {
-              replState.setDisableAccessPolicies(e.target.checked);
-            }}
-          />
-          Disable Access Policies
-        </label>
-        <label>
-          <input
-            type="checkbox"
             checked={replState.persistQuery}
             onChange={(e) => {
               replState.setPersistQuery(e.target.checked);

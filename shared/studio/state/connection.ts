@@ -61,7 +61,6 @@ type PendingQuery = {
   query: string;
   params?: QueryParams;
   newCodec: boolean;
-  disableAccessPolicies: boolean;
   reject: (error: Error) => void;
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
@@ -81,6 +80,7 @@ export class Connection extends Model({
   sessionGlobals: prop(
     () => ({} as {[key: string]: {value: any; typeId: string}})
   ).withSetter(),
+  disableAccessPolicies: prop(false).withSetter(),
 }) {
   conn = AdminUIFetchConnection.create(
     {
@@ -110,22 +110,20 @@ export class Connection extends Model({
     if (items.length) {
       state = state.withGlobals(globals);
     }
+    if (this.disableAccessPolicies) {
+      state = state.withConfig({
+        apply_access_policies: false,
+      });
+    }
     return state;
   }
 
   query(
     query: string,
     params?: QueryParams,
-    newCodec?: boolean,
-    disableAccessPolicies?: boolean
+    newCodec?: boolean
   ): Promise<QueryResult> {
-    return this._addQueryToQueue(
-      "query",
-      query,
-      params,
-      newCodec,
-      disableAccessPolicies
-    );
+    return this._addQueryToQueue("query", query, params, newCodec);
   }
 
   parse(query: string): Promise<ParseResult> {
@@ -140,8 +138,7 @@ export class Connection extends Model({
     kind: QueryKind,
     query: string,
     params?: QueryParams,
-    newCodec: boolean = false,
-    disableAccessPolicies: boolean = false
+    newCodec: boolean = false
   ) {
     return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
@@ -149,7 +146,6 @@ export class Connection extends Model({
         query,
         params,
         newCodec,
-        disableAccessPolicies,
         resolve,
         reject,
       });
@@ -170,7 +166,6 @@ export class Connection extends Model({
           query.kind,
           query.query,
           query.newCodec,
-          query.disableAccessPolicies,
           query.params
         );
         query.resolve(result as any);
@@ -187,15 +182,10 @@ export class Connection extends Model({
     kind: QueryKind,
     queryString: string,
     newCodec: boolean,
-    disableAccessPolicies: boolean,
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
     try {
-      const state = disableAccessPolicies
-        ? this._state.withConfig({
-            apply_access_policies: false,
-          })
-        : this._state;
+      const state = this._state;
 
       if (kind === "execute") {
         await this.conn.rawExecute(queryString, state);
