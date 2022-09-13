@@ -195,6 +195,19 @@
   margin-top: -4px;
 }
 
+.configNote {
+  background: rgba(226, 215, 63, 0.7);
+  border-radius: 12px;
+  padding: 0 10px;
+  color: #706906;
+  margin-left: -16px;
+  white-space: nowrap;
+
+  @include darkTheme {
+    color: #363307;
+  }
+}
+
 .queryError {
   font-weight: normal;
   font-family: Roboto Mono;
