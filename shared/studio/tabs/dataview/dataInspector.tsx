@@ -396,9 +396,9 @@ const GridCell = observer(function GridCell({
       }
     } else {
       const countData = data?.[`__count_${field.queryName}`];
-      if (countData !== null) {
+      if (countData !== null || insertedRow) {
         const counts: {[typename: string]: number} =
-          countData.reduce((counts: any, {typename, count}: any) => {
+          countData?.reduce((counts: any, {typename, count}: any) => {
             counts[typename] = count;
             return counts;
           }, {}) ?? {};
@@ -420,7 +420,9 @@ const GridCell = observer(function GridCell({
         if (Object.keys(counts).length === 0) {
           content = (
             <span className={styles.emptySet}>
-              {field.required ? "hidden by access policy" : "{}"}
+              {field.required && !insertedRow
+                ? "hidden by access policy"
+                : "{}"}
             </span>
           );
         } else {
