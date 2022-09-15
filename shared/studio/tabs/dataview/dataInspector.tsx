@@ -360,6 +360,7 @@ const GridCell = observer(function GridCell({
   }
 
   let content: JSX.Element | null = null;
+  let selectable = false;
   if (isEmptySubtype) {
     content = <span className={styles.emptySubtypeField}>-</span>;
   } else if (data) {
@@ -392,6 +393,7 @@ const GridCell = observer(function GridCell({
               {undoEdit}
             </>
           );
+          selectable = true;
         }
       }
     } else {
@@ -451,6 +453,7 @@ const GridCell = observer(function GridCell({
   return (
     <div
       className={cn(styles.cell, {
+        [styles.selectable]: selectable,
         [styles.loadingCell]: !data,
         [styles.isDeleted]:
           isDeletedRow ||
