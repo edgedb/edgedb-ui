@@ -235,6 +235,10 @@
   font-family: Roboto Mono;
   font-weight: normal;
   font-size: 14px;
+
+  &.selectable {
+    user-select: text;
+  }
 }
 
 .loadingCell {
@@ -440,6 +444,8 @@
     margin-left: var(--rowIndexWidth);
     display: flex;
     align-items: center;
+    user-select: text;
+    width: 100%;
     z-index: 1;
   }
 
@@ -458,6 +464,7 @@
     padding: 0 8px;
     margin-left: 1rem;
     cursor: pointer;
+    user-select: none;
 
     @include darkTheme {
       border: 1px solid #7c7c7c;

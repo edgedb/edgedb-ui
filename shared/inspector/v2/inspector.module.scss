@@ -93,6 +93,8 @@
 
 .typeName {
   color: var(--type-color);
+  user-select: none;
+  pointer-events: none;
 }
 
 .scalar_string {
