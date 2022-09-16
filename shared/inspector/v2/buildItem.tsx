@@ -142,15 +142,27 @@ export function expandItem(
                           (item.parent as any).data.id,
                           item.fieldName!
                         );
-                        (item.parent as any).data[item.fieldName!] = data;
                         const codecIndex = (
                           item.parent as any
                         ).codec.fields.findIndex(
                           (f: any) => f.name === item.fieldName!
                         );
-                        (item.parent as any).codec.codecs[
-                          codecIndex
-                        ].subCodec = codec;
+                        if (
+                          (
+                            (item.parent as any).codec.codecs[
+                              codecIndex
+                            ] as _ICodec
+                          ).getKind() === "object"
+                        ) {
+                          (item.parent as any).data[item.fieldName!] = data[0];
+                          (item.parent as any).codec.codecs[codecIndex] =
+                            codec;
+                        } else {
+                          (item.parent as any).data[item.fieldName!] = data;
+                          (item.parent as any).codec.codecs[
+                            codecIndex
+                          ].subCodec = codec;
+                        }
                         const parentIndex = state._items.indexOf(item.parent!);
                         state.collapseItem(parentIndex);
                         state.expandItem(parentIndex);
