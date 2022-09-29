@@ -174,7 +174,9 @@ const DataInspectorView = observer(function DataInspectorView({
           </div>
         ) : null}
 
-        <div className={styles.rowCount}>{inspectorState?.rowCount} Items</div>
+        <div className={styles.rowCount}>
+          {inspectorState?.rowCount === 1 ? `${inspectorState?.rowCount} Item` : `${inspectorState?.rowCount} Items`}
+        </div>
 
         <div className={styles.headerButtons}>
           {inspectorState.subTypes.length ? (
