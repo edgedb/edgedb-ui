@@ -168,6 +168,7 @@ export class DatabaseState extends Model({
       );
       return schemaData;
     }
+    return this.schemaData;
   }
 
   @modelFlow

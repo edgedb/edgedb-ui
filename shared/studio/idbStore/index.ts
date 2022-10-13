@@ -1,20 +1,37 @@
 import {openDB, DBSchema} from "idb";
 import {SchemaData} from "../state/database";
 
-// interface ReplResult {
-//   replId: string;
-//   outCodecBuf: Buffer;
-//   resultBuf: Buffer;
-// }
+export interface QueryHistoryItem {
+  instanceId: string;
+  dbName: string;
+  timestamp: number;
+  data: any;
+}
+
+export interface QueryResultData {
+  outCodecBuf: Buffer;
+  resultBuf: Buffer;
+}
 
 interface IDBStore extends DBSchema {
-  // replResults: {
-  //   key: string;
-  //   value: ReplResult;
-  //   indexes: {
-  //     replId: string;
-  //   };
-  // };
+  queryHistory: {
+    key: [string, string, number];
+    value: QueryHistoryItem;
+    indexes: {
+      byInstanceId: string;
+    };
+  };
+  replHistory: {
+    key: [string, string, number];
+    value: QueryHistoryItem;
+    indexes: {
+      byInstanceId: string;
+    };
+  };
+  queryResultData: {
+    key: string;
+    value: QueryResultData;
+  };
   schemaData: {
     key: string;
     value: {instanceId: string; data: SchemaData};
@@ -24,35 +41,127 @@ interface IDBStore extends DBSchema {
   };
 }
 
-const db = openDB<IDBStore>("EdgeDBStudio", 1, {
+const db = openDB<IDBStore>("EdgeDBStudio", 2, {
   upgrade(db, oldVersion) {
     switch (oldVersion) {
       case 0: {
-        // const replResultStore = db.createObjectStore("replResults");
-        // replResultStore.createIndex("replId", "replId");
+        db.createObjectStore("schemaData").createIndex(
+          "byInstanceId",
+          "instanceId"
+        );
+      }
+      case 1: {
+        db.createObjectStore("queryHistory", {
+          keyPath: ["instanceId", "dbName", "timestamp"],
+        }).createIndex("byInstanceId", "instanceId");
+        db.createObjectStore("replHistory", {
+          keyPath: ["instanceId", "dbName", "timestamp"],
+        }).createIndex("byInstanceId", "instanceId");
 
-        const schemaDataStore = db.createObjectStore("schemaData");
-        schemaDataStore.createIndex("byInstanceId", "instanceId");
+        db.createObjectStore("queryResultData");
       }
     }
   },
 });
 
-// repl results
+// query / repl history
 
-// export async function storeReplResult(resultId: string, result: ReplResult) {
-//   await (await db).add("replResults", result, resultId);
-// }
+async function _storeHistoryItem(
+  storeId: "queryHistory" | "replHistory",
+  itemId: string,
+  item: QueryHistoryItem,
+  resultData?: QueryResultData
+) {
+  const tx = (await db).transaction([storeId, "queryResultData"], "readwrite");
 
-// export async function fetchReplResult(resultId: string) {
-//   return (await db).get("replResults", resultId);
-// }
+  return Promise.all([
+    tx.objectStore(storeId).add(item),
+    resultData
+      ? tx.objectStore("queryResultData").add(resultData, itemId)
+      : null,
+    tx.done,
+  ]);
+}
 
-// export async function removeReplResults(replId: string) {
-//   const tx = (await db).transaction("replResults", "readwrite");
-//   const resultIds = await tx.store.index("replId").getAllKeys(replId);
-//   await Promise.all([...resultIds.map((id) => tx.store.delete(id)), tx.done]);
-// }
+export function storeQueryHistoryItem(
+  itemId: string,
+  item: QueryHistoryItem,
+  resultData?: QueryResultData
+) {
+  return _storeHistoryItem("queryHistory", itemId, item, resultData);
+}
+
+export function storeReplHistoryItem(
+  itemId: string,
+  item: QueryHistoryItem,
+  resultData?: QueryResultData
+) {
+  return _storeHistoryItem("replHistory", itemId, item, resultData);
+}
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+async function _fetchHistory(
+  storeId: "queryHistory" | "replHistory",
+  instanceId: string,
+  dbName: string,
+  fromTimestamp: number,
+  count = 50
+) {
+  const tx = (await db).transaction(storeId, "readonly");
+  let cursor = await tx.store.openCursor(
+    IDBKeyRange.bound(
+      [instanceId, dbName, -Infinity],
+      [instanceId, dbName, fromTimestamp],
+      true,
+      true
+    ),
+    "prev"
+  );
+  const items: QueryHistoryItem[] = [];
+  let i = 0;
+  while (cursor && i < count) {
+    items.push(cursor.value);
+    i++;
+    cursor = await cursor.continue();
+  }
+  return items;
+}
+
+export function fetchQueryHistory(
+  instanceId: string,
+  dbName: string,
+  fromTimestamp: number,
+  count = 50
+) {
+  return _fetchHistory(
+    "queryHistory",
+    instanceId,
+    dbName,
+    fromTimestamp,
+    count
+  );
+}
+
+export function fetchReplHistory(
+  instanceId: string,
+  dbName: string,
+  fromTimestamp: number,
+  count = 50
+) {
+  return _fetchHistory(
+    "replHistory",
+    instanceId,
+    dbName,
+    fromTimestamp,
+    count
+  );
+}
+
+export async function fetchResultData(itemId: string) {
+  return (await db).get("queryResultData", itemId);
+}
 
 // schema data
 

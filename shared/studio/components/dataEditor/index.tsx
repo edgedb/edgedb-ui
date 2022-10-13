@@ -12,7 +12,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {Select} from "@edgedb/common/ui/select";
 
-import {scalarItemToString} from "@edgedb/inspector/v2/buildScalar";
+import {scalarItemToString} from "@edgedb/inspector/buildScalar";
 
 import {
   SchemaArrayType,

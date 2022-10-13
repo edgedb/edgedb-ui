@@ -3,7 +3,7 @@ import {observer} from "mobx-react";
 import cn from "@edgedb/common/utils/classNames";
 
 import {useTabState} from "../../../state";
-import {Repl} from "../state";
+import {QueryEditor} from "../state";
 import {ResolvedParameter} from "../state/parameters";
 
 import {ArrayEditor, getInputComponent} from "../../../components/dataEditor";
@@ -11,8 +11,8 @@ import {ArrayEditor, getInputComponent} from "../../../components/dataEditor";
 import styles from "./paramEditor.module.scss";
 
 export default observer(function ParamEditorPanel() {
-  const replState = useTabState(Repl);
-  const paramEditorState = replState.queryParamsEditor;
+  const editorState = useTabState(QueryEditor);
+  const paramEditorState = editorState.queryParamsEditor;
 
   if (paramEditorState.currentParams.size === 0) {
     return null;
@@ -52,7 +52,7 @@ const ParamEditor = observer(function ParamEditor({
   param,
   lastParam,
 }: ParamEditorProps) {
-  const paramData = useTabState(Repl).queryParamsEditor.paramData.get(
+  const paramData = useTabState(QueryEditor).queryParamsEditor.paramData.get(
     param.name
   )!;
 

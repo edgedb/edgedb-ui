@@ -156,6 +156,31 @@ export function TabReplIcon(props: ActiveItem) {
   );
 }
 
+export function TabEditorIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="21"
+      height="16"
+      viewBox="0 0 21 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M19.8051 3.40611C20.1327 3.85073 20.0378 4.47675 19.5932 4.80436L10.0932 11.8044C9.6486 12.132 9.02258 12.0371 8.69496 11.5925C8.36735 11.1479 8.4622 10.5219 8.90682 10.1943L18.4068 3.19425C18.8514 2.86664 19.4775 2.96149 19.8051 3.40611Z"
+        fill={props?.active ? activeColor3 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M0 2C0 0.895432 0.89543 0 2 0H14C15.1046 0 16 0.89543 16 2V2.94081C16 3.49309 15.5523 3.94081 15 3.94081C14.4477 3.94081 14 3.49309 14 2.94081V2L2 2V14H14V10.6875C14 10.1352 14.4477 9.68747 15 9.68747C15.5523 9.68747 16 10.1352 16 10.6875V14C16 15.1046 15.1046 16 14 16H2C0.895432 16 0 15.1046 0 14V2Z"
+        fill={props?.active ? activeColor1 : undefined}
+      />
+    </svg>
+  );
+}
+
 export function TabSchemaIcon(props: ActiveItem) {
   return (
     <svg

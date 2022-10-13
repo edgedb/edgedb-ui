@@ -11,7 +11,7 @@ import {
   ReplHistoryCell as ReplHistoryCellState,
   ReplResultCell,
 } from "../state";
-import {currentDate} from "../state/currentDate";
+import {currentDate} from "../state/currentTimestamp";
 import {QueryDuration} from "../../../state/connection";
 
 import {formatDuration} from "../../../utils/formatDuration";

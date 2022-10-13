@@ -1,0 +1,209 @@
+.queryBuilder {
+  font-family: "Roboto Mono", monospace;
+  font-size: 15px;
+  line-height: 28px;
+  padding: 16px;
+  overflow: auto;
+  width: 100%;
+  white-space: nowrap;
+
+  &.editingDisabled {
+    pointer-events: none;
+  }
+}
+
+.select {
+  line-height: 24px;
+  height: 30px;
+  margin: -1px 2px;
+
+  --dropdownButtonColour: transparent;
+}
+
+.inactive {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+
+  label {
+    cursor: pointer;
+  }
+}
+
+.modRow {
+  display: flex;
+  padding: 2px 0;
+  margin-left: 2ch;
+
+  &.indent {
+    margin-left: 4ch;
+  }
+
+  input {
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 26px;
+    margin: -1px 0;
+    margin-left: 0.5ch;
+    border: 2px solid transparent;
+    border-bottom-color: var(--inputBorderColour, #d4d4d4);
+    outline: 0;
+    padding: 0 6px;
+
+    &.error {
+      --inputBorderColour: red;
+    }
+
+    &:focus {
+      background: #fff;
+      border-color: var(--inputBorderColour, #047cff);
+      border-radius: 4px;
+    }
+  }
+
+  &:hover {
+    & > input:not(:focus),
+    & > .filterExpr > input:not(:focus) {
+      background: #fff;
+      border-color: var(--inputBorderColour, #bbb);
+      border-radius: 4px;
+    }
+
+    & > .select,
+    & > .filterExpr > .select {
+      background: #fff;
+      --dropdownButtonColour: #aaa;
+    }
+  }
+}
+
+.keyword {
+  color: var(--syntax-purple);
+}
+
+.addModifiers {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+
+  opacity: 0.3;
+
+  .shapeBlock:hover > .row > & {
+    opacity: 1;
+  }
+}
+
+.modButton {
+  font-size: 13px;
+  border: 1px solid #adadad;
+  border-radius: 11px;
+  height: 20px;
+  line-height: 20px;
+  margin-right: 8px;
+  padding: 0 8px;
+  opacity: 0.6;
+  font-style: italic;
+  cursor: pointer;
+
+  &:before {
+    content: "+";
+    font-style: normal;
+    margin-right: 4px;
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.filterGroup {
+  border-radius: 4px;
+
+  &.nested {
+    margin-left: 1ch;
+    background: #ebebeb;
+    padding: 6px;
+    margin-bottom: 6px;
+
+    & > .modRow {
+      margin-left: 0;
+
+      &.indent {
+        margin-left: 2ch;
+      }
+
+      &:first-child:before {
+        content: "(";
+      }
+      &:nth-last-child(2):after {
+        content: ")";
+      }
+    }
+
+    &.altBg {
+      background: #f5f5f5;
+    }
+  }
+
+  & > .modRow:last-child {
+    opacity: 0.3;
+  }
+
+  &:hover > .modRow:last-child {
+    opacity: 1;
+  }
+}
+
+.filterExpr {
+  display: flex;
+}
+
+.propType {
+  opacity: 0.8;
+  margin: 0 0.5ch;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  opacity: 0;
+  cursor: pointer;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:hover {
+    opacity: 1 !important;
+
+    svg {
+      fill: #ff4242;
+    }
+  }
+
+  .modRow:hover > & {
+    opacity: 0.3;
+  }
+}
+
+.orderByBlock {
+  & > .modRow:last-child {
+    opacity: 0.3;
+  }
+
+  &:hover > .modRow:last-child {
+    opacity: 1;
+  }
+}

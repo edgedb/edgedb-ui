@@ -1,0 +1,440 @@
+@import "@edgedb/common/mixins.scss";
+
+.replx {
+  font-family: Roboto;
+  font-style: normal;
+  min-height: 0;
+  min-width: 0;
+  flex-grow: 1;
+
+  --repl-history-background: #f7f7f7;
+  --repl-history-collapse-background: #e3e3e3;
+  --repl-history-collapse-icon: #7f7f7f;
+  --repl-history-input-background: #ffffff;
+  --repl-history-output-background: #f0f0f0;
+  --repl-history-block-label: #808080;
+  --repl-history-info-label: #7f7f7f;
+  --repl-history-query-colour: #595959;
+  --repl-history-button-background: #e3e3e3;
+  --repl-history-button-colour: #7f7f7f;
+  --repl-inspector-colour: #595959;
+
+  // --transaction-query-colour: #333333;
+  // --transaction-status-colour: #bfbfbf;
+  // --transaction-active: #a5b4ea;
+  // --transaction-active-dark: #97a5d6;
+  // --transaction-error: #eb9292;
+  // --transaction-error-dark: #d78686;
+  // --transaction-savepoint: #e9da8a;
+  // --transaction-savepoint-dark: #d5c77f;
+  // --transaction-committed: #80bea8;
+  // --transaction-committed-dark: #76ae9a;
+
+  @include darkTheme {
+    --repl-history-background: #242424;
+    --repl-history-collapse-background: #1c1c1c;
+    --repl-history-collapse-icon: #808080;
+    --repl-history-input-background: #333333;
+    --repl-history-output-background: #2e2e2e;
+    --repl-history-block-label: #808080;
+    --repl-history-info-label: #cccccc;
+    --repl-history-query-colour: #bfbfbf;
+    --repl-history-button-background: #1f1f1f;
+    --repl-history-button-colour: #8b8b8f;
+    --repl-inspector-colour: #bfbfbf;
+
+    // --transaction-query-colour: #191919;
+    // --transaction-status-colour: #bfbfbf;
+    // --transaction-active: #5f74c0;
+    // --transaction-active-dark: #4f5f98;
+    // --transaction-error: #ac4343;
+    // --transaction-error-dark: #893a3a;
+    // --transaction-savepoint: #978837;
+    // --transaction-savepoint-dark: #796e31;
+    // --transaction-committed: #057d52;
+    // --transaction-committed-dark: #0c6645;
+  }
+}
+
+$historyTransitionTime: 0.15s;
+
+.wrapper {
+  flex-grow: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+
+  .main {
+    height: auto;
+    transition: margin $historyTransitionTime;
+
+    & > div:first-child {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+  }
+
+  &.showHistory .main {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+.sidebar {
+  position: relative;
+  width: 32px;
+  margin-right: 2px;
+  flex-shrink: 0;
+  background: #e9e9e9;
+  border-radius: 8px 0 0 8px;
+  z-index: 1;
+  overflow: hidden;
+  transition: width $historyTransitionTime;
+
+  .showHistory & {
+    width: 194px;
+    margin-right: 0;
+    border-radius: 8px;
+  }
+
+  @include darkTheme {
+    background: #2e2e2e;
+  }
+}
+
+.queryResult {
+  flex-grow: 1;
+  min-width: 0;
+  font-family: "Roboto Mono", monospace;
+}
+
+.toolbar {
+  position: absolute;
+  width: 32px;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  transition: opacity $historyTransitionTime;
+
+  .showHistory & {
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .tabs {
+    grid-row: 2;
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    color: #606060;
+    cursor: pointer;
+
+    &:not(:last-child) {
+      border-bottom: 2px solid var(--app-bg);
+    }
+
+    span {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    &:hover {
+      color: #333;
+    }
+
+    &.selected {
+      background: #f5f5f5;
+
+      color: #333;
+    }
+
+    @include darkTheme {
+      color: #b3b3b3;
+
+      &:hover {
+        color: #d3d3d3;
+      }
+
+      &.selected {
+        background: #242424;
+        color: #d3d3d3;
+      }
+    }
+  }
+}
+
+.historyButton {
+  grid-row: 3;
+  align-self: end;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.history {
+  position: absolute;
+  width: 194px;
+  height: 100%;
+  opacity: 0;
+  transition: opacity $historyTransitionTime;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+}
+
+.historyControls {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+
+  --buttonBg: #acacac;
+  --buttonTextColour: #fff;
+
+  .editButton {
+    margin-left: auto;
+    --buttonBg: #49d8ad;
+  }
+}
+
+.historyListWrapper {
+  height: 100%;
+  mask-image: linear-gradient(
+    transparent 0px,
+    #000 18px,
+    #000 calc(100% - 50px),
+    transparent 100%
+  );
+}
+
+.historyList {
+  @include hideScrollbar;
+
+  & > div {
+    padding-bottom: 50px;
+  }
+}
+
+.historyItem {
+  position: absolute;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  height: 105px;
+  width: calc(100% - 32px);
+  margin: 16px;
+
+  &:hover {
+    background: #fafafa;
+  }
+
+  &.selected {
+    outline: 2px solid #49d8ad;
+  }
+
+  svg {
+    height: 100%;
+    width: 100%;
+    opacity: 0.5;
+
+    --syntax-base: #444;
+
+    @include darkTheme {
+      --syntax-base: #e5e5e5;
+    }
+  }
+
+  .timeLabel {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: #f2f2f2;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 15px;
+    padding: 2px 4px;
+
+    @include darkTheme {
+      background: #333333;
+    }
+  }
+
+  &.draft {
+    background: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    color: #666;
+    border: 2px dashed #aaa;
+    box-sizing: border-box;
+
+    &.selected {
+      outline: none;
+      border-color: #49d8ad;
+    }
+  }
+
+  @include darkTheme {
+    background: #4c4c4c;
+  }
+}
+
+.historyLoading {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 80px;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+}
+
+.editorBlock {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+  // padding-left: 8px;
+}
+
+.replEditorOverlays {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 50%;
+  pointer-events: none;
+  transition: opacity 0.1s;
+
+  .showHistory & {
+    opacity: 0;
+  }
+}
+
+.controls {
+  margin: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  label {
+    display: flex;
+    align-items: center;
+    color: #909090;
+    margin-right: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 16px;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    input {
+      appearance: none;
+      outline: 1px solid #d3d3d3;
+      outline-offset: 1px;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin: 4px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      cursor: inherit;
+
+      &:checked {
+        background-color: var(--app-accent-green);
+      }
+
+      @include darkTheme {
+        outline-color: #989898;
+      }
+    }
+  }
+}
+
+.runButton {
+  --buttonBg: var(--app-accent-green);
+  --buttonTextColour: #0a4634;
+  align-self: flex-start;
+  flex-shrink: 0;
+  pointer-events: auto;
+}
+
+.queryOptions {
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
+  position: relative;
+  min-width: 0;
+
+  .queryOptionsWrapper {
+    display: flex;
+    flex-shrink: 0;
+    pointer-events: auto;
+  }
+
+  .overflowMenu {
+    display: flex;
+    cursor: pointer;
+    pointer-events: auto;
+
+    svg {
+      width: 24px;
+      height: 23px;
+      fill: #b3b3b3;
+    }
+  }
+
+  &.collapsed {
+    .queryOptionsWrapper {
+      flex-direction: column;
+      position: absolute;
+      background: #fff;
+      bottom: calc(100% + 8px);
+      border-radius: 18px;
+      padding: 4px;
+      display: none;
+
+      label {
+        margin: 0;
+      }
+
+      &.menuOpen {
+        display: flex;
+      }
+    }
+  }
+
+  @include darkTheme {
+    .overflowMenu svg {
+      fill: #626262;
+    }
+
+    &.collapsed .queryOptionsWrapper {
+      background: #353535;
+    }
+  }
+}

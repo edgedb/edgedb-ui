@@ -23,7 +23,7 @@ import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {EdgeDBSet} from "../../../utils/decodeRawBuffer";
 
-import {ObservableLRU} from "./lru";
+import {ObservableLRU} from "../../../state/utils/lru";
 
 import {
   SchemaLink,
@@ -32,7 +32,7 @@ import {
 } from "@edgedb/common/schemaData";
 import {resolveObjectTypeUnion} from "@edgedb/common/schemaData/utils";
 
-import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
+import {InspectorState, resultGetterCtx} from "@edgedb/inspector/state";
 
 import {dbCtx, connCtx} from "../../../state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./edits";

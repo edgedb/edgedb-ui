@@ -24,6 +24,7 @@ export default observer(function SplitView({
   views,
   state,
   minViewSize = 10,
+  className,
   ...otherProps
 }: React.HTMLAttributes<HTMLDivElement> & SplitViewProps) {
   const [_, setGlobalDragCursor] = useGlobalDragCursor();
@@ -87,7 +88,7 @@ export default observer(function SplitView({
     <div
       {...otherProps}
       ref={ref}
-      className={cn(styles.splitViewContainer, {
+      className={cn(className, styles.splitViewContainer, {
         [styles.splitVertical]:
           state.direction === SplitViewDirection.vertical,
       })}

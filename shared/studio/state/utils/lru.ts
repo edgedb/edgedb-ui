@@ -1,4 +1,4 @@
-import {observable, makeObservable} from "mobx";
+import {observable, makeObservable, action} from "mobx";
 
 export class ObservableLRU<K, V> {
   @observable.shallow
@@ -28,6 +28,7 @@ export class ObservableLRU<K, V> {
     }
   }
 
+  @action
   set(key: K, val: V): void {
     if (this.data.has(key)) {
       this.data.set(key, val);

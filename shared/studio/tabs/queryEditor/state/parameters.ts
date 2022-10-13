@@ -13,7 +13,7 @@ import {
   ResolvedParameter,
 } from "./extractQueryParameters";
 
-import {Repl} from ".";
+import {EditorKind, queryEditorCtx} from ".";
 import {dbCtx} from "../../../state/database";
 import {parsers} from "../../../components/dataEditor";
 
@@ -50,7 +50,7 @@ export type ParamsData = {
 };
 
 @model("Repl/QueryParamsEditor")
-export class ReplQueryParamsEditor extends Model({
+export class QueryParamsEditor extends Model({
   paramData: prop(() => objectMap<ReplQueryParamData>()),
 }) {
   @observable
@@ -84,10 +84,10 @@ export class ReplQueryParamsEditor extends Model({
 
   onAttachedToRootStore() {
     const dbState = dbCtx.get(this)!;
-    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
+    const editor = queryEditorCtx.get(this)!;
 
     const disposer = reaction(
-      () => [repl.currentQuery, dbState.schemaData],
+      () => [editor.currentQueryData[EditorKind.EdgeQL], dbState.schemaData],
       () => this._extractQueryParameters(),
       {delay: 200, fireImmediately: true}
     );
@@ -99,9 +99,9 @@ export class ReplQueryParamsEditor extends Model({
 
   _extractQueryParameters() {
     const dbState = dbCtx.get(this)!;
-    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
+    const editor = queryEditorCtx.get(this)!;
 
-    const query = repl.currentQuery;
+    const query = editor.currentQueryData[EditorKind.EdgeQL];
     const schemaScalars = dbState.schemaData?.scalars;
 
     if (schemaScalars) {
@@ -157,7 +157,7 @@ export class ReplQueryParamsEditor extends Model({
   }
 
   @modelAction
-  restoreParamsData(paramsData?: ParamsData) {
+  restoreParamsData(paramsData?: ParamsData | null) {
     this.clear();
     if (paramsData) {
       for (const [key, param] of Object.entries(paramsData)) {

@@ -2,4 +2,30 @@
 
 .codeEditor {
   display: contents;
+
+  &.terminalCursor {
+    :global {
+      .cm-cursor {
+        border: 0;
+        margin: 0;
+        width: 1ch;
+        backdrop-filter: grayscale(100%) contrast(1.5) invert(100%);
+      }
+    }
+  }
 }
+
+// .terminalCursor {
+//   width: 1ch;
+//   margin-right: -1ch;
+//   background: #fff;
+//   color: #000;
+//   z-index: 1;
+//   animation: steps(1) blink 1.2s infinite;
+// }
+
+// @keyframes blink {
+//   50% {
+//     visibility: hidden;
+//   }
+// }

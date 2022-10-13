@@ -1,4 +1,4 @@
-import React, {PropsWithChildren} from "react";
+import {PropsWithChildren} from "react";
 import {_ICodec, Range} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -19,6 +19,7 @@ export function buildScalarItem(
     label?: JSX.Element;
   },
   data: any,
+  index: string | number,
   comma?: boolean
 ): Item {
   const {body, height} = renderValue(
@@ -33,13 +34,10 @@ export function buildScalarItem(
   return {
     ...base,
     type: ItemType.Scalar,
-    height: height,
-    body: (
-      <>
-        {body}
-        {comma ? "," : ""}
-      </>
-    ),
+    index,
+    height,
+    body,
+    comma: comma ?? false,
   };
 }
 

@@ -7,7 +7,7 @@ import {
   buildClientSchema,
 } from "graphql";
 
-import {prettyPrintJSON} from "@edgedb/inspector/v2/buildScalar";
+import {prettyPrintJSON} from "@edgedb/inspector/buildScalar";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 

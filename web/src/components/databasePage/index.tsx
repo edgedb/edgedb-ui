@@ -14,6 +14,7 @@ import DatabasePageContent, {
 
 import {dashboardTabSpec} from "@edgedb/studio/tabs/dashboard";
 import {replTabSpec} from "@edgedb/studio/tabs/repl";
+import {editorTabSpec} from "@edgedb/studio/tabs/queryEditor";
 import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 
@@ -22,6 +23,7 @@ import {useAppState} from "src/state/providers";
 const tabs: DatabaseTabSpec[] = [
   dashboardTabSpec,
   replTabSpec,
+  editorTabSpec,
   schemaTabSpec,
   dataviewTabSpec,
 ];

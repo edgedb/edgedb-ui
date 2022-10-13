@@ -82,6 +82,16 @@
       margin: 4px;
       border-radius: 2px;
     }
+
+    .splitVertical & {
+      height: 10px;
+      width: 40px;
+
+      &:after {
+        height: 2px;
+        width: 32px;
+      }
+    }
   }
 
   .resizerFlip {

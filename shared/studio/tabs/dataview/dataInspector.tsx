@@ -21,8 +21,9 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
 
-import {renderValue} from "@edgedb/inspector/v2/buildScalar";
-import inspectorStyles from "@edgedb/inspector/v2/inspector.module.scss";
+import {InspectorRow} from "@edgedb/inspector";
+import {renderValue} from "@edgedb/inspector/buildScalar";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
@@ -47,7 +48,6 @@ import {
   UndoChangesIcon,
   WarningIcon,
 } from "../../icons";
-import {InspectorRow} from "@edgedb/inspector/v2";
 import {DataEditor} from "../../components/dataEditor";
 
 const DataInspectorContext = createContext<{
@@ -859,10 +859,12 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
         <>
           <InspectorRow
             item={item}
+            state={rowData.state.state}
             isExpanded={!!rowData.state.state.expanded?.has(item.id)}
             toggleExpanded={() => {
               rowData.state.toggleExpanded(rowData.index);
             }}
+            disableCopy
           />
           {item.level === 2 &&
           rowData.state.linkFields.has(item.fieldName as string) ? (

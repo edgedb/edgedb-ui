@@ -1,342 +1,252 @@
-import {action, computed, observable} from "mobx";
+import {action, observable} from "mobx";
 import {
-  model,
-  Model,
-  ExtendedModel,
-  prop,
-  modelAction,
-  modelFlow,
-  _async,
-  _await,
-  findParent,
-  ModelCreationData,
   Frozen,
   frozen,
   idProp,
+  model,
+  Model,
+  modelAction,
+  modelFlow,
+  prop,
+  _async,
+  _await,
+  createContext as createMobxContext,
+  getSnapshot,
+  fromSnapshot,
 } from "mobx-keystone";
-
 import {Text} from "@codemirror/state";
-
-import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
-
-// import {
-//   storeReplResult,
-//   fetchReplResult,
-//   removeReplResults,
-// } from "../../../idbStore";
-
-import {QueryDuration, Capabilities} from "../../../state/connection";
-
-import {EdgeDBSet, decode} from "../../../utils/decodeRawBuffer";
+import {connCtx, dbCtx} from "../../../state";
 import {
   ErrorDetails,
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
-import {renderResultAsJson} from "../../../utils/renderJsonResult";
-
-import {dbCtx} from "../../../state";
-import {connCtx} from "../../../state/connection";
+import {InspectorState} from "@edgedb/inspector/state";
+import {ObservableLRU} from "../../../state/utils/lru";
+import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
+import {CommandResult, handleSlashCommand} from "./commands";
+import {NavigateFunction} from "react-router";
+import {RefObject} from "react";
+import {VariableSizeList as List} from "react-window";
+import {
+  fetchReplHistory,
+  fetchResultData,
+  QueryResultData,
+  storeReplHistoryItem,
+} from "../../../idbStore";
 import {instanceCtx} from "../../../state/instance";
 
-import {SplitViewState} from "@edgedb/common/ui/splitView/model";
-import {
-  serialiseParamsData,
-  ParamsData,
-  ReplQueryParamsEditor,
-} from "./parameters";
+function createInspector(result: EdgeDBSet) {
+  const inspector = new InspectorState({});
+  inspector.initData({data: result, codec: result._codec});
+  return inspector;
+}
 
-@model("Repl/HistoryCell")
-export class ReplHistoryCell extends Model({
+@model("Repl/HistoryItem")
+export class ReplHistoryItem extends Model({
   $modelId: idProp,
   query: prop<string>(),
-  paramsData: prop<Frozen<ParamsData> | null>(null),
-  accessPoliciesDisabled: prop<boolean>(),
   timestamp: prop<number>(),
-  duration: prop<number | QueryDuration>(),
-  expanded: prop(false),
-  renderHeight: prop<number>(64).withSetter(),
+  status: prop<string | null>(null),
+  hasResult: prop<boolean | null>(null),
+  error: prop<Frozen<ErrorDetails> | null>(null),
+  commandResult: prop<Frozen<CommandResult> | null>(null),
 }) {
+  renderHeight: number | null = null;
+
   @modelAction
-  toggleExpanded() {
-    this.expanded = !this.expanded;
+  setResult(status: string, hasResult: boolean) {
+    this.hasResult = hasResult;
+    this.status = status;
   }
 
-  edit() {
-    const repl = findParent<Repl>(this, (parent) => parent instanceof Repl)!;
-    repl.setCurrentQuery(Text.of(this.query.split("\n")));
-
-    repl.queryParamsEditor.restoreParamsData(this.paramsData?.data);
+  @modelAction
+  setError(error: ErrorDetails) {
+    this.error = frozen(error);
   }
 
-  copyToClipboard() {
-    navigator.clipboard?.writeText(this.query);
-  }
-}
-
-@model("Repl/ResultCell")
-export class ReplResultCell extends ExtendedModel(ReplHistoryCell, {
-  inspectorState: prop<InspectorState | null>(),
-  status: prop<string>(),
-}) {
-  @observable.ref
-  _result: EdgeDBSet | null = null;
-
-  @action
-  setResult(result: EdgeDBSet) {
-    this._result = result;
+  @modelAction
+  setCommandResult(result: CommandResult) {
+    this.commandResult = frozen(result);
   }
 
-  onInit() {
-    resultGetterCtx.set(this, async () => {
-      if (this._result) {
-        return {data: this._result, codec: this._result._codec};
-      }
-      const result = null as any; //await fetchReplResult(this.$modelId);
-      const decodedResult =
-        result && decode(result.outCodecBuf, result.resultBuf);
-      if (decodedResult) {
-        return {data: decodedResult, codec: decodedResult._codec};
-      }
-    });
-  }
-
-  copyAsJson() {
-    navigator.clipboard?.writeText(
-      renderResultAsJson(this._result, this._result!._codec)
-    );
+  get inspectorState() {
+    const cache = inspectorCacheCtx.get(this)!;
+    const state = cache.get(this.$modelId);
+    if (!state) {
+      fetchResultData(this.$modelId).then((resultData) => {
+        if (resultData) {
+          const inspector = createInspector(
+            decode(resultData.outCodecBuf, resultData.resultBuf)!
+          );
+          cache.set(this.$modelId, inspector);
+        }
+      });
+    }
+    return state ?? null;
   }
 }
 
-@model("Repl/ErrorCell")
-export class ReplErrorCell extends ExtendedModel(ReplHistoryCell, {
-  error: prop<Frozen<ErrorDetails>>(),
-}) {}
+export interface ReplSettings {
+  retroMode: boolean;
+}
+
+const inspectorCacheCtx =
+  createMobxContext<ObservableLRU<string, InspectorState>>();
 
 @model("Repl")
 export class Repl extends Model({
-  // currentQuery: prop("").withSetter(),
-  queryParamsEditor: prop(() => new ReplQueryParamsEditor({})),
-
-  queryHistory: prop<ReplHistoryCell[]>(() => []),
-
-  splitView: prop(() => new SplitViewState({})),
-  persistQuery: prop<boolean>(false).withSetter(),
-
-  historyScrollPos: prop<number>(0).withSetter(),
+  queryHistory: prop<ReplHistoryItem[]>(() => [null as any]),
 }) {
-  @observable queryRunning = false;
+  onInit() {
+    inspectorCacheCtx.set(this, this.resultInspectorCache);
+  }
 
-  @observable.ref
+  navigation: NavigateFunction | null = null;
+
+  @observable
   currentQuery = Text.empty;
 
   @action
   setCurrentQuery(query: Text) {
     this.currentQuery = query;
+    this.historyCursor = -1;
   }
 
-  @computed
-  get canRunQuery() {
-    return (
-      !this.queryRunning &&
-      !!this.currentQuery.toString().trim() &&
-      !this.queryParamsEditor.hasErrors
-    );
-  }
-
-  onAttachedToRootStore() {
-    return () => {
-      // removeReplResults(this.$modelId);
-    };
-  }
+  initialScrollPos = 0;
 
   historyCursor = -1;
   draftQuery = Text.empty;
-  draftParams: ParamsData | null = null;
 
-  navigateQueryHistory(direction: 1 | -1) {
-    if (!this.queryHistory.length) {
-      return;
-    }
+  navigateHistory(direction: 1 | -1) {
+    let cursor =
+      (this.historyCursor === -1
+        ? this.queryHistory.length
+        : this.historyCursor) + direction;
 
-    const cursor = Math.max(
-      -1,
-      Math.min(this.historyCursor + direction, this.queryHistory.length - 1)
-    );
-
-    if (cursor !== this.historyCursor) {
-      if (this.historyCursor === -1) {
-        this.draftQuery = this.currentQuery;
-        this.draftParams = this.queryParamsEditor.getParamsData();
-      }
-
-      this.historyCursor = cursor;
-      if (cursor === -1) {
-        this.setCurrentQuery(this.draftQuery);
-        this.queryParamsEditor.restoreParamsData(
-          this.draftParams ?? undefined
-        );
-      } else {
-        const historyItem =
-          this.queryHistory[this.queryHistory.length - 1 - cursor];
-        this.setCurrentQuery(Text.of(historyItem.query.split("\n")));
-        this.queryParamsEditor.restoreParamsData(historyItem.paramsData?.data);
-      }
-    }
-  }
-
-  @modelAction
-  addHistoryCell({
-    query,
-    paramsData,
-    accessPoliciesDisabled,
-    timestamp,
-    duration,
-    ...data
-  }: {
-    query: string;
-    paramsData: ParamsData | null;
-    accessPoliciesDisabled: boolean;
-    timestamp: number;
-    duration: number | QueryDuration;
-  } & (
-    | {
-        result: EdgeDBSet | null;
-        outCodecBuf: Buffer;
-        resultBuf: Buffer;
-        status: string;
-      }
-    | {
-        error: ErrorDetails;
-      }
-  )) {
-    const historyCellData: ModelCreationData<ReplHistoryCell> = {
-      query,
-      paramsData: paramsData ? frozen(paramsData) : null,
-      accessPoliciesDisabled,
-      timestamp,
-      duration,
-    };
-
-    let historyCell: ReplHistoryCell;
-
-    if ("error" in data) {
-      historyCell = new ReplErrorCell({
-        ...historyCellData,
-        error: frozen(data.error),
-        expanded: true,
-      });
+    if (cursor === this.queryHistory.length) {
+      this.currentQuery = this.draftQuery;
+      this.historyCursor = -1;
     } else {
-      historyCell = new ReplResultCell({
-        ...historyCellData,
-        inspectorState: data.result ? new InspectorState({}) : null,
-        expanded: true,
-        status: data.status,
-      });
-      if (data.result) {
-        (historyCell as ReplResultCell).setResult(data.result);
-        // storeReplResult(historyCell.$modelId, {
-        //   replId: this.$modelId,
-        //   outCodecBuf: data.outCodecBuf,
-        //   resultBuf: data.resultBuf,
-        // });
+      const historyItem = this.queryHistory[cursor];
+      if (historyItem) {
+        if (this.historyCursor === -1) {
+          this.draftQuery = this.currentQuery;
+        }
+        this.currentQuery = Text.of(historyItem.query.split("\n"));
+        this.historyCursor = cursor;
       }
     }
-
-    this.queryHistory.push(historyCell);
   }
+
+  listRef: RefObject<List> | null = null;
+
+  scrollToEnd() {
+    const ref = (this.listRef?.current as any)._outerRef;
+    ref.scrollTop = ref.scrollHeight;
+  }
+
+  resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
+
+  _fetchingHistory = false;
 
   @modelFlow
-  _runStatement = _async(function* (
-    this: Repl,
-    query: string,
-    paramsData: ParamsData | null
-  ) {
-    const conn = connCtx.get(this)!;
-
-    const timestamp = Date.now();
-    const accessPoliciesDisabled = conn.disableAccessPolicies;
-    try {
-      const {result, duration, outCodecBuf, resultBuf, capabilities, status} =
-        yield* _await(
-          conn.query(
-            query,
-            paramsData ? serialiseParamsData(paramsData) : undefined,
-            false
-          )
-        );
-
-      this.addHistoryCell({
-        query,
-        paramsData,
-        accessPoliciesDisabled,
-        timestamp,
-        duration,
-        result,
-        outCodecBuf,
-        resultBuf,
-        status,
-      });
-      return {success: true, capabilities, status};
-    } catch (e: any) {
-      this.addHistoryCell({
-        query,
-        paramsData,
-        accessPoliciesDisabled,
-        timestamp,
-        duration: Date.now() - timestamp,
-        error: extractErrorDetails(e, query),
-      });
+  fetchReplHistory = _async(function* (this: Repl) {
+    if (this._fetchingHistory || this.queryHistory[0] !== null) {
+      return;
     }
-    return {success: false};
+    this._fetchingHistory = true;
+    const history = yield* _await(
+      fetchReplHistory(
+        instanceCtx.get(this)!.instanceName!,
+        dbCtx.get(this)!.name,
+        this.queryHistory[1]?.timestamp ?? Date.now(),
+        50
+      )
+    );
+    const finished = history.length < 50;
+    this.queryHistory.splice(
+      finished ? 0 : 1,
+      finished ? 1 : 0,
+      ...history.reverse().map((item) => fromSnapshot(item.data))
+    );
+    this._fetchingHistory = false;
   });
 
+  @observable
+  settings: ReplSettings = {
+    retroMode: false,
+  };
+
+  @action
+  updateSetting<T extends keyof ReplSettings>(key: T, value: ReplSettings[T]) {
+    this.settings[key] = value;
+  }
+
+  @observable
+  queryRunning = false;
+
   @modelFlow
-  runQuery = _async(function* (this: Repl) {
-    if (this.queryRunning || !this.canRunQuery) {
+  runQuery = _async(function* (this: Repl, queryStr?: string) {
+    const conn = connCtx.get(this)!;
+
+    const query = queryStr ?? this.currentQuery.toString().trim();
+
+    if (!query) {
       return;
     }
 
-    const query = this.currentQuery.toString().trim();
-    if (!query) return;
+    const historyItem = new ReplHistoryItem({
+      query,
+      timestamp: Date.now(),
+    });
+    this.queryHistory.push(historyItem);
+    if (queryStr !== null) {
+      this.currentQuery = Text.empty;
+    }
 
     this.queryRunning = true;
 
-    const paramsData = this.queryParamsEditor.getParamsData();
+    let resultData: QueryResultData | undefined = undefined;
+    try {
+      if (query.startsWith("\\") && !query.includes("\n")) {
+        yield* _await(handleSlashCommand(query, this, historyItem));
+      } else {
+        const {result, outCodecBuf, resultBuf, capabilities, status} =
+          yield* _await(conn.query(query, undefined, false));
 
-    const dbState = dbCtx.get(this)!;
-    dbState.setLoadingTab(Repl, true);
+        historyItem.setResult(status, !!result);
+        if (result) {
+          this.resultInspectorCache.set(
+            historyItem.$modelId,
+            createInspector(result)
+          );
 
-    let allCapabilities = 0;
-    const statuses = new Set<string>();
+          resultData = {
+            outCodecBuf,
+            resultBuf,
+          };
+        }
+      }
+    } catch (err: any) {
+      historyItem.setError(extractErrorDetails(err, query));
+    }
 
-    const {success, capabilities, status} = yield* _await(
-      this._runStatement(query, paramsData)
+    storeReplHistoryItem(
+      historyItem.$modelId,
+      {
+        instanceId: instanceCtx.get(this)!.instanceName!,
+        dbName: dbCtx.get(this)!.name,
+        timestamp: historyItem.timestamp,
+        data: getSnapshot(historyItem),
+      },
+      resultData
     );
-    if (status) {
-      statuses.add(status.toLowerCase());
-      allCapabilities |= capabilities;
-    }
-
-    if (success && !this.persistQuery) {
-      this.currentQuery = Text.empty;
-      this.queryParamsEditor.clear();
-      this.historyCursor = -1;
-    }
-
-    this.refreshCaches(allCapabilities, statuses);
 
     this.queryRunning = false;
-    dbState.setLoadingTab(Repl, false);
-  });
 
-  refreshCaches(capabilities: number, statuses: Set<string>) {
-    if (capabilities & Capabilities.DDL) {
-      if (statuses.has("create database") || statuses.has("drop database")) {
-        instanceCtx.get(this)!.fetchInstanceInfo();
-      } else {
-        const dbState = dbCtx.get(this)!;
-        dbState.fetchSchemaData();
-      }
-    }
-  }
+    // const listRef = (this.listRef?.current as any)?._outerRef;
+    // if (listRef) {
+    //   setTimeout(() => (listRef.scrollTop = listRef.scrollHeight), 0);
+    // }
+  });
 }

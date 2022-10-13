@@ -9,8 +9,9 @@ import {
   _async,
   _await,
   ArraySet,
+  idProp,
 } from "mobx-keystone";
-import {observable} from "mobx";
+import {action, observable} from "mobx";
 import {_ICodec} from "edgedb";
 import {Item, buildItem, expandItem, ItemType} from "./buildItem";
 
@@ -21,9 +22,10 @@ export interface EdgeDBResult {
   codec: _ICodec;
 }
 
-export const resultGetterCtx = createContext<
-  (state: InspectorState) => Promise<EdgeDBResult | undefined>
->();
+export const resultGetterCtx =
+  createContext<
+    (state: InspectorState) => Promise<EdgeDBResult | undefined>
+  >();
 
 export type NestedDataGetter = (
   objectType: string,
@@ -33,6 +35,7 @@ export type NestedDataGetter = (
 
 @model("edb/Inspector")
 export class InspectorState extends Model({
+  $modelId: idProp,
   expanded: prop<ArraySet<string> | undefined>(),
   scrollPos: prop<number>(0).withSetter(),
 
@@ -45,6 +48,28 @@ export class InspectorState extends Model({
   _jsonMode = false;
 
   loadingData = false;
+
+  @observable
+  hoverId: string | null = null;
+
+  @action.bound
+  setHoverId(id: string | null) {
+    this.hoverId = id;
+  }
+
+  @observable
+  selectedIndex: number | null = null;
+
+  @action.bound
+  setSelectedIndex(index: number | null) {
+    this.selectedIndex =
+      index !== null
+        ? Math.max(0, Math.min(index, this._items.length - 1))
+        : null;
+  }
+
+  extendedViewIds: Set<string> | null = null;
+  openExtendedView: (() => void) | null = null;
 
   loadNestedData: NestedDataGetter | null = null;
 
@@ -87,7 +112,8 @@ export class InspectorState extends Model({
         this._items = [
           buildItem(
             {id: ".", parent: null, level: -1, codec: result.codec},
-            `[${result.data.join(", ")}]`
+            `[${result.data.join(", ")}]`,
+            0
           ),
         ];
         this._jsonMode = true;
@@ -100,7 +126,8 @@ export class InspectorState extends Model({
               level: 0,
               codec: result.codec,
             },
-            result.data
+            result.data,
+            0
           ),
         ];
         this.expandItem(

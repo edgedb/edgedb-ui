@@ -1,0 +1,85 @@
+.hexViewer {
+  font-family: Roboto Mono, monospace;
+  font-size: 14px;
+  height: 100%;
+  width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.dataWrapper {
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.hexRow {
+  display: flex;
+  line-height: 21px;
+
+  .hovered {
+    background: rgba(12, 203, 147, 0.2);
+  }
+
+  .selected,
+  .cursor {
+    background: rgba(12, 203, 147, 0.4);
+  }
+
+  &.rowSelected {
+    .hexCell,
+    .asciiCell {
+      background: rgba(12, 203, 147, 0.4);
+    }
+  }
+
+  .dataWrapper:focus & .cursor:after {
+    position: absolute;
+    content: "";
+    border: 2px solid rgba(12, 203, 147);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+}
+
+.rowOffset {
+  color: rgb(77, 77, 77, 0.6);
+  margin-right: 16px;
+}
+
+.hexData {
+  display: flex;
+  min-width: (2ch + 1ch) * 16 + 1ch;
+
+  .hexCell {
+    position: relative;
+    padding: 0 0.5ch;
+
+    &:nth-child(2n) {
+      color: rgb(77, 77, 77, 0.8);
+    }
+
+    &:nth-child(8) {
+      margin-right: 1ch;
+    }
+  }
+}
+
+.asciiData {
+  display: flex;
+  margin-left: 16px;
+  white-space: pre;
+
+  .asciiCell {
+    position: relative;
+    padding: 0 0.15ch;
+  }
+
+  .unprintableAscii {
+    color: rgba(77, 77, 77, 0.3);
+  }
+}

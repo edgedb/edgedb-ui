@@ -1,22 +1,25 @@
 import {
   useEffect,
   useRef,
-  useState,
   useLayoutEffect,
   useImperativeHandle,
   forwardRef,
 } from "react";
 
-import {EditorState, StateEffect, Text} from "@codemirror/state";
+import {
+  EditorState,
+  Text,
+  Compartment,
+  EditorSelection,
+} from "@codemirror/state";
 import {
   EditorView,
   keymap,
-  highlightActiveLine,
+  highlightActiveLine as highlightActiveLineExt,
   highlightSpecialChars,
   drawSelection,
   KeyBinding,
   lineNumbers,
-  highlightActiveLineGutter,
 } from "@codemirror/view";
 import {
   defaultKeymap,
@@ -44,186 +47,272 @@ import {edgeql, edgeqlLanguage} from "@edgedb/lang-edgeql";
 import {highlightStyle, darkTheme, lightTheme} from "./theme";
 import {getCompletions} from "./completions";
 
+import cn from "@edgedb/common/utils/classNames";
+
 import {SchemaObjectType} from "@edgedb/common/schemaData";
 
 import styles from "./codeEditor.module.scss";
+// import {cursorPlugin} from "./terminalCursor";
 
-interface ExtensionConfig {
-  onChange: (doc: Text) => void;
-  keybindings?: KeyBinding[];
-  useDarkTheme?: boolean;
-  language?: LanguageSupport;
-  schemaObjects?: Map<string, SchemaObjectType>;
-}
+const readOnlyComp = new Compartment();
+const darkThemeComp = new Compartment();
+const keybindingsComp = new Compartment();
+const onChangeComp = new Compartment();
+const autocompleteComp = new Compartment();
 
-function getExtensions({
-  onChange,
-  keybindings = [],
-  useDarkTheme = false,
-  language,
-  schemaObjects,
-}: ExtensionConfig) {
-  return [
-    lineNumbers(),
-    highlightActiveLineGutter(),
-    highlightSpecialChars(),
-    history(),
-    drawSelection(),
-    EditorState.allowMultipleSelections.of(true),
-    indentOnInput(),
-    bracketMatching(),
-    closeBrackets(),
-    autocompletion(),
-    ...(schemaObjects
-      ? [
-          edgeqlLanguage.data.of({
-            autocomplete: getCompletions(schemaObjects),
-          }),
-        ]
-      : []),
-    highlightActiveLine(),
-    indentationMarkers(),
-    keymap.of([
-      ...keybindings,
-      ...closeBracketsKeymap,
-      ...defaultKeymap,
-      ...historyKeymap,
-      ...completionKeymap,
-      ...lintKeymap,
-      {
-        key: "Tab",
-        run: ({state, dispatch}) => {
-          if (state.selection.ranges.some((r) => !r.empty))
-            return indentMore({state, dispatch});
-          dispatch(
-            state.update(state.replaceSelection("  "), {
-              scrollIntoView: true,
-              userEvent: "input",
-            })
-          );
-          return true;
-        },
-        shift: indentLess,
-      },
-    ]),
-    //
-    useDarkTheme ? darkTheme : lightTheme,
-    syntaxHighlighting(highlightStyle),
-    language ?? edgeql(),
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        onChange(update.state.doc);
-      }
-    }),
-  ];
-}
-
-function createState(doc: Text, extensionConfig: ExtensionConfig) {
-  return EditorState.create({
-    doc,
-    extensions: getExtensions(extensionConfig),
-  });
-}
+const baseExtensions = [
+  highlightSpecialChars(),
+  history(),
+  drawSelection(),
+  indentOnInput(),
+  bracketMatching(),
+  closeBrackets(),
+  autocompletion(),
+  EditorState.allowMultipleSelections.of(true),
+  indentationMarkers(),
+  syntaxHighlighting(highlightStyle),
+];
 
 export interface CodeEditorProps {
   code: Text;
   onChange: (value: Text) => void;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
-  language?: LanguageSupport;
+  readonly?: boolean;
   schemaObjects?: Map<string, SchemaObjectType>;
+  noPadding?: boolean;
 }
 
 export interface CodeEditorRef {
   focus: () => void;
 }
 
-export const CodeEditor = forwardRef(function CodeEditor(
-  {
-    code,
+export function createCodeEditor({
+  language,
+  highlightActiveLine = true,
+  formatLineNo,
+  terminalCursor,
+}: {
+  language?: LanguageSupport | null;
+  highlightActiveLine?: boolean;
+  formatLineNo?: (lineNo: number) => string;
+  terminalCursor?: boolean;
+}) {
+  function createState({
+    doc,
     onChange,
-    keybindings = [],
-    language,
-    useDarkTheme = false,
+    readonly,
+    keybindings,
+    useDarkTheme,
     schemaObjects,
-  }: CodeEditorProps,
-  componentRef
-) {
-  const ref = useRef<HTMLDivElement>(null);
-  const view = useRef<EditorView | null>(null);
-
-  useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
-    focus: () => view.current?.focus(),
-  }));
-
-  useEffect(() => {
-    if (ref.current) {
-      view.current = new EditorView({
-        state: createState(code, {
-          onChange,
-          keybindings,
-          useDarkTheme,
-          language,
-          schemaObjects,
+  }: {
+    doc: Text;
+    onChange: (value: Text) => void;
+    readonly: boolean;
+    keybindings: KeyBinding[];
+    useDarkTheme: boolean;
+    schemaObjects?: Map<string, SchemaObjectType>;
+  }) {
+    return EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(doc.length),
+      extensions: [
+        ...baseExtensions,
+        ...(highlightActiveLine ? [highlightActiveLineExt()] : []),
+        lineNumbers({
+          formatNumber: formatLineNo,
         }),
-        parent: ref.current,
-      });
-
-      return () => {
-        view.current?.destroy();
-      };
-    }
-  }, [ref]);
-
-  useEffect(() => {
-    if (view.current && view.current?.state.doc !== code) {
-      view.current.setState(
-        createState(code, {
-          onChange,
-          keybindings,
-          useDarkTheme,
-          language,
-          schemaObjects,
-        })
-      );
-    }
-  }, [code]);
-
-  useLayoutEffect(() => {
-    if (view.current) {
-      view.current.dispatch({
-        effects: StateEffect.reconfigure.of(
-          getExtensions({
-            onChange,
-            keybindings,
-            useDarkTheme,
-            language,
-            schemaObjects,
+        readOnlyComp.of([
+          EditorState.readOnly.of(readonly),
+          EditorView.editable.of(!readonly),
+        ]),
+        keybindingsComp.of(keymap.of(keybindings)),
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...historyKeymap,
+          ...completionKeymap,
+          ...lintKeymap,
+          {
+            key: "Tab",
+            run: ({state, dispatch}) => {
+              if (state.selection.ranges.some((r) => !r.empty))
+                return indentMore({state, dispatch});
+              dispatch(
+                state.update(state.replaceSelection("  "), {
+                  scrollIntoView: true,
+                  userEvent: "input",
+                })
+              );
+              return true;
+            },
+            shift: indentLess,
+          },
+        ]),
+        darkThemeComp.of(useDarkTheme ? darkTheme : lightTheme),
+        language === undefined ? edgeql() : [],
+        onChangeComp.of(
+          EditorView.updateListener.of((update) => {
+            if (update.docChanged) {
+              onChange(update.state.doc);
+            }
           })
         ),
-      });
-    }
-  }, [useDarkTheme, schemaObjects, language]);
+        autocompleteComp.of(
+          schemaObjects
+            ? [
+                edgeqlLanguage.data.of({
+                  autocomplete: getCompletions(schemaObjects),
+                }),
+              ]
+            : []
+        ),
+      ],
+    });
+  }
 
-  useEffect(() => {
-    if (ref.current?.firstChild) {
-      const observer = new ResizeObserver((entries) => {
-        (
-          ref.current?.querySelector(".cm-content") as HTMLElement
-        )?.style.setProperty(
-          "padding-bottom",
-          // `${entries[0].contentRect.height - 25}px`
-          `${entries[0].contentRect.height / 2}px`
+  return forwardRef(function CodeEditor(
+    {
+      code,
+      onChange,
+      keybindings,
+      noPadding,
+      readonly,
+      schemaObjects,
+      useDarkTheme,
+    }: CodeEditorProps,
+    componentRef
+  ) {
+    const ref = useRef<HTMLDivElement>(null);
+    const view = useRef<EditorView | null>(null);
+
+    useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
+      focus: () => view.current?.focus(),
+    }));
+
+    useEffect(() => {
+      if (ref.current) {
+        view.current = new EditorView({
+          state: createState({
+            doc: code,
+            keybindings,
+            onChange,
+            readonly,
+            useDarkTheme,
+            schemaObjects,
+          }),
+          parent: ref.current,
+        });
+
+        return () => {
+          view.current?.destroy();
+        };
+      }
+    }, [ref]);
+
+    useEffect(() => {
+      if (view.current && view.current?.state.doc !== code) {
+        view.current.setState(
+          createState({
+            doc: code,
+            keybindings,
+            onChange,
+            readonly,
+            useDarkTheme,
+            schemaObjects,
+          })
         );
-      });
+      }
+    }, [code]);
 
-      observer.observe(ref.current.firstChild as Element);
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: readOnlyComp.reconfigure([
+            EditorState.readOnly.of(readonly),
+            EditorView.editable.of(!readonly),
+          ]),
+        }),
+      [readonly]
+    );
 
-      return () => {
-        observer.disconnect();
-      };
-    }
-  }, [ref]);
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: darkThemeComp.reconfigure(
+            useDarkTheme ? darkTheme : lightTheme
+          ),
+        }),
+      [useDarkTheme]
+    );
 
-  return <div className={styles.codeEditor} ref={ref} />;
-});
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: keybindingsComp.reconfigure(keymap.of(keybindings)),
+        }),
+      [keybindings]
+    );
+
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: onChangeComp.reconfigure(
+            EditorView.updateListener.of((update) => {
+              if (update.docChanged) {
+                onChange(update.state.doc);
+              }
+            })
+          ),
+        }),
+      [onChange]
+    );
+
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: autocompleteComp.reconfigure(
+            schemaObjects
+              ? [
+                  edgeqlLanguage.data.of({
+                    autocomplete: getCompletions(schemaObjects),
+                  }),
+                ]
+              : []
+          ),
+        }),
+      [schemaObjects]
+    );
+
+    useEffect(() => {
+      if (!noPadding && ref.current?.firstChild) {
+        const observer = new ResizeObserver((entries) => {
+          (
+            ref.current?.querySelector(".cm-content") as HTMLElement
+          )?.style.setProperty(
+            "padding-bottom",
+            // `${entries[0].contentRect.height - 25}px`
+            `${entries[0].contentRect.height / 2}px`
+          );
+        });
+
+        observer.observe(ref.current.firstChild as Element);
+
+        return () => {
+          observer.disconnect();
+        };
+      }
+    }, [ref]);
+
+    return (
+      <div
+        className={cn(styles.codeEditor, {
+          [styles.terminalCursor]: terminalCursor,
+        })}
+        ref={ref}
+      />
+    );
+  });
+}
+
+export const CodeEditor = createCodeEditor({});

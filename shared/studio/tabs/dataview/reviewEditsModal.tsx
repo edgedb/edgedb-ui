@@ -12,8 +12,8 @@ import {Modal, ModalOverlay} from "@edgedb/common/ui/modal";
 import Button from "@edgedb/common/ui/button";
 import {WarningIcon} from "../../icons";
 
-import {renderValue} from "@edgedb/inspector/v2/buildScalar";
-import inspectorStyles from "@edgedb/inspector/v2/inspector.module.scss";
+import {renderValue} from "@edgedb/inspector/buildScalar";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
