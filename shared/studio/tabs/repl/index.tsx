@@ -21,6 +21,7 @@ import ReplHistory from "./replHistory";
 import ParamEditorPanel from "./paramEditor";
 import {KebabMenuIcon, TabReplIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
+import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 
 export const ReplView = observer(function ReplView() {
   const dbState = useDatabaseState();
@@ -39,54 +40,55 @@ export const ReplView = observer(function ReplView() {
       <div className={cn(styles.repl)}>
         <SplitView
           views={[
-            <div className={styles.editorBlock}>
-              <CodeEditor
-                ref={codeEditorRef}
-                code={replState.currentQuery}
-                onChange={(value) => replState.setCurrentQuery(value)}
-                keybindings={[
-                  {
-                    key: "Mod-Enter",
-                    run: () => {
-                      replState.runQuery();
-                      return true;
-                    },
-                    preventDefault: true,
-                  },
-                  {
-                    key: "Mod-ArrowUp",
-                    run: () => {
-                      replState.navigateQueryHistory(1);
-                      return true;
-                    },
-                  },
-                  {
-                    key: "Mod-ArrowDown",
-                    run: () => {
-                      replState.navigateQueryHistory(-1);
-                      return true;
-                    },
-                  },
-                ]}
-                useDarkTheme={theme === Theme.dark}
-                schemaObjects={dbState.schemaData?.objectsByName}
-              />
-              <div className={styles.replEditorOverlays}>
-                <div className={styles.controls}>
-                  <QueryOptions />
-                  <Button
-                    className={styles.runButton}
-                    label="Run"
-                    shortcut="Ctrl+Enter"
-                    macShortcut="⌘+Enter"
-                    disabled={!replState.canRunQuery}
-                    loading={replState.queryRunning}
-                    onClick={() => replState.runQuery()}
-                  />
-                </div>
-                <ParamEditorPanel />
-              </div>
-            </div>,
+            // <div className={styles.editorBlock}>
+            //   <CodeEditor
+            //     ref={codeEditorRef}
+            //     code={replState.currentQuery}
+            //     onChange={(value) => replState.setCurrentQuery(value)}
+            //     keybindings={[
+            //       {
+            //         key: "Mod-Enter",
+            //         run: () => {
+            //           replState.runQuery();
+            //           return true;
+            //         },
+            //         preventDefault: true,
+            //       },
+            //       {
+            //         key: "Mod-ArrowUp",
+            //         run: () => {
+            //           replState.navigateQueryHistory(1);
+            //           return true;
+            //         },
+            //       },
+            //       {
+            //         key: "Mod-ArrowDown",
+            //         run: () => {
+            //           replState.navigateQueryHistory(-1);
+            //           return true;
+            //         },
+            //       },
+            //     ]}
+            //     useDarkTheme={theme === Theme.dark}
+            //     schemaObjects={dbState.schemaData?.objectsByName}
+            //   />
+            //   <div className={styles.replEditorOverlays}>
+            //     <div className={styles.controls}>
+            //       <QueryOptions />
+            //       <Button
+            //         className={styles.runButton}
+            //         label="Run"
+            //         shortcut="Ctrl+Enter"
+            //         macShortcut="⌘+Enter"
+            //         disabled={!replState.canRunQuery}
+            //         loading={replState.queryRunning}
+            //         onClick={() => replState.runQuery()}
+            //       />
+            //     </div>
+            //     <ParamEditorPanel />
+            //   </div>
+            // </div>,
+            <VisualQuerybuilder />,
             <ReplHistory />,
           ]}
           state={replState.splitView}

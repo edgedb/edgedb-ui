@@ -1,0 +1,20 @@
+.queryBuilder {
+  font-family: "Roboto Mono", monospace;
+  margin: 8px;
+  overflow: auto;
+  width: 100%;
+  white-space: nowrap;
+
+  select,
+  input {
+    font-family: inherit;
+  }
+}
+
+.inactive {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
