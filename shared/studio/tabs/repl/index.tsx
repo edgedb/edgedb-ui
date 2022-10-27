@@ -21,6 +21,7 @@ import ReplHistory from "./replHistory";
 import ParamEditorPanel from "./paramEditor";
 import {KebabMenuIcon, TabReplIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
+import {settingsState} from "../../state/settings";
 
 export const ReplView = observer(function ReplView() {
   const dbState = useDatabaseState();
@@ -162,9 +163,9 @@ const QueryOptions = observer(function QueryOptions() {
         <label>
           <input
             type="checkbox"
-            checked={replState.disableAccessPolicies}
+            checked={settingsState.disableAccessPolicies}
             onChange={(e) => {
-              replState.setDisableAccessPolicies(e.target.checked);
+              settingsState.setDisableAccessPolicies(e.target.checked);
             }}
           />
           Disable Access Policies
@@ -172,9 +173,9 @@ const QueryOptions = observer(function QueryOptions() {
         <label>
           <input
             type="checkbox"
-            checked={replState.persistQuery}
+            checked={settingsState.persistQuery}
             onChange={(e) => {
-              replState.setPersistQuery(e.target.checked);
+              settingsState.setPersistQuery(e.target.checked);
             }}
           />
           Persist Query

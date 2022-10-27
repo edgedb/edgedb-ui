@@ -37,6 +37,7 @@ import {
 import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
+import {settingsState} from "../../../state/settings";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
@@ -119,8 +120,6 @@ export class Repl extends Model({
   queryHistory: prop<ReplHistoryCell[]>(() => []),
 
   splitView: prop(() => new SplitViewState({})),
-  persistQuery: prop<boolean>(false).withSetter(),
-  disableAccessPolicies: prop<boolean>(false).withSetter(),
 
   historyScrollPos: prop<number>(0).withSetter(),
 }) {
@@ -258,7 +257,7 @@ export class Repl extends Model({
             query,
             paramsData ? serialiseParamsData(paramsData) : undefined,
             false,
-            this.disableAccessPolicies
+            settingsState.disableAccessPolicies
           )
         );
 
@@ -312,7 +311,7 @@ export class Repl extends Model({
       allCapabilities |= capabilities;
     }
 
-    if (success && !this.persistQuery) {
+    if (success && !settingsState.persistQuery) {
       this.currentQuery = Text.empty;
       this.queryParamsEditor.clear();
       this.historyCursor = -1;
