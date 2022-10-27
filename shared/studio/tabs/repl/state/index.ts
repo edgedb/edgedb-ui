@@ -18,6 +18,7 @@ import {
 import {Text} from "@codemirror/state";
 
 import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
+import {renderResultAsJson} from "@edgedb/inspector/v2/renderJsonResult";
 
 // import {
 //   storeReplResult,
@@ -32,7 +33,6 @@ import {
   ErrorDetails,
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
-import {renderResultAsJson} from "../../../utils/renderJsonResult";
 
 import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";

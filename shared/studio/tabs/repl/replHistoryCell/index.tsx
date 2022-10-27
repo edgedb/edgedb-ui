@@ -65,7 +65,7 @@ export default observer(function ReplHistoryCell({
                     ) : null}
                   </div>
                 ) : null}
-                <div className={styles.info}>
+                {/* <div className={styles.info}>
                   {cell instanceof ReplResultCell && cell._result ? (
                     <CopyButton
                       label="Copy as JSON"
@@ -73,9 +73,9 @@ export default observer(function ReplHistoryCell({
                     />
                   ) : null}
                   <div className={styles.infoLabel}>
-                    {/*<ReplQueryDuration duration={cell.duration} />*/}
+                    <ReplQueryDuration duration={cell.duration} />
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {cell instanceof ReplResultCell ? (
