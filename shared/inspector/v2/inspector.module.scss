@@ -17,13 +17,20 @@
 }
 
 .inspector {
-  margin: 10px 0;
-
   @extend .inspectorTheme;
 
   & * {
     box-sizing: border-box;
   }
+
+  .innerWrapper {
+    width: max-content;
+    min-width: 100%;
+  }
+}
+
+.rowWrapper {
+  position: relative;
 }
 
 .rowItem {
@@ -32,30 +39,85 @@
   padding: var(--rowPad) 0;
   white-space: pre;
 
-  border-radius: 4px;
-
   .jsonMode & {
     padding-left: 0 !important;
   }
+
+  &.hoverable:hover {
+    background: var(--inspectorRowHoverBg, #ebebeb);
+
+    .copyButton {
+      opacity: 1;
+    }
+
+    :global(.dark-theme) & {
+      background: var(--inspectorRowHoverBg, #303030);
+    }
+  }
+
+  .itemContent,
+  .itemBody {
+    display: flex;
+    padding: 0 2px;
+    margin: 0 -2px;
+    border-radius: 2px;
+  }
+
+  .itemContent {
+    margin-right: auto;
+  }
+
+  &.highlightBody {
+    .itemBody {
+      background: Highlight;
+
+      &,
+      & * {
+        color: HighlightText !important;
+      }
+    }
+  }
+
+  &.highlightAll {
+    .itemContent {
+      background: Highlight;
+
+      &,
+      & * {
+        color: HighlightText !important;
+      }
+    }
+  }
+}
+
+.comma {
+  align-self: flex-end;
 }
 
 .expandArrow {
   display: flex;
   align-items: center;
+  justify-content: center;
   width: 24px;
   height: var(--lineHeight);
   margin-left: -24px;
   cursor: pointer;
+  transform: rotate(-90deg);
   transition: transform 0.1s;
 
   &.expanded {
-    transform: rotate(90deg);
+    transform: rotate(0);
+  }
+
+  svg {
+    width: 11px;
   }
 }
 
 .ellipsis {
   border: 1px solid #ccc;
   background: #eee;
+  fill: #4d4d4d;
   user-select: none;
   height: 12px;
   margin: 0 3px;
@@ -68,6 +130,48 @@
   :global(.dark-theme) & {
     border-color: #636363;
     background: #3d3d3d;
+    fill: #e7e7e7;
+  }
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: #a2a2a2;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--inspectorRowHoverBg, #ebebeb) 8px,
+    var(--inspectorRowHoverBg, #ebebeb)
+  );
+  padding: 0 8px;
+  padding-left: 16px;
+  opacity: 0;
+  cursor: pointer;
+  position: sticky;
+  right: 0;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:hover {
+    color: #1f8aed;
+  }
+
+  :global(.dark-theme) & {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--inspectorRowHoverBg, #303030) 8px,
+      var(--inspectorRowHoverBg, #303030)
+    );
   }
 }
 

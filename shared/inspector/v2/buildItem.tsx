@@ -1,5 +1,3 @@
-import React from "react";
-
 import cn from "@edgedb/common/utils/classNames";
 
 import {_ICodec} from "edgedb";
@@ -31,6 +29,7 @@ export type Item = {
   label?: JSX.Element;
   body: JSX.Element;
   fieldName?: string;
+  comma: boolean;
 } & (
   | {
       type: ItemType.Set | ItemType.Array | ItemType.Tuple;
@@ -44,7 +43,11 @@ export type Item = {
       closingBracket: Item;
     }
   | {
-      type: ItemType.Scalar | ItemType.Other;
+      type: ItemType.Scalar;
+      index: string | number;
+    }
+  | {
+      type: ItemType.Other;
     }
 );
 
@@ -57,239 +60,241 @@ export function expandItem(
   loadNestedData: NestedDataGetter | null,
   state: InspectorState
 ): Item[] {
-  if (item.type !== ItemType.Scalar && item.type !== ItemType.Other) {
-    expanded.add(item.id);
-
-    const shouldExpandChildren =
-      !!expandLevels && item.level + 1 < expandLevels;
-
-    let childItems: Item[];
-
-    switch (item.type) {
-      case ItemType.Set:
-      case ItemType.Array:
-      case ItemType.Tuple:
-        {
-          childItems = (item.data ?? []).flatMap((data, i) => {
-            const subCodec =
-              item.level === 0
-                ? item.codec
-                : item.codec.getKind() === "tuple"
-                ? item.codec.getSubcodecs()[i]
-                : item.codec.getSubcodecs()[0];
-
-            const id = `${item.id}.${i}`;
-
-            const childItem = buildItem(
-              {
-                id,
-                parent: item,
-                codec: subCodec,
-                level: item.level + 1,
-              },
-              data,
-              i < item.data!.length - 1
-            );
-
-            return [
-              childItem,
-              ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(
-                    childItem,
-                    expanded,
-                    expandLevels,
-                    countPrefix,
-                    ignorePrefix,
-                    loadNestedData,
-                    state
-                  )
-                : []),
-            ];
-          });
-
-          if (
-            item.expectedCount !== undefined &&
-            (!item.data || item.expectedCount > item.data.length)
-          ) {
-            const more = item.expectedCount - (item.data?.length ?? 0);
-
-            const canLoadMoreData =
-              loadNestedData &&
-              (item.data?.length ?? 0) === 0 &&
-              (item.parent as any)?.data &&
-              item.fieldName;
-
-            const childItem: Item = {
-              id: `${item.id}.count`,
-              parent: item,
-              type: ItemType.Other,
-              codec: item.codec,
-              level: item.level + 1,
-              body: (
-                <>
-                  {canLoadMoreData ? (
-                    <span
-                      className={cn(styles.resultsHidden, styles.loadable)}
-                      onClick={async () => {
-                        state.replaceItemBody(
-                          childItem,
-                          <span className={styles.resultsHidden}>
-                            Loading...
-                          </span>
-                        );
-                        const {data, codec} = await loadNestedData(
-                          (item.parent as any).data.__tname__,
-                          (item.parent as any).data.id,
-                          item.fieldName!
-                        );
-                        (item.parent as any).data[item.fieldName!] = data;
-                        const codecIndex = (
-                          item.parent as any
-                        ).codec.fields.findIndex(
-                          (f: any) => f.name === item.fieldName!
-                        );
-                        (item.parent as any).codec.codecs[
-                          codecIndex
-                        ].subCodec = codec;
-                        const parentIndex = state._items.indexOf(item.parent!);
-                        state.collapseItem(parentIndex);
-                        state.expandItem(parentIndex);
-                      }}
-                    >
-                      load {more} hidden result{more > 1 ? "s" : ""}...
-                    </span>
-                  ) : (
-                    <span className={styles.resultsHidden}>
-                      ...{item.data?.length ? "further " : ""}
-                      {more} result{more > 1 ? "s" : ""} hidden
-                    </span>
-                  )}
-                </>
-              ),
-            };
-            childItems.push(childItem);
-          }
-        }
-        break;
-      case ItemType.Object:
-        {
-          const fields = (item.codec as ObjectCodec).getFields();
-          const explicitNum = fields.filter((field) => !field.implicit).length;
-          const subCodecs = item.codec.getSubcodecs();
-
-          let explicitFieldIndex = 1;
-          childItems = fields.flatMap((field, i) => {
-            if (
-              (field.implicit && !(!explicitNum && field.name === "id")) ||
-              (countPrefix !== null && field.name.startsWith(countPrefix))
-            ) {
-              return [];
-            }
-
-            const id = `${item.id}.${i}`;
-
-            const expectedCount =
-              countPrefix !== null &&
-              item.data[countPrefix + field.name] !== undefined
-                ? parseInt(item.data[countPrefix + field.name], 10)
-                : undefined;
-
-            const childItem = buildItem(
-              {
-                id,
-                parent: item,
-                codec: subCodecs[i],
-                level: item.level + 1,
-                label: (
-                  <>
-                    <span>
-                      {ignorePrefix && field.name.startsWith(ignorePrefix)
-                        ? field.name.slice(ignorePrefix.length)
-                        : field.name}
-                    </span>
-                    <span>: </span>
-                  </>
-                ),
-                fieldName: field.name,
-                expectedCount:
-                  expectedCount !== undefined && !Number.isNaN(expectedCount)
-                    ? expectedCount
-                    : undefined,
-              },
-              item.data[field.name],
-              !!explicitNum && explicitFieldIndex++ < explicitNum
-            );
-
-            return [
-              childItem,
-              ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(
-                    childItem,
-                    expanded,
-                    expandLevels,
-                    countPrefix,
-                    ignorePrefix,
-                    loadNestedData,
-                    state
-                  )
-                : []),
-            ];
-          });
-        }
-        break;
-      case ItemType.NamedTuple:
-        {
-          const fieldNames = (item.codec as NamedTupleCodec).getNames();
-          const subCodecs = item.codec.getSubcodecs();
-
-          childItems = fieldNames.flatMap((fieldName, i) => {
-            const data = item.data[fieldName];
-
-            const id = `${item.id}.${i}`;
-
-            const childItem = buildItem(
-              {
-                id,
-                parent: item,
-                codec: subCodecs[i],
-                level: item.level + 1,
-                label: (
-                  <>
-                    {fieldName}
-                    <span> := </span>
-                  </>
-                ),
-                fieldName: fieldName,
-              },
-              data,
-              i < item.data.length - 1
-            );
-
-            return [
-              childItem,
-              ...(shouldExpandChildren || expanded.has(id)
-                ? expandItem(
-                    childItem,
-                    expanded,
-                    expandLevels,
-                    countPrefix,
-                    ignorePrefix,
-                    loadNestedData,
-                    state
-                  )
-                : []),
-            ];
-          });
-        }
-        break;
-      default:
-        assertNever(item.type);
-    }
-
-    return [...childItems, item.closingBracket];
+  if (item.type === ItemType.Scalar || item.type === ItemType.Other) {
+    return [];
   }
 
-  return [];
+  expanded.add(item.id);
+
+  const shouldExpandChildren = !!expandLevels && item.level + 1 < expandLevels;
+
+  let childItems: Item[];
+
+  switch (item.type) {
+    case ItemType.Set:
+    case ItemType.Array:
+    case ItemType.Tuple:
+      {
+        childItems = (item.data ?? []).flatMap((data, i) => {
+          const subCodec =
+            item.level === 0
+              ? item.codec
+              : item.codec.getKind() === "tuple"
+              ? item.codec.getSubcodecs()[i]
+              : item.codec.getSubcodecs()[0];
+
+          const id = `${item.id}.${i}`;
+
+          const childItem = buildItem(
+            {
+              id,
+              parent: item,
+              codec: subCodec,
+              level: item.level + 1,
+            },
+            data,
+            i,
+            i < item.data!.length - 1
+          );
+
+          return [
+            childItem,
+            ...(shouldExpandChildren || expanded.has(id)
+              ? expandItem(
+                  childItem,
+                  expanded,
+                  expandLevels,
+                  countPrefix,
+                  ignorePrefix,
+                  loadNestedData,
+                  state
+                )
+              : []),
+          ];
+        });
+
+        if (
+          item.expectedCount !== undefined &&
+          (!item.data || item.expectedCount > item.data.length)
+        ) {
+          const more = item.expectedCount - (item.data?.length ?? 0);
+
+          const canLoadMoreData =
+            loadNestedData &&
+            (item.data?.length ?? 0) === 0 &&
+            (item.parent as any)?.data &&
+            item.fieldName;
+
+          const childItem: Item = {
+            id: `${item.id}.count`,
+            parent: item,
+            type: ItemType.Other,
+            codec: item.codec,
+            level: item.level + 1,
+            comma: false,
+            body: (
+              <>
+                {canLoadMoreData ? (
+                  <span
+                    className={cn(styles.resultsHidden, styles.loadable)}
+                    onClick={async () => {
+                      state.replaceItemBody(
+                        childItem,
+                        <span className={styles.resultsHidden}>
+                          Loading...
+                        </span>
+                      );
+                      const {data, codec} = await loadNestedData(
+                        (item.parent as any).data.__tname__,
+                        (item.parent as any).data.id,
+                        item.fieldName!
+                      );
+                      (item.parent as any).data[item.fieldName!] = data;
+                      const codecIndex = (
+                        item.parent as any
+                      ).codec.fields.findIndex(
+                        (f: any) => f.name === item.fieldName!
+                      );
+                      (item.parent as any).codec.codecs[codecIndex].subCodec =
+                        codec;
+                      const parentIndex = state._items.indexOf(item.parent!);
+                      state.collapseItem(parentIndex);
+                      state.expandItem(parentIndex);
+                    }}
+                  >
+                    load {more} hidden result{more > 1 ? "s" : ""}...
+                  </span>
+                ) : (
+                  <span className={styles.resultsHidden}>
+                    ...{item.data?.length ? "further " : ""}
+                    {more} result{more > 1 ? "s" : ""} hidden
+                  </span>
+                )}
+              </>
+            ),
+          };
+          childItems.push(childItem);
+        }
+      }
+      break;
+    case ItemType.Object:
+      {
+        const fields = (item.codec as ObjectCodec).getFields();
+        const explicitNum = fields.filter((field) => !field.implicit).length;
+        const subCodecs = item.codec.getSubcodecs();
+
+        let explicitFieldIndex = 1;
+        childItems = fields.flatMap((field, i) => {
+          if (
+            (field.implicit && !(!explicitNum && field.name === "id")) ||
+            (countPrefix !== null && field.name.startsWith(countPrefix))
+          ) {
+            return [];
+          }
+
+          const id = `${item.id}.${i}`;
+
+          const expectedCount =
+            countPrefix !== null &&
+            item.data[countPrefix + field.name] !== undefined
+              ? parseInt(item.data[countPrefix + field.name], 10)
+              : undefined;
+
+          const childItem = buildItem(
+            {
+              id,
+              parent: item,
+              codec: subCodecs[i],
+              level: item.level + 1,
+              label: (
+                <>
+                  <span>
+                    {ignorePrefix && field.name.startsWith(ignorePrefix)
+                      ? field.name.slice(ignorePrefix.length)
+                      : field.name}
+                  </span>
+                  <span>: </span>
+                </>
+              ),
+              fieldName: field.name,
+              expectedCount:
+                expectedCount !== undefined && !Number.isNaN(expectedCount)
+                  ? expectedCount
+                  : undefined,
+            },
+            item.data[field.name],
+            field.name,
+            !!explicitNum && explicitFieldIndex++ < explicitNum
+          );
+
+          return [
+            childItem,
+            ...(shouldExpandChildren || expanded.has(id)
+              ? expandItem(
+                  childItem,
+                  expanded,
+                  expandLevels,
+                  countPrefix,
+                  ignorePrefix,
+                  loadNestedData,
+                  state
+                )
+              : []),
+          ];
+        });
+      }
+      break;
+    case ItemType.NamedTuple:
+      {
+        const fieldNames = (item.codec as NamedTupleCodec).getNames();
+        const subCodecs = item.codec.getSubcodecs();
+
+        childItems = fieldNames.flatMap((fieldName, i) => {
+          const data = item.data[fieldName];
+
+          const id = `${item.id}.${i}`;
+
+          const childItem = buildItem(
+            {
+              id,
+              parent: item,
+              codec: subCodecs[i],
+              level: item.level + 1,
+              label: (
+                <>
+                  {fieldName}
+                  <span> := </span>
+                </>
+              ),
+              fieldName: fieldName,
+            },
+            data,
+            fieldName,
+            i < item.data.length - 1
+          );
+
+          return [
+            childItem,
+            ...(shouldExpandChildren || expanded.has(id)
+              ? expandItem(
+                  childItem,
+                  expanded,
+                  expandLevels,
+                  countPrefix,
+                  ignorePrefix,
+                  loadNestedData,
+                  state
+                )
+              : []),
+          ];
+        });
+      }
+      break;
+    default:
+      assertNever(item);
+  }
+
+  return [...childItems, item.closingBracket];
 }
 
 const itemTypes: {
@@ -317,10 +322,11 @@ export function buildItem(
     expectedCount?: number;
   },
   data: any,
+  index: string | number,
   comma?: boolean
 ): Item {
   if (data === null && !base.expectedCount) {
-    return buildScalarItem(base, null, comma);
+    return buildScalarItem(base, null, index, comma);
   }
 
   const codecKind =
@@ -329,7 +335,7 @@ export function buildItem(
       : base.codec.getKind();
 
   if (codecKind === "scalar" || codecKind === "range") {
-    return buildScalarItem(base, data, comma);
+    return buildScalarItem(base, data, index, comma);
   }
 
   const {type, brackets} = itemTypes[codecKind];
@@ -348,18 +354,15 @@ export function buildItem(
         {brackets[0]}
       </>
     ),
+    comma: false,
     closingBracket: {
       id: base.id,
       parent: base.parent,
       level: base.level,
       codec: base.codec,
       type: ItemType.Other,
-      body: (
-        <span>
-          {brackets[1]}
-          {comma ? "," : ""}
-        </span>
-      ),
+      comma,
+      body: <span>{brackets[1]}</span>,
     },
   };
 }

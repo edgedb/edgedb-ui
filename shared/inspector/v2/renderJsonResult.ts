@@ -1,7 +1,7 @@
 import type {_ICodec as ICodec} from "edgedb";
 import type {ObjectCodec} from "edgedb/dist/codecs/object";
 import type {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
-import {scalarItemToString} from "@edgedb/inspector/v2/buildScalar";
+import {scalarItemToString} from "./buildScalar";
 
 export function renderResultAsJson(result: any, codec: ICodec): string {
   return `[\n${(result as any[])
@@ -9,7 +9,7 @@ export function renderResultAsJson(result: any, codec: ICodec): string {
     .join(",\n")}\n]`;
 }
 
-function _renderToJson(val: any, codec: ICodec, depth: string): string {
+export function _renderToJson(val: any, codec: ICodec, depth: string): string {
   if (val == null) {
     return "null";
   }

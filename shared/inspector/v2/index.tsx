@@ -1,4 +1,3 @@
-import React from "react";
 import {observer} from "mobx-react";
 import {VariableSizeList as List, ListChildComponentProps} from "react-window";
 import {_ICodec} from "edgedb";
@@ -10,6 +9,14 @@ import {InspectorContext, useInspectorState} from "./context";
 
 import styles from "./inspector.module.scss";
 import {ItemType} from "./buildItem";
+import {renderResultAsJson, _renderToJson} from "./renderJsonResult";
+import {
+  forwardRef,
+  HTMLAttributes,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 interface InspectorProps extends RowListProps {
   state: InspectorState;
@@ -18,7 +25,7 @@ interface InspectorProps extends RowListProps {
 export default function Inspector({state, ...rowProps}: InspectorProps) {
   return (
     <InspectorContext.Provider value={state}>
-      <RowList {...rowProps} />
+      <RowList key={state.$modelId} {...rowProps} />
     </InspectorContext.Provider>
   );
 }
@@ -27,14 +34,25 @@ interface RowListProps {
   className?: string;
   rowHeight?: number;
   lineHeight?: number;
+  height?: number;
   maxHeight?: number;
   disableVirtualisedRendering?: boolean;
 }
 
+const innerElementType = forwardRef((props, ref) => (
+  <div
+    ref={ref as any}
+    className={styles.innerWrapper}
+    {...props}
+    style={{...(props as any).style, width: undefined}}
+  />
+));
+
 const RowList = observer(function RowList({
   className,
-  rowHeight = 24,
-  lineHeight = 24,
+  rowHeight = 28,
+  lineHeight = 26,
+  height,
   maxHeight = rowHeight * 10,
   disableVirtualisedRendering,
 }: RowListProps) {
@@ -58,7 +76,7 @@ const RowList = observer(function RowList({
         style={inspectorStyle}
       >
         {items.map((_, i) => (
-          <Row index={i} style={{}} data={items} key={i} />
+          <Row index={i} style={{}} data={items} key={i} noVirtualised />
         ))}
       </div>
     );
@@ -66,12 +84,14 @@ const RowList = observer(function RowList({
     const itemSize = (index: number) =>
       (items[index].height ?? 1) * lineHeight + vPad;
 
-    let height = 0;
-    for (let i = 0; i < items.length; i++) {
-      height += itemSize(i);
-      if (height > maxHeight) {
-        height = maxHeight;
-        break;
+    if (height == null) {
+      height = 0;
+      for (let i = 0; i < items.length; i++) {
+        height += itemSize(i);
+        if (height > maxHeight) {
+          height = maxHeight;
+          break;
+        }
       }
     }
 
@@ -83,6 +103,7 @@ const RowList = observer(function RowList({
         style={inspectorStyle}
         height={height}
         width={"100%"}
+        innerElementType={innerElementType}
         initialScrollOffset={state.scrollPos}
         onScroll={({scrollOffset}) => state.setScrollPos(scrollOffset)}
         itemData={items}
@@ -100,7 +121,8 @@ const Row = observer(function Row({
   index,
   style,
   data,
-}: ListChildComponentProps<Item[]>) {
+  noVirtualised,
+}: ListChildComponentProps<Item[]> & {noVirtualised?: boolean}) {
   const state = useInspectorState();
 
   const item = data[index];
@@ -108,23 +130,77 @@ const Row = observer(function Row({
   const isExpanded = state.expanded!.has(item.id);
 
   return (
-    <InspectorRow
-      item={item}
-      style={style}
-      isExpanded={isExpanded}
-      toggleExpanded={() => {
-        isExpanded ? state.collapseItem(index) : state.expandItem(index);
+    <div
+      className={styles.rowWrapper}
+      style={{
+        top: style.top,
+        height: noVirtualised ? undefined : 0,
       }}
-    />
+    >
+      <InspectorRow
+        item={item}
+        isExpanded={isExpanded}
+        toggleExpanded={() => {
+          isExpanded ? state.collapseItem(index) : state.expandItem(index);
+        }}
+        hoverId={state.hoverId}
+        setHoverId={state.setHoverId}
+      />
+    </div>
   );
 });
 
+function CopyButton({
+  item,
+  ...props
+}: {item: Item} & HTMLAttributes<HTMLDivElement>) {
+  if (item.type === ItemType.Other) {
+    return null;
+  }
+
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timeout = setTimeout(() => setCopied(false), 1000);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [copied]);
+
+  return (
+    <div
+      className={styles.copyButton}
+      {...props}
+      onClick={() => {
+        const jsonString =
+          item.parent == null
+            ? renderResultAsJson((item as any).data, item.codec)
+            : _renderToJson(
+                item.type === ItemType.Scalar
+                  ? (item.parent as any).data[item.index]
+                  : item.data,
+                item.codec,
+                ""
+              );
+
+        navigator.clipboard?.writeText(jsonString);
+        setCopied(true);
+      }}
+    >
+      <CopyIcon /> {copied ? "Copied" : "Copy"}
+    </div>
+  );
+}
+
 interface InspectorRowProps {
   item: Item;
-  style?: React.CSSProperties;
   className?: string;
   isExpanded: boolean;
   toggleExpanded: () => void;
+  hoverId?: string | null;
+  setHoverId?: (id: string | null) => void;
 }
 
 export function InspectorRow({
@@ -132,17 +208,22 @@ export function InspectorRow({
   className,
   isExpanded,
   toggleExpanded,
-  style,
+  hoverId,
+  setHoverId,
 }: InspectorRowProps) {
   const expandableItem =
     item.type !== ItemType.Scalar && item.type !== ItemType.Other;
 
   return (
     <div
-      className={cn(styles.rowItem, className)}
+      className={cn(styles.rowItem, className, {
+        [styles.hoverable]: setHoverId && item.type !== ItemType.Other,
+        [styles.highlightBody]: hoverId === item.id,
+        [styles.highlightAll]:
+          hoverId !== item.id && item.id.startsWith(hoverId),
+      })}
       style={{
-        ...style,
-        paddingLeft: `${(item.level + 1) * 2}ch`,
+        paddingLeft: `${(item.level + 1) * 2 + 1}ch`,
       }}
     >
       {expandableItem ? (
@@ -155,30 +236,57 @@ export function InspectorRow({
           <ExpandArrowIcon />
         </div>
       ) : null}
-      {item.label}
-      {item.body}
-      {expandableItem && !isExpanded ? (
-        <>
-          <div className={styles.ellipsis} onClick={toggleExpanded}>
-            <EllipsisIcon />
-          </div>
-          {(item as any).closingBracket.body}
-        </>
+      <div className={styles.itemContent}>
+        {item.label}
+        <div className={styles.itemBody}>
+          {item.body}
+          {expandableItem && !isExpanded ? (
+            <>
+              <div className={styles.ellipsis} onClick={toggleExpanded}>
+                <EllipsisIcon />
+              </div>
+              {(item as any).closingBracket.body}
+            </>
+          ) : null}
+        </div>
+        {item.comma ||
+        (expandableItem &&
+          !isExpanded &&
+          (item as any).closingBracket.comma) ? (
+          <span className={styles.comma}>,</span>
+        ) : null}
+      </div>
+      {setHoverId ? (
+        <CopyButton
+          item={item}
+          onMouseEnter={() => {
+            setHoverId(item.id);
+          }}
+          onMouseLeave={() => {
+            setHoverId(null);
+          }}
+        />
       ) : null}
     </div>
   );
 }
 
-function ExpandArrowIcon() {
+export function ExpandArrowIcon() {
   return (
     <svg
+      width="14"
+      height="7"
+      viewBox="0 0 14 7"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
     >
-      <path d="M0 0h24v24H0z" fill="none" />
-      <path fill="currentColor" d="M10 17l5-5-5-5v10z" />
+      <path
+        d="M13 1L7 6L1 1"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -191,9 +299,27 @@ function EllipsisIcon() {
       height="24"
       viewBox="0 0 24 24"
     >
-      <circle fill="currentColor" cx="8" cy="12" r="1"></circle>
-      <circle fill="currentColor" cx="12" cy="12" r="1"></circle>
-      <circle fill="currentColor" cx="16" cy="12" r="1"></circle>
+      <circle cx="8" cy="12" r="1"></circle>
+      <circle cx="12" cy="12" r="1"></circle>
+      <circle cx="16" cy="12" r="1"></circle>
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg
+      width="13"
+      height="15"
+      viewBox="0 0 13 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M2 0C0.895431 0 0 0.895431 0 2V10C0 11.1046 0.89543 12 2 12H3V13C3 14.1046 3.89543 15 5 15H11C12.1046 15 13 14.1046 13 13V5C13 3.89543 12.1046 3 11 3H10V2C10 0.895431 9.10457 0 8 0H2ZM4 12H8C9.10457 12 10 11.1046 10 10V4H11C11.5523 4 12 4.44772 12 5V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V12Z"
+      />
     </svg>
   );
 }

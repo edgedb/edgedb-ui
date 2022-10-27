@@ -9,8 +9,9 @@ import {
   _async,
   _await,
   ArraySet,
+  idProp,
 } from "mobx-keystone";
-import {observable} from "mobx";
+import {action, observable} from "mobx";
 import {_ICodec} from "edgedb";
 import {Item, buildItem, expandItem, ItemType} from "./buildItem";
 
@@ -34,6 +35,7 @@ export type NestedDataGetter = (
 
 @model("edb/Inspector")
 export class InspectorState extends Model({
+  $modelId: idProp,
   expanded: prop<ArraySet<string> | undefined>(),
   scrollPos: prop<number>(0).withSetter(),
 
@@ -46,6 +48,14 @@ export class InspectorState extends Model({
   _jsonMode = false;
 
   loadingData = false;
+
+  @observable
+  hoverId: string | null = null;
+
+  @action.bound
+  setHoverId(id: string | null) {
+    this.hoverId = id;
+  }
 
   loadNestedData: NestedDataGetter | null = null;
 
@@ -92,7 +102,8 @@ export class InspectorState extends Model({
             level: 0,
             codec: result.codec,
           },
-          jsonMode ? `[${result.data.join(", ")}]` : result.data
+          jsonMode ? `[${result.data.join(", ")}]` : result.data,
+          0
         ),
       ];
       if (!jsonMode) {

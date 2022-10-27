@@ -85,6 +85,7 @@
 .outputBlock {
   grid-area: output;
   background-color: var(--repl-history-output-background);
+  min-width: 0;
 }
 
 .collapse {
@@ -180,12 +181,18 @@
 }
 
 .inspector {
-  margin: -6px 0 12px 12px !important;
+  margin: -6px 0 0 0 !important;
   width: calc(100% - 12px) !important;
   font-family: Roboto Mono;
   color: var(--repl-inspector-colour);
 
   @include customScrollbar;
+
+  --inspectorRowHoverBg: #e8e8e8;
+
+  @include darkTheme {
+    --inspectorRowHoverBg: #363636;
+  }
 }
 
 .queryStatus {
