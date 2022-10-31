@@ -5,7 +5,7 @@
   "license": "UNLICENSED",
   "peerDependencies": {
     "@types/react": "^17.0.0",
-    "edgedb": "^0.15.2",
+    "edgedb": "^0.21.1",
     "react": "^17.0.0",
     "react-dom": "^17.0.0"
   },

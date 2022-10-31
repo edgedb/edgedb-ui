@@ -7,6 +7,6 @@
     ]
   },
   "resolutions": {
-    "edgedb": "portal:/home/james/dev/edgedb-js"
+    "edgedb": "^0.21.1"
   }
 }

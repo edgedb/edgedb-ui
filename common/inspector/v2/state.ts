@@ -21,10 +21,9 @@ export interface EdgeDBResult {
   codec: _ICodec;
 }
 
-export const resultGetterCtx =
-  createContext<
-    (state: InspectorState) => Promise<EdgeDBResult | undefined>
-  >();
+export const resultGetterCtx = createContext<
+  (state: InspectorState) => Promise<EdgeDBResult | undefined>
+>();
 
 @model("edb/Inspector")
 export class InspectorState extends Model({
@@ -76,15 +75,19 @@ export class InspectorState extends Model({
 
     if (result) {
       this._items = [
-        buildItem(
-          {
-            id: ".",
-            level: 0,
-            codec: result.codec,
-          },
-          result.codec,
-          jsonMode ? `[${result.data.join(", ")}]` : result.data
-        ),
+        jsonMode
+          ? buildItem(
+              {id: ".", level: -1, codec: result.codec},
+              `[${result.data.join(", ")}]`
+            )
+          : buildItem(
+              {
+                id: ".",
+                level: 0,
+                codec: result.codec,
+              },
+              result.data
+            ),
       ];
       if (!jsonMode) {
         this.expandItem(

@@ -1,4 +1,4 @@
-import {UUID} from "edgedb";
+type UUID = string;
 
 export interface SchemaObject {
   name: string;

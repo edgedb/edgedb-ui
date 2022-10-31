@@ -1,7 +1,8 @@
 import React, {PropsWithChildren} from "react";
-import {_ICodec} from "edgedb";
-import {EdgeDBDateTime} from "edgedb/dist/datatypes/datetime";
-// import {EnumCodec} from "edgedb/dist/codecs/enum";
+import {_ICodec, Range} from "edgedb";
+
+import {EnumCodec} from "edgedb/dist/codecs/enum";
+import {RangeCodec} from "edgedb/dist/codecs/range";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -12,7 +13,14 @@ export function buildScalarItem(
   data: any,
   comma?: boolean
 ): Item {
-  const {body, height} = renderValue(data, base.codec);
+  const {body, height} = renderValue(
+    data,
+    base.codec.getKnownTypeName(),
+    base.codec instanceof EnumCodec,
+    base.codec instanceof RangeCodec
+      ? base.codec.getSubcodecs()[0].getKnownTypeName()
+      : undefined
+  );
 
   return {
     ...base,
@@ -44,7 +52,9 @@ function ScalarTag({name, children}: PropsWithChildren<TagProps>) {
 
 export function renderValue(
   value: any,
-  codec: _ICodec,
+  knownTypeName: string,
+  isEnum: boolean,
+  rangeKnownTypeName?: string,
   showTypeTag: boolean = true
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
@@ -55,8 +65,7 @@ export function renderValue(
     ? ScalarTag
     : ({children}: PropsWithChildren<{}>) => <>{children}</>;
 
-  const mt = codec.getKnownTypeName();
-  switch (mt) {
+  switch (knownTypeName) {
     case "std::bigint":
     case "std::decimal":
       return {
@@ -102,14 +111,16 @@ export function renderValue(
         ),
       };
     case "std::datetime":
+      value = value.toString() + "+00:00";
     case "cal::local_datetime":
-      value = edgeDBDateTimeToString(value);
     case "cal::local_time":
     case "cal::local_date":
     case "std::duration":
+    case "cal::relative_duration":
+    case "cal::date_duration":
       return {
         body: (
-          <Tag name={mt}>
+          <Tag name={knownTypeName}>
             <span className={styles.scalar_string}>{value.toString()}</span>
           </Tag>
         ),
@@ -137,20 +148,50 @@ export function renderValue(
     };
   }
 
-  // if (codec instanceof EnumCodec) {
-  //   return {
-  //     body: (
-  //       <span>
-  //         <span className={styles.typeName}>{mt}.</span>
-  //         <b>{value.toString()}</b>
-  //       </span>
-  //     ),
-  //   };
-  // }
+  if (value instanceof Range) {
+    return {
+      body: (
+        <span>
+          range({renderValue(value.lower, rangeKnownTypeName!, false).body}
+          {value.isEmpty ? (
+            <>
+              , empty := <span className={styles.scalar_boolean}>true</span>
+            </>
+          ) : (
+            <>
+              , {renderValue(value.upper, rangeKnownTypeName!, false).body},
+              inc_lower :={" "}
+              <span className={styles.scalar_boolean}>
+                {JSON.stringify(value.incLower)}
+              </span>
+              , inc_upper :={" "}
+              <span className={styles.scalar_boolean}>
+                {JSON.stringify(value.incUpper)}
+              </span>
+            </>
+          )}
+          )
+        </span>
+      ),
+    };
+  }
+
+  if (isEnum) {
+    return {
+      body: (
+        <span>
+          {showTypeTag ? (
+            <span className={styles.typeName}>{knownTypeName}.</span>
+          ) : null}
+          <b>{value.toString()}</b>
+        </span>
+      ),
+    };
+  }
 
   return {
     body: (
-      <Tag name={mt}>
+      <Tag name={knownTypeName}>
         <b>{value.toString()}</b>
       </Tag>
     ),
@@ -250,22 +291,4 @@ function prettyPrintJSON(json: string, indentSpaces: number = 2): string {
   }
   pretty += json.slice(lasti);
   return pretty;
-}
-
-function edgeDBDateTimeToString(datetime: EdgeDBDateTime): string {
-  const year = `${datetime.year < 0 ? "-" : ""}${Math.abs(datetime.year)
-    .toString()
-    .padStart(4, "0")}`;
-  return `${year}-${datetime.month.toString().padStart(2, "0")}-${datetime.day
-    .toString()
-    .padStart(2, "0")}T${datetime.hour
-    .toString()
-    .padStart(2, "0")}:${datetime.minute
-    .toString()
-    .padStart(2, "0")}:${datetime.second.toString().padStart(2, "0")}${
-    datetime.microsecond
-      ? "." +
-        datetime.microsecond.toString().padStart(6, "0").replace(/0+$/, "")
-      : ""
-  }`;
 }
