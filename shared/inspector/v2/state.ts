@@ -21,10 +21,9 @@ export interface EdgeDBResult {
   codec: _ICodec;
 }
 
-export const resultGetterCtx =
-  createContext<
-    (state: InspectorState) => Promise<EdgeDBResult | undefined>
-  >();
+export const resultGetterCtx = createContext<
+  (state: InspectorState) => Promise<EdgeDBResult | undefined>
+>();
 
 export type NestedDataGetter = (
   objectType: string,
@@ -84,24 +83,30 @@ export class InspectorState extends Model({
     }
 
     if (result) {
-      this._items = [
-        buildItem(
-          {
-            id: ".",
-            parent: null,
-            level: 0,
-            codec: result.codec,
-          },
-          jsonMode ? `[${result.data.join(", ")}]` : result.data
-        ),
-      ];
-      if (!jsonMode) {
+      if (jsonMode) {
+        this._items = [
+          buildItem(
+            {id: ".", parent: null, level: -1, codec: result.codec},
+            `[${result.data.join(", ")}]`
+          ),
+        ];
+        this._jsonMode = true;
+      } else {
+        this._items = [
+          buildItem(
+            {
+              id: ".",
+              parent: null,
+              level: 0,
+              codec: result.codec,
+            },
+            result.data
+          ),
+        ];
         this.expandItem(
           0,
           shouldAutoExpand ? this.autoExpandDepth ?? 4 : undefined
         );
-      } else {
-        this._jsonMode = jsonMode;
       }
     }
   });

@@ -344,7 +344,9 @@ export function buildItem(
     return buildScalarItem(base, data, comma);
   }
 
-  const {type, brackets} = itemTypes[codecKind];
+  const {type, brackets} = itemTypes[
+    codecKind as Exclude<typeof codecKind, "sparse_object">
+  ];
 
   return {
     ...base,

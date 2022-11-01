@@ -1,5 +1,5 @@
 import React, {PropsWithChildren} from "react";
-import {LocalDateTime, _ICodec, Range} from "edgedb";
+import {_ICodec, Range} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -135,6 +135,8 @@ export function renderValue(
     case "cal::local_time":
     case "cal::local_date":
     case "std::duration":
+    case "cal::relative_duration":
+    case "cal::date_duration":
       return {
         body: (
           <Tag name={knownTypeName}>
@@ -228,7 +230,7 @@ export function scalarItemToString(item: any, typename: string): string {
   }
 }
 
-function formatDatetime(date: LocalDateTime): string {
+function formatDatetime(date: Date): string {
   return date.toString() + "+00:00";
 }
 
