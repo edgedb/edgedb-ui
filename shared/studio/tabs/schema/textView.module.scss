@@ -6,6 +6,8 @@
   display: flex;
   flex-direction: column;
   background: var(--app-panel-bg);
+
+  --syntax-punc: #909090;
 }
 
 .filterControls {
@@ -187,7 +189,7 @@
   color: var(--syntax-purple);
 }
 .punc {
-  color: #909090;
+  color: var(--syntax-punc);
 }
 .literal {
   color: var(--syntax-orange);
@@ -400,7 +402,7 @@
 
 .arrow {
   font-family: Inter;
-  color: #909090;
+  color: var(--syntax-punc);
 }
 
 .typeLink {
@@ -562,22 +564,43 @@
 }
 
 .showCopyHighlight .copyHighlight {
-  background: #efe8ae;
+  background: Highlight;
+  color: HighlightText;
+
+  --syntax-purple: HighlightText;
+  --syntax-green: HighlightText;
+  --syntax-blue: HighlightText;
+  --syntax-red: HighlightText;
+  --syntax-orange: HighlightText;
+  --syntax-comment: HighlightText;
+  --syntax-mod: HighlightText;
+  --syntax-punc: HighlightText;
+
   padding: 3px;
   margin: 0 -3px;
   border-radius: 3px;
-
-  @include darkTheme {
-    background: #68601b;
-  }
 }
 
-.inheritedBlock {
-  .copyHighlight {
-    background: none;
+.inheritedBlock .copyHighlight {
+  background: none;
+  color: inherit;
 
-    @include darkTheme {
-      background: none;
-    }
+  --syntax-purple: #b044c2;
+  --syntax-green: #1a8f66;
+  --syntax-blue: #0075d2;
+  --syntax-red: #e72525;
+  --syntax-orange: #d78100;
+  --syntax-comment: #7f7f7f;
+  --syntax-mod: #838383;
+  --syntax-punc: #909090;
+
+  @include darkTheme {
+    --syntax-purple: #ac86f6;
+    --syntax-green: #07a66d;
+    --syntax-blue: #369ff2;
+    --syntax-red: #f13f4a;
+    --syntax-orange: #f4e470;
+    --syntax-comment: #7f7f7f;
+    --syntax-mod: #9f9f9f;
   }
 }
