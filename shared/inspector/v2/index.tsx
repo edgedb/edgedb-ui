@@ -152,8 +152,9 @@ const Row = observer(function Row({
 
 function CopyButton({
   item,
+  ignorePrefixes = false,
   ...props
-}: {item: Item} & HTMLAttributes<HTMLDivElement>) {
+}: {item: Item; ignorePrefixes?: boolean} & HTMLAttributes<HTMLDivElement>) {
   if (item.type === ItemType.Other) {
     return null;
   }
@@ -176,13 +177,18 @@ function CopyButton({
       onClick={() => {
         const jsonString =
           item.parent == null
-            ? renderResultAsJson((item as any).data, item.codec)
+            ? renderResultAsJson(
+                (item as any).data,
+                item.codec,
+                ignorePrefixes
+              )
             : _renderToJson(
                 item.type === ItemType.Scalar
                   ? (item.parent as any).data[item.index]
                   : item.data,
                 item.codec,
-                ""
+                "",
+                ignorePrefixes
               );
 
         navigator.clipboard?.writeText(jsonString);
@@ -201,6 +207,8 @@ interface InspectorRowProps {
   toggleExpanded: () => void;
   hoverId?: string | null;
   setHoverId?: (id: string | null) => void;
+  inject?: JSX.Element | null;
+  ignorePrefixes?: boolean;
 }
 
 export function InspectorRow({
@@ -210,6 +218,8 @@ export function InspectorRow({
   toggleExpanded,
   hoverId,
   setHoverId,
+  inject,
+  ignorePrefixes,
 }: InspectorRowProps) {
   const expandableItem =
     item.type !== ItemType.Scalar && item.type !== ItemType.Other;
@@ -236,29 +246,33 @@ export function InspectorRow({
           <ExpandArrowIcon />
         </div>
       ) : null}
-      <div className={styles.itemContent}>
-        {item.label}
-        <div className={styles.itemBody}>
-          {item.body}
-          {expandableItem && !isExpanded ? (
-            <>
-              <div className={styles.ellipsis} onClick={toggleExpanded}>
-                <EllipsisIcon />
-              </div>
-              {(item as any).closingBracket.body}
-            </>
+      <div className={styles.itemWrapper}>
+        <div className={styles.itemContent}>
+          {item.label}
+          <div className={styles.itemBody}>
+            {item.body}
+            {expandableItem && !isExpanded ? (
+              <>
+                <div className={styles.ellipsis} onClick={toggleExpanded}>
+                  <EllipsisIcon />
+                </div>
+                {(item as any).closingBracket.body}
+              </>
+            ) : null}
+          </div>
+          {item.comma ||
+          (expandableItem &&
+            !isExpanded &&
+            (item as any).closingBracket.comma) ? (
+            <span className={styles.comma}>,</span>
           ) : null}
         </div>
-        {item.comma ||
-        (expandableItem &&
-          !isExpanded &&
-          (item as any).closingBracket.comma) ? (
-          <span className={styles.comma}>,</span>
-        ) : null}
+        {inject}
       </div>
       {setHoverId ? (
         <CopyButton
           item={item}
+          ignorePrefixes={ignorePrefixes}
           onMouseEnter={() => {
             setHoverId(item.id);
           }}

@@ -55,16 +55,17 @@
     }
   }
 
+  .itemWrapper {
+    display: flex;
+    margin-right: auto;
+  }
+
   .itemContent,
   .itemBody {
     display: flex;
     padding: 0 2px;
     margin: 0 -2px;
     border-radius: 2px;
-  }
-
-  .itemContent {
-    margin-right: auto;
   }
 
   &.highlightBody {

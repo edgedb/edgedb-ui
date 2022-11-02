@@ -102,7 +102,7 @@ export class ReplResultCell extends ExtendedModel(ReplHistoryCell, {
 
   copyAsJson() {
     navigator.clipboard?.writeText(
-      renderResultAsJson(this._result, this._result!._codec)
+      renderResultAsJson(this._result, this._result!._codec, false)
     );
   }
 }

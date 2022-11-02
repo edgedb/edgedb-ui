@@ -3,13 +3,22 @@ import type {ObjectCodec} from "edgedb/dist/codecs/object";
 import type {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 import {scalarItemToString} from "./buildScalar";
 
-export function renderResultAsJson(result: any, codec: ICodec): string {
+export function renderResultAsJson(
+  result: any,
+  codec: ICodec,
+  ignorePrefixes: boolean
+): string {
   return `[\n${(result as any[])
-    .map((item) => "  " + _renderToJson(item, codec, "  "))
+    .map((item) => "  " + _renderToJson(item, codec, "  ", ignorePrefixes))
     .join(",\n")}\n]`;
 }
 
-export function _renderToJson(val: any, codec: ICodec, depth: string): string {
+export function _renderToJson(
+  val: any,
+  codec: ICodec,
+  depth: string,
+  ignorePrefixes: boolean
+): string {
   if (val == null) {
     return "null";
   }
@@ -43,11 +52,13 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
       return `{"lower": ${_renderToJson(
         val.lower,
         subcodec,
-        depth
+        depth,
+        ignorePrefixes
       )}, "upper": ${_renderToJson(
         val.upper,
         subcodec,
-        depth
+        depth,
+        ignorePrefixes
       )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
         val.incUpper ? "true" : "false"
       }}`;
@@ -64,7 +75,8 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
             _renderToJson(
               item,
               subcodecs[codecKind === "tuple" ? i : 0],
-              depth + "  "
+              depth + "  ",
+              ignorePrefixes
             )
         )
         .join(",\n")}\n${depth}]`;
@@ -77,7 +89,7 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
           ? (codec as ObjectCodec).getFields().filter((f) => !f.implicit)
               .length
           : 0;
-      const fields =
+      let fields =
         codecKind === "object"
           ? (codec as ObjectCodec)
               .getFields()
@@ -87,13 +99,25 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
                   : f.name
               )
           : (codec as NamedTupleCodec).getNames();
+      if (ignorePrefixes) {
+        fields = fields.filter((name) => !name?.startsWith("__count_"));
+      }
       return `{\n${fields
         .flatMap((fieldName, i) =>
           fieldName
             ? [
                 depth +
-                  `  "${fieldName}": ` +
-                  _renderToJson(val[fieldName], subcodecs[i], depth + "  "),
+                  `  "${
+                    ignorePrefixes && fieldName.startsWith("__")
+                      ? fieldName.slice(2)
+                      : fieldName
+                  }": ` +
+                  _renderToJson(
+                    val[fieldName],
+                    subcodecs[i],
+                    depth + "  ",
+                    ignorePrefixes
+                  ),
               ]
             : []
         )

@@ -858,29 +858,37 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
       {item ? (
         <>
           <InspectorRow
+            className={styles.inspectorRowInner}
             item={item}
             isExpanded={!!rowData.state.state.expanded?.has(item.id)}
             toggleExpanded={() => {
               rowData.state.toggleExpanded(rowData.index);
             }}
+            hoverId={rowData.state.state.hoverId}
+            setHoverId={rowData.state.state.setHoverId}
+            ignorePrefixes
+            inject={
+              item.level === 2 &&
+              rowData.state.linkFields.has(item.fieldName as string) ? (
+                <div
+                  className={styles.viewInTableButton}
+                  onClick={() =>
+                    state.openNestedView(
+                      basePath,
+                      navigate,
+                      rowData.state.objectId,
+                      rowData.state.objectTypeName,
+                      state.fields!.find(
+                        (field) => field.name === item.fieldName
+                      )!
+                    )
+                  }
+                >
+                  View in Table
+                </div>
+              ) : null
+            }
           />
-          {item.level === 2 &&
-          rowData.state.linkFields.has(item.fieldName as string) ? (
-            <div
-              className={styles.viewInTableButton}
-              onClick={() =>
-                state.openNestedView(
-                  basePath,
-                  navigate,
-                  rowData.state.objectId,
-                  rowData.state.objectTypeName,
-                  state.fields!.find((field) => field.name === item.fieldName)!
-                )
-              }
-            >
-              View in Table
-            </div>
-          ) : null}
         </>
       ) : (
         <div>Loading...</div>
