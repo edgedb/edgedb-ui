@@ -484,8 +484,6 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
     });
   }
 
-  console.log(data.operators.filter((op) => !op.name.startsWith("std::")));
-
   for (const constraint of data.constraints) {
     constraints.set(constraint.id, {
       schemaType: "Constraint",
@@ -842,7 +840,7 @@ export function getNameOfSchemaType(type: SchemaType): string {
         )
         .join(", ")}>`;
     case "Range":
-      return `range<${type.elementType.name}>`
+      return `range<${type.elementType.name}>`;
     default:
       throw new Error(`unknown schema type: ${(type as any).schemaType}`);
   }

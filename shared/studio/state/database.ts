@@ -51,7 +51,7 @@ import {connCtx, Connection} from "./connection";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 2;
+const SCHEMA_DATA_VERSION = 3;
 
 export interface SchemaData {
   schemaDataVersion: number;
