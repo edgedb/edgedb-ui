@@ -254,7 +254,7 @@ export class Repl extends Model({
     const conn = connCtx.get(this)!;
 
     const timestamp = Date.now();
-    const accessPoliciesDisabled = conn.disableAccessPolicies;
+    const accessPoliciesDisabled = settingsState.disableAccessPolicies;
     try {
       const {result, duration, outCodecBuf, resultBuf, capabilities, status} =
         yield* _await(
