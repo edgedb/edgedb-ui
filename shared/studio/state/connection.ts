@@ -23,6 +23,7 @@ import {
   codecsRegistry,
 } from "../utils/decodeRawBuffer";
 import {instanceCtx, InstanceState} from "./instance";
+import {settingsState} from "./settings";
 
 export {Capabilities};
 export type {QueryParams};
@@ -80,7 +81,6 @@ export class Connection extends Model({
   sessionGlobals: prop(
     () => ({} as {[key: string]: {value: any; typeId: string}})
   ).withSetter(),
-  disableAccessPolicies: prop(false).withSetter(),
 }) {
   conn = AdminUIFetchConnection.create(
     {
@@ -110,7 +110,7 @@ export class Connection extends Model({
     if (items.length) {
       state = state.withGlobals(globals);
     }
-    if (this.disableAccessPolicies) {
+    if (settingsState.disableAccessPolicies) {
       state = state.withConfig({
         apply_access_policies: false,
       });

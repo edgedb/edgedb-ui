@@ -17,6 +17,7 @@ import {DatabaseState} from "../../state/database";
 import styles from "./sessionState.module.scss";
 import {getInputComponent} from "../dataEditor";
 import {ChevronDownIcon, DeleteIcon, PlusIcon} from "../../icons";
+import {settingsState} from "../../state/settings";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -35,7 +36,7 @@ export const SessionState = observer(function ({
         {dbState.schemaData?.globals.size ? (
           <SessionGlobals dbState={dbState} />
         ) : null}
-        <SessionConfig dbState={dbState} />
+        <SessionConfig />
       </div>,
       targetEl
     );
@@ -50,12 +51,14 @@ interface PanelRef {
 const Panel = forwardRef(function (
   {
     label,
+    modified,
     content,
     onOpen,
     onClose,
     disabled,
   }: {
     label: string | JSX.Element;
+    modified: boolean;
     content: JSX.Element;
     onOpen?: () => void;
     onClose: () => void;
@@ -96,7 +99,7 @@ const Panel = forwardRef(function (
       })}
     >
       <div
-        className={styles.stateButton}
+        className={cn(styles.stateButton, {[styles.modified]: modified})}
         onClick={() => {
           onOpen?.();
           setPanelOpen(true);
@@ -140,6 +143,7 @@ const SessionGlobals = observer(function SessionGlobals({
           Globals {globalsCount ? <span>&nbsp;· {globalsCount}</span> : null}
         </>
       }
+      modified={globalsCount > 0}
       content={
         <SessionGlobalsPanel
           dbState={dbState}
@@ -247,18 +251,15 @@ interface SessionConfig {
   disableAccessPolicies: boolean;
 }
 
-const SessionConfig = observer(function SessionConfig({
-  dbState,
-}: {
-  dbState: DatabaseState;
-}) {
+const SessionConfig = observer(function SessionConfig() {
   const [config, setConfig] = useState<SessionConfig>(() => ({
-    disableAccessPolicies: dbState.connection.disableAccessPolicies,
+    disableAccessPolicies: settingsState.disableAccessPolicies,
   }));
 
   return (
     <Panel
       label="Config"
+      modified={settingsState.disableAccessPolicies}
       content={
         <>
           <label className={styles.configItem}>
@@ -278,13 +279,11 @@ const SessionConfig = observer(function SessionConfig({
       }
       onOpen={() => {
         setConfig({
-          disableAccessPolicies: dbState.connection.disableAccessPolicies,
+          disableAccessPolicies: settingsState.disableAccessPolicies,
         });
       }}
       onClose={() => {
-        dbState.connection.setDisableAccessPolicies(
-          config.disableAccessPolicies
-        );
+        settingsState.setDisableAccessPolicies(config.disableAccessPolicies);
       }}
     />
   );

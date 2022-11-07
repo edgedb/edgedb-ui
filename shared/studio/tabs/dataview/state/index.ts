@@ -36,6 +36,7 @@ import {InspectorState, resultGetterCtx} from "@edgedb/inspector/v2/state";
 
 import {dbCtx, connCtx} from "../../../state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./edits";
+import {settingsState} from "../../../state/settings";
 
 const fetchBlockSize = 100;
 
@@ -302,7 +303,7 @@ export class DataInspector extends Model({
     const refreshDataDisposer = reaction(
       () => {
         const conn = connCtx.get(this);
-        return [conn?.sessionGlobals, conn?.disableAccessPolicies];
+        return [conn?.sessionGlobals, settingsState.disableAccessPolicies];
       },
       () => {
         this.omittedLinks.clear();
