@@ -130,6 +130,10 @@ const HistoryList = observer(function HistoryList({
     }
   }, [state.historyCursor, height]);
 
+  useEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [historyList.length]);
+
   return (
     <div ref={ref} className={styles.historyListWrapper}>
       <List
@@ -139,7 +143,9 @@ const HistoryList = observer(function HistoryList({
         height={height}
         width="100%"
         estimatedItemSize={121}
-        itemSize={() => 121}
+        itemSize={(index) =>
+          historyList[index - 1]?.showDateHeader ? 137 : 121
+        }
       >
         {({index, style}) => (
           <HistoryItem
@@ -180,12 +186,18 @@ const HistoryItem = observer(function HistoryItem({
       className={cn(styles.historyItem, {
         [styles.selected]: state.historyCursor === index,
         [styles.draft]: !item,
+        [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
       onClick={() => state.setHistoryCursor(index)}
       onDoubleClick={() => state.setShowHistory(false, false)}
     >
       {item ? (
         <>
+          {item.showDateHeader ? (
+            <div className={styles.dateHeader}>
+              {new Date(item.timestamp).toLocaleDateString()}
+            </div>
+          ) : null}
           {renderThumbnail(item.thumbnailData.data)}
           <div
             className={styles.timeLabel}

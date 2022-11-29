@@ -22,7 +22,7 @@ import {
 
 import {Text} from "@codemirror/state";
 
-import {InspectorState} from "@edgedb/inspector/state";
+import {InspectorState, Item} from "@edgedb/inspector/state";
 
 import {
   storeQueryHistoryItem,
@@ -43,10 +43,7 @@ import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
-import {
-  SplitViewDirection,
-  SplitViewState,
-} from "@edgedb/common/ui/splitView/model";
+import {SplitViewState} from "@edgedb/common/ui/splitView/model";
 import {
   serialiseParamsData,
   ParamsData,
@@ -55,8 +52,8 @@ import {
 import {getThumbnailData, ThumbnailData} from "./thumbnailGen";
 import {QueryBuilderState} from "../../../components/visualQuerybuilder/state";
 import {ObservableLRU} from "../../../state/utils/lru";
-import {settingsState} from "../../../state/settings";
 import {extendedViewerIds} from "../../../components/extendedViewers";
+import {sessionStateCtx} from "../../../state/sessionState";
 
 export enum EditorKind {
   EdgeQL,
@@ -76,26 +73,27 @@ type HistoryItemQueryData =
 
 export abstract class QueryHistoryItem extends Model({
   $modelId: idProp,
-  queryData: prop<HistoryItemQueryData>(),
+  queryData: prop<Frozen<HistoryItemQueryData>>(),
   timestamp: prop<number>(),
   thumbnailData: prop<Frozen<ThumbnailData>>(),
-}) {}
+}) {
+  showDateHeader = false;
+}
 
 @model("QueryEditor/HistoryResultItem")
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   status: prop<string>(),
   hasResult: prop<boolean>(),
+  implicitLimit: prop<number>(),
 }) {
   get inspectorState() {
     const queryEditor = queryEditorCtx.get(this)!;
     const state = queryEditor.resultInspectorCache.get(this.$modelId);
     if (!state) {
-      queryEditor.fetchResultData(this.$modelId);
+      queryEditor.fetchResultData(this.$modelId, this.implicitLimit);
     }
     return state ?? null;
   }
-
-  async fetchResultData() {}
 }
 
 @model("QueryEditor/HistoryErrorItem")
@@ -103,8 +101,12 @@ export class QueryHistoryErrorItem extends ExtendedModel(QueryHistoryItem, {
   error: prop<Frozen<ErrorDetails>>(),
 }) {}
 
-function createInspector(result: EdgeDBSet, openExtendedView: () => void) {
-  const inspector = new InspectorState({});
+function createInspector(
+  result: EdgeDBSet,
+  implicitLimit: number,
+  openExtendedView: (item: Item) => void
+) {
+  const inspector = new InspectorState({implicitLimit});
   inspector.extendedViewIds = extendedViewerIds;
   inspector.openExtendedView = openExtendedView;
   inspector.initData({data: result, codec: result._codec});
@@ -128,11 +130,6 @@ export class QueryEditor extends Model({
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
-
-  showExtendedViewer: prop(false).withSetter(),
-  extendedViewerSplitView: prop(
-    () => new SplitViewState({direction: SplitViewDirection.vertical})
-  ),
 }) {
   @observable queryRunning = false;
 
@@ -183,22 +180,57 @@ export class QueryEditor extends Model({
         50
       )
     );
+
+    let lastDate: [number, number, number] | null = null;
+    if (this.queryHistory[this.queryHistory.length - 2]) {
+      const date = new Date(
+        this.queryHistory[this.queryHistory.length - 2].timestamp
+      );
+      lastDate = [date.getDate(), date.getMonth(), date.getFullYear()];
+    }
+    const items = new Array(history.length);
+    for (let i = 0; i < history.length; i++) {
+      const item = fromSnapshot<QueryHistoryItem>(history[i].data);
+      const date = new Date(item.timestamp);
+
+      if (
+        !lastDate ||
+        lastDate[0] !== date.getDate() ||
+        lastDate[1] !== date.getMonth() ||
+        lastDate[2] !== date.getFullYear()
+      ) {
+        item.showDateHeader = true;
+        lastDate = [date.getDate(), date.getMonth(), date.getFullYear()];
+      }
+
+      items[i] = item;
+    }
+
     this.queryHistory.splice(
       this.queryHistory.length - 1,
       history.length < 50 ? 1 : 0,
-      ...history.map((item) => fromSnapshot(item.data))
+      ...items
     );
     this._fetchingHistory = false;
   });
 
   resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
 
-  async fetchResultData(itemId: string) {
+  @observable.ref
+  extendedViewerItem: Item | null = null;
+
+  @action
+  setExtendedViewerItem(item: Item | null) {
+    this.extendedViewerItem = item;
+  }
+
+  async fetchResultData(itemId: string, implicitLimit: number) {
     const resultData = await fetchResultData(itemId);
     if (resultData) {
       const inspector = createInspector(
         decode(resultData.outCodecBuf, resultData.resultBuf)!,
-        () => this.setShowExtendedViewer(true)
+        implicitLimit,
+        (item) => this.setExtendedViewerItem(item)
       );
       this.resultInspectorCache.set(itemId, inspector);
     }
@@ -218,6 +250,8 @@ export class QueryEditor extends Model({
   historyCursor = -1;
 
   draftQueryData: {
+    selectedEditor: EditorKind;
+    currentResult: QueryHistoryItem | null;
     [EditorKind.EdgeQL]: {query: Text; params: ParamsData | null};
     [EditorKind.VisualBuilder]: QueryBuilderState;
   } | null = null;
@@ -226,6 +260,8 @@ export class QueryEditor extends Model({
   _saveDraftQueryData() {
     const current = this.currentQueryData;
     this.draftQueryData = {
+      selectedEditor: this.selectedEditor,
+      currentResult: this.currentResult,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
         params: this.queryParamsEditor.getParamsData(),
@@ -245,6 +281,9 @@ export class QueryEditor extends Model({
       this.queryParamsEditor.restoreParamsData(
         draft[EditorKind.EdgeQL].params
       );
+
+      this.setSelectedEditor(draft.selectedEditor);
+      this.currentResult = draft.currentResult;
     }
   }
 
@@ -265,21 +304,23 @@ export class QueryEditor extends Model({
 
       this.historyCursor = cursor;
       const queryData = historyItem.queryData;
-      switch (queryData.kind) {
+      switch (queryData.data.kind) {
         case EditorKind.EdgeQL:
           this.currentQueryData[EditorKind.EdgeQL] = Text.of(
-            queryData.query.split("\n")
+            queryData.data.query.split("\n")
           );
-          this.queryParamsEditor.restoreParamsData(queryData.params?.data);
+          this.queryParamsEditor.restoreParamsData(
+            queryData.data.params?.data
+          );
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
-            fromSnapshot<QueryBuilderState>(queryData.state);
+            fromSnapshot<QueryBuilderState>(queryData.data.state);
           break;
       }
 
       this.currentResult = historyItem;
-      this.setSelectedEditor(queryData.kind);
+      this.setSelectedEditor(queryData.data.kind);
     }
   }
 
@@ -312,13 +353,14 @@ export class QueryEditor extends Model({
         outCodecBuf: Buffer;
         resultBuf: Buffer;
         status: string;
+        implicitLimit: number;
       }
     | {
         error: ErrorDetails;
       }
   )) {
     const historyItemData: ModelCreationData<QueryHistoryItem> = {
-      queryData,
+      queryData: frozen(queryData),
       timestamp,
       thumbnailData: frozen(thumbnailData),
     };
@@ -336,11 +378,15 @@ export class QueryEditor extends Model({
         ...historyItemData,
         hasResult: data.result !== null,
         status: data.status,
+        implicitLimit: data.implicitLimit,
       });
       if (data.result) {
         this.resultInspectorCache.set(
           historyItem.$modelId,
-          createInspector(data.result, () => this.setShowExtendedViewer(true))
+
+          createInspector(data.result, data.implicitLimit, (item) =>
+            this.setExtendedViewerItem(item)
+          )
         );
         resultData = {
           outCodecBuf: data.outCodecBuf,
@@ -359,6 +405,18 @@ export class QueryEditor extends Model({
       },
       resultData
     );
+
+    if (this.queryHistory[0]) {
+      const lastDate = new Date(this.queryHistory[0].timestamp);
+      const date = new Date(timestamp);
+      if (
+        lastDate.getDate() !== date.getDate() ||
+        lastDate.getMonth() !== date.getMonth() ||
+        lastDate.getFullYear() !== date.getFullYear()
+      ) {
+        this.queryHistory[0].showDateHeader = true;
+      }
+    }
 
     this.queryHistory.unshift(historyItem);
     this.currentResult = historyItem;
@@ -387,13 +445,20 @@ export class QueryEditor extends Model({
           };
     const timestamp = Date.now();
     const thumbnailData = getThumbnailData({query});
+    const implicitLimit = sessionStateCtx
+      .get(this)!
+      .activeState.options.find((opt) => opt.name === "Implicit Limit")?.value;
+
     try {
       const {result, outCodecBuf, resultBuf, capabilities, status} =
         yield* _await(
           conn.query(
             query,
             paramsData ? serialiseParamsData(paramsData) : undefined,
-            false
+            {
+              implicitLimit:
+                implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+            }
           )
         );
 
@@ -405,6 +470,7 @@ export class QueryEditor extends Model({
         outCodecBuf,
         resultBuf,
         status,
+        implicitLimit: Number(implicitLimit),
       });
       return {success: true, capabilities, status};
     } catch (e: any) {

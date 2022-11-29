@@ -1,0 +1,49 @@
+@import "@edgedb/common/mixins.scss";
+
+.customScrollbars {
+  position: relative;
+
+  &:hover,
+  &.dragging {
+    & > .verticalBar,
+    & > .horizontalBar {
+      opacity: 1;
+    }
+  }
+}
+
+.verticalBar,
+.horizontalBar {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  padding: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scroller {
+  width: 6px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+
+  @include darkTheme {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.verticalBar {
+  height: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.horizontalBar {
+  width: auto;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}

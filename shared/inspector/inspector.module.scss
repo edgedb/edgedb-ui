@@ -26,6 +26,28 @@
   .innerWrapper {
     width: max-content;
     min-width: 100%;
+    padding: 8px;
+  }
+}
+
+.showMore {
+  position: relative;
+  font-family: Inter;
+  text-transform: uppercase;
+  font-size: 12px;
+  height: 28px;
+  margin-top: -28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background: linear-gradient(transparent, var(--inspectorBg));
+
+  span {
+    background: var(--inspectorBg);
+    border-radius: 14px;
+    padding: 4px 8px;
+    opacity: 0.8;
   }
 }
 
@@ -39,14 +61,29 @@
   line-height: var(--lineHeight);
   padding: var(--rowPad) 0;
   white-space: pre;
+  border-radius: 6px;
 
   .jsonMode & {
     padding-left: 0 !important;
   }
 
-  &.selected {
-    outline: 2px solid #0ccb93;
-    z-index: 1;
+  .inspector:focus &.selected {
+    background: var(--inspectorRowSelectedBg, #e8eef2);
+
+    &:after {
+      left: 0;
+      position: absolute;
+      content: "";
+      width: 4px;
+      top: 0;
+      bottom: 0;
+      background: #1f8aed;
+      border-radius: 4px 2px 2px 4px;
+    }
+
+    :global(.dark-theme) & {
+      background: var(--inspectorRowSelectedBg, #2c3134);
+    }
   }
 
   &.hoverable:hover {
@@ -66,7 +103,7 @@
     display: flex;
     padding: 0 2px;
     margin: 0 -2px;
-    border-radius: 2px;
+    border-radius: 3px;
   }
 
   .itemContent {
@@ -142,29 +179,39 @@
 
 .actions {
   display: flex;
-  align-items: center;
-  padding-left: 16px;
+  height: calc(var(--lineHeight) + 2 * var(--rowPad));
+  margin: -1px 0;
   position: sticky;
-  right: 0;
+  right: 8px;
+  top: 0;
   opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--inspectorRowHoverBg, #ebebeb) 8px,
-    var(--inspectorRowHoverBg, #ebebeb)
-  );
 
-  :global(.dark-theme) & {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--inspectorRowHoverBg, #303030) 8px,
-      var(--inspectorRowHoverBg, #303030)
-    );
+  &:before {
+    content: "";
+    background: var(--inspectorRowHoverBg, #ebebeb);
+    opacity: 0.9;
+    border-radius: 6px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+
+    .inspector:focus .rowItem.selected & {
+      background: var(--inspectorRowSelectedBg, #e8eef2);
+    }
+  }
+
+  :global(.dark-theme) &:before {
+    background: var(--inspectorRowHoverBg, #303030);
+  }
+  :global(.dark-theme) .inspector:focus .rowItem.selected &:before {
+    background: var(--inspectorRowSelectedBg, #2c3134);
   }
 }
 
-.copyButton {
+.actionButton {
   display: flex;
   align-items: center;
   font-family: "Inter";
@@ -174,17 +221,24 @@
   line-height: 24px;
   text-transform: uppercase;
   color: #a2a2a2;
-
   padding: 0 8px;
-
   cursor: pointer;
-
-  svg {
-    fill: currentColor;
-  }
 
   &:hover {
     color: #1f8aed;
+  }
+}
+
+.copyButton {
+  svg {
+    fill: currentColor;
+  }
+}
+
+.openExtendedButton {
+  svg {
+    stroke: currentColor;
+    height: 20px;
   }
 }
 

@@ -1,15 +1,17 @@
 import {observer} from "mobx-react-lite";
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {TabReplIcon} from "../../icons";
-import {Repl, ReplHistoryItem as ReplHistoryItemState} from "./state";
-import {VariableSizeList as List} from "react-window";
+import {
+  defaultItemHeight,
+  Repl,
+  ReplHistoryItem as ReplHistoryItemState,
+} from "./state";
 
 import styles from "./repl.module.scss";
-import {
-  forwardRef,
-  RefObject,
+import React, {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -24,22 +26,18 @@ import {renderCommandResult} from "./commands";
 import {useNavigate} from "react-router-dom";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
-
-const outerElementType = forwardRef(({children, ...props}, ref) => (
-  <div ref={ref as any} {...props}>
-    {children}
-    <ReplInput />
-  </div>
-));
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+import {reaction} from "mobx";
+import {
+  ExtendedViewerContext,
+  ExtendedViewerRenderer,
+} from "../../components/extendedViewers";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
-  const dbState = useDatabaseState();
 
   replState.navigation = useNavigate();
-
-  const listRef = useRef<List>(null);
-  replState.listRef = listRef;
 
   const initialScrollPos = useInitialValue(() => replState.initialScrollPos);
 
@@ -48,45 +46,149 @@ const ReplView = observer(function ReplView() {
   useResize(containerRef, ({height}) => setHeight(height));
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("dark-theme", styles.repl, {
-        [styles.retroMode]: replState.settings.retroMode,
-      })}
-    >
-      <List
-        ref={listRef}
-        className={styles.listWrapper}
-        outerElementType={outerElementType}
-        initialScrollOffset={initialScrollPos}
-        onScroll={({scrollOffset}) =>
-          (replState.initialScrollPos = scrollOffset)
-        }
-        height={height}
-        width="100%"
-        itemCount={replState.queryHistory.length + 1}
-        itemSize={(index) =>
-          index === 0
-            ? 320
-            : replState.queryHistory[index - 1]?.renderHeight ?? 34
-        }
+    <div className={styles.replWrapper}>
+      <div
+        style={{display: "contents"}}
+        className={cn({"dark-theme": replState.settings.retroMode})}
       >
-        {({index, style}) =>
-          index === 0 ? (
-            <ReplHeader />
-          ) : replState.queryHistory[index - 1] ? (
-            <ReplHistoryItem
-              state={replState}
-              listRef={listRef}
-              index={index - 1}
-              styleTop={style.top}
-              dbName={dbState.name}
-            />
-          ) : (
-            <HistoryLoader state={replState} styleTop={style.top} />
-          )
-        }
-      </List>
+        <div
+          ref={containerRef}
+          className={cn(styles.repl, {
+            [styles.retroMode]: replState.settings.retroMode,
+            [styles.showExtendedResult]: replState.extendedViewerItem !== null,
+          })}
+        >
+          <CustomScrollbars innerClass={styles.scrollInner} reverse>
+            <ReplList height={height} initialScrollPos={initialScrollPos} />
+          </CustomScrollbars>
+        </div>
+      </div>
+
+      {replState.extendedViewerItem ? (
+        <div className={styles.extendedViewerContainer}>
+          <ExtendedViewerContext.Provider
+            value={{
+              closeExtendedView: () => replState.setExtendedViewerItem(null),
+            }}
+          >
+            <ExtendedViewerRenderer item={replState.extendedViewerItem} />
+          </ExtendedViewerContext.Provider>
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+const ReplList = observer(function ReplList({
+  height,
+  initialScrollPos,
+}: {
+  height: number;
+  initialScrollPos: number;
+}) {
+  const replState = useTabState(Repl);
+  const dbState = useDatabaseState();
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTop = initialScrollPos;
+    }
+  }, []);
+
+  const [renderHeader, setRenderHeader] = useState(true);
+  const [visibleBounds, setVisibleBounds] = useState<[number, number, number]>(
+    [0, 0, 0]
+  );
+
+  const headerHeight = 320 + (replState._hasUnfetchedHistory ? 34 : 0);
+
+  useEffect(() => {
+    replState.scrollRef = ref.current;
+  }, [ref]);
+
+  const updateVisibleBounds = useCallback(() => {
+    const el = ref.current!;
+    const scrollTop = el.scrollHeight + el.scrollTop - el.clientHeight;
+
+    setRenderHeader(scrollTop < headerHeight + 100);
+
+    const startIndex = Math.max(
+      0,
+      replState.itemHeights.getIndexAtHeight(
+        Math.max(0, scrollTop - headerHeight)
+      ) - 2
+    );
+    const endIndex = Math.min(
+      replState.itemHeights.getIndexAtHeight(
+        Math.max(0, scrollTop - headerHeight + ref.current!.clientHeight)
+      ) + 2,
+      replState.queryHistory.length - 1
+    );
+
+    setVisibleBounds((old) =>
+      old[0] === startIndex && old[1] === endIndex
+        ? old
+        : [
+            startIndex,
+            endIndex,
+            old[0] !== startIndex
+              ? replState.itemHeights.getHeightAtIndex(startIndex)
+              : old[2],
+          ]
+    );
+  }, [height, headerHeight, replState.queryHistory.length]);
+
+  useEffect(() => {
+    const el = ref.current!;
+
+    const listener = () => {
+      replState.initialScrollPos = el.scrollTop;
+      updateVisibleBounds();
+    };
+    el.addEventListener("scroll", listener, {passive: true});
+
+    return () => {
+      el.removeEventListener("scroll", listener);
+    };
+  }, [updateVisibleBounds]);
+
+  useEffect(() => {
+    updateVisibleBounds();
+  }, [replState.itemHeights.totalHeight, height]);
+
+  const items: JSX.Element[] = [];
+  if (replState.queryHistory.length) {
+    let top = visibleBounds[2] + headerHeight;
+    for (let i = visibleBounds[0]; i <= visibleBounds[1]; i++) {
+      const item = replState.queryHistory[i];
+      items.push(
+        <ReplHistoryItem
+          key={item.$modelId}
+          state={replState}
+          index={i}
+          item={item}
+          styleTop={top}
+          dbName={dbState.name}
+        />
+      );
+      top += item.renderHeight ?? defaultItemHeight;
+    }
+  }
+
+  return (
+    <div ref={ref} className={styles.list} style={{height}}>
+      <div className={styles.scrollInner}>
+        <div
+          className={styles.listInner}
+          style={{height: replState.itemHeights.totalHeight + headerHeight}}
+        >
+          {renderHeader ? <ReplHeader /> : null}
+          {items}
+        </div>
+        <ReplInput />
+      </div>
     </div>
   );
 });
@@ -95,6 +197,7 @@ export const replTabSpec: DatabaseTabSpec = {
   path: "repl",
   label: "REPL",
   icon: (active) => <TabReplIcon active={active} />,
+  usesSessionState: true,
   state: Repl,
   element: <ReplView />,
 };
@@ -102,6 +205,8 @@ export const replTabSpec: DatabaseTabSpec = {
 const ReplInput = observer(function ReplInput() {
   const replState = useTabState(Repl);
   const dbState = useDatabaseState();
+
+  const [_, theme] = useTheme();
 
   const [CodeEditor] = useState(() =>
     createCodeEditor({
@@ -158,56 +263,78 @@ const ReplInput = observer(function ReplInput() {
     [replState]
   );
 
-  useEffect(() => {
-    replState.scrollToEnd();
-  }, [replState.currentQuery.lines]);
-
   return (
     <div
       className={cn(styles.replInput, {
         [styles.hidden]: replState.queryRunning,
       })}
     >
-      <CodeEditor
-        // ref={codeEditorRef}
-        code={replState.currentQuery}
-        onChange={onChange}
-        keybindings={keybindings}
-        useDarkTheme
-        noPadding
-      />
+      <CustomScrollbars
+        className={styles.scrollWrapper}
+        scrollClass="cm-scroller"
+        innerClass="cm-content"
+      >
+        <CodeEditor
+          code={replState.currentQuery}
+          onChange={onChange}
+          keybindings={keybindings}
+          useDarkTheme={replState.settings.retroMode || theme === Theme.dark}
+          noPadding
+        />
+      </CustomScrollbars>
     </div>
   );
 });
 
 const ReplHistoryItem = observer(function ReplHistoryItem({
   state,
-  listRef,
   index,
+  item,
   styleTop,
   dbName,
 }: {
   state: Repl;
-  listRef: RefObject<List>;
   index: number;
+  item: ReplHistoryItemState;
   styleTop: any;
   dbName: string;
 }) {
-  const item = state.queryHistory[index];
-
   const ref = useRef<HTMLDivElement>(null);
 
-  useResize(ref, ({height}) => {
-    const scrollEl = (listRef.current as any)?._outerRef;
-    if (scrollEl) {
-      console.log(
-        `updating ${index} ${height + 24 - (item.renderHeight ?? 0)}`
-      );
-      scrollEl.scrollTop += height + 24 - (item.renderHeight ?? 0);
-    }
-    item.renderHeight = height + 24;
-    listRef.current?.resetAfterIndex(index + 1);
-  });
+  const updateScroll = useRef(false);
+
+  useEffect(() => {
+    const disposer = reaction(
+      () => item.inspectorState?._items.length,
+      (curr, prev) => {
+        if (prev && curr !== prev) {
+          updateScroll.current = true;
+        }
+      }
+    );
+
+    return () => {
+      disposer();
+      item._inspector = null;
+    };
+  }, []);
+
+  useResize(
+    ref,
+    ({height}) => {
+      const paddedHeight = height + 24 + (item.showDateHeader ? 24 : 0);
+      if (item.renderHeight !== paddedHeight) {
+        if (item.renderHeight && state.scrollRef && updateScroll.current) {
+          state.scrollRef.scrollTop += item.renderHeight - paddedHeight;
+
+          updateScroll.current = false;
+        }
+        item.renderHeight = paddedHeight;
+        state.itemHeights.updateItemHeight(index, paddedHeight);
+      }
+    },
+    [item.showDateHeader]
+  );
 
   let output: JSX.Element | null;
 
@@ -229,6 +356,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           className={styles.inspector}
           state={item.inspectorState}
           disableVirtualisedRendering
+          maxHeight={item.showMore ? undefined : 16}
+          showMore={() => {
+            item.setShowMore(true);
+            updateScroll.current = true;
+          }}
         />
       ) : (
         <>loading ...</>
@@ -239,11 +371,26 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   } else if (item.commandResult) {
     output = renderCommandResult(item.commandResult.data);
   } else {
-    output = <div>running query...</div>;
+    output = (
+      <div style={{marginLeft: 8}}>
+        <Spinner size={18} />
+      </div>
+    );
   }
 
   return (
-    <div ref={ref} className={styles.replHistoryItem} style={{top: styleTop}}>
+    <div
+      ref={ref}
+      className={cn(styles.replHistoryItem, {
+        [styles.showDateHeader]: item.showDateHeader,
+      })}
+      style={{top: styleTop}}
+    >
+      {item.showDateHeader ? (
+        <div className={styles.historyDateHeader}>
+          {new Date(item.timestamp).toLocaleDateString()}
+        </div>
+      ) : null}
       <div className={styles.historyQuery}>
         <div className={styles.historyPrompt}>
           {[
@@ -254,41 +401,50 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           ].join("\n")}
         </div>
 
-        <CodeBlock
-          className={cn(styles.code)}
-          code={item.query}
-          customRanges={
-            item.error?.data.range
-              ? [
-                  {
-                    range: item.error.data.range,
-                    style: styles.errorUnderline,
-                  },
-                ]
-              : undefined
-          }
-        />
+        <CustomScrollbars
+          className={styles.historyQueryCode}
+          innerClass={styles.code}
+        >
+          <div className={styles.scrollWrapper}>
+            <CodeBlock
+              className={cn(styles.code)}
+              code={item.query}
+              customRanges={
+                item.error?.data.range
+                  ? [
+                      {
+                        range: item.error.data.range,
+                        style: styles.errorUnderline,
+                      },
+                    ]
+                  : undefined
+              }
+            />
+          </div>
+        </CustomScrollbars>
+
+        <div className={styles.historyTime}>
+          {new Date(item.timestamp).toLocaleTimeString()}
+        </div>
       </div>
       {output ? (
-        <div
-          className={styles.historyOutput}
-          style={{paddingLeft: `${dbName.length + 2}ch`}}
+        <CustomScrollbars
+          className={styles.outputOuterWrapper}
+          innerClass={styles.historyOutput}
         >
-          {output}
-        </div>
+          <div className={styles.scrollWrapper}>
+            <div
+              className={styles.historyOutput}
+              style={{marginLeft: `${dbName.length + 2}ch`}}
+            >
+              {output}
+            </div>
+          </div>
+        </CustomScrollbars>
       ) : null}
     </div>
   );
 });
-
-function HistoryLoader({state, styleTop}: {state: Repl; styleTop: any}) {
-  state.fetchReplHistory();
-  return (
-    <div className={styles.historyLoading} style={{top: styleTop}}>
-      <Spinner size={24} strokeWidth={2} period={1} />
-    </div>
-  );
-}
 
 const headerASCII = `
                                           /$$
@@ -307,8 +463,14 @@ const headerASCII = `
                                          |__/
 `.replace(/\$+/g, "<span>$&</span>");
 
-function ReplHeader() {
+const ReplHeader = observer(function ReplHeader() {
   const replState = useTabState(Repl);
+
+  useEffect(() => {
+    if (replState._hasUnfetchedHistory && !replState._fetchingHistory) {
+      replState.fetchReplHistory();
+    }
+  }, [replState._hasUnfetchedHistory, replState._fetchingHistory]);
 
   return (
     <div className={styles.replHeader}>
@@ -321,6 +483,11 @@ function ReplHeader() {
         <span onClick={() => replState.runQuery("\\help")}>\help</span> for
         commands list
       </div>
+      {replState._hasUnfetchedHistory ? (
+        <div className={styles.historyLoading}>
+          <Spinner size={24} strokeWidth={2} period={1} />
+        </div>
+      ) : null}
     </div>
   );
-}
+});

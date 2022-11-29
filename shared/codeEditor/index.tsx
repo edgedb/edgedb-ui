@@ -11,6 +11,8 @@ import {
   Text,
   Compartment,
   EditorSelection,
+  Extension,
+  StateEffect,
 } from "@codemirror/state";
 import {
   EditorView,
@@ -59,9 +61,22 @@ const darkThemeComp = new Compartment();
 const keybindingsComp = new Compartment();
 const onChangeComp = new Compartment();
 const autocompleteComp = new Compartment();
+const renderWhitespaceComp = new Compartment();
+
+const specialCharRender = (
+  code: number,
+  desc: string,
+  placeholder: string
+) => {
+  let span = document.createElement("span");
+  span.textContent = placeholder === "\u2022" ? "\u00B7" : placeholder;
+  span.title = desc;
+  span.setAttribute("aria-label", desc);
+  span.className = "cm-specialChar";
+  return span;
+};
 
 const baseExtensions = [
-  highlightSpecialChars(),
   history(),
   drawSelection(),
   indentOnInput(),
@@ -69,7 +84,6 @@ const baseExtensions = [
   closeBrackets(),
   autocompletion(),
   EditorState.allowMultipleSelections.of(true),
-  indentationMarkers(),
   syntaxHighlighting(highlightStyle),
 ];
 
@@ -81,10 +95,12 @@ export interface CodeEditorProps {
   readonly?: boolean;
   schemaObjects?: Map<string, SchemaObjectType>;
   noPadding?: boolean;
+  renderWhitespace?: boolean;
 }
 
 export interface CodeEditorRef {
   focus: () => void;
+  dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) => void;
 }
 
 export function createCodeEditor({
@@ -92,11 +108,15 @@ export function createCodeEditor({
   highlightActiveLine = true,
   formatLineNo,
   terminalCursor,
+  customExtensions = [],
+  showIndentationMarkers = true,
 }: {
   language?: LanguageSupport | null;
   highlightActiveLine?: boolean;
   formatLineNo?: (lineNo: number) => string;
   terminalCursor?: boolean;
+  customExtensions?: Extension;
+  showIndentationMarkers?: boolean;
 }) {
   function createState({
     doc,
@@ -105,6 +125,7 @@ export function createCodeEditor({
     keybindings,
     useDarkTheme,
     schemaObjects,
+    renderWhitespace,
   }: {
     doc: Text;
     onChange: (value: Text) => void;
@@ -112,13 +133,21 @@ export function createCodeEditor({
     keybindings: KeyBinding[];
     useDarkTheme: boolean;
     schemaObjects?: Map<string, SchemaObjectType>;
+    renderWhitespace?: boolean;
   }) {
     return EditorState.create({
       doc,
       selection: EditorSelection.cursor(doc.length),
       extensions: [
         ...baseExtensions,
-        ...(highlightActiveLine ? [highlightActiveLineExt()] : []),
+        showIndentationMarkers ? indentationMarkers() : [],
+        renderWhitespaceComp.of(
+          highlightSpecialChars({
+            render: specialCharRender,
+            addSpecialChars: renderWhitespace ? /\s/ : undefined,
+          })
+        ),
+        highlightActiveLine ? highlightActiveLineExt() : [],
         lineNumbers({
           formatNumber: formatLineNo,
         }),
@@ -150,7 +179,7 @@ export function createCodeEditor({
           },
         ]),
         darkThemeComp.of(useDarkTheme ? darkTheme : lightTheme),
-        language === undefined ? edgeql() : [],
+        language === undefined ? edgeql() : language ?? [],
         onChangeComp.of(
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -167,6 +196,7 @@ export function createCodeEditor({
               ]
             : []
         ),
+        customExtensions,
       ],
     });
   }
@@ -175,11 +205,12 @@ export function createCodeEditor({
     {
       code,
       onChange,
-      keybindings,
+      keybindings = [],
       noPadding,
       readonly,
       schemaObjects,
       useDarkTheme,
+      renderWhitespace,
     }: CodeEditorProps,
     componentRef
   ) {
@@ -188,6 +219,8 @@ export function createCodeEditor({
 
     useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
       focus: () => view.current?.focus(),
+      dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
+        view.current?.dispatch({effects}),
     }));
 
     useEffect(() => {
@@ -200,6 +233,7 @@ export function createCodeEditor({
             readonly,
             useDarkTheme,
             schemaObjects,
+            renderWhitespace,
           }),
           parent: ref.current,
         });
@@ -220,6 +254,7 @@ export function createCodeEditor({
             readonly,
             useDarkTheme,
             schemaObjects,
+            renderWhitespace,
           })
         );
       }
@@ -282,6 +317,19 @@ export function createCodeEditor({
           ),
         }),
       [schemaObjects]
+    );
+
+    useLayoutEffect(
+      () =>
+        view.current?.dispatch({
+          effects: renderWhitespaceComp.reconfigure(
+            highlightSpecialChars({
+              render: specialCharRender,
+              addSpecialChars: renderWhitespace ? /\s/ : undefined,
+            })
+          ),
+        }),
+      [renderWhitespace]
     );
 
     useEffect(() => {

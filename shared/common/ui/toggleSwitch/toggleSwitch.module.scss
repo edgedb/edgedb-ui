@@ -1,0 +1,44 @@
+@import "../../mixins.scss";
+
+.toggleSwitch {
+  cursor: pointer;
+}
+
+.track {
+  display: flex;
+  width: calc(var(--switchSize, 18px) * 2 - 4px);
+  height: var(--switchSize, 18px);
+  border-radius: var(--switchSize, 18px);
+  background: #d3d3d3;
+  transition: background-color 0.2s;
+
+  .checked & {
+    background: #fff;
+  }
+
+  @include darkTheme {
+    background: #141414;
+  }
+}
+
+.switch {
+  width: calc(var(--switchSize, 18px) - 4px);
+  height: calc(var(--switchSize, 18px) - 4px);
+  border-radius: var(--switchSize, 18px);
+  margin: 2px;
+  background: #fff;
+  transition: transform 0.2s, background-color 0.2s;
+
+  @include darkTheme {
+    background: #333;
+  }
+
+  .checked & {
+    transform: translateX(calc(var(--switchSize, 18px) - 4px));
+    background: #39d1a5;
+
+    @include darkTheme {
+      background: #0d805e;
+    }
+  }
+}

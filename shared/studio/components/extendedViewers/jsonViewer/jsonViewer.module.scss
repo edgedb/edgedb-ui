@@ -1,6 +1,6 @@
 @import "@edgedb/common/mixins.scss";
 
-.textViewer {
+.jsonViewer {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -9,6 +9,20 @@
   :global(.cm-editor) {
     flex-grow: 1;
     min-height: 0;
+  }
+
+  :global(.cm-foldPlaceholder) {
+    display: inline-block;
+    padding: 0 7px 0 5px;
+    height: 14px;
+    line-height: 5px;
+    transform: translateY(-4px);
+
+    @include darkTheme {
+      background-color: #1a1a1a;
+      border-color: #4b4b4b;
+      color: #b7b7b7;
+    }
   }
 }
 

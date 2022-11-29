@@ -23,6 +23,7 @@ import {
   codecsRegistry,
 } from "../utils/decodeRawBuffer";
 import {instanceCtx, InstanceState} from "./instance";
+import {sessionStateCtx} from "./sessionState";
 
 export {Capabilities};
 export type {QueryParams};
@@ -57,10 +58,16 @@ interface ParseResult {
 
 type QueryKind = "query" | "parse" | "execute";
 
+type QueryOpts = {
+  newCodec?: boolean;
+  ignoreSessionConfig?: boolean;
+  implicitLimit?: bigint;
+};
+
 type PendingQuery = {
   query: string;
   params?: QueryParams;
-  newCodec: boolean;
+  opts: QueryOpts;
   reject: (error: Error) => void;
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
@@ -77,10 +84,6 @@ const queryOptions: QueryOptions = {
 @model("Connection")
 export class Connection extends Model({
   config: prop<ConnectConfig>(),
-  sessionGlobals: prop(
-    () => ({} as {[key: string]: {value: any; typeId: string}})
-  ).withSetter(),
-  disableAccessPolicies: prop(false).withSetter(),
 }) {
   conn = AdminUIFetchConnection.create(
     {
@@ -101,19 +104,25 @@ export class Connection extends Model({
 
   @computed
   get _state() {
+    const sessionState = sessionStateCtx.get(this);
+
     let state = Session.defaults();
-    const items = Object.entries(this.sessionGlobals);
-    const globals = items.reduce((g, [name, {value}]) => {
-      g[name] = value;
-      return g;
-    }, {} as {[key: string]: any});
-    if (items.length) {
-      state = state.withGlobals(globals);
+
+    if (sessionState?.activeState.globals.length) {
+      state = state.withGlobals(
+        sessionState.activeState.globals.reduce((globals, global) => {
+          globals[global.name] = global.value;
+          return globals;
+        }, {} as {[key: string]: any})
+      );
     }
-    if (this.disableAccessPolicies) {
-      state = state.withConfig({
-        apply_access_policies: false,
-      });
+    if (sessionState?.activeState.config.length) {
+      state = state.withConfig(
+        sessionState.activeState.config.reduce((configs, config) => {
+          configs[config.name] = config.value;
+          return configs;
+        }, {} as {[key: string]: any})
+      );
     }
     return state;
   }
@@ -121,9 +130,9 @@ export class Connection extends Model({
   query(
     query: string,
     params?: QueryParams,
-    newCodec?: boolean
+    opts: QueryOpts = {}
   ): Promise<QueryResult> {
-    return this._addQueryToQueue("query", query, params, newCodec);
+    return this._addQueryToQueue("query", query, params, opts);
   }
 
   parse(query: string): Promise<ParseResult> {
@@ -138,14 +147,14 @@ export class Connection extends Model({
     kind: QueryKind,
     query: string,
     params?: QueryParams,
-    newCodec: boolean = false
+    opts: QueryOpts = {}
   ) {
     return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
         kind,
         query,
         params,
-        newCodec,
+        opts,
         resolve,
         reject,
       });
@@ -165,7 +174,7 @@ export class Connection extends Model({
         const result = await this._query(
           query.kind,
           query.query,
-          query.newCodec,
+          query.opts,
           query.params
         );
         query.resolve(result as any);
@@ -181,11 +190,15 @@ export class Connection extends Model({
   async _query(
     kind: QueryKind,
     queryString: string,
-    newCodec: boolean,
+    opts: QueryOpts,
     params?: QueryParams
   ): Promise<QueryResult | ParseResult | void> {
     try {
-      const state = this._state;
+      let state = this._state;
+
+      if (opts.ignoreSessionConfig) {
+        state = Session.defaults().withGlobals(state.globals);
+      }
 
       if (kind === "execute") {
         await this.conn.rawExecute(queryString, state);
@@ -220,7 +233,7 @@ export class Connection extends Model({
         queryString,
         state,
         outCodec,
-        queryOptions,
+        {...queryOptions, implicitLimit: opts.implicitLimit},
         inCodec,
         params
       );
@@ -233,7 +246,7 @@ export class Connection extends Model({
       };
 
       return {
-        result: decode(outCodecBuf, resultBuf, newCodec),
+        result: decode(outCodecBuf, resultBuf, opts.newCodec),
         duration,
         outCodecBuf,
         resultBuf,

@@ -73,6 +73,7 @@ export const dataviewTabSpec: DatabaseTabSpec = {
   allowNested: true,
   label: "Data Explorer",
   icon: (active) => <TabDataExplorerIcon active={active} />,
+  usesSessionState: true,
   state: DataViewState,
   element: <DataView />,
 };

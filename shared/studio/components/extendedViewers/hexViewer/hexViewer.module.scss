@@ -1,22 +1,33 @@
+@import "@edgedb/common/mixins.scss";
+
 .hexViewer {
   font-family: Roboto Mono, monospace;
   font-size: 14px;
   height: 100%;
   width: 100%;
   max-height: 100%;
-  overflow: auto;
   display: flex;
   flex-direction: column;
+}
+
+.downloadButton {
+  margin-left: auto;
 }
 
 .dataWrapper {
   flex-grow: 1;
   min-height: 0;
+
+  & > div > div:first-child {
+    @include hideScrollbar;
+  }
 }
 
 .hexRow {
   display: flex;
   line-height: 21px;
+  padding: 0 16px;
+  width: calc(100% - 32px);
 
   .hovered {
     background: rgba(12, 203, 147, 0.2);
@@ -48,12 +59,13 @@
 
 .rowOffset {
   color: rgb(77, 77, 77, 0.6);
-  margin-right: 16px;
+  margin-right: 12px;
 }
 
 .hexData {
   display: flex;
   min-width: (2ch + 1ch) * 16 + 1ch;
+  margin-right: 16px;
 
   .hexCell {
     position: relative;
@@ -71,7 +83,6 @@
 
 .asciiData {
   display: flex;
-  margin-left: 16px;
   white-space: pre;
 
   .asciiCell {

@@ -3,13 +3,25 @@ import type {ObjectCodec} from "edgedb/dist/codecs/object";
 import type {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 import {scalarItemToString} from "./buildScalar";
 
-export function renderResultAsJson(result: any, codec: ICodec): string {
-  return `[\n${(result as any[])
-    .map((item) => "  " + _renderToJson(item, codec, "  "))
+export function renderResultAsJson(
+  result: any,
+  codec: ICodec,
+  implicitLimit: number | null
+): string {
+  return `[\n${(implicitLimit != null
+    ? (result as any[]).slice(0, implicitLimit)
+    : (result as any[])
+  )
+    .map((item) => "  " + _renderToJson(item, codec, "  ", implicitLimit))
     .join(",\n")}\n]`;
 }
 
-export function _renderToJson(val: any, codec: ICodec, depth: string): string {
+export function _renderToJson(
+  val: any,
+  codec: ICodec,
+  depth: string,
+  implicitLimit: number | null
+): string {
   if (val == null) {
     return "null";
   }
@@ -43,11 +55,13 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
       return `{"lower": ${_renderToJson(
         val.lower,
         subcodec,
-        depth
+        depth,
+        implicitLimit
       )}, "upper": ${_renderToJson(
         val.upper,
         subcodec,
-        depth
+        depth,
+        implicitLimit
       )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
         val.incUpper ? "true" : "false"
       }}`;
@@ -56,7 +70,10 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
     case "array":
     case "tuple": {
       const subcodecs = codec.getSubcodecs();
-      return `[\n${(val as any[])
+      return `[\n${(implicitLimit != null && codecKind === "set"
+        ? (val as any[]).slice(0, implicitLimit)
+        : (val as any[])
+      )
         .map(
           (item, i) =>
             depth +
@@ -64,7 +81,8 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
             _renderToJson(
               item,
               subcodecs[codecKind === "tuple" ? i : 0],
-              depth + "  "
+              depth + "  ",
+              implicitLimit
             )
         )
         .join(",\n")}\n${depth}]`;
@@ -93,7 +111,12 @@ export function _renderToJson(val: any, codec: ICodec, depth: string): string {
             ? [
                 depth +
                   `  "${fieldName}": ` +
-                  _renderToJson(val[fieldName], subcodecs[i], depth + "  "),
+                  _renderToJson(
+                    val[fieldName],
+                    subcodecs[i],
+                    depth + "  ",
+                    implicitLimit
+                  ),
               ]
             : []
         )

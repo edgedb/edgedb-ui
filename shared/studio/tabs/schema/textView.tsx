@@ -39,6 +39,7 @@ import {
 import {Schema} from "./state";
 import {renderers} from "./renderers";
 import {ModuleHeaders} from "./renderers/module";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 const schemaModuleGroups = Object.values(ModuleGroup).filter(
   (v) => typeof v === "number"
@@ -299,7 +300,8 @@ const innerElementType = forwardRef<HTMLDivElement>(
     <div
       ref={ref}
       {...props}
-      style={{...props.style, minWidth: "100%", width: "max-content"}}
+      className={styles.listInner}
+      style={{...props.style, width: undefined}}
     >
       {children}
       <ModuleHeaders _rerender={props.style.height} />
@@ -337,26 +339,29 @@ const SchemaTypesList = observer(function SchemaTypesList() {
           [styles.searchMode]: state.searchText !== "",
         })}
       >
-        <List
-          ref={listRef}
-          innerElementType={innerElementType}
-          width={"100%"}
-          height={containerHeight}
-          initialScrollOffset={initialScrollOffset}
-          onScroll={({scrollOffset}) => (state.scrollPos = scrollOffset)}
-          itemCount={listItems.length}
-          itemKey={(index) => {
-            const item = listItems[index].item;
-            return item.schemaType === "Module"
-              ? `${item.module}-${item.isEnd}`
-              : item.id;
-          }}
-          itemSize={(index) => {
-            return state.getRenderHeight(index);
-          }}
-        >
-          {ListItemRenderer}
-        </List>
+        <CustomScrollbars innerClass={styles.listInner}>
+          <List
+            ref={listRef}
+            className={styles.listScrollContainer}
+            innerElementType={innerElementType}
+            width={"100%"}
+            height={containerHeight}
+            initialScrollOffset={initialScrollOffset}
+            onScroll={({scrollOffset}) => (state.scrollPos = scrollOffset)}
+            itemCount={listItems.length}
+            itemKey={(index) => {
+              const item = listItems[index].item;
+              return item.schemaType === "Module"
+                ? `${item.module}-${item.isEnd}`
+                : item.id;
+            }}
+            itemSize={(index) => {
+              return state.getRenderHeight(index);
+            }}
+          >
+            {ListItemRenderer}
+          </List>
+        </CustomScrollbars>
       </div>
     </SchemaTextStateContext.Provider>
   );

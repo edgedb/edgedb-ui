@@ -49,6 +49,7 @@ import {
   WarningIcon,
 } from "../../icons";
 import {DataEditor} from "../../components/dataEditor";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -83,9 +84,11 @@ const innerElementType = forwardRef<HTMLDivElement>(
 const outerElementType = forwardRef<HTMLDivElement>(
   ({children, style, ...props}: any, ref) => (
     <div ref={ref} style={{...style, willChange: null}} {...props}>
-      <FieldHeaders />
-      <StickyCol />
-      {children}
+      <div className={styles.gridInner}>
+        <FieldHeaders />
+        <StickyCol />
+        {children}
+      </div>
     </div>
   )
 );
@@ -155,38 +158,47 @@ export default observer(function DataInspectorTable({
           } as any
         }
       >
-        <Grid
-          ref={gridRef}
-          outerElementType={outerElementType}
-          innerElementType={innerElementType}
-          width={containerSize[0]}
-          height={containerSize[1]}
-          initialScrollTop={initialScrollOffset[0]}
-          initialScrollLeft={initialScrollOffset[1]}
-          onScroll={({scrollTop, scrollLeft}) => {
-            state.setScrollPos([scrollTop, scrollLeft]);
-          }}
-          columnCount={state.fields?.length ?? 0}
-          estimatedColumnWidth={180}
-          columnWidth={(index) => state.fieldWidths![index]}
-          rowCount={state.gridRowCount}
-          estimatedRowHeight={40}
-          rowHeight={(rowIndex) =>
-            state.getRowData(rowIndex - state.insertedRows.length).kind ===
-            RowKind.expanded
-              ? 28
-              : 40
-          }
-          overscanRowCount={5}
-          onItemsRendered={({overscanRowStartIndex, overscanRowStopIndex}) => {
-            state.setVisibleRowIndexes(
-              overscanRowStartIndex,
-              overscanRowStopIndex
-            );
-          }}
+        <CustomScrollbars
+          innerClass={styles.gridInner}
+          headerPadding={state.hasSubtypeFields ? 64 : 48}
         >
-          {GridCellWrapper}
-        </Grid>
+          <Grid
+            ref={gridRef}
+            className={styles.gridScrollContainer}
+            outerElementType={outerElementType}
+            innerElementType={innerElementType}
+            width={containerSize[0]}
+            height={containerSize[1]}
+            initialScrollTop={initialScrollOffset[0]}
+            initialScrollLeft={initialScrollOffset[1]}
+            onScroll={({scrollTop, scrollLeft}) => {
+              state.setScrollPos([scrollTop, scrollLeft]);
+            }}
+            columnCount={state.fields?.length ?? 0}
+            estimatedColumnWidth={180}
+            columnWidth={(index) => state.fieldWidths![index]}
+            rowCount={state.gridRowCount}
+            estimatedRowHeight={40}
+            rowHeight={(rowIndex) =>
+              state.getRowData(rowIndex - state.insertedRows.length).kind ===
+              RowKind.expanded
+                ? 28
+                : 40
+            }
+            overscanRowCount={5}
+            onItemsRendered={({
+              overscanRowStartIndex,
+              overscanRowStopIndex,
+            }) => {
+              state.setVisibleRowIndexes(
+                overscanRowStartIndex,
+                overscanRowStopIndex
+              );
+            }}
+          >
+            {GridCellWrapper}
+          </Grid>
+        </CustomScrollbars>
       </div>
     </DataInspectorContext.Provider>
   );

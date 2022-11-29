@@ -22,6 +22,7 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 import SplitView from "@edgedb/common/ui/splitView";
 import Button from "@edgedb/common/ui/button";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 import {HistoryPanel} from "./history";
 import ParamEditorPanel from "./paramEditor";
@@ -35,6 +36,8 @@ import {
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
 import {InspectorState} from "@edgedb/inspector/state";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
+import Spinner from "@edgedb/common/ui/spinner";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const dbState = useDatabaseState();
@@ -53,6 +56,9 @@ export const QueryEditorView = observer(function QueryEditorView() {
         }
         editorState.setShowHistory(!editorState.showHistory);
       }
+      if (e.key === "Escape" && editorState.extendedViewerItem) {
+        editorState.setExtendedViewerItem(null);
+      }
     };
 
     window.addEventListener("keydown", listener);
@@ -65,6 +71,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
   return (
     <div
       className={cn(styles.wrapper, {
+        [styles.showExtendedResult]: editorState.extendedViewerItem !== null,
         [styles.showHistory]: editorState.showHistory,
       })}
     >
@@ -114,7 +121,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
                 <QueryCodeEditor />
                 <div className={styles.replEditorOverlays}>
                   <div className={styles.controls}>
-                    <QueryOptions />
+                    {/* <QueryOptions /> */}
                     <Button
                       className={styles.runButton}
                       label="Run"
@@ -139,6 +146,18 @@ export const QueryEditorView = observer(function QueryEditorView() {
         state={editorState.splitView}
         minViewSize={20}
       />
+
+      {editorState.extendedViewerItem ? (
+        <div className={styles.extendedViewerContainer}>
+          <ExtendedViewerContext.Provider
+            value={{
+              closeExtendedView: () => editorState.setExtendedViewerItem(null),
+            }}
+          >
+            <ExtendedViewerRenderer item={editorState.extendedViewerItem} />
+          </ExtendedViewerContext.Provider>
+        </div>
+      ) : null}
     </div>
   );
 });
@@ -175,29 +194,45 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
   }, []);
 
   return (
-    <CodeEditor
-      ref={codeEditorRef}
-      code={editorState.currentQueryData[EditorKind.EdgeQL]}
-      onChange={onChange}
-      keybindings={keybindings}
-      useDarkTheme={theme === Theme.dark}
-      readonly={editorState.showHistory}
-      schemaObjects={dbState.schemaData?.objectsByName}
-    />
+    <CustomScrollbars
+      className={styles.scrollWrapper}
+      scrollClass="cm-scroller"
+      innerClass="cm-content"
+    >
+      <CodeEditor
+        ref={codeEditorRef}
+        code={editorState.currentQueryData[EditorKind.EdgeQL]}
+        onChange={onChange}
+        keybindings={keybindings}
+        useDarkTheme={theme === Theme.dark}
+        readonly={editorState.showHistory}
+        schemaObjects={dbState.schemaData?.objectsByName}
+      />
+    </CustomScrollbars>
   );
 });
 
-function ResultInspector({state}: {state: InspectorState}) {
+const ResultInspector = observer(function ResultInspector({
+  state,
+}: {
+  state: InspectorState;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
   return (
-    <div ref={ref} style={{height: "100%", minWidth: 0}}>
-      <Inspector className={styles.inspector} state={state} height={height} />
+    <div ref={ref} style={{height: "100%", minWidth: 0, width: "100%"}}>
+      <CustomScrollbars innerClass={inspectorStyles.innerWrapper}>
+        <Inspector
+          className={styles.inspector}
+          state={state}
+          height={height}
+        />
+      </CustomScrollbars>
     </div>
   );
-}
+});
 
 const QueryResult = observer(function QueryResult() {
   const editorState = useTabState(QueryEditor);
@@ -209,34 +244,18 @@ const QueryResult = observer(function QueryResult() {
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
       if (result.inspectorState) {
-        content =
-          editorState.showExtendedViewer &&
-          result.inspectorState.selectedIndex ? (
-            <SplitView
-              state={editorState.extendedViewerSplitView}
-              views={[
-                <ResultInspector state={result.inspectorState} />,
-                <ExtendedViewerContext.Provider
-                  value={{
-                    closeExtendedView: () =>
-                      editorState.setShowExtendedViewer(false),
-                  }}
-                >
-                  <ExtendedViewerRenderer
-                    item={
-                      result.inspectorState._items[
-                        result.inspectorState.selectedIndex
-                      ]
-                    }
-                  />
-                </ExtendedViewerContext.Provider>,
-              ]}
-            />
-          ) : (
-            <ResultInspector state={result.inspectorState} />
-          );
+        content = (
+          <ResultInspector
+            key={result.$modelId}
+            state={result.inspectorState}
+          />
+        );
       } else {
-        content = <>loading...</>;
+        content = (
+          <div className={styles.inspectorLoading}>
+            <Spinner size={24} />
+          </div>
+        );
       }
     } else {
       content = <div className={styles.queryStatus}>OK: {result.status}</div>;
@@ -262,6 +281,7 @@ export const editorTabSpec: DatabaseTabSpec = {
   path: "editor",
   label: "Query Editor",
   icon: (active) => <TabEditorIcon active={active} />,
+  usesSessionState: true,
   state: QueryEditor,
   element: <QueryEditorView />,
 };
@@ -317,18 +337,7 @@ const QueryOptions = observer(function QueryOptions() {
         className={cn(styles.queryOptionsWrapper, {
           [styles.menuOpen]: menuOpen,
         })}
-      >
-        <label>
-          <input
-            type="checkbox"
-            checked={settingsState.disableAccessPolicies}
-            onChange={(e) => {
-              settingsState.setDisableAccessPolicies(e.target.checked);
-            }}
-          />
-          Disable Access Policies
-        </label>
-      </div>
+      ></div>
       {collapsed ? (
         <div
           className={styles.overflowMenu}

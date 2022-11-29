@@ -48,6 +48,7 @@ import {fetchSchemaData, storeSchemaData} from "../idbStore";
 
 import {instanceCtx} from "./instance";
 import {connCtx, Connection} from "./connection";
+import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
@@ -78,6 +79,7 @@ export class DatabaseState extends Model({
   name: prop<string>(),
 
   connection: prop<Connection>(null!).withSetter(),
+  sessionState: prop(() => new SessionState({})),
   tabStates: prop<ObjectMap<AnyModel>>(),
 }) {
   @observable.ref
@@ -105,6 +107,7 @@ export class DatabaseState extends Model({
 
   onInit() {
     dbCtx.set(this, this);
+    sessionStateCtx.set(this, this.sessionState);
     connCtx.setComputed(this, () => this.connection);
   }
 

@@ -9,18 +9,25 @@
   // 10px (chevron width) + 16px (chevron padding)
   --rowIndexWidth: calc(var(--rowIndexCharWidth) * 7.8px + 62px);
 
-  & > div {
-    @include customScrollbar;
-  }
-
   @include darkTheme {
     background: #2e2e2e;
   }
 }
 
+.gridScrollContainer {
+  @include hideScrollbar;
+}
+
+.gridInner {
+  width: max-content;
+  min-width: 100%;
+}
+
 .innerContainer {
   margin-left: var(--rowIndexWidth);
   margin-bottom: var(--gridBottomPadding);
+
+  @include hideScrollbar;
 }
 
 .header {

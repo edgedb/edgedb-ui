@@ -223,6 +223,15 @@
   white-space: nowrap;
 }
 
+.listScrollContainer {
+  @include hideScrollbar;
+}
+
+.listInner {
+  width: max-content;
+  min-width: 100%;
+}
+
 .listItem {
   position: relative;
   // left: 0;

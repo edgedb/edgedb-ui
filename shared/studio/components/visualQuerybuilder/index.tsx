@@ -18,6 +18,8 @@ import {SchemaObjectType, SchemaProperty} from "@edgedb/common/schemaData";
 import styles from "./querybuilder.module.scss";
 import {Select} from "@edgedb/common/ui/select";
 import {DeleteIcon} from "../../icons";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import Button from "@edgedb/common/ui/button";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({
   state,
@@ -56,55 +58,58 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
     (type) => !type.builtin
   );
 
-  const [debugQuery, setDebugQuery] = useState(false);
-
   return (
-    <div
-      className={cn(styles.queryBuilder, {
-        [styles.editingDisabled]: editorState.showHistory,
-      })}
-    >
-      <div className={styles.shapeBlock}>
-        <div className={styles.row}>
-          <span className={styles.keyword}>select</span>{" "}
-          <Select
-            items={schemaObjectTypes.map((type) => ({
-              label: type.name,
-              action: () =>
-                state.setRoot(new QueryBuilderShape({typename: type.name})),
-            }))}
-            selectedItemIndex={schemaObjectTypes.findIndex(
-              (type) => type.name === state.root.typename
-            )}
-          />{" "}
-          {"{"}
+    <>
+      <CustomScrollbars
+        className={styles.scrollWrapper}
+        innerClass={styles.scrollInner}
+      >
+        <div
+          className={cn(styles.queryBuilder, {
+            [styles.editingDisabled]: editorState.showHistory,
+          })}
+        >
+          <div className={styles.scrollInner}>
+            <div className={styles.shapeBlock}>
+              <div className={styles.row}>
+                <span className={styles.keyword}>select</span>{" "}
+                <Select
+                  items={schemaObjectTypes.map((type) => ({
+                    label: type.name,
+                    action: () =>
+                      state.setRoot(
+                        new QueryBuilderShape({typename: type.name})
+                      ),
+                  }))}
+                  selectedItemIndex={schemaObjectTypes.findIndex(
+                    (type) => type.name === state.root.typename
+                  )}
+                />{" "}
+                {"{"}
+              </div>
+              <QueryBuilderShapeRenderer
+                shape={state.root}
+                schemaType={
+                  schemaData.objectsByName.get(state.root.typename!)!
+                }
+              />
+            </div>
+          </div>
         </div>
-        <QueryBuilderShapeRenderer
-          shape={state.root}
-          schemaType={schemaData.objectsByName.get(state.root.typename!)!}
-        />
-      </div>
-      {editorState.showHistory ? null : (
-        <>
-          <button
-            onClick={() => {
-              editorState.runQuery();
-            }}
-            disabled={state.root.hasErrors}
-          >
-            Run
-          </button>
+      </CustomScrollbars>
 
-          <button
-            style={{display: "block", marginTop: 20}}
-            onClick={() => setDebugQuery(!debugQuery)}
-          >
-            debug query
-          </button>
-          {debugQuery ? <pre>{state.query}</pre> : null}
-        </>
+      {editorState.showHistory ? null : (
+        <div className={styles.controls}>
+          <Button
+            className={styles.runButton}
+            label="Run"
+            disabled={!editorState.canRunQuery}
+            loading={editorState.queryRunning}
+            onClick={() => editorState.runQuery()}
+          />
+        </div>
       )}
-    </div>
+    </>
   );
 });
 
@@ -376,7 +381,7 @@ const FilterGroupRenderer = observer(function _FilterGroupRenderer({
           filter
         </div>
         <div className={styles.modButton} onClick={() => group.addGroup()}>
-          group
+          (...)
         </div>
       </div>
     </div>

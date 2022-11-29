@@ -1,7 +1,68 @@
+@import "@edgedb/common/mixins.scss";
+
 .actionsBar {
   display: flex;
+  font-family: "Inter", sans-serif;
+  min-height: 32px;
+  padding-left: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-grow: 1;
+  margin-right: 8px;
+}
+
+.actionButton {
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 20px;
+  color: #808080;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+
+  svg {
+    fill: currentColor;
+    margin-left: 6px;
+    opacity: 0.8;
+  }
+
+  &.active {
+    svg {
+      opacity: 1;
+      fill: #0ccb93;
+    }
+  }
 }
 
 .closeAction {
-  margin-left: auto;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.noViewer {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+
+  .message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    flex-grow: 1;
+    opacity: 0.7;
+  }
 }

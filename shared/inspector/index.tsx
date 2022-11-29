@@ -15,6 +15,8 @@ import {
   HTMLAttributes,
   useCallback,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -30,6 +32,61 @@ export default function Inspector({state, ...rowProps}: InspectorProps) {
   );
 }
 
+export function useInspectorKeybindings(state: InspectorState) {
+  return useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          if (e.ctrlKey) {
+            state.selectSiblingIndex(state.selectedIndex, 1);
+          } else {
+            state.setSelectedIndex((state.selectedIndex ?? -1) + 1);
+          }
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          if (e.ctrlKey) {
+            state.selectSiblingIndex(state.selectedIndex, -1);
+          } else {
+            state.setSelectedIndex(
+              (state.selectedIndex ?? state._items.length) - 1
+            );
+          }
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          if (state.selectedIndex != null) {
+            state.collapseItem(state.selectedIndex);
+          }
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          if (state.selectedIndex != null) {
+            state.expandItem(state.selectedIndex);
+          }
+          break;
+        case " ": {
+          // spacebar
+          e.preventDefault();
+          const item = state.selectedIndex
+            ? state._items[state.selectedIndex]
+            : null;
+          if (
+            state.openExtendedView &&
+            item?.type === ItemType.Scalar &&
+            state.extendedViewIds?.has(item.codec.getKnownTypeName())
+          ) {
+            state.openExtendedView(item);
+          }
+          break;
+        }
+      }
+    },
+    [state]
+  );
+}
+
 interface RowListProps {
   className?: string;
   rowHeight?: number;
@@ -37,14 +94,22 @@ interface RowListProps {
   height?: number;
   maxHeight?: number;
   disableVirtualisedRendering?: boolean;
+  showMore?: () => void;
 }
+
+const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
+  forwardRef((props, ref) => <div ref={ref as any} {...attrs} {...props} />);
 
 const innerElementType = forwardRef((props, ref) => (
   <div
     ref={ref as any}
     className={styles.innerWrapper}
     {...props}
-    style={{...(props as any).style, width: undefined}}
+    style={{
+      ...(props as any).style,
+      width: undefined,
+      height: (props as any).style.height + 16,
+    }}
   />
 ));
 
@@ -53,8 +118,9 @@ const RowList = observer(function RowList({
   rowHeight = 28,
   lineHeight = 26,
   height,
-  maxHeight = rowHeight * 10,
+  maxHeight,
   disableVirtualisedRendering,
+  showMore,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -62,22 +128,37 @@ const RowList = observer(function RowList({
 
   const items = state.getItems();
 
+  const onKeyDown = useInspectorKeybindings(state);
+
   const inspectorStyle = {
     "--lineHeight": `${lineHeight}px`,
     "--rowPad": `${vPad / 2}px`,
   } as any;
 
   if (disableVirtualisedRendering) {
+    const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
+    const showExpandedButton =
+      maxHeight &&
+      (rows.length > maxHeight ||
+        rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
+
     return (
       <div
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonMode,
         })}
         style={inspectorStyle}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
       >
-        {items.map((_, i) => (
+        {rows.map((_, i) => (
           <Row index={i} style={{}} data={items} key={i} noVirtualised />
         ))}
+        {showExpandedButton ? (
+          <div className={styles.showMore} onClick={() => showMore?.()}>
+            <span>show more...</span>
+          </div>
+        ) : null}
       </div>
     );
   } else {
@@ -86,6 +167,7 @@ const RowList = observer(function RowList({
 
     if (height == null) {
       height = 0;
+      maxHeight ??= 10 * rowHeight;
       for (let i = 0; i < items.length; i++) {
         height += itemSize(i);
         if (height > maxHeight) {
@@ -95,14 +177,29 @@ const RowList = observer(function RowList({
       }
     }
 
+    const ref = useRef<List>(null);
+
+    useEffect(() => {
+      if (state.selectedIndex != null) {
+        ref.current?.scrollToItem(state.selectedIndex);
+      }
+    }, [state.selectedIndex]);
+
+    const outerElementType = useMemo(
+      () => createOuterElementType({onKeyDown, tabIndex: 0}),
+      [onKeyDown]
+    );
+
     return (
       <List<Item[]>
+        ref={ref}
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonMode,
         })}
         style={inspectorStyle}
         height={height}
         width={"100%"}
+        outerElementType={outerElementType}
         innerElementType={innerElementType}
         initialScrollOffset={state.scrollPos}
         onScroll={({scrollOffset}) => state.setScrollPos(scrollOffset)}
@@ -152,8 +249,12 @@ const Row = observer(function Row({
 
 function CopyButton({
   item,
+  implicitLimit,
   ...props
-}: {item: Item} & HTMLAttributes<HTMLDivElement>) {
+}: {
+  item: Item;
+  implicitLimit: number | null;
+} & HTMLAttributes<HTMLDivElement>) {
   if (item.type === ItemType.Other) {
     return null;
   }
@@ -171,18 +272,19 @@ function CopyButton({
 
   return (
     <div
-      className={styles.copyButton}
+      className={cn(styles.actionButton, styles.copyButton)}
       {...props}
       onClick={() => {
         const jsonString =
           item.parent == null
-            ? renderResultAsJson((item as any).data, item.codec)
+            ? renderResultAsJson((item as any).data, item.codec, implicitLimit)
             : _renderToJson(
                 item.type === ItemType.Scalar
                   ? (item.parent as any).data[item.index]
                   : item.data,
                 item.codec,
-                ""
+                "",
+                implicitLimit
               );
 
         navigator.clipboard?.writeText(jsonString);
@@ -264,15 +366,19 @@ export const InspectorRow = observer(function InspectorRow({
       </div>
 
       {!disableCopy ? (
-        <div className={styles.actions}>
+        <div
+          className={cn(styles.actions, {
+            [styles.multiline]: (item.height ?? 0) > 1,
+          })}
+        >
           {state.openExtendedView &&
           item.type === ItemType.Scalar &&
           state.extendedViewIds?.has(item.codec.getKnownTypeName()) ? (
             <div
-              className={styles.openExtendedButton}
-              onClick={state.openExtendedView}
+              className={cn(styles.actionButton, styles.openExtendedButton)}
+              onClick={() => state.openExtendedView?.(item)}
             >
-              Open
+              <OpenExpandedViewIcon /> View
             </div>
           ) : null}
           <CopyButton
@@ -283,6 +389,7 @@ export const InspectorRow = observer(function InspectorRow({
             onMouseLeave={() => {
               state.setHoverId(null);
             }}
+            implicitLimit={state.implicitLimit}
           />
         </div>
       ) : null}
@@ -338,6 +445,31 @@ function CopyIcon() {
         fillRule="evenodd"
         clipRule="evenodd"
         d="M2 0C0.895431 0 0 0.895431 0 2V10C0 11.1046 0.89543 12 2 12H3V13C3 14.1046 3.89543 15 5 15H11C12.1046 15 13 14.1046 13 13V5C13 3.89543 12.1046 3 11 3H10V2C10 0.895431 9.10457 0 8 0H2ZM4 12H8C9.10457 12 10 11.1046 10 10V4H11C11.5523 4 12 4.44772 12 5V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V12Z"
+      />
+    </svg>
+  );
+}
+
+function OpenExpandedViewIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

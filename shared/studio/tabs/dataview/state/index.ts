@@ -36,6 +36,7 @@ import {InspectorState, resultGetterCtx} from "@edgedb/inspector/state";
 
 import {dbCtx, connCtx} from "../../../state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./edits";
+import {sessionStateCtx} from "../../../state/sessionState";
 
 const fetchBlockSize = 100;
 
@@ -300,10 +301,7 @@ export class DataInspector extends Model({
       }
     );
     const refreshDataDisposer = reaction(
-      () => {
-        const conn = connCtx.get(this);
-        return [conn?.sessionGlobals, conn?.disableAccessPolicies];
-      },
+      () => sessionStateCtx.get(this)?.activeState,
       () => {
         this.omittedLinks.clear();
         this._refreshData(true);
@@ -1138,7 +1136,7 @@ class ExpandedInspector extends Model({
         {
           objectId: this.objectId,
         },
-        true
+        {newCodec: true}
       );
       if (result) {
         return {data: result, codec: result._codec};
@@ -1198,7 +1196,7 @@ class ExpandedInspector extends Model({
       {
         id: parentObjectId,
       },
-      true
+      {newCodec: true}
     );
 
     if (!result) {

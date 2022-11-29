@@ -75,43 +75,72 @@ export function expandItem(
     case ItemType.Array:
     case ItemType.Tuple:
       {
-        childItems = (item.data ?? []).flatMap((data, i) => {
-          const subCodec =
-            item.level === 0
-              ? item.codec
-              : item.codec.getKind() === "tuple"
-              ? item.codec.getSubcodecs()[i]
-              : item.codec.getSubcodecs()[0];
+        childItems = (item.data ?? [])
+          .slice(
+            0,
+            item.type === ItemType.Set && state.implicitLimit
+              ? state.implicitLimit
+              : undefined
+          )
+          .flatMap((data, i) => {
+            const subCodec =
+              item.level === 0
+                ? item.codec
+                : item.codec.getKind() === "tuple"
+                ? item.codec.getSubcodecs()[i]
+                : item.codec.getSubcodecs()[0];
 
-          const id = `${item.id}.${i}`;
+            const id = `${item.id}.${i}`;
 
-          const childItem = buildItem(
-            {
-              id,
-              parent: item,
-              codec: subCodec,
-              level: item.level + 1,
-            },
-            data,
-            i,
-            i < item.data!.length - 1
-          );
+            const childItem = buildItem(
+              {
+                id,
+                parent: item,
+                codec: subCodec,
+                level: item.level + 1,
+              },
+              data,
+              i,
+              i < item.data!.length - 1
+            );
 
-          return [
-            childItem,
-            ...(shouldExpandChildren || expanded.has(id)
-              ? expandItem(
-                  childItem,
-                  expanded,
-                  expandLevels,
-                  countPrefix,
-                  ignorePrefix,
-                  loadNestedData,
-                  state
-                )
-              : []),
-          ];
-        });
+            return [
+              childItem,
+              ...(shouldExpandChildren || expanded.has(id)
+                ? expandItem(
+                    childItem,
+                    expanded,
+                    expandLevels,
+                    countPrefix,
+                    ignorePrefix,
+                    loadNestedData,
+                    state
+                  )
+                : []),
+            ];
+          });
+
+        if (
+          item.type === ItemType.Set &&
+          state.implicitLimit &&
+          item.data &&
+          state.implicitLimit + 1 === item.data.length
+        ) {
+          childItems.push({
+            id: `_${item.id}.count`,
+            parent: item,
+            type: ItemType.Other,
+            codec: item.codec,
+            level: item.level + 1,
+            comma: false,
+            body: (
+              <span className={styles.resultsHidden}>
+                ... further results hidden (implicit limit{" "}
+                {state.implicitLimit})
+              </span>
+            ),
+          });
+        }
 
         if (
           item.expectedCount !== undefined &&

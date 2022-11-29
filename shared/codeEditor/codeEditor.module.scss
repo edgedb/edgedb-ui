@@ -5,6 +5,10 @@
 
   &.terminalCursor {
     :global {
+      .cm-cursorLayer {
+        animation: none !important;
+      }
+
       .cm-cursor {
         border: 0;
         margin: 0;

@@ -87,6 +87,20 @@ const lightThemeSpec: ThemeSpec = {
   ".cm-tooltip-autocomplete ul li[aria-selected]": {
     background: "var(--app-accent-green)",
   },
+  ".cm-specialChar": {
+    color: "#333",
+    opacity: 0.5,
+  },
+  ".cm-tab": {
+    display: "inline",
+    position: "relative",
+    color: "#333",
+    "&:before": {
+      position: "absolute",
+      content: '"→"',
+      opacity: 0.5,
+    },
+  },
 };
 
 export const lightTheme = EditorView.theme(lightThemeSpec);
@@ -120,6 +134,12 @@ export const darkTheme = EditorView.theme(
     },
     ".cm-tooltip-autocomplete": {
       background: "#1F1F1F",
+    },
+    ".cm-specialChar": {
+      color: "#e5e5e5",
+    },
+    ".cm-tab": {
+      color: "#e5e5e5",
     },
   }),
   {dark: true}

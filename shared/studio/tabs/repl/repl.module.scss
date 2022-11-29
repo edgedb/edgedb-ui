@@ -1,21 +1,20 @@
 @import "@edgedb/common/mixins.scss";
 
+.replWrapper {
+  position: relative;
+  flex-grow: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+}
+
 .repl {
   flex-grow: 1;
   min-height: 0;
   min-width: 0;
-  background-color: #242424;
+  background-color: #f5f5f5;
   border-radius: 8px;
   font-family: "Roboto Mono", monospace;
-  color: #e7e7e7;
-
-  --syntax-purple: #ac86f6;
-  --syntax-green: #07a66d;
-  --syntax-blue: #369ff2;
-  --syntax-red: #f13f4a;
-  --syntax-orange: #f4e470;
-  --syntax-comment: #7f7f7f;
-  --syntax-mod: #9f9f9f;
 
   :global {
     .cm-scroller {
@@ -27,6 +26,29 @@
       padding-right: 2px;
     }
   }
+
+  &.showExtendedResult {
+    margin: 0 8px;
+    filter: brightness(0.95);
+    pointer-events: none;
+  }
+
+  @include darkTheme {
+    background-color: #242424;
+  }
+}
+
+.extendedViewerContainer {
+  position: absolute;
+  display: flex;
+  top: 12px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--app-panel-bg);
+  border-radius: 8px;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .replHeader {
@@ -53,21 +75,44 @@
   }
 }
 
-.listWrapper {
+.list {
+  display: flex;
+  flex-direction: column-reverse;
+  overflow: auto;
+
+  @include hideScrollbar;
+}
+
+.scrollInner {
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+}
 
-  // @include hideScrollbar;
-
-  & > div {
-    flex-shrink: 0;
-  }
+.listInner {
+  flex-shrink: 0;
+  position: relative;
+  margin-bottom: 12px;
 }
 
 .replInput {
-  padding: 8px;
   flex-grow: 1;
   display: flex;
+  padding: 0 16px;
+
+  .scrollWrapper {
+    flex-grow: 1;
+    display: flex;
+    min-width: 0;
+  }
+
+  :global(.cm-editor) {
+    margin-bottom: 12px;
+  }
+
+  :global(.cm-scroller) {
+    @include hideScrollbar;
+  }
 
   &.hidden {
     display: none;
@@ -76,12 +121,49 @@
 
 .replHistoryItem {
   position: absolute;
-  background: #303030;
+  background: #ebebeb;
+  --inspectorBg: #ebebeb;
   box-sizing: border-box;
-  margin: 8px;
-  width: calc(100% - 16px);
-  padding: 8px 16px;
+  margin: 12px 16px;
+  width: calc(100% - 32px);
+  padding: 12px 16px;
+  padding-bottom: 0;
   border-radius: 8px;
+
+  &.showDateHeader {
+    margin-top: 36px;
+  }
+
+  .scrollWrapper {
+    overflow: auto;
+    @include hideScrollbar;
+  }
+
+  @include darkTheme {
+    background: #303030;
+    --inspectorBg: #303030;
+  }
+}
+
+.historyDateHeader {
+  position: absolute;
+  height: 16px;
+  top: -26px;
+  left: 0;
+  right: 0;
+  display: flex;
+  opacity: 0.7;
+  font-size: 13px;
+
+  &:before,
+  &:after {
+    content: "";
+    height: 8px;
+    border-bottom: 1px solid currentColor;
+    flex-grow: 1;
+    margin: 0 8px;
+    opacity: 0.1;
+  }
 }
 
 .historyQuery {
@@ -96,14 +178,35 @@
     padding-right: 1ch;
   }
 
+  .historyQueryCode {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
   .code {
     margin: 0;
     font-family: inherit;
+    padding-bottom: 12px;
+  }
+
+  .historyTime {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    line-height: 18px;
+    opacity: 0.5;
+    pointer-events: none;
+    user-select: none;
+    margin-left: 16px;
   }
 }
 
+.outputOuterWrapper {
+  margin: 0 -16px;
+}
+
 .historyOutput {
-  margin: 16px 0 8px 0;
+  padding: 4px 8px 8px 8px;
+  min-width: max-content;
 }
 
 .queryError {
@@ -131,6 +234,18 @@
   background-position: bottom;
   background-image: url("data:image/svg+xml,%3Csvg width='6' height='3' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0.82843C0.511845 0.82843 1.02369 1.02369 1.41421 1.41422L1.58579 1.58579C2.36683 2.36684 3.63316 2.36684 4.41421 1.58579L4.58579 1.41422C4.97631 1.02369 5.48816 0.828431 6 0.828431' stroke='%23E91919'/%3E%3C/svg%3E%0A");
   padding-bottom: 1px;
+}
+
+.inspector {
+  min-width: max-content;
+
+  --inspectorRowHoverBg: #f5f5f5;
+  --inspectorRowSelectedBg: #d6e2e9;
+
+  @include darkTheme {
+    --inspectorRowHoverBg: #292929;
+    --inspectorRowSelectedBg: #2d383f;
+  }
 }
 
 .commandHelp {
@@ -201,10 +316,11 @@
 }
 
 .historyLoading {
-  position: absolute;
   width: 100%;
+  height: 44px;
   display: flex;
   justify-content: center;
+  align-items: center;
   opacity: 0.8;
 }
 

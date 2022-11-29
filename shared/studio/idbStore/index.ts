@@ -1,5 +1,6 @@
 import {openDB, DBSchema} from "idb";
 import {SchemaData} from "../state/database";
+import {StoredSessionStateData} from "../state/sessionState";
 
 export interface QueryHistoryItem {
   instanceId: string;
@@ -13,7 +14,17 @@ export interface QueryResultData {
   resultBuf: Buffer;
 }
 
+export interface SessionStateData {
+  instanceId: string;
+  dbName: string;
+  data: StoredSessionStateData;
+}
+
 interface IDBStore extends DBSchema {
+  sessionState: {
+    key: [string, string];
+    value: SessionStateData;
+  };
   queryHistory: {
     key: [string, string, number];
     value: QueryHistoryItem;
@@ -41,15 +52,17 @@ interface IDBStore extends DBSchema {
   };
 }
 
-const db = openDB<IDBStore>("EdgeDBStudio", 2, {
+const db = openDB<IDBStore>("EdgeDBStudio", 3, {
   upgrade(db, oldVersion) {
     switch (oldVersion) {
+      // @ts-ignore fallthrough
       case 0: {
         db.createObjectStore("schemaData").createIndex(
           "byInstanceId",
           "instanceId"
         );
       }
+      // @ts-ignore fallthrough
       case 1: {
         db.createObjectStore("queryHistory", {
           keyPath: ["instanceId", "dbName", "timestamp"],
@@ -60,9 +73,27 @@ const db = openDB<IDBStore>("EdgeDBStudio", 2, {
 
         db.createObjectStore("queryResultData");
       }
+      // @ts-ignore fallthrough
+      case 2: {
+        db.createObjectStore("sessionState", {
+          keyPath: ["instanceId", "dbName"],
+        });
+      }
     }
   },
 });
+
+// session state
+
+export async function fetchSessionState(instanceId: string, dbName: string) {
+  return (
+    (await (await db).get("sessionState", [instanceId, dbName]))?.data ?? null
+  );
+}
+
+export async function storeSessionState(data: SessionStateData) {
+  await (await db).put("sessionState", data);
+}
 
 // query / repl history
 

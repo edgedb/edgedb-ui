@@ -8,6 +8,8 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {createHexViewerState, HexViewer as HexViewerState} from "./state";
 import {observer} from "mobx-react";
 import {computed} from "mobx";
+import {ActionButton, ActionsBar} from "../shared";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 export interface HexViewerProps {
   data: Uint8Array;
@@ -19,6 +21,8 @@ export const HexViewer = observer(function HexViewer({data}: HexViewerProps) {
   const [wrapperHeight, setWrapperHeight] = useState<number>(0);
   const wrapperRef = useRef<HTMLDivElement>(null);
   useResize(wrapperRef, ({height}) => setWrapperHeight(height));
+
+  const innerRef = useRef(null);
 
   return (
     <div className={styles.hexViewer}>
@@ -50,32 +54,35 @@ export const HexViewer = observer(function HexViewer({data}: HexViewerProps) {
           }
         }}
       >
-        <List
-          itemCount={state.rowsCount}
-          itemSize={21}
-          width="100%"
-          height={wrapperHeight}
-          overscanCount={10}
-        >
-          {state.asciiMode
-            ? ({index, style}) => (
-                <HexRow
-                  state={state}
-                  style={style}
-                  rowOffset={index * 80}
-                  rowSize={80}
-                  asciiOnly
-                />
-              )
-            : ({index, style}) => (
-                <HexRow
-                  state={state}
-                  style={style}
-                  rowOffset={index * 16}
-                  rowSize={16}
-                />
-              )}
-        </List>
+        <CustomScrollbars innerClass={innerRef.current}>
+          <List
+            itemCount={state.rowsCount}
+            innerRef={innerRef}
+            itemSize={21}
+            width="100%"
+            height={wrapperHeight}
+            overscanCount={10}
+          >
+            {state.asciiMode
+              ? ({index, style}) => (
+                  <HexRow
+                    state={state}
+                    style={style}
+                    rowOffset={index * 80}
+                    rowSize={80}
+                    asciiOnly
+                  />
+                )
+              : ({index, style}) => (
+                  <HexRow
+                    state={state}
+                    style={style}
+                    rowOffset={index * 16}
+                    rowSize={16}
+                  />
+                )}
+          </List>
+        </CustomScrollbars>
       </div>
     </div>
   );
@@ -87,21 +94,22 @@ const HexViewerStatus = observer(function HexViewerStatus({
   state: HexViewerState;
 }) {
   return (
-    <div>
-      {state.data?.length}{" "}
-      <button onClick={() => state.downloadData()}>
-        download{state.endOffset !== null ? " range" : ""}
-      </button>
-      <label>
-        <input
-          type="checkbox"
-          checked={state.asciiMode}
-          onChange={(e) => state.setAsciiMode(e.target.checked)}
-        />
-        ASCII mode
-      </label>{" "}
-      {state.hoverOffset?.toString(16).padStart(state.offsetWidth, "0")}
-    </div>
+    <ActionsBar>
+      <ActionButton
+        icon={<></>}
+        active={state.asciiMode}
+        onClick={() => state.setAsciiMode(!state.asciiMode)}
+      >
+        ASCII Mode
+      </ActionButton>
+      <ActionButton
+        className={styles.downloadButton}
+        icon={<></>}
+        onClick={() => state.downloadData()}
+      >
+        Download{state.endOffset !== null ? " range" : ""}
+      </ActionButton>
+    </ActionsBar>
   );
 });
 
@@ -198,7 +206,7 @@ const HexRow = observer(function HexRow({
       className={cn(styles.hexRow, {
         [styles.rowSelected]: selectedRow === true,
       })}
-      style={style}
+      style={{...style, width: undefined}}
     >
       {!asciiOnly ? (
         <>

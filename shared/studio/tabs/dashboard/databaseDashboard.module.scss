@@ -1,12 +1,23 @@
 @import "@edgedb/common/mixins.scss";
 
+.dashboardWrapper,
+.firstDashboardWrapper {
+  flex-grow: 1;
+  display: flex;
+}
+
 .dashboard,
 .firstDashboard {
+  flex-grow: 1;
   background-color: var(--app-panel-bg);
   border-radius: 8px;
   overflow: auto;
 
-  flex-grow: 1;
+  @include hideScrollbar;
+}
+
+.dashboardLayout,
+.firstDashboardLayout {
   display: flex;
   flex-direction: column;
   align-items: center;

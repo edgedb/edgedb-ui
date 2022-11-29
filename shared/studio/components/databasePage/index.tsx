@@ -19,8 +19,8 @@ import {DatabaseStateContext, useDatabaseState} from "../../state/database";
 
 import styles from "./databasePage.module.scss";
 
+import {SessionStateBar, SessionStateButton} from "../sessionState";
 import {ErrorPage} from "../errorPage";
-import {SessionState} from "../sessionState";
 import {WarningIcon} from "../../icons";
 
 export interface DatabaseTabSpec {
@@ -28,6 +28,7 @@ export interface DatabaseTabSpec {
   allowNested?: boolean;
   label: string;
   icon: (active: boolean) => JSX.Element;
+  usesSessionState: boolean;
   state?: ModelClass<AnyModel>;
   element: JSX.Element;
 }
@@ -109,40 +110,43 @@ const DatabasePageContent = observer(function DatabasePageContent({
 
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
 
+  const currentTabId =
+    useMatch(`${useResolvedPath("").pathname}/:tabId/*`)?.params.tabId ?? "";
+
   return (
-    <>
-      <SessionState dbState={dbState} />
+    <DatabaseStateContext.Provider value={dbState}>
+      <SessionStateButton />
 
       <div className={styles.databasePage}>
-        <DatabaseStateContext.Provider value={dbState}>
-          <TabBar tabs={tabs} />
-          <div className={styles.tabContent}>
-            {useRoutes([
-              ...tabs.map((t) => ({
-                path: t.path + (t.allowNested ? "/*" : ""),
-                element: (
-                  <ErrorBoundary
-                    key={t.path}
-                    FallbackComponent={ErrorFallback}
-                  >
-                    {t.element}
-                  </ErrorBoundary>
-                ),
-              })),
-              {path: "*", element: <Navigate to="" replace />},
-            ])}
-          </div>
-        </DatabaseStateContext.Provider>
+        <SessionStateBar
+          className={styles.sessionBar}
+          active={tabs.find((t) => t.path === currentTabId)?.usesSessionState}
+        />
+        <TabBar tabs={tabs} hide={dbState.sessionState.panelOpen} />
+        <div className={styles.tabContent}>
+          {useRoutes([
+            ...tabs.map((t) => ({
+              path: t.path + (t.allowNested ? "/*" : ""),
+              element: (
+                <ErrorBoundary key={t.path} FallbackComponent={ErrorFallback}>
+                  {t.element}
+                </ErrorBoundary>
+              ),
+            })),
+            {path: "*", element: <Navigate to="" replace />},
+          ])}
+        </div>
       </div>
-    </>
+    </DatabaseStateContext.Provider>
   );
 });
 
 interface TabBarProps {
   tabs: DatabaseTabSpec[];
+  hide?: boolean;
 }
 
-const TabBar = observer(function TabBar({tabs}: TabBarProps) {
+const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
   const navigate = useNavigate();
   const dbState = useDatabaseState();
 
@@ -182,6 +186,7 @@ const TabBar = observer(function TabBar({tabs}: TabBarProps) {
     <div
       className={cn(styles.tabs, {
         [styles.showLabels]: showTabLabels,
+        [styles.hide]: !!hide,
       })}
     >
       {tabs.map(({path, label, icon, state}) => (

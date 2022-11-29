@@ -1,14 +1,44 @@
+@import "@edgedb/common/mixins.scss";
+
 .queryBuilder {
   font-family: "Roboto Mono", monospace;
   font-size: 15px;
   line-height: 28px;
-  padding: 16px;
   overflow: auto;
   width: 100%;
   white-space: nowrap;
 
+  @include hideScrollbar;
+
   &.editingDisabled {
     pointer-events: none;
+  }
+}
+
+.scrollWrapper {
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.scrollInner {
+  padding: 8px 16px;
+  padding-bottom: 48px;
+}
+
+.controls {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 8px;
+  pointer-events: none;
+
+  .runButton {
+    --buttonBg: var(--app-accent-green);
+    --buttonTextColour: #0a4634;
+    align-self: flex-start;
+    flex-shrink: 0;
+    pointer-events: auto;
   }
 }
 

@@ -1,41 +1,60 @@
-import {
-  useRef,
-  useState,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-  ForwardedRef,
-  useCallback,
-} from "react";
-import {createPortal} from "react-dom";
-import {observer} from "mobx-react-lite";
-
+import {useModal} from "@edgedb/common/hooks/useModal";
+import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
+import {ModalOverlay} from "@edgedb/common/ui/modal";
 import cn from "@edgedb/common/utils/classNames";
-
-import {DatabaseState} from "../../state/database";
+import {renderValue} from "@edgedb/inspector/buildScalar";
+import {observer} from "mobx-react-lite";
+import {PropsWithChildren, useEffect, useRef, useState} from "react";
+import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
+import {useDatabaseState} from "../../state";
+import {SchemaData} from "../../state/database";
+import {
+  configNames,
+  configNamesIndex,
+  queryOptions,
+  SessionState,
+} from "../../state/sessionState";
+import {getInputComponent} from "../dataEditor";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import styles from "./sessionState.module.scss";
-import {getInputComponent} from "../dataEditor";
-import {ChevronDownIcon, DeleteIcon, PlusIcon} from "../../icons";
+import {createPortal} from "react-dom";
+import {useResize} from "@edgedb/common/hooks/useResize";
+import {ButtonTabArrow} from "./icons";
+import {ToggleSwitch} from "@edgedb/common/ui/toggleSwitch";
+import fuzzysort, {highlight} from "fuzzysort";
+import {highlightString} from "../../utils/fuzzysortHighlight";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
 }
 
-export const SessionState = observer(function ({
-  dbState,
-}: {
-  dbState: DatabaseState;
-}) {
+export const SessionStateButton = observer(function SessionStateButton() {
+  const sessionState = useDatabaseState().sessionState;
   const targetEl = document.getElementById("sessionStateControls");
 
   if (targetEl) {
     return createPortal(
       <div className={styles.sessionState}>
-        {dbState.schemaData?.globals.size ? (
-          <SessionGlobals dbState={dbState} />
-        ) : null}
-        <SessionConfig dbState={dbState} />
+        <div
+          className={cn(styles.stateButton, {
+            [styles.open]: sessionState.barOpen,
+            [styles.panelOpen]: sessionState.panelOpen,
+          })}
+          onClick={() => {
+            if (sessionState.barOpen) {
+              sessionState.closePanel();
+              sessionState.setBarOpen(false);
+            } else {
+              sessionState.setBarOpen(true);
+            }
+          }}
+        >
+          Client Settings
+          <ChevronDownIcon className={styles.chevron} />
+          <ButtonTabArrow className={styles.tabArrow} />
+        </div>
       </div>,
       targetEl
     );
@@ -43,249 +62,534 @@ export const SessionState = observer(function ({
   return null;
 });
 
-interface PanelRef {
-  cancelOpenPanel: () => void;
+const renderValueWithType = (value: any, type: SchemaType) =>
+  renderValue(
+    value,
+    type.name,
+    type.schemaType === "Scalar" && type.enum_values !== null,
+    type.schemaType === "Range" ? type.elementType.name : undefined,
+    false
+  ).body;
+
+export interface SessionStateBarProps {
+  className?: string;
+  active?: boolean;
 }
 
-const Panel = forwardRef(function (
-  {
-    label,
-    content,
-    onOpen,
-    onClose,
-    disabled,
-  }: {
-    label: string | JSX.Element;
-    content: JSX.Element;
-    onOpen?: () => void;
-    onClose: () => void;
-    disabled?: boolean;
-  },
-  ref: ForwardedRef<PanelRef>
-) {
-  const [panelOpen, setPanelOpen] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
+export const SessionStateBar = observer(function SessionStateBar({
+  className,
+  active = false,
+}: SessionStateBarProps) {
+  const dbState = useDatabaseState();
+  const state = dbState.sessionState;
 
-  useImperativeHandle(ref, () => ({
-    cancelOpenPanel() {
-      setPanelOpen(false);
-    },
-  }));
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (panelOpen) {
-      const listener = (e: MouseEvent) => {
-        if (!panelRef.current?.contains(e.target as Node)) {
-          onClose();
-          setPanelOpen(false);
-        }
-      };
-
-      window.addEventListener("mousedown", listener, {capture: true});
-
-      return () => {
-        window.removeEventListener("mousedown", listener, {capture: true});
-      };
-    }
-  }, [panelOpen, onClose]);
+  const [height, setHeight] = useState(0);
+  useResize(ref, ({height}) => setHeight(height));
 
   return (
     <div
-      className={cn(styles.sessionStateOptions, {
-        [styles.disabled]: disabled ?? false,
-      })}
+      className={cn(
+        styles.sessionBarWrapper,
+        inspectorStyles.inspectorTheme,
+        className,
+        {
+          [styles.notActive]: !active,
+          [styles.barOpen]: state.barOpen,
+          [styles.panelOpen]: state.panelOpen,
+        }
+      )}
+      style={{height: state.barOpen ? height + 8 : undefined}}
     >
       <div
-        className={styles.stateButton}
-        onClick={() => {
-          onOpen?.();
-          setPanelOpen(true);
+        className={styles.panelBg}
+        style={{
+          left: !state.panelOpen ? 68 : undefined,
+          height: state.barOpen && !state.panelOpen ? height : undefined,
         }}
-      >
-        {label}
-        <ChevronDownIcon />
+      />
+      <SessionEditorPanel show={state.panelOpen} />
+      <div ref={ref}>
+        <SessionBarContent />
       </div>
-      {panelOpen ? (
-        <div ref={panelRef} className={styles.statePanel}>
-          {content}
+    </div>
+  );
+});
+
+const SessionBarContent = observer(function SessionBarContent() {
+  const state = useDatabaseState().sessionState;
+
+  const [overflowCount, setOverflowCount] = useState(0);
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  const activeState = [
+    ...state.activeState.globals.map((g) => ({kind: "g" as const, ...g})),
+    ...state.activeState.config.map((c) => ({kind: "c" as const, ...c})),
+    ...state.activeState.options.map((o) => ({kind: "o" as const, ...o})),
+  ];
+
+  useResize(
+    ref,
+    ({height}) => {
+      if (ref.current!.scrollHeight > height) {
+        let count = 0;
+        for (const child of ref.current!.children) {
+          if ((child as HTMLElement).offsetTop > height) {
+            break;
+          }
+          count++;
+        }
+        setOverflowCount(
+          state.activeState.globals.length +
+            state.activeState.config.length +
+            state.activeState.options.length -
+            count
+        );
+      } else {
+        setOverflowCount(0);
+      }
+    },
+    [state.activeState]
+  );
+
+  return (
+    <div className={styles.sessionBar}>
+      <div ref={ref} className={styles.chips}>
+        {activeState.length ? (
+          activeState.map(({kind, name, value, type}) => {
+            const [module, shortName] = name.split("::");
+            return (
+              <div
+                key={name}
+                className={styles.chip}
+                onDoubleClick={() => state.openPanel({kind, name})}
+              >
+                <div className={styles.chipKind}>{kind}</div>
+                {shortName && module !== "default" ? (
+                  <span>{module}::</span>
+                ) : null}
+                {shortName ?? module} :=
+                <div className={styles.chipVal}>
+                  {renderValueWithType(value, type.data)}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className={styles.emptySessionBar}>
+            {state.draftState
+              ? "no configured settings"
+              : "loading settings..."}
+          </div>
+        )}
+      </div>
+      {state.draftState ? (
+        <div className={styles.openPanel} onClick={() => state.openPanel()}>
+          <div className={styles.openPanelButton}>
+            {overflowCount ? <span>+{overflowCount}</span> : null}
+            <ChevronDownIcon />
+          </div>
         </div>
       ) : null}
     </div>
   );
 });
 
-const SessionGlobals = observer(function SessionGlobals({
-  dbState,
-}: {
-  dbState: DatabaseState;
-}) {
-  const dataGetter = useRef<() => typeof dbState.connection.sessionGlobals>();
-  const ref = useRef<PanelRef>(null);
-
-  const fetchingSchemaData = dbState.fetchingSchemaData;
+function SessionEditorPanel({show}: {show: boolean}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shouldRender, setShouldRender] = useState(false);
 
   useEffect(() => {
-    if (fetchingSchemaData) {
-      ref.current?.cancelOpenPanel();
+    if (show && !shouldRender) {
+      setShouldRender(true);
     }
-  }, [fetchingSchemaData]);
-
-  const globalsCount = Object.keys(dbState.connection.sessionGlobals).length;
+    if (!show && shouldRender) {
+      ref.current?.addEventListener(
+        "transitionend",
+        () => setShouldRender(false),
+        {once: true}
+      );
+    }
+  }, [show, shouldRender]);
 
   return (
-    <Panel
+    <div
       ref={ref}
-      label={
-        <>
-          Globals {globalsCount ? <span>&nbsp;· {globalsCount}</span> : null}
-        </>
-      }
-      content={
-        <SessionGlobalsPanel
-          dbState={dbState}
-          setDataGetter={(getter) => (dataGetter.current = getter)}
+      className={cn(styles.editorPanel, {[styles.panelVisible]: show})}
+    >
+      {shouldRender ? <SessionEditorPanelContent /> : null}
+    </div>
+  );
+}
+
+const SessionEditorPanelContent = observer(
+  function SessionEditorPanelContent() {
+    const dbState = useDatabaseState();
+    const sessionState = dbState.sessionState;
+
+    const [searchFilter, setSearchFilter] = useState("");
+
+    useEffect(() => {
+      const listener = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          sessionState.closePanel();
+        }
+      };
+      window.addEventListener("keydown", listener);
+      return () => window.removeEventListener("keydown", listener);
+    }, []);
+
+    const filteredGlobals = searchFilter
+      ? fuzzysort.go(searchFilter, sessionState.indexedSchemaGlobals, {
+          key: "indexed",
+        })
+      : sessionState.indexedSchemaGlobals.map((item) => ({obj: item}));
+    const filteredConfigs = searchFilter
+      ? fuzzysort.go(searchFilter, configNamesIndex)
+      : configNames;
+    const filteredOptions = searchFilter
+      ? fuzzysort.go(searchFilter, queryOptions, {key: "indexed"})
+      : queryOptions.map((opt) => ({obj: opt}));
+
+    return (
+      <div className={styles.editorPanelContent}>
+        <div
+          className={styles.closePanel}
+          onClick={() => sessionState.closePanel()}
+        >
+          <CloseIcon />
+        </div>
+        <div className={styles.searchBar}>
+          <div className={styles.search}>
+            <SearchIcon />
+            <input
+              placeholder="search..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className={styles.grid}>
+          <div className={styles.group}>
+            <div className={styles.header}>Globals</div>
+
+            {filteredGlobals.length ? (
+              <ListWrapper>
+                {filteredGlobals.map((item) => (
+                  <ListGlobalItem
+                    key={item.obj.global.id}
+                    schemaGlobal={item.obj.global}
+                    sessionState={sessionState}
+                    highlight={
+                      searchFilter
+                        ? (fuzzysort.indexes(item as any) as any)
+                        : undefined
+                    }
+                  />
+                ))}
+              </ListWrapper>
+            ) : (
+              <div className={styles.emptyItem}>
+                {searchFilter ? "no matching globals" : "no globals in schema"}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.group}>
+            <div className={styles.header}>Config</div>
+
+            {filteredConfigs.length ? (
+              <ListWrapper>
+                {filteredConfigs.map((item: any) => (
+                  <ListConfigItem
+                    key={searchFilter ? item.target : item}
+                    name={searchFilter ? item.target : item}
+                    sessionState={sessionState}
+                    highlight={
+                      searchFilter
+                        ? (fuzzysort.indexes(item) as any)
+                        : undefined
+                    }
+                  />
+                ))}
+              </ListWrapper>
+            ) : (
+              <div className={styles.emptyItem}>no matching config</div>
+            )}
+          </div>
+
+          <div className={styles.group}>
+            <div className={styles.header}>Query Options</div>
+
+            {filteredOptions.length ? (
+              <ListWrapper>
+                {filteredOptions.map((item) => (
+                  <ListQueryOptionItem
+                    key={item.obj.name}
+                    opt={item.obj}
+                    sessionState={sessionState}
+                    highlight={
+                      searchFilter
+                        ? (fuzzysort.indexes(item as any) as any)
+                        : undefined
+                    }
+                  />
+                ))}
+              </ListWrapper>
+            ) : (
+              <div className={styles.emptyItem}>no matching options</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+function ListWrapper({children}: PropsWithChildren<{}>) {
+  return (
+    <CustomScrollbars
+      className={styles.listWrapper}
+      innerClass={styles.listInner}
+    >
+      <div className={styles.list}>
+        <div className={styles.listInner}>{children}</div>
+      </div>
+    </CustomScrollbars>
+  );
+}
+
+function ListItem({
+  state,
+  canDeactivate = true,
+  active,
+  onActiveToggle,
+  name,
+  type,
+  value,
+  onChange,
+  defaultValue,
+  allowNull,
+  highlighted,
+  onUpdate,
+  canUpdate,
+}: {
+  state: SessionState;
+  canDeactivate?: boolean;
+  active: boolean;
+  onActiveToggle?: () => void;
+  name: JSX.Element | string;
+  type: SchemaType;
+  value: any;
+  onChange: (val: any, err: boolean) => void;
+  defaultValue?: JSX.Element | string;
+  allowNull?: boolean;
+  highlighted: boolean;
+  onUpdate: () => void;
+  canUpdate: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const Input = getInputComponent(type);
+
+  useEffect(() => {
+    if (highlighted) {
+      ref.current?.scrollIntoView();
+      const timeout = setTimeout(() => state.clearHighlight(), 2000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(styles.item, {
+        [styles.inactive]: !active,
+        [styles.highlighted]: highlighted,
+      })}
+    >
+      {canDeactivate ? (
+        <ToggleSwitch
+          className={styles.activeToggle}
+          checked={active}
+          onChange={onActiveToggle!}
         />
+      ) : null}
+      <div className={styles.itemHeader}>
+        <div className={styles.headerInner}>
+          <div className={styles.itemName}>{name}</div>
+          <div className={styles.itemType}>{`<${type.name}>`}</div>
+        </div>
+        {/* <div
+          className={cn(styles.itemUpdate, {[styles.disabled]: !canUpdate})}
+          onClick={onUpdate}
+        >
+          Update
+        </div> */}
+        <></>
+      </div>
+
+      <div className={cn(styles.itemValue, {[styles.inactive]: !active})}>
+        {active ? (
+          <>
+            <Input
+              type={type}
+              stringMode
+              value={value}
+              onChange={onChange}
+              allowNull={allowNull}
+            />
+            {allowNull ? (
+              <div
+                className={cn(styles.setNullButton, {
+                  [styles.disabled]: value === null,
+                })}
+                onClick={() => onChange(null, false)}
+              >
+                {"{}"}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          defaultValue
+        )}
+      </div>
+    </div>
+  );
+}
+
+const ListGlobalItem = observer(function ListGlobalItem({
+  schemaGlobal,
+  sessionState,
+  highlight,
+}: {
+  schemaGlobal: SchemaGlobal;
+  sessionState: SessionState;
+  highlight?: number[];
+}) {
+  const state = sessionState.draftState?.globals[schemaGlobal.name];
+  const snap = sessionState.draftSnapshot!.globals[schemaGlobal.name];
+
+  const canUpdate =
+    !!state &&
+    !state.error &&
+    (!snap
+      ? state.active
+      : snap.active !== state.active ||
+        (state.active && snap.value !== state.value));
+
+  return (
+    <ListItem
+      state={sessionState}
+      name={
+        highlight ? (
+          highlightString(schemaGlobal.name, highlight, styles.nameMatch)
+        ) : (
+          <>
+            <span>{schemaGlobal.module + "::"}</span>
+            {schemaGlobal.shortName}
+          </>
+        )
       }
-      onClose={() => {
-        dbState.connection.setSessionGlobals(dataGetter.current!());
-      }}
-      disabled={fetchingSchemaData}
+      active={state?.active ?? false}
+      onActiveToggle={() => sessionState.toggleGlobalActive(schemaGlobal)}
+      type={schemaGlobal.target}
+      value={state?.value}
+      onChange={(val, err) => sessionState.updateItemValue(state!, val, err)}
+      defaultValue={schemaGlobal.default ?? `{}`}
+      allowNull={schemaGlobal.default != null}
+      highlighted={
+        sessionState.highlight?.kind === "g" &&
+        sessionState.highlight.name === schemaGlobal.name
+      }
+      onUpdate={() => sessionState.updateGlobal(schemaGlobal.name)}
+      canUpdate={canUpdate}
     />
   );
 });
 
-const SessionGlobalsPanel = observer(function SessionGlobalsPanel({
-  dbState,
-  setDataGetter,
+const ListConfigItem = observer(function ListConfigItem({
+  name,
+  sessionState,
+  highlight,
 }: {
-  dbState: DatabaseState;
-  setDataGetter: (
-    getter: () => typeof dbState.connection.sessionGlobals
-  ) => void;
+  name: string;
+  sessionState: SessionState;
+  highlight?: number[];
 }) {
-  const [values, setValues] = useState(() =>
-    Object.entries(dbState.connection.sessionGlobals).reduce(
-      (g, [name, {value}]) => {
-        g[name] = {value, err: false};
-        return g;
-      },
-      {} as {[name: string]: {value: any; err: boolean} | undefined}
-    )
-  );
+  const state = sessionState.draftState?.config[name]!;
+  const snap = sessionState.draftSnapshot!.config[name];
 
-  useEffect(() => {
-    setDataGetter(() => {
-      const schemaGlobals = [...(dbState.schemaData?.globals.values() ?? [])];
-      return Object.entries(values).reduce((globals, [name, data]) => {
-        if (data) {
-          const type = schemaGlobals.find((g) => g.name === name);
-          if (type && !data.err) {
-            globals[name] = {value: data.value, typeId: type.target.id};
-          }
-        }
-        return globals;
-      }, {} as typeof dbState.connection.sessionGlobals);
-    });
-  }, [values]);
+  const canUpdate =
+    !state.error &&
+    (snap.active !== state.active ||
+      (state.active && snap.value !== state.value));
 
   return (
-    <div className={styles.globalsGrid}>
-      {[...(dbState.schemaData?.globals.values() ?? [])]
-        .filter((g) => !g.expr)
-        .map((g, i) => {
-          const Input = getInputComponent(g.target)!;
-
-          return (
-            <div className={styles.globalItem} key={i}>
-              <div className={styles.globalName}>
-                {g.module !== "default" ? <span>{g.module}::</span> : null}
-                {g.shortName}
-              </div>
-              <div className={styles.globalInput}>
-                {values[g.name] !== undefined ? (
-                  <>
-                    <Input
-                      type={g.target}
-                      // errorMessageAbove={lastParam}
-                      value={values[g.name]!.value}
-                      depth={2}
-                      onChange={(value, err) => {
-                        setValues({...values, [g.name]: {value, err}});
-                      }}
-                    />
-                    <button
-                      className={styles.button}
-                      onClick={() =>
-                        setValues({...values, [g.name]: undefined})
-                      }
-                    >
-                      <DeleteIcon />
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className={styles.button}
-                    onClick={() =>
-                      setValues({
-                        ...values,
-                        [g.name]: {value: null, err: true},
-                      })
-                    }
-                  >
-                    <PlusIcon />
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-    </div>
+    <ListItem
+      state={sessionState}
+      name={
+        highlight ? highlightString(name, highlight, styles.nameMatch) : name
+      }
+      active={state.active}
+      onActiveToggle={() => sessionState.toggleConfigActive(name)}
+      type={state.type.data}
+      value={state.value}
+      onChange={(val, err) => sessionState.updateItemValue(state, val, err)}
+      defaultValue={
+        sessionState.configValues
+          ? renderValueWithType(
+              sessionState.configValues[name],
+              state.type.data
+            )
+          : "fetching..."
+      }
+      highlighted={
+        sessionState.highlight?.kind === "c" &&
+        sessionState.highlight.name === name
+      }
+      onUpdate={() => sessionState.updateConfig(name)}
+      canUpdate={canUpdate}
+    />
   );
 });
 
-interface SessionConfig {
-  disableAccessPolicies: boolean;
-}
-
-const SessionConfig = observer(function SessionConfig({
-  dbState,
+const ListQueryOptionItem = observer(function ListQueryOptionItem({
+  opt,
+  sessionState,
+  highlight,
 }: {
-  dbState: DatabaseState;
+  opt: typeof queryOptions[number];
+  sessionState: SessionState;
+  highlight?: number[];
 }) {
-  const [config, setConfig] = useState<SessionConfig>(() => ({
-    disableAccessPolicies: dbState.connection.disableAccessPolicies,
-  }));
+  const state = sessionState.draftState?.options[opt.name]!;
+  const snap = sessionState.draftSnapshot!.options[opt.name];
+
+  const canUpdate = !state.error && snap.value !== state.value;
 
   return (
-    <Panel
-      label="Config"
-      content={
-        <>
-          <label className={styles.configItem}>
-            <input
-              type="checkbox"
-              checked={config.disableAccessPolicies}
-              onChange={(e) => {
-                setConfig({
-                  ...config,
-                  disableAccessPolicies: e.target.checked,
-                });
-              }}
-            />
-            Disable Access Policies
-          </label>
-        </>
+    <ListItem
+      state={sessionState}
+      canDeactivate={false}
+      active={true}
+      name={
+        highlight
+          ? highlightString(opt.name, highlight, styles.nameMatch)
+          : opt.name
       }
-      onOpen={() => {
-        setConfig({
-          disableAccessPolicies: dbState.connection.disableAccessPolicies,
-        });
-      }}
-      onClose={() => {
-        dbState.connection.setDisableAccessPolicies(
-          config.disableAccessPolicies
-        );
-      }}
+      type={state.type.data}
+      value={state.value}
+      onChange={(val, err) => sessionState.updateItemValue(state, val, err)}
+      highlighted={
+        sessionState.highlight?.kind === "o" &&
+        sessionState.highlight.name === opt.name
+      }
+      onUpdate={() => sessionState.updateOption(opt)}
+      canUpdate={canUpdate}
     />
   );
 });

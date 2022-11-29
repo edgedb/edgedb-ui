@@ -1,61 +1,5 @@
 @import "@edgedb/common/mixins.scss";
 
-.replx {
-  font-family: Roboto;
-  font-style: normal;
-  min-height: 0;
-  min-width: 0;
-  flex-grow: 1;
-
-  --repl-history-background: #f7f7f7;
-  --repl-history-collapse-background: #e3e3e3;
-  --repl-history-collapse-icon: #7f7f7f;
-  --repl-history-input-background: #ffffff;
-  --repl-history-output-background: #f0f0f0;
-  --repl-history-block-label: #808080;
-  --repl-history-info-label: #7f7f7f;
-  --repl-history-query-colour: #595959;
-  --repl-history-button-background: #e3e3e3;
-  --repl-history-button-colour: #7f7f7f;
-  --repl-inspector-colour: #595959;
-
-  // --transaction-query-colour: #333333;
-  // --transaction-status-colour: #bfbfbf;
-  // --transaction-active: #a5b4ea;
-  // --transaction-active-dark: #97a5d6;
-  // --transaction-error: #eb9292;
-  // --transaction-error-dark: #d78686;
-  // --transaction-savepoint: #e9da8a;
-  // --transaction-savepoint-dark: #d5c77f;
-  // --transaction-committed: #80bea8;
-  // --transaction-committed-dark: #76ae9a;
-
-  @include darkTheme {
-    --repl-history-background: #242424;
-    --repl-history-collapse-background: #1c1c1c;
-    --repl-history-collapse-icon: #808080;
-    --repl-history-input-background: #333333;
-    --repl-history-output-background: #2e2e2e;
-    --repl-history-block-label: #808080;
-    --repl-history-info-label: #cccccc;
-    --repl-history-query-colour: #bfbfbf;
-    --repl-history-button-background: #1f1f1f;
-    --repl-history-button-colour: #8b8b8f;
-    --repl-inspector-colour: #bfbfbf;
-
-    // --transaction-query-colour: #191919;
-    // --transaction-status-colour: #bfbfbf;
-    // --transaction-active: #5f74c0;
-    // --transaction-active-dark: #4f5f98;
-    // --transaction-error: #ac4343;
-    // --transaction-error-dark: #893a3a;
-    // --transaction-savepoint: #978837;
-    // --transaction-savepoint-dark: #796e31;
-    // --transaction-committed: #057d52;
-    // --transaction-committed-dark: #0c6645;
-  }
-}
-
 $historyTransitionTime: 0.15s;
 
 .wrapper {
@@ -78,6 +22,29 @@ $historyTransitionTime: 0.15s;
     margin-top: 16px;
     margin-bottom: 16px;
   }
+
+  &.showExtendedResult {
+    margin: 0 8px;
+
+    .sidebar,
+    .main {
+      filter: brightness(0.95);
+      pointer-events: none;
+    }
+  }
+}
+
+.extendedViewerContainer {
+  position: absolute;
+  display: flex;
+  top: 12px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--app-panel-bg);
+  border-radius: 8px;
+  z-index: 1;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -106,6 +73,38 @@ $historyTransitionTime: 0.15s;
   flex-grow: 1;
   min-width: 0;
   font-family: "Roboto Mono", monospace;
+}
+
+.inspector {
+  @include hideScrollbar;
+}
+
+.queryError {
+  font-size: 14px;
+  line-height: 20px;
+  user-select: text;
+  padding: 16px;
+
+  .errorName {
+    font-weight: 600;
+  }
+
+  .errorHint {
+    font-style: italic;
+    opacity: 0.7;
+  }
+}
+
+.queryStatus {
+  padding: 16px;
+}
+
+.inspectorLoading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
 }
 
 .toolbar {
@@ -246,6 +245,10 @@ $historyTransitionTime: 0.15s;
     outline: 2px solid #49d8ad;
   }
 
+  &.hasDateHeader {
+    margin-top: 32px;
+  }
+
   svg {
     height: 100%;
     width: 100%;
@@ -290,6 +293,33 @@ $historyTransitionTime: 0.15s;
     }
   }
 
+  .dateHeader {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    right: 0;
+    display: flex;
+    font-size: 12px;
+    line-height: 16px;
+    height: 16px;
+    opacity: 0.7;
+
+    &:before,
+    &:after {
+      content: "";
+      height: 8px;
+      flex-grow: 1;
+      border-bottom: 1px solid currentColor;
+      opacity: 0.2;
+    }
+    &:before {
+      margin-right: 8px;
+    }
+    &:after {
+      margin-left: 8px;
+    }
+  }
+
   @include darkTheme {
     background: #4c4c4c;
   }
@@ -311,6 +341,20 @@ $historyTransitionTime: 0.15s;
   display: flex;
   min-width: 0;
   // padding-left: 8px;
+
+  .scrollWrapper {
+    min-width: 0;
+    display: flex;
+    width: 100%;
+  }
+
+  :global(.cm-scroller) {
+    @include hideScrollbar;
+  }
+
+  :global(.cm-line) {
+    padding-right: 12px;
+  }
 }
 
 .replEditorOverlays {

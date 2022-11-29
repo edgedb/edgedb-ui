@@ -13,6 +13,8 @@ import {
   createContext as createMobxContext,
   getSnapshot,
   fromSnapshot,
+  getParent,
+  findParent,
 } from "mobx-keystone";
 import {Text} from "@codemirror/state";
 import {connCtx, dbCtx} from "../../../state";
@@ -20,13 +22,11 @@ import {
   ErrorDetails,
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
-import {InspectorState} from "@edgedb/inspector/state";
+import {InspectorState, Item} from "@edgedb/inspector/state";
 import {ObservableLRU} from "../../../state/utils/lru";
 import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
 import {NavigateFunction} from "react-router";
-import {RefObject} from "react";
-import {VariableSizeList as List} from "react-window";
 import {
   fetchReplHistory,
   fetchResultData,
@@ -34,9 +34,22 @@ import {
   storeReplHistoryItem,
 } from "../../../idbStore";
 import {instanceCtx} from "../../../state/instance";
+import {extendedViewerIds} from "../../../components/extendedViewers";
 
-function createInspector(result: EdgeDBSet) {
-  const inspector = new InspectorState({});
+import "./itemHeights";
+import {ItemHeights} from "./itemHeights";
+import {sessionStateCtx} from "../../../state/sessionState";
+
+export const defaultItemHeight = 85;
+
+function createInspector(
+  result: EdgeDBSet,
+  implicitLimit: number | null,
+  openExtendedView: (item: Item) => void
+) {
+  const inspector = new InspectorState({implicitLimit});
+  inspector.extendedViewIds = extendedViewerIds;
+  inspector.openExtendedView = openExtendedView;
   inspector.initData({data: result, codec: result._codec});
   return inspector;
 }
@@ -46,17 +59,28 @@ export class ReplHistoryItem extends Model({
   $modelId: idProp,
   query: prop<string>(),
   timestamp: prop<number>(),
+  implicitLimit: prop<number | null>(null),
   status: prop<string | null>(null),
   hasResult: prop<boolean | null>(null),
   error: prop<Frozen<ErrorDetails> | null>(null),
   commandResult: prop<Frozen<CommandResult> | null>(null),
 }) {
   renderHeight: number | null = null;
+  showDateHeader: boolean = false;
+
+  @observable
+  showMore = false;
+
+  @action
+  setShowMore(val: boolean) {
+    this.showMore = val;
+  }
 
   @modelAction
-  setResult(status: string, hasResult: boolean) {
+  setResult(status: string, hasResult: boolean, implicitLimit: number) {
     this.hasResult = hasResult;
     this.status = status;
+    this.implicitLimit = implicitLimit;
   }
 
   @modelAction
@@ -69,18 +93,34 @@ export class ReplHistoryItem extends Model({
     this.commandResult = frozen(result);
   }
 
+  _inspector: InspectorState | null = null;
+
   get inspectorState() {
+    if (!this.hasResult) {
+      return null;
+    }
+    if (this._inspector) {
+      return this._inspector;
+    }
     const cache = inspectorCacheCtx.get(this)!;
     const state = cache.get(this.$modelId);
     if (!state) {
       fetchResultData(this.$modelId).then((resultData) => {
         if (resultData) {
           const inspector = createInspector(
-            decode(resultData.outCodecBuf, resultData.resultBuf)!
+            decode(resultData.outCodecBuf, resultData.resultBuf)!,
+            this.implicitLimit,
+            (item) =>
+              findParent<Repl>(
+                this,
+                (p) => p instanceof Repl
+              )!.setExtendedViewerItem(item)
           );
           cache.set(this.$modelId, inspector);
         }
       });
+    } else {
+      this._inspector = state;
     }
     return state ?? null;
   }
@@ -95,13 +135,17 @@ const inspectorCacheCtx =
 
 @model("Repl")
 export class Repl extends Model({
-  queryHistory: prop<ReplHistoryItem[]>(() => [null as any]),
+  queryHistory: prop<ReplHistoryItem[]>(() => []),
 }) {
   onInit() {
     inspectorCacheCtx.set(this, this.resultInspectorCache);
   }
 
   navigation: NavigateFunction | null = null;
+
+  itemHeights = new ItemHeights();
+
+  scrollRef: HTMLDivElement | null = null;
 
   @observable
   currentQuery = Text.empty;
@@ -117,6 +161,7 @@ export class Repl extends Model({
   historyCursor = -1;
   draftQuery = Text.empty;
 
+  @action
   navigateHistory(direction: 1 | -1) {
     let cursor =
       (this.historyCursor === -1
@@ -138,20 +183,25 @@ export class Repl extends Model({
     }
   }
 
-  listRef: RefObject<List> | null = null;
+  @observable.ref
+  extendedViewerItem: Item | null = null;
 
-  scrollToEnd() {
-    const ref = (this.listRef?.current as any)._outerRef;
-    ref.scrollTop = ref.scrollHeight;
+  @action
+  setExtendedViewerItem(item: Item | null) {
+    this.extendedViewerItem = item;
   }
 
   resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
 
+  @observable
+  _hasUnfetchedHistory = true;
+
+  @observable
   _fetchingHistory = false;
 
   @modelFlow
   fetchReplHistory = _async(function* (this: Repl) {
-    if (this._fetchingHistory || this.queryHistory[0] !== null) {
+    if (this._fetchingHistory || !this._hasUnfetchedHistory) {
       return;
     }
     this._fetchingHistory = true;
@@ -159,16 +209,46 @@ export class Repl extends Model({
       fetchReplHistory(
         instanceCtx.get(this)!.instanceName!,
         dbCtx.get(this)!.name,
-        this.queryHistory[1]?.timestamp ?? Date.now(),
+        this.queryHistory[0]?.timestamp ?? Date.now(),
         50
       )
     );
-    const finished = history.length < 50;
-    this.queryHistory.splice(
-      finished ? 0 : 1,
-      finished ? 1 : 0,
-      ...history.reverse().map((item) => fromSnapshot(item.data))
+    this._hasUnfetchedHistory = history.length === 50;
+
+    let lastDate: [number, number, number] | null = null;
+
+    const historyItems: ReplHistoryItem[] = Array(history.length);
+    for (let i = history.length - 1; i >= 0; i--) {
+      const item = fromSnapshot<ReplHistoryItem>(history[i].data);
+      const date = new Date(item.timestamp);
+      if (
+        !lastDate ||
+        lastDate[0] !== date.getDate() ||
+        lastDate[1] !== date.getMonth() ||
+        lastDate[2] !== date.getFullYear()
+      ) {
+        item.showDateHeader = true;
+        lastDate = [date.getDate(), date.getMonth(), date.getFullYear()];
+      }
+      historyItems[history.length - 1 - i] = item;
+    }
+    if (this.queryHistory[0]) {
+      const date = new Date(this.queryHistory[0].timestamp);
+      if (
+        lastDate &&
+        lastDate[0] === date.getDate() &&
+        lastDate[1] === date.getMonth() &&
+        lastDate[2] === date.getFullYear()
+      ) {
+        this.queryHistory[0].showDateHeader = false;
+      }
+    }
+
+    this.queryHistory.unshift(...historyItems);
+    this.itemHeights.addHistoryItems(
+      Array(history.length).fill(defaultItemHeight)
     );
+
     this._fetchingHistory = false;
   });
 
@@ -199,26 +279,53 @@ export class Repl extends Model({
       query,
       timestamp: Date.now(),
     });
+
+    if (this.queryHistory.length) {
+      const prevDate = new Date(
+        this.queryHistory[this.queryHistory.length - 1].timestamp
+      );
+      const currDate = new Date(historyItem.timestamp);
+      historyItem.showDateHeader =
+        prevDate.getDate() !== currDate.getDate() ||
+        prevDate.getMonth() !== currDate.getMonth() ||
+        prevDate.getFullYear() !== currDate.getFullYear();
+    }
+
     this.queryHistory.push(historyItem);
+    this.itemHeights.addItem(defaultItemHeight);
     if (queryStr !== null) {
       this.currentQuery = Text.empty;
     }
 
     this.queryRunning = true;
+    this.historyCursor = -1;
 
     let resultData: QueryResultData | undefined = undefined;
     try {
       if (query.startsWith("\\") && !query.includes("\n")) {
         yield* _await(handleSlashCommand(query, this, historyItem));
       } else {
-        const {result, outCodecBuf, resultBuf, capabilities, status} =
-          yield* _await(conn.query(query, undefined, false));
+        const implicitLimit = sessionStateCtx
+          .get(this)!
+          .activeState.options.find(
+            (opt) => opt.name === "Implicit Limit"
+          )?.value;
 
-        historyItem.setResult(status, !!result);
+        const {result, outCodecBuf, resultBuf, capabilities, status} =
+          yield* _await(
+            conn.query(query, undefined, {
+              implicitLimit:
+                implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+            })
+          );
+
+        historyItem.setResult(status, !!result, Number(implicitLimit));
         if (result) {
           this.resultInspectorCache.set(
             historyItem.$modelId,
-            createInspector(result)
+            createInspector(result, Number(implicitLimit), (item) =>
+              this.setExtendedViewerItem(item)
+            )
           );
 
           resultData = {
@@ -243,10 +350,5 @@ export class Repl extends Model({
     );
 
     this.queryRunning = false;
-
-    // const listRef = (this.listRef?.current as any)?._outerRef;
-    // if (listRef) {
-    //   setTimeout(() => (listRef.scrollTop = listRef.scrollHeight), 0);
-    // }
   });
 }

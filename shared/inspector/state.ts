@@ -42,6 +42,7 @@ export class InspectorState extends Model({
   autoExpandDepth: prop<number | null>(null),
   countPrefix: prop<string | null>(null),
   ignorePrefix: prop<string | null>(null),
+  implicitLimit: prop<number | null>(null),
 }) {
   @observable.shallow
   _items: Item[] = [];
@@ -68,8 +69,31 @@ export class InspectorState extends Model({
         : null;
   }
 
+  @action
+  selectSiblingIndex(index: number | null, dir: 1 | -1) {
+    if (index === null) {
+      this.selectedIndex = 0;
+      return;
+    }
+
+    const level = this._items[index].level;
+    for (
+      let i = index + dir, end = dir === 1 ? this._items.length : -1;
+      i !== end;
+      i += dir
+    ) {
+      if (
+        this._items[i].type !== ItemType.Other &&
+        this._items[i].level === level
+      ) {
+        this.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
   extendedViewIds: Set<string> | null = null;
-  openExtendedView: (() => void) | null = null;
+  openExtendedView: ((item: Item) => void) | null = null;
 
   loadNestedData: NestedDataGetter | null = null;
 
@@ -147,23 +171,33 @@ export class InspectorState extends Model({
   expandItem(index: number, expandLevels?: number) {
     const item = this._items[index];
 
-    const expandedItems = expandItem(
-      item,
-      this.expanded!,
-      expandLevels,
-      this.countPrefix,
-      this.ignorePrefix,
-      this.loadNestedData,
-      this
-    );
-    this._items.splice(index + 1, 0, ...expandedItems);
+    if (
+      item.type !== ItemType.Scalar &&
+      item.type !== ItemType.Other &&
+      !this.expanded!.has(item.id)
+    ) {
+      const expandedItems = expandItem(
+        item,
+        this.expanded!,
+        expandLevels,
+        this.countPrefix,
+        this.ignorePrefix,
+        this.loadNestedData,
+        this
+      );
+      this._items.splice(index + 1, 0, ...expandedItems);
+    }
   }
 
   @modelAction
   collapseItem(index: number) {
     const item = this._items[index];
 
-    if (item.type !== ItemType.Scalar && item.type !== ItemType.Other) {
+    if (
+      item.type !== ItemType.Scalar &&
+      item.type !== ItemType.Other &&
+      this.expanded!.has(item.id)
+    ) {
       const itemEndIndex = this._items.indexOf(
         (item as any).closingBracket,
         index

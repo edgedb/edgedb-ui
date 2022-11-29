@@ -69,6 +69,7 @@
   flex-grow: 1;
   display: flex;
   position: relative;
+  min-width: 0;
 
   input,
   textarea {

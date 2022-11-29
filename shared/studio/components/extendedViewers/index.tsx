@@ -1,13 +1,18 @@
 import {Item, ItemType} from "@edgedb/inspector/buildItem";
 import {createContext} from "react";
 import {HexViewer} from "./hexViewer";
+import {JsonViewer} from "./jsonViewer";
 import {TextViewer} from "./textViewer";
+
+import styles from "./shared.module.scss";
+import {ActionsBar} from "./shared";
 
 export const extendedViewerRenderers: {
   [key: string]: (props: {data: any}) => JSX.Element | null;
 } = {
   "std::str": TextViewer,
   "std::bytes": HexViewer,
+  "std::json": JsonViewer,
 };
 
 export const extendedViewerIds = new Set(Object.keys(extendedViewerRenderers));
@@ -29,5 +34,10 @@ export function ExtendedViewerRenderer({item}: ExtendedViewerRendererProps) {
     }
   }
 
-  return <div>No extended viewer for this type</div>;
+  return (
+    <div className={styles.noViewer}>
+      <ActionsBar />
+      <div className={styles.message}>No extended viewer for this type</div>
+    </div>
+  );
 }

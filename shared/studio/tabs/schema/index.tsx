@@ -96,6 +96,7 @@ export const schemaTabSpec: DatabaseTabSpec = {
   allowNested: true,
   label: "Schema",
   icon: (active) => <TabSchemaIcon active={active} />,
+  usesSessionState: false,
   state: Schema,
   element: <SchemaView />,
 };
