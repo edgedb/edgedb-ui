@@ -242,7 +242,8 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
           ? codec.getSubcodecs()[0].getKnownTypeName()
           : undefined,
         false,
-        inspectorOverrideStyles
+        inspectorOverrideStyles,
+        100
       ).body;
     case "set":
       return (
@@ -357,12 +358,21 @@ const GridCell = observer(function GridCell({
     field.type === ObjectFieldType.property &&
     edits.activePropertyEditId === cellId
   ) {
-    return (
+    return cellEditState?.value === undefined &&
+      field.schemaType.name === "std::str" &&
+      value.length === 100 &&
+      !state.fullyFetchedData.has(cellId) ? (
+      <FetchingDataPlaceholder state={state} data={data} field={field} />
+    ) : (
       <DataEditor
         type={field.schemaType}
         isRequired={field.required}
         isMulti={field.multi}
-        value={value}
+        value={
+          cellEditState?.value === undefined
+            ? state.fullyFetchedData.get(cellId) ?? value
+            : value
+        }
         onChange={(val) =>
           edits.updateCellEdit(data?.id, data.__tname__, field.name, val)
         }
@@ -517,6 +527,22 @@ const GridCell = observer(function GridCell({
     </div>
   );
 });
+
+function FetchingDataPlaceholder({
+  state,
+  data,
+  field,
+}: {
+  state: DataInspectorState;
+  data: any;
+  field: ObjectField;
+}) {
+  useEffect(() => {
+    state.fetchFullCellData(data.id, field);
+  }, []);
+
+  return <div className={styles.fetchingDataPlaceholder}>loading...</div>;
+}
 
 const FieldHeaders = observer(function FieldHeaders() {
   const {state} = useDataInspectorState();

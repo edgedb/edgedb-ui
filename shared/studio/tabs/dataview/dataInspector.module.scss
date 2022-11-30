@@ -402,6 +402,13 @@
   color: #747474;
 }
 
+.fetchingDataPlaceholder {
+  line-height: 32px;
+  padding: 0 12px;
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .stickyCol {
   position: relative;
   height: 0px;
