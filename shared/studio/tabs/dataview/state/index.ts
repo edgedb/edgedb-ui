@@ -1,4 +1,12 @@
-import {computed, observable, action, when, reaction, autorun} from "mobx";
+import {
+  computed,
+  observable,
+  action,
+  when,
+  reaction,
+  autorun,
+  runInAction,
+} from "mobx";
 import {
   model,
   Model,
@@ -725,6 +733,20 @@ export class DataInspector extends Model({
   @observable.ref
   dataFetchingError: Error | null = null;
 
+  @observable.shallow
+  fullyFetchedData = new Map<string, any>();
+
+  async fetchFullCellData(dataId: string, field: ObjectField) {
+    const query = `select (select ${this._getObjectTypeQuery} filter .id = <uuid>$id).${field.escapedName}`;
+    const conn = connCtx.get(this)!;
+
+    const val = (await conn.query(query, {id: dataId})).result![0];
+
+    runInAction(() => {
+      this.fullyFetchedData.set(`${dataId}__${field.name}`, val);
+    });
+  }
+
   @modelFlow
   _fetchData = _async(function* (this: DataInspector) {
     const offset = this._pendingOffsets[0];
@@ -843,6 +865,7 @@ export class DataInspector extends Model({
     this.expandedRows = [];
     this.gridRef?.resetAfterRowIndex(0);
     this._pendingOffsets = [...this.visibleOffsets];
+    this.fullyFetchedData.clear();
 
     if (this.fetchingData) {
       this.discardLastFetch = true;

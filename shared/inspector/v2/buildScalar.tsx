@@ -62,7 +62,8 @@ export function renderValue(
   isEnum: boolean,
   rangeKnownTypeName?: string,
   showTypeTag: boolean = true,
-  overrideStyles: {[key: string]: string} = {}
+  overrideStyles: {[key: string]: string} = {},
+  implicitLength?: number
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
     return {body: <span className={styles.scalar_empty}>{"{}"}</span>};
@@ -146,7 +147,12 @@ export function renderValue(
     case "std::str": {
       const str = strToString(value);
       return {
-        body: <span className={styles.scalar_string}>{str}</span>,
+        body: (
+          <span className={styles.scalar_string}>
+            {str}
+            {implicitLength && value.length === implicitLength ? "…" : ""}
+          </span>
+        ),
         height: str.split("\n").length,
       };
     }
