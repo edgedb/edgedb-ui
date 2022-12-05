@@ -12,12 +12,14 @@ import {
 import {
   AnyModel,
   createContext as createMobxContext,
+  getTypeInfo,
   idProp,
   Model,
   model,
   modelAction,
   ModelClass,
   modelFlow,
+  ModelTypeInfo,
   ObjectMap,
   objectMap,
   prop,
@@ -47,7 +49,7 @@ import {
 import {fetchSchemaData, storeSchemaData} from "../idbStore";
 
 import {instanceCtx} from "./instance";
-import {connCtx, Connection} from "./connection";
+import {Capabilities, connCtx, Connection} from "./connection";
 import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
@@ -96,7 +98,24 @@ export class DatabaseState extends Model({
 
   @action
   setLoadingTab(stateClass: ModelClass<any>, loading: boolean) {
-    this.loadingTabs.set(stateClass.name, loading);
+    this.loadingTabs.set(
+      (getTypeInfo(stateClass) as ModelTypeInfo).modelType,
+      loading
+    );
+  }
+
+  refreshCaches(capabilities: number, statuses: string[]) {
+    if (capabilities & Capabilities.DDL) {
+      if (
+        statuses.includes("create database") ||
+        statuses.includes("drop database")
+      ) {
+        instanceCtx.get(this)!.fetchInstanceInfo();
+      } else {
+        const dbState = dbCtx.get(this)!;
+        dbState.fetchSchemaData();
+      }
+    }
   }
 
   @observable
