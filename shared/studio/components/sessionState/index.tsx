@@ -95,12 +95,12 @@ export const SessionStateBar = observer(function SessionStateBar({
           [styles.panelOpen]: state.panelOpen,
         }
       )}
-      style={{height: state.barOpen ? height + 8 : undefined}}
+      style={{height: state.barOpen ? height + 4 : undefined}}
     >
       <div
         className={styles.panelBg}
         style={{
-          left: !state.panelOpen ? 68 : undefined,
+          left: !state.panelOpen ? 56 : undefined,
           height: state.barOpen && !state.panelOpen ? height : undefined,
         }}
       />

@@ -152,17 +152,28 @@
   left: 0;
   right: 0;
   display: flex;
-  opacity: 0.7;
-  font-size: 13px;
+  font-size: 10px;
+  line-height: 16px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  color: #a6a6a6;
 
   &:before,
   &:after {
     content: "";
     height: 8px;
-    border-bottom: 1px solid currentColor;
+    border-bottom: 2px solid #e3e3e3;
     flex-grow: 1;
     margin: 0 8px;
-    opacity: 0.1;
+  }
+
+  @include darkTheme {
+    color: #808080;
+
+    &:before,
+    &:after {
+      border-bottom-color: #404040;
+    }
   }
 }
 

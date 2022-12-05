@@ -9,19 +9,22 @@
 .tab {
   display: flex;
   align-items: center;
-  font-size: 15px;
-
-  & > svg {
-    fill: #adadad;
-  }
+  font-size: 14px;
 
   .tabTitle {
+    display: flex;
+    align-items: center;
     font-weight: 500;
+
+    & > svg {
+      fill: #adadad;
+      margin-right: 8px;
+    }
   }
 }
 
 .tabSep {
-  margin: 0 8px;
+  margin: 0 4px;
   margin-left: 2px;
   opacity: 0.5;
 }
