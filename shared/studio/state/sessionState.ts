@@ -22,29 +22,22 @@ import {connCtx} from "./connection";
 import {dbCtx} from "./database";
 import {instanceCtx} from "./instance";
 
+type DraftStateItem = {
+  active: boolean;
+  type: Frozen<SchemaType>;
+  value: any;
+  error: boolean;
+};
+
 type DraftState = {
   globals: {
-    [key: string]: {
-      active: boolean;
-      type: Frozen<SchemaType>;
-      value: any;
-      error: boolean;
-    };
+    [key: string]: DraftStateItem;
   };
   config: {
-    [key in typeof configNames[number]]: {
-      active: boolean;
-      type: Frozen<SchemaType>;
-      value: any;
-      error: boolean;
-    };
+    [key: string]: DraftStateItem;
   };
   options: {
-    [key: string]: {
-      type: Frozen<SchemaType>;
-      value: any;
-      error: boolean;
-    };
+    [key: string]: DraftStateItem;
   };
 };
 
@@ -64,23 +57,19 @@ export type StoredSessionStateData = {
   };
   options: {
     [key: string]: {
+      active: boolean;
       value: any;
     };
   };
 };
 
-export const configNames = [
-  "apply_access_policies",
-  "query_execution_timeout",
-  "allow_bare_ddl",
-  "allow_user_specified_id",
-];
-export const configNamesIndex = configNames.map((name) =>
-  fuzzysort.prepare(name)
-);
-
 export const queryOptions = [
-  {name: "Implicit Limit", typename: "std::int64", default: "100"},
+  {
+    name: "Implicit Limit",
+    typename: "std::int64",
+    default: "100",
+    active: true,
+  },
 ].map((item) => ({
   ...item,
   indexed: fuzzysort.prepare(item.name),
@@ -101,6 +90,9 @@ export class SessionState extends Model({
       .filter((global) => !global.expr)
       .map((global) => ({global, indexed: fuzzysort.prepare(global.name)}));
   }
+
+  configNames: string[] = [];
+  configNamesIndex: Fuzzysort.Prepared[] = [];
 
   @modelAction
   setBarOpen(open: boolean, persist = true) {
@@ -174,9 +166,28 @@ export class SessionState extends Model({
     ]);
 
     const schemaData = dbState.schemaData!;
+
     const schemaGlobals = new Map(
       [...schemaData.globals.values()].map((global) => [global.name, global])
     );
+
+    const configType = schemaData.objectsByName.get("cfg::Config")!;
+    this.configNames = Object.values(configType.properties)
+      .filter(
+        (prop) =>
+          prop.name !== "id" &&
+          !prop.annotations.some(
+            (anno) =>
+              (anno.name === "cfg::system" || anno.name === "cfg::internal") &&
+              anno["@value"] === "true"
+          )
+      )
+      .map((prop) => prop.name)
+      .sort((a, b) => a.localeCompare(b));
+    this.configNamesIndex = this.configNames.map((name) =>
+      fuzzysort.prepare(name)
+    );
+
     const draftState: DraftState = {globals: {}, config: {}, options: {}};
     for (const [key, global] of Object.entries(
       sessionStateData?.globals ?? {}
@@ -195,8 +206,8 @@ export class SessionState extends Model({
         };
       }
     }
-    const configType = schemaData.objectsByName.get("cfg::Config")!;
-    for (const configName of configNames) {
+
+    for (const configName of this.configNames) {
       const type = configType.properties[configName].target!;
       const storedItem = sessionStateData?.config[configName];
       draftState.config[configName] = {
@@ -213,6 +224,7 @@ export class SessionState extends Model({
       const storedItem = sessionStateData?.options[option.name];
       draftState.options[option.name] = {
         type: frozen(type, FrozenCheckMode.Off),
+        active: storedItem?.active ?? option.active,
         value: storedItem?.value ?? option.default,
         error: storedItem ? !isValidValue(type, storedItem.value) : false,
       };
@@ -253,6 +265,12 @@ export class SessionState extends Model({
     config.active = !config.active;
   }
 
+  @modelAction
+  toggleOptionActive(name: string) {
+    const opt = this.draftState!.options[name];
+    opt.active = !opt.active;
+  }
+
   @computed
   get hasValidChanges() {
     return this.draftState
@@ -276,7 +294,11 @@ export class SessionState extends Model({
           }) ||
           Object.entries(this.draftState.options).some(([name, option]) => {
             const snap = this.draftSnapshot!.options[name];
-            return !option.error && snap.value !== option.value;
+            return (
+              !option.error &&
+              (snap.active !== option.active ||
+                (option.active && snap.value !== option.value))
+            );
           })
       : false;
   }
@@ -288,7 +310,7 @@ export class SessionState extends Model({
     const conn = connCtx.get(this)!;
 
     const result = await conn.query(
-      `select cfg::Config {${configNames.join(", ")}}`,
+      `select cfg::Config {${this.configNames.join(", ")}}`,
       undefined,
       {ignoreSessionConfig: true}
     );
@@ -296,7 +318,7 @@ export class SessionState extends Model({
     if (result.result) {
       const values = result.result![0];
       runInAction(() => (this.configValues = values));
-      for (const configName of configNames) {
+      for (const configName of this.configNames) {
         if (this.draftState?.config[configName].value === null) {
           objectActions.set(
             this.draftState.config[configName],
@@ -310,11 +332,7 @@ export class SessionState extends Model({
 
   @observable.shallow
   activeState: {
-    globals: {
-      name: string;
-      type: Frozen<SchemaType>;
-      value: any;
-    }[];
+    globals: {name: string; type: Frozen<SchemaType>; value: any}[];
     config: {name: string; type: Frozen<SchemaType>; value: any}[];
     options: {name: string; type: Frozen<SchemaType>; value: any}[];
   } = {globals: [], config: [], options: []};
@@ -339,7 +357,7 @@ export class SessionState extends Model({
       options: queryOptions
         .filter(
           (opt) =>
-            this.draftState!.options[opt.name].value !== opt.default &&
+            this.draftState!.options[opt.name].active &&
             !this.draftState!.options[opt.name].error
         )
         .map(({name}) => {
@@ -388,6 +406,7 @@ export class SessionState extends Model({
         options: Object.entries(this.draftState!.options).reduce(
           (data, [name, opt]) => {
             data[name] = {
+              active: opt.active,
               value: opt.value,
             };
             return data;
@@ -396,54 +415,6 @@ export class SessionState extends Model({
         ),
       },
     });
-  }
-
-  @action
-  updateGlobal(name: string) {
-    const global = this.draftState!.globals[name];
-    this.activeState.globals = this.activeState.globals.filter(
-      (g) => g.name !== name
-    );
-    if (global.active) {
-      this.activeState.globals.push({
-        name,
-        type: global.type,
-        value: parseValue(global.type.data, global.value),
-      });
-    }
-    this.draftSnapshot = clone(this.draftState!);
-  }
-
-  @action
-  updateConfig(name: string) {
-    const config = this.draftState!.config[name];
-    this.activeState.config = this.activeState.config.filter(
-      (c) => c.name !== name
-    );
-    if (config.active) {
-      this.activeState.config.push({
-        name,
-        type: config.type,
-        value: parseValue(config.type.data, config.value),
-      });
-    }
-    this.draftSnapshot = clone(this.draftState!);
-  }
-
-  @action
-  updateOption(option: typeof queryOptions[number]) {
-    const opt = this.draftState!.options[option.name];
-    this.activeState.options = this.activeState.options.filter(
-      (o) => o.name !== option.name
-    );
-    if (opt.value !== option.default) {
-      this.activeState.options.push({
-        name: option.name,
-        type: opt.type,
-        value: parseValue(opt.type.data, opt.value),
-      });
-    }
-    this.draftSnapshot = clone(this.draftState!);
   }
 }
 

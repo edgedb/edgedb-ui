@@ -8,12 +8,7 @@ import {PropsWithChildren, useEffect, useRef, useState} from "react";
 import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
 import {useDatabaseState} from "../../state";
 import {SchemaData} from "../../state/database";
-import {
-  configNames,
-  configNamesIndex,
-  queryOptions,
-  SessionState,
-} from "../../state/sessionState";
+import {queryOptions, SessionState} from "../../state/sessionState";
 import {getInputComponent} from "../dataEditor";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
@@ -247,8 +242,8 @@ const SessionEditorPanelContent = observer(
         })
       : sessionState.indexedSchemaGlobals.map((item) => ({obj: item}));
     const filteredConfigs = searchFilter
-      ? fuzzysort.go(searchFilter, configNamesIndex)
-      : configNames;
+      ? fuzzysort.go(searchFilter, sessionState.configNamesIndex)
+      : sessionState.configNames;
     const filteredOptions = searchFilter
       ? fuzzysort.go(searchFilter, queryOptions, {key: "indexed"})
       : queryOptions.map((opt) => ({obj: opt}));
@@ -363,7 +358,6 @@ function ListWrapper({children}: PropsWithChildren<{}>) {
 
 function ListItem({
   state,
-  canDeactivate = true,
   active,
   onActiveToggle,
   name,
@@ -373,11 +367,8 @@ function ListItem({
   defaultValue,
   allowNull,
   highlighted,
-  onUpdate,
-  canUpdate,
 }: {
   state: SessionState;
-  canDeactivate?: boolean;
   active: boolean;
   onActiveToggle?: () => void;
   name: JSX.Element | string;
@@ -387,8 +378,6 @@ function ListItem({
   defaultValue?: JSX.Element | string;
   allowNull?: boolean;
   highlighted: boolean;
-  onUpdate: () => void;
-  canUpdate: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -411,24 +400,17 @@ function ListItem({
         [styles.highlighted]: highlighted,
       })}
     >
-      {canDeactivate ? (
-        <ToggleSwitch
-          className={styles.activeToggle}
-          checked={active}
-          onChange={onActiveToggle!}
-        />
-      ) : null}
+      <ToggleSwitch
+        className={styles.activeToggle}
+        checked={active}
+        onChange={onActiveToggle!}
+      />
+
       <div className={styles.itemHeader}>
         <div className={styles.headerInner}>
           <div className={styles.itemName}>{name}</div>
           <div className={styles.itemType}>{`<${type.name}>`}</div>
         </div>
-        {/* <div
-          className={cn(styles.itemUpdate, {[styles.disabled]: !canUpdate})}
-          onClick={onUpdate}
-        >
-          Update
-        </div> */}
         <></>
       </div>
 
@@ -471,15 +453,6 @@ const ListGlobalItem = observer(function ListGlobalItem({
   highlight?: number[];
 }) {
   const state = sessionState.draftState?.globals[schemaGlobal.name];
-  const snap = sessionState.draftSnapshot!.globals[schemaGlobal.name];
-
-  const canUpdate =
-    !!state &&
-    !state.error &&
-    (!snap
-      ? state.active
-      : snap.active !== state.active ||
-        (state.active && snap.value !== state.value));
 
   return (
     <ListItem
@@ -505,8 +478,6 @@ const ListGlobalItem = observer(function ListGlobalItem({
         sessionState.highlight?.kind === "g" &&
         sessionState.highlight.name === schemaGlobal.name
       }
-      onUpdate={() => sessionState.updateGlobal(schemaGlobal.name)}
-      canUpdate={canUpdate}
     />
   );
 });
@@ -521,12 +492,6 @@ const ListConfigItem = observer(function ListConfigItem({
   highlight?: number[];
 }) {
   const state = sessionState.draftState?.config[name]!;
-  const snap = sessionState.draftSnapshot!.config[name];
-
-  const canUpdate =
-    !state.error &&
-    (snap.active !== state.active ||
-      (state.active && snap.value !== state.value));
 
   return (
     <ListItem
@@ -551,8 +516,6 @@ const ListConfigItem = observer(function ListConfigItem({
         sessionState.highlight?.kind === "c" &&
         sessionState.highlight.name === name
       }
-      onUpdate={() => sessionState.updateConfig(name)}
-      canUpdate={canUpdate}
     />
   );
 });
@@ -567,15 +530,12 @@ const ListQueryOptionItem = observer(function ListQueryOptionItem({
   highlight?: number[];
 }) {
   const state = sessionState.draftState?.options[opt.name]!;
-  const snap = sessionState.draftSnapshot!.options[opt.name];
-
-  const canUpdate = !state.error && snap.value !== state.value;
 
   return (
     <ListItem
       state={sessionState}
-      canDeactivate={false}
-      active={true}
+      active={state.active}
+      onActiveToggle={() => sessionState.toggleOptionActive(opt.name)}
       name={
         highlight
           ? highlightString(opt.name, highlight, styles.nameMatch)
@@ -588,8 +548,6 @@ const ListQueryOptionItem = observer(function ListQueryOptionItem({
         sessionState.highlight?.kind === "o" &&
         sessionState.highlight.name === opt.name
       }
-      onUpdate={() => sessionState.updateOption(opt)}
-      canUpdate={canUpdate}
     />
   );
 });
