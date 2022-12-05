@@ -267,6 +267,7 @@ export class Repl extends Model({
 
   @modelFlow
   runQuery = _async(function* (this: Repl, queryStr?: string) {
+    const dbState = dbCtx.get(this)!;
     const conn = connCtx.get(this)!;
 
     const query = queryStr ?? this.currentQuery.toString().trim();
@@ -300,6 +301,8 @@ export class Repl extends Model({
     this.queryRunning = true;
     this.historyCursor = -1;
 
+    dbState.setLoadingTab(Repl, true);
+
     let resultData: QueryResultData | undefined = undefined;
     try {
       if (query.startsWith("\\") && !query.includes("\n")) {
@@ -318,6 +321,8 @@ export class Repl extends Model({
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
             })
           );
+
+        dbState.refreshCaches(capabilities, status ? [status] : []);
 
         historyItem.setResult(status, !!result, Number(implicitLimit));
         if (result) {
@@ -349,6 +354,7 @@ export class Repl extends Model({
       resultData
     );
 
+    dbState.setLoadingTab(Repl, false);
     this.queryRunning = false;
   });
 }

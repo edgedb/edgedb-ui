@@ -31,8 +31,6 @@ import {
   QueryResultData,
 } from "../../../idbStore";
 
-import {QueryDuration, Capabilities} from "../../../state/connection";
-
 import {EdgeDBSet, decode} from "../../../utils/decodeRawBuffer";
 import {
   ErrorDetails,
@@ -508,31 +506,13 @@ export class QueryEditor extends Model({
     const dbState = dbCtx.get(this)!;
     dbState.setLoadingTab(QueryEditor, true);
 
-    let allCapabilities = 0;
-    const statuses = new Set<string>();
-
     const {capabilities, status} = yield* _await(
       this._runStatement(query, paramsData)
     );
-    if (status) {
-      statuses.add(status.toLowerCase());
-      allCapabilities |= capabilities;
-    }
 
-    this.refreshCaches(allCapabilities, statuses);
+    dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);
 
     this.queryRunning = false;
     dbState.setLoadingTab(QueryEditor, false);
   });
-
-  refreshCaches(capabilities: number, statuses: Set<string>) {
-    if (capabilities & Capabilities.DDL) {
-      if (statuses.has("create database") || statuses.has("drop database")) {
-        instanceCtx.get(this)!.fetchInstanceInfo();
-      } else {
-        const dbState = dbCtx.get(this)!;
-        dbState.fetchSchemaData();
-      }
-    }
-  }
 }
