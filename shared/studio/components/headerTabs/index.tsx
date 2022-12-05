@@ -14,7 +14,12 @@ interface _HeaderTabProps {
 
 export type HeaderTabProps = _HeaderTabProps & SelectProps;
 
-export function HeaderTab({icon, depth, ...selectProps}: HeaderTabProps) {
+export function HeaderTab({
+  icon,
+  depth,
+  title,
+  ...selectProps
+}: HeaderTabProps) {
   const targetEl = document.getElementById(`headerTabsPortalTarget${depth}`);
 
   if (targetEl) {
@@ -22,8 +27,16 @@ export function HeaderTab({icon, depth, ...selectProps}: HeaderTabProps) {
       <>
         {depth ? <TabSep /> : null}
         <div className={styles.tab}>
-          {icon}
-          <Select titleClassName={styles.tabTitle} {...selectProps} />
+          <Select
+            title={
+              <>
+                {icon}
+                {title}
+              </>
+            }
+            titleClassName={styles.tabTitle}
+            {...selectProps}
+          />
         </div>
       </>,
       targetEl

@@ -76,7 +76,7 @@
     flex-grow: 1;
     appearance: none;
     box-sizing: border-box;
-    background: #fafafa;
+    background: var(--inputBg, #fafafa);
     outline: none;
     border: 2px solid transparent;
     border-radius: 4px;
@@ -99,7 +99,7 @@
     }
 
     @include darkTheme {
-      background: #141414;
+      background: var(--inputBg, #141414);
       color: #adadad;
 
       &:focus,
@@ -169,25 +169,28 @@
   div {
     font-family: Roboto Mono;
     line-height: 22px;
-    border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: 14px;
+    color: #adadad;
     padding: 0 8px;
     cursor: pointer;
-    opacity: 0.8;
 
     &:not(:last-child) {
       margin-right: 6px;
     }
 
     @include darkTheme {
-      border-color: rgba(255, 255, 255, 0.5);
+      color: #747474;
     }
   }
 
   .boolSelected {
-    background: var(--app-accent-green);
-    border-color: transparent;
-    color: #fff;
+    background: #dadada;
+    color: #4c4c4c;
+
+    @include darkTheme {
+      background: #747474;
+      color: #141414;
+    }
   }
 }
 
@@ -419,20 +422,22 @@
 }
 
 .enumSelect {
-  background: #fafafa;
+  background: var(--inputBg, #fafafa);
   flex-grow: 1;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
 
   &:hover {
-    background: #fafafa !important;
+    background: var(--inputBg, #fafafa) !important;
+  }
+
+  .dataEditor > & {
+    border-radius: 4px 0 0 4px;
   }
 
   @include darkTheme {
-    background: #141414;
+    background: var(--inputBg, #141414);
 
     &:hover {
-      background: #141414 !important;
+      background: var(--inputBg, #141414) !important;
     }
   }
 }

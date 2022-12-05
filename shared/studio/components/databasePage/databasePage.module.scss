@@ -18,7 +18,7 @@
 .tabs {
   grid-area: tabs;
   flex-shrink: 0;
-  width: 68px;
+  width: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,8 +33,8 @@
 
 .tab {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   margin-bottom: 4px;
   display: flex;
@@ -61,7 +61,7 @@
 
 .tabLabel {
   position: absolute;
-  left: calc(100% + 9px);
+  left: calc(100% + 6px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.1s;
@@ -81,6 +81,11 @@
     background: inherit;
     left: -2px;
     top: calc(50% - 5px);
+  }
+
+  @include darkTheme {
+    background: #adadad;
+    color: #141414;
   }
 }
 

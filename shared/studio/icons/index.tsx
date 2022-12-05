@@ -4,10 +4,10 @@ type ActiveItem = {
   active?: boolean;
 };
 
-const activeColor1 = "#74A6FC";
-const activeColor2 = "#B199F2";
-const activeColor3 = "#E5AAA5";
-const activeColor4 = "#8EA1F7";
+const activeColor1 = "#74A6FC"; // blue
+const activeColor2 = "#B199F2"; // purple
+const activeColor3 = "#E5AAA5"; // orange
+const activeColor4 = "#8EA1F7"; // slightly darker blue
 
 export function ChevronIcon(props: IconProps) {
   return (
@@ -99,35 +99,35 @@ export function HeaderDatabaseIcon() {
 export function TabDashboardIcon(props: ActiveItem) {
   return (
     <svg
-      width="28"
-      height="28"
-      viewBox="-1 -1 28 28"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 2V10H10V2H2ZM1 0C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H11C11.5523 12 12 11.5523 12 11V1C12 0.447715 11.5523 0 11 0H1Z"
-        fill={props && props.active ? activeColor1 : undefined}
+        d="M5 5V8H9V5H5ZM4 3C3.44772 3 3 3.44772 3 4V9C3 9.55228 3.44772 10 4 10H10C10.5523 10 11 9.55228 11 9V4C11 3.44772 10.5523 3 10 3H4Z"
+        fill={props.active ? activeColor1 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 16V24H10V16H2ZM1 14C0.447715 14 0 14.4477 0 15V25C0 25.5523 0.447715 26 1 26H11C11.5523 26 12 25.5523 12 25V15C12 14.4477 11.5523 14 11 14H1Z"
-        fill={props && props.active ? activeColor4 : undefined}
+        d="M5 13.233V18.767H9V13.233H5ZM4 11C3.44772 11 3 11.4999 3 12.1165V19.8835C3 20.5001 3.44772 21 4 21H10C10.5523 21 11 20.5001 11 19.8835V12.1165C11 11.4999 10.5523 11 10 11H4Z"
+        fill={props.active ? activeColor2 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M16 2V10H24V2H16ZM15 0C14.4477 0 14 0.447715 14 1V11C14 11.5523 14.4477 12 15 12H25C25.5523 12 26 11.5523 26 11V1C26 0.447715 25.5523 0 25 0H15Z"
-        fill={props && props.active ? activeColor2 : undefined}
+        d="M14.2388 5V11H18.7612V5H14.2388ZM13.1194 3C12.5012 3 12 3.44772 12 4V12C12 12.5523 12.5012 13 13.1194 13H19.8806C20.4988 13 21 12.5523 21 12V4C21 3.44772 20.4988 3 19.8806 3H13.1194Z"
+        fill={props.active ? activeColor4 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M16 16V24H24V16H16ZM15 14C14.4477 14 14 14.4477 14 15V25C14 25.5523 14.4477 26 15 26H25C25.5523 26 26 25.5523 26 25V15C26 14.4477 25.5523 14 25 14H15Z"
-        fill={props && props.active ? activeColor3 : undefined}
+        d="M14.2388 16.3333L14.2388 18.6667H18.7612V16.3333H14.2388ZM13.1194 14C12.5012 14 12 14.5223 12 15.1667V19.8333C12 20.4777 12.5012 21 13.1194 21H19.8806C20.4988 21 21 20.4777 21 19.8333L21 15.1667C21 14.5223 20.4988 14 19.8806 14H13.1194Z"
+        fill={props.active ? activeColor3 : undefined}
       />
     </svg>
   );
@@ -136,21 +136,23 @@ export function TabDashboardIcon(props: ActiveItem) {
 export function TabReplIcon(props: ActiveItem) {
   return (
     <svg
-      width="26"
-      height="26"
-      viewBox="0 0 26 26"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M4.70711 5.29289C4.31658 4.90237 3.68342 4.90237 3.29289 5.29289C2.90237 5.68342 2.90237 6.31658 3.29289 6.70711L9.58579 13L3.29289 19.2929C2.90237 19.6834 2.90237 20.3166 3.29289 20.7071C3.68342 21.0976 4.31658 21.0976 4.70711 20.7071L11.7071 13.7071C12.0976 13.3166 12.0976 12.6834 11.7071 12.2929L4.70711 5.29289Z"
-        fill={props && props.active ? activeColor1 : undefined}
+        d="M13 17C13 16.4477 13.4477 16 14 16H19C19.5523 16 20 16.4477 20 17C20 17.5523 19.5523 18 19 18H14C13.4477 18 13 17.5523 13 17Z"
+        fill={props.active ? activeColor3 : undefined}
       />
       <path
-        d="M15 19C14.4477 19 14 19.4477 14 20C14 20.5523 14.4477 21 15 21H22C22.5523 21 23 20.5523 23 20C23 19.4477 22.5523 19 22 19H15Z"
-        fill={props && props.active ? activeColor3 : undefined}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.26285 5.82428C4.63604 5.41716 5.26861 5.38966 5.67573 5.76285L11.6757 11.2629C11.8824 11.4523 12 11.7197 12 12C12 12.2803 11.8824 12.5477 11.6757 12.7372L5.67573 18.2372C5.26861 18.6104 4.63604 18.5828 4.26285 18.1757C3.88966 17.7686 3.91716 17.136 4.32428 16.7629L9.52011 12L4.32428 7.23716C3.91716 6.86397 3.88966 6.2314 4.26285 5.82428Z"
+        fill={props.active ? activeColor1 : undefined}
       />
     </svg>
   );
@@ -159,23 +161,23 @@ export function TabReplIcon(props: ActiveItem) {
 export function TabEditorIcon(props: ActiveItem) {
   return (
     <svg
-      width="21"
-      height="16"
-      viewBox="0 0 21 16"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M19.8051 3.40611C20.1327 3.85073 20.0378 4.47675 19.5932 4.80436L10.0932 11.8044C9.6486 12.132 9.02258 12.0371 8.69496 11.5925C8.36735 11.1479 8.4622 10.5219 8.90682 10.1943L18.4068 3.19425C18.8514 2.86664 19.4775 2.96149 19.8051 3.40611Z"
-        fill={props?.active ? activeColor3 : undefined}
+        d="M23.8051 7.40611C24.1327 7.85073 24.0378 8.47675 23.5932 8.80436L14.0932 15.8044C13.6486 16.132 13.0226 16.0371 12.695 15.5925C12.3673 15.1479 12.4622 14.5219 12.9068 14.1943L22.4068 7.19425C22.8514 6.86664 23.4775 6.96149 23.8051 7.40611Z"
+        fill={props.active ? activeColor3 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M0 2C0 0.895432 0.89543 0 2 0H14C15.1046 0 16 0.89543 16 2V2.94081C16 3.49309 15.5523 3.94081 15 3.94081C14.4477 3.94081 14 3.49309 14 2.94081V2L2 2V14H14V10.6875C14 10.1352 14.4477 9.68747 15 9.68747C15.5523 9.68747 16 10.1352 16 10.6875V14C16 15.1046 15.1046 16 14 16H2C0.895432 16 0 15.1046 0 14V2Z"
-        fill={props?.active ? activeColor1 : undefined}
+        d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V6.94081C20 7.49309 19.5523 7.94081 19 7.94081C18.4477 7.94081 18 7.49309 18 6.94081V6L6 6V18H18V14.6875C18 14.1352 18.4477 13.6875 19 13.6875C19.5523 13.6875 20 14.1352 20 14.6875V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z"
+        fill={props.active ? activeColor1 : undefined}
       />
     </svg>
   );
@@ -184,29 +186,29 @@ export function TabEditorIcon(props: ActiveItem) {
 export function TabSchemaIcon(props: ActiveItem) {
   return (
     <svg
-      width="26"
-      height="26"
-      viewBox="0 0 26 26"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 2V10H10V2H2ZM1 0C0.447715 0 0 0.447715 0 1V11C0 11.5523 0.447715 12 1 12H11C11.5523 12 12 11.5523 12 11V1C12 0.447715 11.5523 0 11 0H1Z"
-        fill={props && props.active ? activeColor1 : undefined}
+        d="M5 5V9H9V5H5ZM4 3C3.44772 3 3 3.44772 3 4V10C3 10.5523 3.44772 11 4 11H10C10.5523 11 11 10.5523 11 10V4C11 3.44772 10.5523 3 10 3H4Z"
+        fill={props.active ? activeColor1 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M16 16V24H24V16H16ZM15 14C14.4477 14 14 14.4477 14 15V25C14 25.5523 14.4477 26 15 26H25C25.5523 26 26 25.5523 26 25V15C26 14.4477 25.5523 14 25 14H15Z"
-        fill={props && props.active ? activeColor2 : undefined}
+        d="M14 14V18H18V14H14ZM13 12C12.4477 12 12 12.4477 12 13V19C12 19.5523 12.4477 20 13 20H19C19.5523 20 20 19.5523 20 19V13C20 12.4477 19.5523 12 19 12H13Z"
+        fill={props.active ? activeColor3 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M5 12H7V17.9999C7 18.3514 7.0898 18.5956 7.20572 18.7348C7.29491 18.8418 7.49048 18.9999 8 18.9999H13.9992L13.9999 20.9999H8C7.00952 20.9999 6.20509 20.6581 5.66928 20.0151C5.1602 19.4042 5 18.6485 5 17.9999V12Z"
-        fill={props && props.active ? activeColor3 : undefined}
+        d="M6 11H8V14.6923C8 14.8068 8.03818 14.8921 8.07108 14.9309C8.08435 14.9466 8.09968 14.9592 8.12376 14.97C8.14834 14.9811 8.20392 15 8.30769 15H11.9992L12 17H8.30769C7.5699 17 6.95711 16.7107 6.54431 16.2228C6.15413 15.7617 6 15.1931 6 14.6923V11Z"
+        fill={props.active ? activeColor2 : undefined}
       />
     </svg>
   );
@@ -215,29 +217,29 @@ export function TabSchemaIcon(props: ActiveItem) {
 export function TabDataExplorerIcon(props: ActiveItem) {
   return (
     <svg
-      width="26"
-      height="25"
-      viewBox="0 0 26 25"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M10 11V14H24V11H10ZM9 9C8.44772 9 8 9.44772 8 10V15C8 15.5523 8.44772 16 9 16H25C25.5523 16 26 15.5523 26 15V10C26 9.44772 25.5523 9 25 9H9Z"
-        fill={props && props.active ? activeColor1 : undefined}
+        d="M11 11.0195V12H18V11.0195H11ZM10 9.01953C9.44772 9.01953 9 9.46725 9 10.0195V13C9 13.5523 9.44771 14 10 14H19C19.5523 14 20 13.5523 20 13V10.0195C20 9.46725 19.5523 9.01953 19 9.01953H10Z"
+        fill={props.active ? activeColor2 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 20V23H20V20H2ZM1 18C0.447715 18 0 18.4477 0 19V24C0 24.5523 0.447716 25 1 25H21C21.5523 25 22 24.5523 22 24V19C22 18.4477 21.5523 18 21 18H1Z"
-        fill={props && props.active ? activeColor2 : undefined}
+        d="M6 17V18H15V17H6ZM5 15C4.44772 15 4 15.4477 4 16V19C4 19.5523 4.44772 20 5 20H16C16.5523 20 17 19.5523 17 19V16C17 15.4477 16.5523 15 16 15H5Z"
+        fill={props.active ? activeColor3 : undefined}
       />
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M2 2V5H20V2H2ZM1 0C0.447715 0 0 0.447715 0 1V6C0 6.55228 0.447716 7 1 7H21C21.5523 7 22 6.55228 22 6V1C22 0.447715 21.5523 0 21 0H1Z"
-        fill={props && props.active ? activeColor3 : undefined}
+        d="M6 5V6H15V5H6ZM5 3C4.44772 3 4 3.44772 4 4V7C4 7.55228 4.44772 8 5 8H16C16.5523 8 17 7.55228 17 7V4C17 3.44772 16.5523 3 16 3H5Z"
+        fill={props.active ? activeColor1 : undefined}
       />
     </svg>
   );
