@@ -413,7 +413,6 @@ export class DataEditingManager extends Model({}) {
         const linkUpdate = generateLinkUpdate(
           linkEdit,
           deletedIds,
-          insertEdit.objectTypeName,
           deps,
           true
         );
@@ -479,7 +478,6 @@ export class DataEditingManager extends Model({}) {
         const linkUpdate = generateLinkUpdate(
           linkEdit,
           deletedIds,
-          edits.objectTypeName,
           undefined,
           type.links[linkEdit.fieldName]!.cardinality === "One"
         );
@@ -554,7 +552,6 @@ select ${
 function generateLinkUpdate(
   linkEdits: UpdateLinkEdit,
   deletedIds: Set<string>,
-  parentObjectTypeName: string,
   deps?: number[],
   forceLinkSet?: boolean
 ): string | null {
@@ -581,9 +578,9 @@ function generateLinkUpdate(
         .filter((change) => change.kind === UpdateLinkChangeKind.Remove)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`,
-      `(select ${
-        linkEdits.linkTypeName === parentObjectTypeName ? "detached " : ""
-      }${linkEdits.escapedLinkTypeName} filter .id in <uuid>{${changes
+      `(select detached ${
+        linkEdits.escapedLinkTypeName
+      } filter .id in <uuid>{${changes
         .filter((change) => change.kind === UpdateLinkChangeKind.Add)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`
@@ -597,9 +594,7 @@ function generateLinkUpdate(
         : ":=";
     if (changes.length) {
       links.push(
-        `(select ${
-          linkEdits.linkTypeName === parentObjectTypeName ? "detached " : ""
-        }${linkEdits.escapedLinkTypeName} filter .id ${
+        `(select detached ${linkEdits.escapedLinkTypeName} filter .id ${
           changes.length === 1
             ? `= <uuid>'${changes[0].id}'`
             : `in <uuid>{${changes.map(({id}) => `'${id}'`).join(", ")}}`
