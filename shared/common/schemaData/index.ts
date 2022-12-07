@@ -341,6 +341,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         } as any);
         break;
       case "schema::Array":
+      case "schema::ArrayExprAlias":
         types.set(type.id, {
           schemaType: "Array",
           id: type.id,
@@ -348,6 +349,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         } as any);
         break;
       case "schema::Tuple":
+      case "schema::TupleExprAlias":
         types.set(type.id, {
           schemaType: "Tuple",
           id: type.id,
@@ -356,6 +358,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         } as any);
         break;
       case "schema::Range":
+      case "schema::RangeExprAlias":
         types.set(type.id, {
           schemaType: "Range",
           id: type.id,
@@ -661,7 +664,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         });
         break;
       }
-      case "schema::Array": {
+      case "schema::Array":
+      case "schema::ArrayExprAlias": {
         const elementType = types.get(type.element_type_id!);
         if (!elementType) {
           throw new Error(
@@ -671,7 +675,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         (types.get(type.id) as SchemaArrayType).elementType = elementType;
         break;
       }
-      case "schema::Tuple": {
+      case "schema::Tuple":
+      case "schema::TupleExprAlias": {
         const t = types.get(type.id) as SchemaTupleType;
         t.elements = type.element_types!.map((el) => {
           const elType = types.get(el.type_id);
@@ -684,7 +689,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         });
         break;
       }
-      case "schema::Range": {
+      case "schema::Range":
+      case "schema::RangeExprAlias": {
         const elementType = types.get(type.range_element_type_id!);
         if (!elementType) {
           throw new Error(
