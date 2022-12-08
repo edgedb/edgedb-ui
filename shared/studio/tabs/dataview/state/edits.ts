@@ -578,7 +578,9 @@ function generateLinkUpdate(
         .filter((change) => change.kind === UpdateLinkChangeKind.Remove)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`,
-      `(select ${linkEdits.escapedLinkTypeName} filter .id in <uuid>{${changes
+      `(select detached ${
+        linkEdits.escapedLinkTypeName
+      } filter .id in <uuid>{${changes
         .filter((change) => change.kind === UpdateLinkChangeKind.Add)
         .map(({id}) => `'${id}'`)
         .join(", ")}})`
@@ -592,7 +594,7 @@ function generateLinkUpdate(
         : ":=";
     if (changes.length) {
       links.push(
-        `(select ${linkEdits.escapedLinkTypeName} filter .id ${
+        `(select detached ${linkEdits.escapedLinkTypeName} filter .id ${
           changes.length === 1
             ? `= <uuid>'${changes[0].id}'`
             : `in <uuid>{${changes.map(({id}) => `'${id}'`).join(", ")}}`
