@@ -17,6 +17,21 @@
       }
     }
   }
+
+  .errorUnderline {
+    background-repeat: repeat-x;
+    background-position: bottom;
+    background-image: url("data:image/svg+xml,%3Csvg width='6' height='3' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0.82843C0.511845 0.82843 1.02369 1.02369 1.41421 1.41422L1.58579 1.58579C2.36683 2.36684 3.63316 2.36684 4.41421 1.58579L4.58579 1.41422C4.97631 1.02369 5.48816 0.828431 6 0.828431' stroke='%23E91919'/%3E%3C/svg%3E%0A");
+    padding-bottom: 1px;
+  }
+
+  .errorLineHighlight {
+    background: rgba(255, 0, 0, 0.15);
+
+    &:global(.cm-activeLine) {
+      background: rgba(255, 0, 0, 0.2);
+    }
+  }
 }
 
 // .terminalCursor {

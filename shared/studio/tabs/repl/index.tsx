@@ -378,6 +378,9 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     );
   }
 
+  const queryLines = item.query.split("\n").length;
+  const truncateQuery = !item.showFullQuery && queryLines > 20;
+
   return (
     <div
       ref={ref}
@@ -395,7 +398,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         <div className={styles.historyPrompt}>
           {[
             `${dbName}>`,
-            ...Array(item.query.split("\n").length - 1).fill(
+            ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
               ".".repeat(dbName.length + 1)
             ),
           ].join("\n")}
@@ -403,23 +406,59 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
         <CustomScrollbars
           className={styles.historyQueryCode}
-          innerClass={styles.code}
+          innerClass={styles.codeBlockContainer}
         >
           <div className={styles.scrollWrapper}>
-            <CodeBlock
-              className={cn(styles.code)}
-              code={item.query}
-              customRanges={
-                item.error?.data.range
-                  ? [
-                      {
-                        range: item.error.data.range,
-                        style: styles.errorUnderline,
-                      },
-                    ]
-                  : undefined
-              }
-            />
+            <div
+              className={cn(styles.codeBlockContainer, {
+                [styles.truncateQuery]: truncateQuery,
+              })}
+            >
+              <CodeBlock
+                className={cn(styles.code)}
+                code={item.query}
+                customRanges={
+                  item.error?.data.range
+                    ? [
+                        {
+                          range: item.error.data.range,
+                          style: styles.errorUnderline,
+                        },
+                      ]
+                    : undefined
+                }
+              />
+              {item.error?.data.range ? (
+                <div
+                  className={styles.codeBlockErrorLines}
+                  style={{
+                    top: `${
+                      item.query.slice(0, item.error.data.range[0]).split("\n")
+                        .length - 1
+                    }em`,
+                    height: `${
+                      item.query
+                        .slice(
+                          item.error.data.range[0],
+                          item.error.data.range[1]
+                        )
+                        .split("\n").length
+                    }em`,
+                  }}
+                />
+              ) : null}
+            </div>
+            {truncateQuery ? (
+              <div
+                className={styles.showFullQuery}
+                onClick={() => {
+                  item.setShowFullQuery(true);
+                  updateScroll.current = true;
+                }}
+              >
+                <span>show full query...</span>
+              </div>
+            ) : null}
           </div>
         </CustomScrollbars>
 

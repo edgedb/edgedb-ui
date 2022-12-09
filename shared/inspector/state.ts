@@ -43,6 +43,7 @@ export class InspectorState extends Model({
   countPrefix: prop<string | null>(null),
   ignorePrefix: prop<string | null>(null),
   implicitLimit: prop<number | null>(null),
+  noMultiline: prop<boolean>(false),
 }) {
   @observable.shallow
   _items: Item[] = [];
@@ -137,7 +138,8 @@ export class InspectorState extends Model({
           buildItem(
             {id: ".", parent: null, level: -1, codec: result.codec},
             `[${result.data.join(", ")}]`,
-            0
+            0,
+            false
           ),
         ];
         this._jsonMode = true;
@@ -151,7 +153,8 @@ export class InspectorState extends Model({
               codec: result.codec,
             },
             result.data,
-            0
+            0,
+            this.noMultiline
           ),
         ];
         this.expandItem(

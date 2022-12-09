@@ -104,7 +104,7 @@ function createInspector(
   implicitLimit: number,
   openExtendedView: (item: Item) => void
 ) {
-  const inspector = new InspectorState({implicitLimit});
+  const inspector = new InspectorState({implicitLimit, noMultiline: true});
   inspector.extendedViewIds = extendedViewerIds;
   inspector.openExtendedView = openExtendedView;
   inspector.initData({data: result, codec: result._codec});
@@ -140,10 +140,16 @@ export class QueryEditor extends Model({
   @observable.ref
   currentResult: QueryHistoryItem | null = null;
 
+  @observable
+  showErrorUnderline = false;
+
   @action
   setCurrentQueryData<T extends EditorKind>(kind: T, data: QueryData[T]) {
     this.currentQueryData[kind] = data;
     this.historyCursor = -1;
+    if (kind === EditorKind.EdgeQL) {
+      this.showErrorUnderline = false;
+    }
   }
 
   @computed
@@ -250,6 +256,7 @@ export class QueryEditor extends Model({
   draftQueryData: {
     selectedEditor: EditorKind;
     currentResult: QueryHistoryItem | null;
+    showErrorUnderline: boolean;
     [EditorKind.EdgeQL]: {query: Text; params: ParamsData | null};
     [EditorKind.VisualBuilder]: QueryBuilderState;
   } | null = null;
@@ -260,6 +267,7 @@ export class QueryEditor extends Model({
     this.draftQueryData = {
       selectedEditor: this.selectedEditor,
       currentResult: this.currentResult,
+      showErrorUnderline: this.showErrorUnderline,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
         params: this.queryParamsEditor.getParamsData(),
@@ -282,6 +290,7 @@ export class QueryEditor extends Model({
 
       this.setSelectedEditor(draft.selectedEditor);
       this.currentResult = draft.currentResult;
+      this.showErrorUnderline = draft.showErrorUnderline;
     }
   }
 
@@ -310,6 +319,7 @@ export class QueryEditor extends Model({
           this.queryParamsEditor.restoreParamsData(
             queryData.data.params?.data
           );
+          this.showErrorUnderline = true;
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
@@ -488,10 +498,12 @@ export class QueryEditor extends Model({
       return;
     }
 
+    const selectedEditor = this.selectedEditor;
+
     const query =
-      this.selectedEditor === EditorKind.EdgeQL
+      selectedEditor === EditorKind.EdgeQL
         ? this.currentQueryData[EditorKind.EdgeQL].toString().trim()
-        : this.selectedEditor === EditorKind.VisualBuilder
+        : selectedEditor === EditorKind.VisualBuilder
         ? this.currentQueryData[EditorKind.VisualBuilder].query
         : null;
     if (!query) return;
@@ -509,6 +521,9 @@ export class QueryEditor extends Model({
     const {capabilities, status} = yield* _await(
       this._runStatement(query, paramsData)
     );
+    if (selectedEditor === EditorKind.EdgeQL) {
+      this.showErrorUnderline = true;
+    }
 
     dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);
 

@@ -1,25 +1,23 @@
-import {useModal} from "@edgedb/common/hooks/useModal";
 import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
-import {ModalOverlay} from "@edgedb/common/ui/modal";
 import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import {observer} from "mobx-react-lite";
 import {PropsWithChildren, useEffect, useRef, useState} from "react";
 import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
 import {useDatabaseState} from "../../state";
-import {SchemaData} from "../../state/database";
 import {queryOptions, SessionState} from "../../state/sessionState";
-import {getInputComponent} from "../dataEditor";
+import {getInputComponent, InputValidator} from "../dataEditor";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import styles from "./sessionState.module.scss";
 import {createPortal} from "react-dom";
 import {useResize} from "@edgedb/common/hooks/useResize";
-import {ButtonTabArrow} from "./icons";
+import {ButtonTabArrow, SettingsIcon} from "./icons";
 import {ToggleSwitch} from "@edgedb/common/ui/toggleSwitch";
-import fuzzysort, {highlight} from "fuzzysort";
+import fuzzysort from "fuzzysort";
 import {highlightString} from "../../utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {TabSep} from "../headerTabs";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -32,6 +30,7 @@ export const SessionStateButton = observer(function SessionStateButton() {
   if (targetEl) {
     return createPortal(
       <div className={styles.sessionState}>
+        <TabSep />
         <div
           className={cn(styles.stateButton, {
             [styles.open]: sessionState.barOpen,
@@ -46,6 +45,7 @@ export const SessionStateButton = observer(function SessionStateButton() {
             }
           }}
         >
+          <SettingsIcon className={styles.icon} />
           Client Settings
           <ChevronDownIcon className={styles.chevron} />
           <ButtonTabArrow className={styles.tabArrow} />
@@ -367,6 +367,8 @@ function ListItem({
   defaultValue,
   allowNull,
   highlighted,
+  description,
+  validator,
 }: {
   state: SessionState;
   active: boolean;
@@ -378,6 +380,8 @@ function ListItem({
   defaultValue?: JSX.Element | string;
   allowNull?: boolean;
   highlighted: boolean;
+  description?: string;
+  validator?: InputValidator;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -411,7 +415,9 @@ function ListItem({
           <div className={styles.itemName}>{name}</div>
           <div className={styles.itemType}>{`<${type.name}>`}</div>
         </div>
-        <></>
+        {description ? (
+          <span className={styles.itemDesc}>{description}</span>
+        ) : null}
       </div>
 
       <div className={cn(styles.itemValue, {[styles.inactive]: !active})}>
@@ -423,6 +429,7 @@ function ListItem({
               value={value}
               onChange={onChange}
               allowNull={allowNull}
+              validator={validator}
             />
             {allowNull ? (
               <div
@@ -478,6 +485,11 @@ const ListGlobalItem = observer(function ListGlobalItem({
         sessionState.highlight?.kind === "g" &&
         sessionState.highlight.name === schemaGlobal.name
       }
+      description={
+        schemaGlobal.annotations.find(
+          (anno) => anno.name === "std::description"
+        )?.["@value"]
+      }
     />
   );
 });
@@ -516,6 +528,7 @@ const ListConfigItem = observer(function ListConfigItem({
         sessionState.highlight?.kind === "c" &&
         sessionState.highlight.name === name
       }
+      description={state.description}
     />
   );
 });
@@ -548,6 +561,7 @@ const ListQueryOptionItem = observer(function ListQueryOptionItem({
         sessionState.highlight?.kind === "o" &&
         sessionState.highlight.name === opt.name
       }
+      validator={opt.validator}
     />
   );
 });

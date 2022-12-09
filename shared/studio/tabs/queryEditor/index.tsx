@@ -209,6 +209,12 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
         useDarkTheme={theme === Theme.dark}
         readonly={editorState.showHistory}
         schemaObjects={dbState.schemaData?.objectsByName}
+        errorUnderline={
+          editorState.showErrorUnderline &&
+          editorState.currentResult instanceof QueryHistoryErrorItem
+            ? editorState.currentResult.error.data.range
+            : undefined
+        }
       />
     </CustomScrollbars>
   );

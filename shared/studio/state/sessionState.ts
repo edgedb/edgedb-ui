@@ -25,6 +25,7 @@ import {instanceCtx} from "./instance";
 type DraftStateItem = {
   active: boolean;
   type: Frozen<SchemaType>;
+  description?: string;
   value: any;
   error: boolean;
 };
@@ -69,6 +70,8 @@ export const queryOptions = [
     typename: "std::int64",
     default: "100",
     active: true,
+    validator: (val: BigInt) =>
+      Number(val) <= 0 ? "Implicit limit must be greater than 0" : null,
   },
 ].map((item) => ({
   ...item,
@@ -171,7 +174,7 @@ export class SessionState extends Model({
       [...schemaData.globals.values()].map((global) => [global.name, global])
     );
 
-    const configType = schemaData.objectsByName.get("cfg::Config")!;
+    const configType = schemaData.objectsByName.get("cfg::AbstractConfig")!;
     this.configNames = Object.values(configType.properties)
       .filter(
         (prop) =>
@@ -212,6 +215,9 @@ export class SessionState extends Model({
       const storedItem = sessionStateData?.config[configName];
       draftState.config[configName] = {
         type: frozen(type, FrozenCheckMode.Off),
+        description: configType.properties[configName].annotations.find(
+          (anno) => anno.name === "std::description"
+        )?.["@value"],
         active: storedItem?.active ?? false,
         value: storedItem?.value ?? null,
         error: storedItem ? !isValidValue(type, storedItem.value) : true,
@@ -277,27 +283,24 @@ export class SessionState extends Model({
       ? Object.entries(this.draftState.globals).some(([name, global]) => {
           const snap = this.draftSnapshot!.globals[name];
           return (
-            !global.error &&
-            (!snap
-              ? global.active
-              : snap.active !== global.active ||
-                (global.active && snap.value !== global.value))
+            (!global.active && snap?.active) ||
+            (global.active &&
+              !global.error &&
+              (!snap || snap.value !== global.value))
           );
         }) ||
           Object.entries(this.draftState.config).some(([name, config]) => {
             const snap = this.draftSnapshot!.config[name];
             return (
-              !config.error &&
-              (snap.active !== config.active ||
-                (config.active && snap.value !== config.value))
+              (!config.active && snap.active) ||
+              (config.active && !config.error && snap.value !== config.value)
             );
           }) ||
           Object.entries(this.draftState.options).some(([name, option]) => {
             const snap = this.draftSnapshot!.options[name];
             return (
-              !option.error &&
-              (snap.active !== option.active ||
-                (option.active && snap.value !== option.value))
+              (!option.active && snap.active) ||
+              (option.active && !option.error && snap.value !== option.value)
             );
           })
       : false;
