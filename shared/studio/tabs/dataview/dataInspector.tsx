@@ -348,7 +348,7 @@ const GridCell = observer(function GridCell({
   ) {
     return cellEditState?.value === undefined &&
       field.schemaType.name === "std::str" &&
-      value.length === 100 &&
+      value?.length === 100 &&
       !state.fullyFetchedData.has(cellId) ? (
       <FetchingDataPlaceholder state={state} data={data} field={field} />
     ) : (
