@@ -31,23 +31,35 @@
 }
 
 .showMore {
-  position: relative;
-  font-family: Inter;
+  position: absolute;
+  font-family: Inter, "sans-serif";
   text-transform: uppercase;
   font-size: 12px;
-  height: 28px;
-  margin-top: -28px;
+  font-weight: 500;
+  bottom: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  background: linear-gradient(transparent, var(--inspectorBg));
+  padding-bottom: 12px;
+  padding-top: 6px;
+  background: linear-gradient(
+    0deg,
+    var(--inspectorBg),
+    var(--inspectorBg) 12px,
+    transparent
+  );
 
   span {
-    background: var(--inspectorBg);
+    background: #f8f8f8;
     border-radius: 14px;
-    padding: 4px 8px;
+    padding: 4px 10px;
     opacity: 0.8;
+
+    :global(.dark-theme) & {
+      background: #272727;
+    }
   }
 }
 
@@ -278,6 +290,10 @@
   }
   &:after {
     content: "'";
+  }
+
+  span {
+    color: #808080;
   }
 
   .jsonMode & {

@@ -65,7 +65,7 @@ export function HeaderTabs({className}: HeaderTabsProps) {
   );
 }
 
-function TabSep() {
+export function TabSep() {
   return (
     <svg
       width="16"

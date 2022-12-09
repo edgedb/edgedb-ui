@@ -134,6 +134,8 @@ export function DataEditor({
   );
 }
 
+export type InputValidator = (value: any) => string | null;
+
 export function getInputComponent(
   type: SchemaType
 ): (props: {
@@ -145,6 +147,7 @@ export function getInputComponent(
   stringMode?: boolean;
   depth?: number;
   errorMessageAbove?: boolean;
+  validator?: InputValidator;
 }) => JSX.Element {
   if (type.schemaType === "Scalar") {
     if (type.enum_values) {
@@ -523,6 +526,7 @@ const Textbox = forwardRef(function Textbox(
     stringMode,
     depth,
     errorMessageAbove,
+    validator,
   }: {
     type: SchemaScalarType;
     value: any;
@@ -531,6 +535,7 @@ const Textbox = forwardRef(function Textbox(
     stringMode?: boolean;
     depth?: number;
     errorMessageAbove?: boolean;
+    validator?: InputValidator;
   },
   ref
 ) {
@@ -554,7 +559,14 @@ const Textbox = forwardRef(function Textbox(
       onChange(value as any, true);
     } else if (value !== null) {
       try {
-        parsers[baseTypeName](val);
+        const parsed = parsers[baseTypeName](val);
+        if (validator) {
+          const err = validator(parsed);
+          if (err !== null) {
+            setErr(err);
+            onChange(value, true);
+          }
+        }
       } catch (e) {
         setErr((e as Error).message);
         onChange(value, true);
@@ -581,6 +593,9 @@ const Textbox = forwardRef(function Textbox(
           } else {
             try {
               parsed = parsers[baseTypeName](e.target.value);
+              if (validator) {
+                err = validator(parsed);
+              }
             } catch (e) {
               err = (e as Error).message;
             }

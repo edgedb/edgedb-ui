@@ -180,6 +180,7 @@
 .historyQuery {
   display: flex;
   user-select: text;
+  line-height: 19px;
 
   .historyPrompt {
     white-space: pre;
@@ -194,10 +195,67 @@
     min-width: 0;
   }
 
+  .codeBlockContainer {
+    position: relative;
+    padding: 0 2px;
+    padding-bottom: 12px;
+    min-width: max-content;
+
+    &.truncateQuery {
+      max-height: 20 * 19px;
+      overflow: hidden;
+    }
+  }
+
+  .codeBlockErrorLines {
+    position: absolute;
+    width: 100%;
+    background: rgba(255, 0, 0, 0.15);
+    font-size: 19px;
+    border-radius: 4px;
+    margin: 0 -2px;
+    padding-bottom: 2px;
+  }
+
   .code {
     margin: 0;
     font-family: inherit;
+    position: relative;
+    z-index: 1;
+  }
+
+  .showFullQuery {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(
+      0deg,
+      var(--inspectorBg),
+      var(--inspectorBg) 12px,
+      transparent
+    );
     padding-bottom: 12px;
+    padding-top: 6px;
+    font-family: Inter, sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+    cursor: pointer;
+    z-index: 1;
+
+    span {
+      background: #f8f8f8;
+      border-radius: 14px;
+      padding: 4px 10px;
+      opacity: 0.8;
+
+      @include darkTheme {
+        background: #272727;
+      }
+    }
   }
 
   .historyTime {
@@ -223,7 +281,7 @@
 .queryError {
   font-size: 14px;
   line-height: 20px;
-  color: #bfbfbf;
+  color: #6a6a6a;
   user-select: text;
 
   .errorName {
@@ -233,6 +291,10 @@
   .errorHint {
     font-style: italic;
     opacity: 0.7;
+  }
+
+  @include darkTheme {
+    color: #bfbfbf;
   }
 }
 

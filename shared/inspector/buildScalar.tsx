@@ -20,7 +20,8 @@ export function buildScalarItem(
   },
   data: any,
   index: string | number,
-  comma?: boolean
+  comma?: boolean,
+  noMultiline: boolean = false
 ): Item {
   const {body, height} = renderValue(
     data,
@@ -28,7 +29,11 @@ export function buildScalarItem(
     base.codec instanceof EnumCodec,
     base.codec instanceof RangeCodec
       ? base.codec.getSubcodecs()[0].getKnownTypeName()
-      : undefined
+      : undefined,
+    undefined,
+    undefined,
+    undefined,
+    noMultiline
   );
 
   return {
@@ -63,7 +68,8 @@ export function renderValue(
   rangeKnownTypeName?: string,
   showTypeTag: boolean = true,
   overrideStyles: {[key: string]: string} = {},
-  implicitLength?: number
+  implicitLength?: number,
+  noMultiline: boolean = false
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
     return {body: <span className={styles.scalar_empty}>{"{}"}</span>};
@@ -145,9 +151,9 @@ export function renderValue(
       };
 
     case "std::json":
-      value = prettyPrintJSON(value);
+      value = noMultiline ? value : prettyPrintJSON(value);
     case "std::str": {
-      const str = strToString(value);
+      const str = noMultiline ? toSingleLineStr(value) : strToString(value);
       return {
         body: (
           <span className={styles.scalar_string}>
@@ -155,7 +161,7 @@ export function renderValue(
             {implicitLength && value.length === implicitLength ? "…" : ""}
           </span>
         ),
-        height: str.split("\n").length,
+        height: noMultiline ? 1 : (str as string).split("\n").length,
       };
     }
   }
@@ -285,6 +291,21 @@ function strToString(value: string): string {
   };
 
   return escape(value);
+}
+
+function toSingleLineStr(value: string, limit = 200): JSX.Element {
+  const lines = value.slice(0, limit).split("\n");
+  const output: (JSX.Element | string)[] = [lines.shift()!];
+  let i = 0;
+  for (const line of lines) {
+    output.push(<span key={i++}>↲</span>, line);
+  }
+  return (
+    <>
+      {output}
+      {value.length > limit ? <span>…</span> : null}
+    </>
+  );
 }
 
 export function prettyPrintJSON(

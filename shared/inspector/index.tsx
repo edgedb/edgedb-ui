@@ -147,7 +147,16 @@ const RowList = observer(function RowList({
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonMode,
         })}
-        style={inspectorStyle}
+        style={{
+          ...inspectorStyle,
+          ...(showExpandedButton
+            ? {
+                position: "relative",
+                overflow: "hidden",
+                maxHeight: maxHeight! * rowHeight,
+              }
+            : undefined),
+        }}
         tabIndex={0}
         onKeyDown={onKeyDown}
       >

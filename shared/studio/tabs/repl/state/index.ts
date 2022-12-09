@@ -47,7 +47,7 @@ function createInspector(
   implicitLimit: number | null,
   openExtendedView: (item: Item) => void
 ) {
-  const inspector = new InspectorState({implicitLimit});
+  const inspector = new InspectorState({implicitLimit, noMultiline: true});
   inspector.extendedViewIds = extendedViewerIds;
   inspector.openExtendedView = openExtendedView;
   inspector.initData({data: result, codec: result._codec});
@@ -74,6 +74,14 @@ export class ReplHistoryItem extends Model({
   @action
   setShowMore(val: boolean) {
     this.showMore = val;
+  }
+
+  @observable
+  showFullQuery = false;
+
+  @action
+  setShowFullQuery(val: boolean) {
+    this.showFullQuery = val;
   }
 
   @modelAction

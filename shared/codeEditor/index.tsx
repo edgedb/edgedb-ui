@@ -13,6 +13,9 @@ import {
   EditorSelection,
   Extension,
   StateEffect,
+  Range,
+  RangeSet,
+  RangeSetBuilder,
 } from "@codemirror/state";
 import {
   EditorView,
@@ -22,6 +25,7 @@ import {
   drawSelection,
   KeyBinding,
   lineNumbers,
+  Decoration,
 } from "@codemirror/view";
 import {
   defaultKeymap,
@@ -63,6 +67,30 @@ const onChangeComp = new Compartment();
 const autocompleteComp = new Compartment();
 const renderWhitespaceComp = new Compartment();
 
+const errorUnderlineComp = new Compartment();
+const errorUnderlineMark = Decoration.mark({
+  class: styles.errorUnderline,
+});
+const errorLineHighlight = Decoration.line({
+  class: styles.errorLineHighlight,
+});
+
+function getErrorExtension(range: [number, number], doc: Text) {
+  if (range[1] > doc.length) {
+    return [];
+  }
+
+  const decos: Range<Decoration>[] = [errorUnderlineMark.range(...range)];
+
+  const startLine = doc.lineAt(range[0]).number;
+  const endLine = doc.lineAt(range[1]).number;
+  for (let i = startLine; i <= endLine; i++) {
+    decos.push(errorLineHighlight.range(doc.line(i).from));
+  }
+
+  return EditorView.decorations.of(RangeSet.of(decos, true));
+}
+
 const specialCharRender = (
   code: number,
   desc: string,
@@ -96,6 +124,7 @@ export interface CodeEditorProps {
   schemaObjects?: Map<string, SchemaObjectType>;
   noPadding?: boolean;
   renderWhitespace?: boolean;
+  errorUnderline?: [number, number];
 }
 
 export interface CodeEditorRef {
@@ -126,6 +155,7 @@ export function createCodeEditor({
     useDarkTheme,
     schemaObjects,
     renderWhitespace,
+    errorUnderline,
   }: {
     doc: Text;
     onChange: (value: Text) => void;
@@ -134,6 +164,7 @@ export function createCodeEditor({
     useDarkTheme: boolean;
     schemaObjects?: Map<string, SchemaObjectType>;
     renderWhitespace?: boolean;
+    errorUnderline?: [number, number];
   }) {
     return EditorState.create({
       doc,
@@ -196,6 +227,9 @@ export function createCodeEditor({
               ]
             : []
         ),
+        errorUnderlineComp.of(
+          errorUnderline ? getErrorExtension(errorUnderline, doc) : []
+        ),
         customExtensions,
       ],
     });
@@ -211,6 +245,7 @@ export function createCodeEditor({
       schemaObjects,
       useDarkTheme,
       renderWhitespace,
+      errorUnderline,
     }: CodeEditorProps,
     componentRef
   ) {
@@ -234,6 +269,7 @@ export function createCodeEditor({
             useDarkTheme,
             schemaObjects,
             renderWhitespace,
+            errorUnderline,
           }),
           parent: ref.current,
         });
@@ -255,6 +291,7 @@ export function createCodeEditor({
             useDarkTheme,
             schemaObjects,
             renderWhitespace,
+            errorUnderline,
           })
         );
       }
@@ -331,6 +368,16 @@ export function createCodeEditor({
         }),
       [renderWhitespace]
     );
+
+    useLayoutEffect(() => {
+      view.current?.dispatch({
+        effects: errorUnderlineComp.reconfigure(
+          errorUnderline
+            ? getErrorExtension(errorUnderline, view.current.state.doc)
+            : []
+        ),
+      });
+    }, [errorUnderline]);
 
     useEffect(() => {
       if (!noPadding && ref.current?.firstChild) {

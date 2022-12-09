@@ -101,6 +101,13 @@ export function expandItem(
               },
               data,
               i,
+              // override 'noMultiline' option if result is a single scalar
+              !item.parent &&
+                item.type === ItemType.Set &&
+                item.data!.length === 1 &&
+                subCodec.getKind() === "scalar"
+                ? false
+                : state.noMultiline,
               i < item.data!.length - 1
             );
 
@@ -265,6 +272,7 @@ export function expandItem(
             },
             item.data[field.name],
             field.name,
+            state.noMultiline,
             !!explicitNum && explicitFieldIndex++ < explicitNum
           );
 
@@ -311,6 +319,7 @@ export function expandItem(
             },
             data,
             fieldName,
+            state.noMultiline,
             i < item.data.length - 1
           );
 
@@ -364,6 +373,7 @@ export function buildItem(
   },
   data: any,
   index: string | number,
+  noMultiline: boolean,
   comma?: boolean
 ): Item {
   if (data === null && !base.expectedCount) {
@@ -376,7 +386,7 @@ export function buildItem(
       : base.codec.getKind();
 
   if (codecKind === "scalar" || codecKind === "range") {
-    return buildScalarItem(base, data, index, comma);
+    return buildScalarItem(base, data, index, comma, noMultiline);
   }
 
   const {type, brackets} =

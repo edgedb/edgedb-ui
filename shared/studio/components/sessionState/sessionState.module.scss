@@ -2,36 +2,40 @@
 
 .sessionState {
   display: flex;
-  margin-left: 58px;
+  align-items: center;
 }
 
 .stateButton {
   position: relative;
-  height: 28px;
+  height: 32px;
   display: flex;
   align-items: center;
-  text-transform: uppercase;
-  font-size: 12px;
   font-weight: 500;
-  background: rgba(0, 0, 0, 0.03);
-  padding: 0 12px;
-  border-radius: 14px;
+  color: var(--header-tab-text-colour);
+  padding: 0 6px;
+  border-radius: 4px;
   cursor: pointer;
 
-  span {
-    opacity: 0.7;
+  .icon {
+    fill: #adadad;
+    margin-right: 8px;
   }
 
   .chevron {
     width: 10px;
     margin-left: 6px;
+    color: #828282;
+    path {
+      stroke-width: 2px;
+    }
+    opacity: 0.5;
   }
 
   .tabArrow {
     position: absolute;
     fill: #e9e9e9;
     left: calc(50% - 15px);
-    top: calc(100% + 5px);
+    top: calc(100% + 3px);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0s 0.1s, fill 0.2s;
@@ -41,8 +45,17 @@
     }
   }
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.08);
+  &:hover,
+  &.open {
+    background: rgba(0, 0, 0, 0.05);
+
+    .chevron {
+      opacity: 1;
+    }
+
+    @include darkTheme {
+      background: rgba(255, 255, 255, 0.05);
+    }
   }
 
   &.open {
@@ -61,14 +74,6 @@
 
     @include darkTheme {
       fill: #242424;
-    }
-  }
-
-  @include darkTheme {
-    background: rgba(255, 255, 255, 0.05);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
     }
   }
 }
@@ -348,7 +353,7 @@
 
   .list {
     flex-grow: 1;
-    overflow: hidden auto;
+    overflow: auto;
     padding: 0 16px 0 8px;
     mask-image: linear-gradient(
       transparent 0px,
@@ -364,6 +369,7 @@
     padding: 12px 0 4px 0;
     display: flex;
     flex-direction: column;
+    min-width: min-content;
   }
 
   .item {
@@ -382,13 +388,10 @@
     --inputBg: #fafafa;
 
     &.inactive {
-      .itemName,
+      .itemHeader,
       .itemValue {
         opacity: 0.6;
         pointer-events: none;
-      }
-      .itemType {
-        opacity: 0.6 * 0.6;
       }
     }
 
@@ -411,11 +414,19 @@
     grid-area: header;
     margin-bottom: 8px;
     display: flex;
+    flex-direction: column;
   }
 
   .headerInner {
     display: flex;
     flex-wrap: wrap;
+  }
+
+  .itemDesc {
+    font-style: italic;
+    margin-top: 6px;
+    font-size: 13px;
+    opacity: 0.7;
   }
 
   .itemName {
