@@ -888,7 +888,8 @@ export class DataInspector extends Model({
 
   get _baseObjectsQuery() {
     if (this.parentObject && typeof this.parentObject.id === "string") {
-      return this.parentObject.isComputedLink
+      return this.parentObject.isComputedLink ||
+        this.objectType?.unionOf?.length
         ? `(SELECT ${
             this.parentObject.subtypeName ?? this.parentObject.objectTypeName
           } FILTER .id = <uuid>'${this.parentObject.id}').${
