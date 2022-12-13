@@ -751,6 +751,10 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
             pointer as any;
           t.pointers.push(pointer as any);
         }
+        if (t.unionOf?.length) {
+          // Prettify name of union type placeholders
+          t.name = t.unionOf.map((ut) => ut.name).join(" | ");
+        }
         break;
       }
       default:

@@ -268,7 +268,7 @@ export class SchemaTextView extends Model({
         a.name.localeCompare(b.name)
       ),
       ...[...schemaData.objects.values()]
-        .filter((o) => !o.from_alias)
+        .filter((o) => !o.from_alias && !o.unionOf)
         .sort((a, b) => a.name.localeCompare(b.name)),
       ...[...schemaData.functions.values()].sort((a, b) =>
         a.name.localeCompare(b.name)

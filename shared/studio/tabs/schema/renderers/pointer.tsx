@@ -136,7 +136,9 @@ export const PointerRenderer = observer(function _PointerRenderer({
             <Keyword>
               {pointer.type === "Property" ? "property" : "link"}
             </Keyword>{" "}
-            {match ? highlightString(pointer.name, match) : pointer.name}
+            {match
+              ? highlightString(pointer.name, match as number[])
+              : pointer.name}
             {bases.length ? (
               <>
                 {" "}
