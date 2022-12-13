@@ -12,12 +12,14 @@ import {
 import {
   AnyModel,
   createContext as createMobxContext,
+  getTypeInfo,
   idProp,
   Model,
   model,
   modelAction,
   ModelClass,
   modelFlow,
+  ModelTypeInfo,
   ObjectMap,
   objectMap,
   prop,
@@ -94,7 +96,10 @@ export class DatabaseState extends Model({
 
   @action
   setLoadingTab(stateClass: ModelClass<any>, loading: boolean) {
-    this.loadingTabs.set(stateClass.name, loading);
+    this.loadingTabs.set(
+      (getTypeInfo(stateClass) as ModelTypeInfo).modelType,
+      loading
+    );
   }
 
   @observable

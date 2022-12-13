@@ -8,7 +8,7 @@ import {
   useResolvedPath,
   useRoutes,
 } from "react-router-dom";
-import {AnyModel, ModelClass} from "mobx-keystone";
+import {AnyModel, getTypeInfo, ModelClass, ModelTypeInfo} from "mobx-keystone";
 import {ErrorBoundary, FallbackProps} from "react-error-boundary";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -219,7 +219,10 @@ const TabBar = observer(function TabBar({tabs}: TabBarProps) {
           {state ? (
             <div
               className={cn(styles.loadingDot, {
-                [styles.active]: dbState.loadingTabs.get(state.name) === true,
+                [styles.active]:
+                  dbState.loadingTabs.get(
+                    (getTypeInfo(state) as ModelTypeInfo).modelType
+                  ) === true,
               })}
             />
           ) : null}
