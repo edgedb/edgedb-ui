@@ -166,6 +166,18 @@ export function TypeLink({
         </>
       );
     }
+    if (type.schemaType === "Object" && type.unionOf?.length) {
+      const parts: (JSX.Element | string)[] = [
+        <Fragment key={0}>{wrapLink(type.unionOf[0])}</Fragment>,
+      ];
+      for (let i = 1; i < type.unionOf.length; i++) {
+        parts.push(
+          " | ",
+          <Fragment key={i}>{wrapLink(type.unionOf[i])}</Fragment>
+        );
+      }
+      return <>{parts}</>;
+    }
 
     return (
       <span

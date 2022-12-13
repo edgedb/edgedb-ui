@@ -32,7 +32,9 @@ export function ExtensionRenderer({
         >
           <CopyHighlight>
             <Keyword>using extension</Keyword>{" "}
-            {nameMatch ? highlightString(type.name, nameMatch) : type.name}
+            {nameMatch
+              ? highlightString(type.name, nameMatch as number[])
+              : type.name}
             <Punc>;</Punc>
           </CopyHighlight>
         </ItemHeader>
