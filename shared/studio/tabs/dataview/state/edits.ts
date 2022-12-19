@@ -432,9 +432,12 @@ export class DataEditingManager extends Model({}) {
             !prop.expr &&
             insertEdit.data[prop.name] == null
         ),
-
         ...Object.values(type.links).filter(
-          (link) => link.required && !link.default && !setLinks.has(link.name)
+          (link) =>
+            link.required &&
+            !link.default &&
+            !link.expr &&
+            !setLinks.has(link.name)
         ),
       ];
 
