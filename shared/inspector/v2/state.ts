@@ -14,6 +14,7 @@ import {
 import {action, observable} from "mobx";
 import {_ICodec} from "edgedb";
 import {Item, buildItem, expandItem, ItemType} from "./buildItem";
+import type {VariableSizeList as List} from "react-window";
 
 export type {Item};
 
@@ -58,6 +59,8 @@ export class InspectorState extends Model({
   }
 
   loadNestedData: NestedDataGetter | null = null;
+
+  listRef: List | null = null;
 
   getItems() {
     if (!this._items.length) {
@@ -136,6 +139,8 @@ export class InspectorState extends Model({
       this
     );
     this._items.splice(index + 1, 0, ...expandedItems);
+
+    this.listRef?.resetAfterIndex(index);
   }
 
   @modelAction
@@ -153,5 +158,7 @@ export class InspectorState extends Model({
         this._items.splice(index + 1, itemEndIndex - index);
       }
     }
+
+    this.listRef?.resetAfterIndex(index);
   }
 }

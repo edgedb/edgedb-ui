@@ -15,6 +15,7 @@ import {
   HTMLAttributes,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -95,8 +96,15 @@ const RowList = observer(function RowList({
       }
     }
 
+    const listRef = useRef<List>(null);
+
+    useEffect(() => {
+      state.listRef = listRef.current;
+    }, []);
+
     return (
       <List<Item[]>
+        ref={listRef}
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonMode,
         })}
