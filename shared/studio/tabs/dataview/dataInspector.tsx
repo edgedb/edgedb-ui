@@ -338,9 +338,9 @@ const GridCell = observer(function GridCell({
   const cellEditState = edits.propertyEdits.get(cellId);
   const linkEditState = edits.linkEdits.get(cellId);
 
-  const editedLinkChange =
-    state.parentObject &&
-    edits.linkEdits.get(state.parentObject.linkId)?.changes.get(data?.id);
+  const editedLink =
+    state.parentObject && edits.linkEdits.get(state.parentObject.linkId);
+  const editedLinkChange = editedLink?.changes.get(data?.id);
 
   const value =
     cellEditState?.value !== undefined
@@ -422,10 +422,12 @@ const GridCell = observer(function GridCell({
       const countData = data?.[`__count_${field.queryName}`];
       if (countData !== null || insertedRow) {
         const counts: {[typename: string]: number} =
-          countData?.reduce((counts: any, {typename, count}: any) => {
-            counts[typename] = count;
-            return counts;
-          }, {}) ?? {};
+          field.multi || !linkEditState
+            ? countData.reduce((counts: any, {typename, count}: any) => {
+                counts[typename] = count;
+                return counts;
+              }, {})
+            : {};
 
         if (linkEditState) {
           for (const change of linkEditState.changes.values()) {
@@ -479,7 +481,12 @@ const GridCell = observer(function GridCell({
         [styles.loadingCell]: !data,
         [styles.isDeleted]:
           isDeletedRow ||
-          editedLinkChange?.kind === UpdateLinkChangeKind.Remove,
+          editedLinkChange?.kind === UpdateLinkChangeKind.Remove ||
+          (!state.parentObject?.isMultiLink &&
+            !!editedLink &&
+            (state.parentObject?.editMode
+              ? !!data?.__isLinked
+              : !editedLinkChange)),
         [styles.editableCell]:
           !isDeletedRow &&
           isEditable &&
@@ -718,12 +725,21 @@ const DataRowIndex = observer(function DataRowIndex({
 
   const editedLinkChange = editedLink?.changes.get(data?.id);
 
+  const hasLinkEdit = state.parentObject?.editMode
+    ? !!editedLinkChange ||
+      (!state.parentObject?.isMultiLink &&
+        editedLink != null &&
+        !!data?.__isLinked)
+    : state.parentObject?.isMultiLink
+    ? !!editedLinkChange
+    : !!editedLink;
+
   return (
     <>
       <div
         className={cn(styles.rowIndex, {
           [styles.active]: active,
-          [styles.hasLinkEdit]: !!editedLinkChange || dataIndex === null,
+          [styles.hasLinkEdit]: hasLinkEdit || dataIndex === null,
         })}
         style={{top: styleTop}}
         onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
@@ -760,7 +776,7 @@ const DataRowIndex = observer(function DataRowIndex({
                               state.parentObject!.subtypeName ??
                                 state.parentObject!.objectTypeName,
                               state.parentObject!.fieldName,
-                              state.objectType!.name,
+                              state.objectType!,
                               data.__isLinked
                                 ? UpdateLinkChangeKind.Remove
                                 : UpdateLinkChangeKind.Add,
@@ -774,7 +790,7 @@ const DataRowIndex = observer(function DataRowIndex({
                             state.parentObject!.subtypeName ??
                               state.parentObject!.objectTypeName,
                             state.parentObject!.fieldName,
-                            state.objectType!.name,
+                            state.objectType!,
                             state.insertedRows[rowIndex]
                           );
                         }
@@ -803,7 +819,7 @@ const DataRowIndex = observer(function DataRowIndex({
                               state.parentObject!.subtypeName ??
                                 state.parentObject!.objectTypeName,
                               state.parentObject!.fieldName,
-                              state.objectType!.name,
+                              state.objectType!,
                               UpdateLinkChangeKind.Set,
                               data.id,
                               data.__tname__
@@ -815,7 +831,7 @@ const DataRowIndex = observer(function DataRowIndex({
                             state.parentObject!.subtypeName ??
                               state.parentObject!.objectTypeName,
                             state.parentObject!.fieldName,
-                            state.objectType!.name,
+                            state.objectType!,
                             state.insertedRows[rowIndex],
                             true
                           );
