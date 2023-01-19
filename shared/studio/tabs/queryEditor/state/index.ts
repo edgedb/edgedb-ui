@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, runInAction} from "mobx";
 import {
   model,
   Model,
@@ -52,6 +52,10 @@ import {QueryBuilderState} from "../../../components/visualQuerybuilder/state";
 import {ObservableLRU} from "../../../state/utils/lru";
 import {extendedViewerIds} from "../../../components/extendedViewers";
 import {sessionStateCtx} from "../../../state/sessionState";
+import {
+  createExplainState,
+  ExplainState,
+} from "../../../components/explainVis/state";
 
 export enum EditorKind {
   EdgeQL,
@@ -92,6 +96,22 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
     }
     return state ?? null;
   }
+
+  get explainState() {
+    const queryEditor = queryEditorCtx.get(this)!;
+    const state = queryEditor.explainStateCache.get(this.$modelId);
+    if (!state) {
+      fetchResultData(this.$modelId).then((resultData) => {
+        if (resultData) {
+          const explainState = createExplainState(
+            decode(resultData.outCodecBuf, resultData.resultBuf)![0]
+          );
+          queryEditor.explainStateCache.set(this.$modelId, explainState);
+        }
+      });
+    }
+    return state ?? null;
+  }
 }
 
 @model("QueryEditor/HistoryErrorItem")
@@ -128,6 +148,8 @@ export class QueryEditor extends Model({
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
+
+  showExplain: prop(false).withSetter(),
 }) {
   @observable queryRunning = false;
 
@@ -141,14 +163,14 @@ export class QueryEditor extends Model({
   currentResult: QueryHistoryItem | null = null;
 
   @observable
-  showErrorUnderline = false;
+  showEditorResultDecorations = false;
 
   @action
   setCurrentQueryData<T extends EditorKind>(kind: T, data: QueryData[T]) {
     this.currentQueryData[kind] = data;
     this.historyCursor = -1;
     if (kind === EditorKind.EdgeQL) {
-      this.showErrorUnderline = false;
+      this.showEditorResultDecorations = false;
     }
   }
 
@@ -219,6 +241,7 @@ export class QueryEditor extends Model({
   });
 
   resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
+  explainStateCache = new ObservableLRU<string, ExplainState>(10);
 
   @observable.ref
   extendedViewerItem: Item | null = null;
@@ -267,7 +290,7 @@ export class QueryEditor extends Model({
     this.draftQueryData = {
       selectedEditor: this.selectedEditor,
       currentResult: this.currentResult,
-      showErrorUnderline: this.showErrorUnderline,
+      showErrorUnderline: this.showEditorResultDecorations,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
         params: this.queryParamsEditor.getParamsData(),
@@ -290,7 +313,7 @@ export class QueryEditor extends Model({
 
       this.setSelectedEditor(draft.selectedEditor);
       this.currentResult = draft.currentResult;
-      this.showErrorUnderline = draft.showErrorUnderline;
+      this.showEditorResultDecorations = draft.showErrorUnderline;
     }
   }
 
@@ -319,7 +342,7 @@ export class QueryEditor extends Model({
           this.queryParamsEditor.restoreParamsData(
             queryData.data.params?.data
           );
-          this.showErrorUnderline = true;
+          this.showEditorResultDecorations = true;
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
@@ -389,13 +412,19 @@ export class QueryEditor extends Model({
         implicitLimit: data.implicitLimit,
       });
       if (data.result) {
-        this.resultInspectorCache.set(
-          historyItem.$modelId,
-
-          createInspector(data.result, data.implicitLimit, (item) =>
-            this.setExtendedViewerItem(item)
-          )
-        );
+        if (data.status.toLowerCase() === "explain") {
+          this.explainStateCache.set(
+            historyItem.$modelId,
+            createExplainState(data.result[0])
+          );
+        } else {
+          this.resultInspectorCache.set(
+            historyItem.$modelId,
+            createInspector(data.result, data.implicitLimit, (item) =>
+              this.setExtendedViewerItem(item)
+            )
+          );
+        }
         resultData = {
           outCodecBuf: data.outCodecBuf,
           resultBuf: data.resultBuf,
@@ -522,7 +551,7 @@ export class QueryEditor extends Model({
       this._runStatement(query, paramsData)
     );
     if (selectedEditor === EditorKind.EdgeQL) {
-      this.showErrorUnderline = true;
+      this.showEditorResultDecorations = true;
     }
 
     dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);

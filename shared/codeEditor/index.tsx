@@ -80,12 +80,45 @@ function getErrorExtension(range: [number, number], doc: Text) {
     return [];
   }
 
-  const decos: Range<Decoration>[] = [errorUnderlineMark.range(...range)];
+  const decos: Range<Decoration>[] =
+    range[0] !== range[1] ? [errorUnderlineMark.range(...range)] : [];
 
   const startLine = doc.lineAt(range[0]).number;
   const endLine = doc.lineAt(range[1]).number;
   for (let i = startLine; i <= endLine; i++) {
     decos.push(errorLineHighlight.range(doc.line(i).from));
+  }
+
+  return EditorView.decorations.of(RangeSet.of(decos, true));
+}
+
+const explainContextsComp = new Compartment();
+
+type ExplainContexts = {
+  id: number;
+  start: number;
+  end: number;
+  selfPercent: number;
+  selected: boolean;
+}[];
+
+function getExplainContextsExtension(contexts: ExplainContexts) {
+  const decos: Range<Decoration>[] = [];
+
+  for (const ctx of contexts) {
+    decos.push(
+      Decoration.mark({
+        class: cn(styles.explainContextMark, {
+          [styles.selected]: ctx.selected,
+        }),
+        attributes: {
+          style: `background-color: ${`hsl(0, 100%, ${
+            100 - ctx.selfPercent / 2
+          }%)`}`,
+          "data-ctx-id": ctx.id.toString(),
+        },
+      }).range(ctx.start, ctx.end)
+    );
   }
 
   return EditorView.decorations.of(RangeSet.of(decos, true));
@@ -125,9 +158,11 @@ export interface CodeEditorProps {
   noPadding?: boolean;
   renderWhitespace?: boolean;
   errorUnderline?: [number, number];
+  explainContexts?: ExplainContexts;
 }
 
 export interface CodeEditorRef {
+  ref: HTMLDivElement;
   focus: () => void;
   dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) => void;
 }
@@ -156,6 +191,7 @@ export function createCodeEditor({
     schemaObjects,
     renderWhitespace,
     errorUnderline,
+    explainContexts,
   }: {
     doc: Text;
     onChange: (value: Text) => void;
@@ -165,6 +201,7 @@ export function createCodeEditor({
     schemaObjects?: Map<string, SchemaObjectType>;
     renderWhitespace?: boolean;
     errorUnderline?: [number, number];
+    explainContexts?: ExplainContexts;
   }) {
     return EditorState.create({
       doc,
@@ -230,6 +267,9 @@ export function createCodeEditor({
         errorUnderlineComp.of(
           errorUnderline ? getErrorExtension(errorUnderline, doc) : []
         ),
+        explainContextsComp.of(
+          explainContexts ? getExplainContextsExtension(explainContexts) : []
+        ),
         customExtensions,
       ],
     });
@@ -246,17 +286,23 @@ export function createCodeEditor({
       useDarkTheme,
       renderWhitespace,
       errorUnderline,
+      explainContexts,
     }: CodeEditorProps,
     componentRef
   ) {
     const ref = useRef<HTMLDivElement>(null);
     const view = useRef<EditorView | null>(null);
 
-    useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
-      focus: () => view.current?.focus(),
-      dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
-        view.current?.dispatch({effects}),
-    }));
+    useImperativeHandle<unknown, CodeEditorRef>(
+      componentRef,
+      () => ({
+        ref: ref.current,
+        focus: () => view.current?.focus(),
+        dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
+          view.current?.dispatch({effects}),
+      }),
+      [ref]
+    );
 
     useEffect(() => {
       if (ref.current) {
@@ -270,6 +316,7 @@ export function createCodeEditor({
             schemaObjects,
             renderWhitespace,
             errorUnderline,
+            explainContexts,
           }),
           parent: ref.current,
         });
@@ -292,6 +339,7 @@ export function createCodeEditor({
             schemaObjects,
             renderWhitespace,
             errorUnderline,
+            explainContexts,
           })
         );
       }
@@ -378,6 +426,14 @@ export function createCodeEditor({
         ),
       });
     }, [errorUnderline]);
+
+    useLayoutEffect(() => {
+      view.current?.dispatch({
+        effects: explainContextsComp.reconfigure(
+          explainContexts ? getExplainContextsExtension(explainContexts) : []
+        ),
+      });
+    }, [explainContexts]);
 
     useEffect(() => {
       if (!noPadding && ref.current?.firstChild) {

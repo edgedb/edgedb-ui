@@ -1,0 +1,261 @@
+@import "@edgedb/common/mixins.scss";
+
+.explainVisTesting {
+  position: absolute;
+  inset: 0;
+  background: var(--app-panel-bg);
+  z-index: 100;
+  overflow: auto;
+
+  .main {
+    display: flex;
+    margin: 0 16px;
+  }
+
+  .planTree {
+    margin: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .plainNodeWrapper {
+  }
+
+  .planNode {
+    position: relative;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    padding: 8px;
+    padding-left: 8px + 12px;
+    margin: 4px;
+    width: max-content;
+    min-width: 200px;
+
+    &.noContexts .planContent {
+      opacity: 0.5;
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    column-gap: 8px;
+    width: max-content;
+  }
+
+  .planSubTree {
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .heatBar {
+    position: absolute;
+    width: 12px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: 6px 0 0 6px;
+  }
+}
+
+.explainVis {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 22px); // temp
+}
+
+.graphScale {
+  margin: 0 8px;
+  margin-top: 6px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+
+  &:before,
+  &:after {
+    content: "";
+    flex-grow: 1;
+    border-top: 1px solid #ccc;
+    height: 4px;
+    margin-top: 4px;
+  }
+  &:before {
+    margin-right: 6px;
+    border-left: 1px solid #ccc;
+  }
+  &:after {
+    margin-left: 6px;
+    border-right: 1px solid #ccc;
+  }
+}
+
+.flamegraph {
+  flex-grow: 1;
+  overflow: auto;
+
+  @include hideScrollbar;
+
+  &Node {
+  }
+
+  &Bar {
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    padding: 4px 0;
+    white-space: nowrap;
+    border-radius: 3px;
+    margin: 0.5px;
+    // background-clip: padding-box;
+    cursor: pointer;
+
+    .overflowContainer {
+      overflow: hidden;
+      position: sticky;
+      left: 4px;
+      width: max-content;
+      max-width: 100%;
+
+      > span {
+        margin: 4px;
+      }
+    }
+
+    &.selected {
+      border-color: rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  &SubNodes {
+    display: flex;
+  }
+}
+
+.planDetailsContainer {
+  font-family: Inter;
+}
+
+.planDetails {
+  background: #ececec;
+  border-radius: 6px;
+  margin: 12px;
+  padding: 12px;
+  font-family: "Inter";
+
+  .header {
+    font-weight: 500;
+    font-size: 15px;
+    margin-bottom: 6px;
+
+    .nodeType {
+      color: #313131;
+      margin-right: 14px;
+    }
+
+    .stats {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    column-gap: 8px;
+    width: max-content;
+    color: #414141;
+    line-height: 22px;
+
+    .label {
+      text-align: end;
+      opacity: 0.8;
+    }
+  }
+}
+
+.noSelectedPlanDetails {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.explainHeader {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin: 4px 16px;
+  margin-top: 12px;
+
+  > :last-child {
+    display: flex;
+    justify-content: end;
+  }
+
+  .typeSwitcher {
+    display: flex;
+    align-items: center;
+    padding: 0 3px;
+    height: 28px;
+    background: #e6e6e6;
+    border-radius: 14px;
+    margin: 0 16px;
+  }
+
+  .switcherButton {
+    height: 22px;
+    display: flex;
+
+    align-items: center;
+    border-radius: 11px;
+    padding: 0 12px;
+    font-family: "Inter";
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #656565;
+    cursor: pointer;
+
+    &.selected {
+      background: #f5f5f5;
+    }
+
+    &.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+  }
+
+  .copyRawDataButton {
+    display: flex;
+    height: 28px;
+    align-items: center;
+    background: #e8e8e8;
+    border-radius: 14px;
+    padding: 0 12px;
+    font-family: "Inter";
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #5b5b5b;
+    cursor: pointer;
+  }
+
+  .rerunWithAnalyze {
+    font-family: "Inter";
+    text-align: end;
+
+    .message {
+      font-size: 14px;
+      font-style: italic;
+      opacity: 0.7;
+    }
+
+    .button {
+      color: #1f8aed;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+}
