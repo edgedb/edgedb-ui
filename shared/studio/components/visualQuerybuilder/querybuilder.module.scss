@@ -88,13 +88,14 @@
     border-bottom-color: var(--inputBorderColour, #d4d4d4);
     outline: 0;
     padding: 0 6px;
+    color: var(--form-field-text-colour);
 
     &.error {
       --inputBorderColour: red;
     }
 
     &:focus {
-      background: #fff;
+      background: var(--app-bg);
       border-color: var(--inputBorderColour, #047cff);
       border-radius: 4px;
     }
@@ -103,14 +104,14 @@
   &:hover {
     & > input:not(:focus),
     & > .filterExpr > input:not(:focus) {
-      background: #fff;
+      background: var(--app-bg);
       border-color: var(--inputBorderColour, #bbb);
       border-radius: 4px;
     }
 
     & > .select,
     & > .filterExpr > .select {
-      background: #fff;
+      background: var(--app-bg);
       --dropdownButtonColour: #aaa;
     }
   }
@@ -160,7 +161,7 @@
 
   &.nested {
     margin-left: 1ch;
-    background: #ebebeb;
+    background: var(--form-group-bg);
     padding: 6px;
     margin-bottom: 6px;
 
@@ -190,6 +191,31 @@
 
   &:hover > .modRow:last-child {
     opacity: 1;
+  }
+}
+
+.checkbox {
+  margin-right: 6px;
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+  &:after {
+    content: " ";
+    display: inline-block;
+    position: relative;
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    background: var(--app-panel-bg);
+    border: 1px solid var(--app-text-colour);
+    border-radius: 2px;
+  }
+  &.checked {
+    &:after {
+      border: 1px solid var(--app-bg);
+      background: var(--app-bg);
+      background-image: url("../../../icons/checkbox_checked.svg");
+    }
   }
 }
 
