@@ -71,6 +71,7 @@
 .modRow {
   display: flex;
   padding: 2px 0;
+  margin: 8px 0;
   margin-left: 2ch;
 
   &.indent {
@@ -81,36 +82,38 @@
     background: none;
     font-family: inherit;
     font-size: inherit;
-    line-height: 26px;
-    margin: -1px 0;
-    margin-left: 0.5ch;
-    border: 2px solid transparent;
-    border-bottom-color: var(--inputBorderColour, #d4d4d4);
+    margin-left: 4px;
+    border: 1px solid var(--inputBorderColour, #d4d4d4);
+    border-radius: 4px;
     outline: 0;
     padding: 0 6px;
+    color: var(--form-field-text-colour);
+    box-sizing: border-box;
+    width: 201px;
 
-    &.error {
-      --inputBorderColour: red;
+    &:focus,
+    &:hover {
+      background: var(--app-bg);
+      border-color: var(--inputBorderColour, #047cff);
+      border-width: 2px;
     }
 
-    &:focus {
-      background: #fff;
-      border-color: var(--inputBorderColour, #047cff);
-      border-radius: 4px;
+    &.error {
+      --inputBorderColour: var(--app-err-color);
     }
   }
 
   &:hover {
     & > input:not(:focus),
     & > .filterExpr > input:not(:focus) {
-      background: #fff;
+      background: var(--app-bg);
       border-color: var(--inputBorderColour, #bbb);
       border-radius: 4px;
     }
 
     & > .select,
     & > .filterExpr > .select {
-      background: #fff;
+      background: var(--app-bg);
       --dropdownButtonColour: #aaa;
     }
   }
@@ -160,12 +163,12 @@
 
   &.nested {
     margin-left: 1ch;
-    background: #ebebeb;
+    background: var(--form-group-bg);
     padding: 6px;
     margin-bottom: 6px;
 
     & > .modRow {
-      margin-left: 0;
+      margin: 8px 0;
 
       &.indent {
         margin-left: 2ch;
@@ -190,6 +193,24 @@
 
   &:hover > .modRow:last-child {
     opacity: 1;
+  }
+}
+
+.checkbox {
+  appearance: none;
+  cursor: pointer;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid var(--app-text-colour);
+  border-radius: 2px;
+  background: var(--app-panel-bg);
+
+  &:checked {
+    border: 1px solid var(--app-bg);
+    background: var(--app-bg);
+    background-image: url("../../icons/checkbox_checked.svg");
   }
 }
 
@@ -219,7 +240,7 @@
     opacity: 1 !important;
 
     svg {
-      fill: #ff4242;
+      fill: var(--app-err-color);
     }
   }
 

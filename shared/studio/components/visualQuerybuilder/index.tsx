@@ -1,6 +1,4 @@
 import {observer} from "mobx-react";
-import {useState} from "react";
-import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 import {useDatabaseState, useTabState} from "../../state";
 import {SchemaData} from "../../state/database";
@@ -156,6 +154,7 @@ const QueryBuilderShapeRenderer = observer(
                   <label>
                     <input
                       type="checkbox"
+                      className={styles.checkbox}
                       checked={shape.props.has(`@${name}`)}
                       onChange={(e) =>
                         shape.toggleProp(`@${name}`, e.target.checked)
@@ -181,6 +180,7 @@ const QueryBuilderShapeRenderer = observer(
                   >
                     <input
                       type="checkbox"
+                      className={styles.checkbox}
                       checked={shape.props.has(pointer.name)}
                       onChange={(e) =>
                         shape.toggleProp(
@@ -203,6 +203,7 @@ const QueryBuilderShapeRenderer = observer(
                       <label>
                         <input
                           type="checkbox"
+                          className={styles.checkbox}
                           checked={shape.links.has(pointer.name)}
                           onChange={(e) =>
                             shape.toggleLink(
