@@ -71,6 +71,7 @@
 .modRow {
   display: flex;
   padding: 2px 0;
+  margin: 8px 0;
   margin-left: 2ch;
 
   &.indent {
@@ -84,20 +85,21 @@
     line-height: 26px;
     margin: -1px 0;
     margin-left: 0.5ch;
-    border: 2px solid transparent;
-    border-bottom-color: var(--inputBorderColour, #d4d4d4);
+    border: 1px solid var(--inputBorderColour, #d4d4d4);
+    border-radius: 4px;
     outline: 0;
     padding: 0 6px;
     color: var(--form-field-text-colour);
 
-    &.error {
-      --inputBorderColour: red;
-    }
-
-    &:focus {
+    &:focus,
+    &:hover {
       background: var(--app-bg);
       border-color: var(--inputBorderColour, #047cff);
-      border-radius: 4px;
+      border-width: 2px;
+    }
+
+    &.error {
+      --inputBorderColour: var(--app-err-color);
     }
   }
 
@@ -166,7 +168,7 @@
     margin-bottom: 6px;
 
     & > .modRow {
-      margin-left: 0;
+      margin: 8px 0;
 
       &.indent {
         margin-left: 2ch;
@@ -195,27 +197,20 @@
 }
 
 .checkbox {
-  margin-right: 6px;
+  appearance: none;
+  cursor: pointer;
   width: 12px;
   height: 12px;
-  cursor: pointer;
-  &:after {
-    content: " ";
-    display: inline-block;
-    position: relative;
-    width: 12px;
-    height: 12px;
-    margin-right: 4px;
-    background: var(--app-panel-bg);
-    border: 1px solid var(--app-text-colour);
-    border-radius: 2px;
-  }
-  &.checked {
-    &:after {
-      border: 1px solid var(--app-bg);
-      background: var(--app-bg);
-      background-image: url("../../icons/checkbox_checked.svg");
-    }
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid var(--app-text-colour);
+  border-radius: 2px;
+  background: var(--app-panel-bg);
+
+  &:checked {
+    border: 1px solid var(--app-bg);
+    background: var(--app-bg);
+    background-image: url("../../icons/checkbox_checked.svg");
   }
 }
 
@@ -245,7 +240,7 @@
     opacity: 1 !important;
 
     svg {
-      fill: #ff4242;
+      fill: var(--app-err-color);
     }
   }
 

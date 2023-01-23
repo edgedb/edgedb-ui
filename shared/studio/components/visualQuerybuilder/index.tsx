@@ -154,9 +154,7 @@ const QueryBuilderShapeRenderer = observer(
                   <label>
                     <input
                       type="checkbox"
-                      className={cn(styles.checkbox, {
-                        [styles.checked]: shape.props.has(`@${name}`),
-                      })}
+                      className={styles.checkbox}
                       checked={shape.props.has(`@${name}`)}
                       onChange={(e) =>
                         shape.toggleProp(`@${name}`, e.target.checked)
@@ -182,9 +180,7 @@ const QueryBuilderShapeRenderer = observer(
                   >
                     <input
                       type="checkbox"
-                      className={cn(styles.checkbox, {
-                        [styles.checked]: shape.props.has(pointer.name),
-                      })}
+                      className={styles.checkbox}
                       checked={shape.props.has(pointer.name)}
                       onChange={(e) =>
                         shape.toggleProp(
@@ -207,9 +203,7 @@ const QueryBuilderShapeRenderer = observer(
                       <label>
                         <input
                           type="checkbox"
-                          className={cn(styles.checkbox, {
-                            [styles.checked]: shape.links.has(pointer.name),
-                          })}
+                          className={styles.checkbox}
                           checked={shape.links.has(pointer.name)}
                           onChange={(e) =>
                             shape.toggleLink(
