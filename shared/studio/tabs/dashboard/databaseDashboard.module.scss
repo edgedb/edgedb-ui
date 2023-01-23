@@ -63,16 +63,23 @@
 
   .button.button {
     margin: 4px;
+    width: 228px;
 
     & > div {
-      padding: 25px 42px;
-      border-radius: 8px;
+      padding: 24px 34px;
+      border-radius: 4px;
+      justify-content: center;
     }
 
     svg {
       fill: currentColor;
+      margin-right: 12px;
       width: 24px;
       height: 24px;
+    }
+
+    span {
+      margin: unset;
     }
   }
 

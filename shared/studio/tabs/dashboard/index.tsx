@@ -78,7 +78,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
             <Button
               className={styles.button}
-              label="Browse Schema"
+              label="Schema Viewer"
               size="large"
               icon={<TabSchemaIcon />}
               leftIcon
@@ -87,7 +87,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
             <Button
               className={styles.button}
-              label="Browse Data"
+              label="Data Viewer"
               size="large"
               icon={<TabDataExplorerIcon />}
               leftIcon
