@@ -57,6 +57,7 @@
   .headerAscii {
     white-space: pre;
     font-size: 14px;
+    line-height: 16px;
     color: #cc960a;
 
     span {
@@ -65,7 +66,7 @@
   }
 
   .headerMsg {
-    margin-top: 16px;
+    margin-top: 32px;
     opacity: 0.7;
 
     span {
