@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import {observer} from "mobx-react-lite";
 import {useNavigate} from "react-router-dom";
 
@@ -24,6 +24,7 @@ import {
   TabDataExplorerIcon,
   TabReplIcon,
   TabSchemaIcon,
+  TabEditorIcon,
 } from "../../icons";
 
 export const DatabaseDashboard = observer(function DatabaseDashboard() {
@@ -68,7 +69,16 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
             <Button
               className={styles.button}
-              label="Browse Schema"
+              label="Open Editor"
+              size="large"
+              icon={<TabEditorIcon />}
+              leftIcon
+              onClick={() => navigate("editor")}
+            ></Button>
+
+            <Button
+              className={styles.button}
+              label="Schema Viewer"
               size="large"
               icon={<TabSchemaIcon />}
               leftIcon
@@ -77,7 +87,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
             <Button
               className={styles.button}
-              label="Browse Data"
+              label="Data Viewer"
               size="large"
               icon={<TabDataExplorerIcon />}
               leftIcon
