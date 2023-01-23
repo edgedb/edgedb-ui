@@ -68,18 +68,16 @@ export function HeaderTabs({className}: HeaderTabsProps) {
 export function TabSep() {
   return (
     <svg
-      width="16"
-      height="24"
-      viewBox="0 0 16 30"
+      width="8"
+      height="17"
+      viewBox="0 0 8 17"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={styles.tabSep}
     >
       <path
-        d="M 1,29 L 15,1"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinecap="round"
+        d="M7.66602 0.78125L1.73828 16.2207H0.185547L6.12305 0.78125H7.66602Z"
+        fill="currentColor"
       />
     </svg>
   );
