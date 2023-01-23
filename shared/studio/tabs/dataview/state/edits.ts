@@ -5,6 +5,7 @@ import {
   getNameOfSchemaType,
   SchemaType,
   escapeName,
+  SchemaObjectType,
 } from "@edgedb/common/schemaData";
 
 import {connCtx, dbCtx} from "../../../state";
@@ -197,7 +198,7 @@ export class DataEditingManager extends Model({}) {
     objectId: string | number,
     objectTypeName: string,
     fieldName: string,
-    linkTypeName: string,
+    linkType: SchemaObjectType,
     kind: UpdateLinkChangeKind,
     linkObjectId: string,
     linkObjectTypename: string
@@ -212,8 +213,7 @@ export class DataEditingManager extends Model({}) {
         escapedObjectTypeName: escapeName(objectTypeName, true),
         fieldName,
         escapedFieldName: escapeName(fieldName, false),
-        linkTypeName,
-        escapedLinkTypeName: escapeName(linkTypeName, true),
+        ...getLinkTypeName(linkType),
         changes: new Map(),
         inserts: new Set(),
       });
@@ -258,7 +258,7 @@ export class DataEditingManager extends Model({}) {
     objectId: string | number,
     objectTypeName: string,
     fieldName: string,
-    linkTypeName: string,
+    linkType: SchemaObjectType,
     insertedRow: InsertObjectEdit,
     setLink: boolean = false
   ) {
@@ -272,8 +272,7 @@ export class DataEditingManager extends Model({}) {
         escapedObjectTypeName: escapeName(objectTypeName, true),
         fieldName,
         escapedFieldName: escapeName(fieldName, false),
-        linkTypeName,
-        escapedLinkTypeName: escapeName(linkTypeName, true),
+        ...getLinkTypeName(linkType),
         changes: new Map(),
         inserts: new Set(),
       });
@@ -533,6 +532,24 @@ set {
 
     runInAction(() => this.propertyEdits.clear());
   }
+}
+
+function getLinkTypeName(type: SchemaObjectType): {
+  linkTypeName: string;
+  escapedLinkTypeName: string;
+} {
+  if (type.unionOf) {
+    return {
+      linkTypeName: `{${type.unionOf.map((utype) => utype.name).join(", ")}}`,
+      escapedLinkTypeName: `{${type.unionOf
+        .map((utype) => utype.escapedName)
+        .join(", ")}}`,
+    };
+  }
+  return {
+    linkTypeName: type.name,
+    escapedLinkTypeName: type.escapedName,
+  };
 }
 
 export function generateQueryFromStatements(

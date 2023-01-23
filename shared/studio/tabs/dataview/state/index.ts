@@ -152,7 +152,7 @@ export class DataView extends Model({
 
       const stackItem = this.inspectorStack[i + 1];
       const pointers = subtypeName
-        ? parentSchemaObject.descendents.find(
+        ? (parentSchemaObject.unionOf ?? parentSchemaObject.descendents).find(
             (desc) => desc.name === subtypeName
           )?.pointers
         : parentSchemaObject.pointers;
