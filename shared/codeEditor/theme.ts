@@ -140,9 +140,6 @@ export const darkTheme = EditorView.theme(
     ".cm-tab": {
       color: "#e5e5e5",
     },
-    ".cm-content": {
-      caretColor: "blue",
-    },
   }),
   {dark: true}
 );
