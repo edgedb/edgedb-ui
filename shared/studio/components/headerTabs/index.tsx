@@ -1,4 +1,3 @@
-import {useLayoutEffect, useState} from "react";
 import {createPortal} from "react-dom";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -26,18 +25,16 @@ export function HeaderTab({
     return createPortal(
       <>
         {depth ? <TabSep /> : null}
-        <div className={styles.tab}>
-          <Select
-            title={
-              <>
-                {icon}
-                {title}
-              </>
-            }
-            titleClassName={styles.tabTitle}
-            {...selectProps}
-          />
-        </div>
+        <Select
+          title={
+            <>
+              {icon}
+              {title}
+            </>
+          }
+          className={styles.tab}
+          {...selectProps}
+        />
       </>,
       targetEl
     );

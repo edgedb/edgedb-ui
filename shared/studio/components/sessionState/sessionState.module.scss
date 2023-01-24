@@ -7,28 +7,25 @@
 
 .stateButton {
   position: relative;
-  height: 32px;
   display: flex;
   align-items: center;
-  font-weight: 500;
-  color: var(--header-tab-text-colour);
-  padding: 0 6px;
+  font-weight: 600;
+  color: var(--font-inactive-gray);
+  padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
 
   .icon {
-    fill: #adadad;
+    fill: var(--font-inactive-gray);
     margin-right: 8px;
   }
 
   .chevron {
-    width: 10px;
-    margin-left: 6px;
-    color: #828282;
+    margin-left: 8px;
+    color: var(--font-inactive-gray);
     path {
-      stroke-width: 2px;
+      stroke-width: 1px;
     }
-    opacity: 0.5;
   }
 
   .tabArrow {
@@ -47,14 +44,15 @@
 
   &:hover,
   &.open {
-    background: rgba(0, 0, 0, 0.05);
-
-    .chevron {
-      opacity: 1;
+    background: var(--app-bg-gray);
+    color: var(--font-active-gray);
+    .icon {
+      fill: var(--font-active-gray);
+      margin-right: 8px;
     }
 
-    @include darkTheme {
-      background: rgba(255, 255, 255, 0.05);
+    .chevron {
+      color: var(--font-active-gray);
     }
   }
 

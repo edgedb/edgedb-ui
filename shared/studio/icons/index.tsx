@@ -20,19 +20,18 @@ export function ChevronIcon(props: IconProps) {
 export function ChevronDownIcon(props: IconProps) {
   return (
     <svg
-      width="14"
-      height="7"
-      viewBox="0 0 14 7"
+      width="8"
+      height="5"
+      viewBox="0 0 8 5"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
       <path
-        d="M13 1L7 6L1 1"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        fill="currentColor"
+        d="M3.29297 0.292969C3.68359 -0.0976562 4.31641 -0.0976562 4.70703 0.292969L7.70703 3.29297C7.93652 3.52246 8.03125 3.83594 7.99121 4.13477C7.96289 4.34424 7.86816 4.54639 7.70703 4.70703C7.53613 4.87842 7.31836 4.97461 7.09473 4.99561C6.80859 5.02246 6.5127 4.92627 6.29297 4.70703L4 2.41455L1.70703 4.70703C1.31641 5.09766 0.683594 5.09766 0.292969 4.70703C-0.0976562 4.31689 -0.0976562 3.68359 0.292969 3.29297L3.29297 0.292969Z"
       />
     </svg>
   );
