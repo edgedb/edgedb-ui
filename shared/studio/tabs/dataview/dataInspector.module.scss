@@ -382,7 +382,7 @@
 
   .linkObjName {
     background: #0ccb93;
-    color: #fafafa;
+    color: var(--btn-text-hover);
 
     span {
       background: #0db181;
