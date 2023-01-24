@@ -13,6 +13,7 @@
         border: 0;
         margin: 0;
         width: 1ch;
+        background: var(--cursor-color);
         backdrop-filter: grayscale(100%) contrast(1.5) invert(100%);
       }
     }

@@ -37,6 +37,7 @@
   --app-modal-overlay: rgba(0, 0, 0, 0.2);
   --app-modal-bg: #fff;
   --app-err-color: #cd9089;
+  --app-bg-gray: #f5f5f5;
 
   // Header
   --header-tab-text-colour: #3c3c3c;
@@ -56,6 +57,8 @@
   --syntax-orange: #d78100;
   --syntax-comment: #7f7f7f;
   --syntax-mod: #838383;
+
+  --cursor-color: #808080;
 
   @include darkTheme {
     --app-bg: #141414;
@@ -86,5 +89,7 @@
     --syntax-orange: #f4e470;
     --syntax-comment: #7f7f7f;
     --syntax-mod: #9f9f9f;
+
+    --cursor-color: #595959;
   }
 }
