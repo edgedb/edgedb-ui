@@ -10,6 +10,7 @@
   flex-direction: column;
   user-select: none;
   font-size: 14px;
+  line-height: 16px;
   background-color: var(--app-bg);
   color: var(--app-text-colour);
 
@@ -62,6 +63,10 @@
   --font-inactive-gray: #808080;
   --font-active-gray: #666666;
 
+  // Buttons
+  --btn-text-color: #333333;
+  --btn-green: #0ccb93;
+
   @include darkTheme {
     --app-bg: #141414;
     --app-panel-bg: #242424;
@@ -96,5 +101,9 @@
     // Fonts
     --font-inactive-gray: #7d7d7d;
     --font-active-gray: #a6a6a6;
+
+    // Buttons
+    --btn-text-color: #adadad;
+    --btn-green: #29b189;
   }
 }
