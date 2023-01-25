@@ -57,6 +57,8 @@
   --syntax-comment: #7f7f7f;
   --syntax-mod: #838383;
 
+  --btn-text-hover: #fafafa;
+
   @include darkTheme {
     --app-bg: #141414;
     --app-panel-bg: #242424;
@@ -86,5 +88,7 @@
     --syntax-orange: #f4e470;
     --syntax-comment: #7f7f7f;
     --syntax-mod: #9f9f9f;
+
+    --btn-text-hover: #141414;
   }
 }
