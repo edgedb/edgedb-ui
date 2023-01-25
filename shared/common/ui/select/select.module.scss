@@ -10,7 +10,6 @@
 
   &.fullButton {
     cursor: pointer;
-    padding: 6px 10px;
 
     &:hover {
       background: var(--hoverBg);
@@ -24,20 +23,6 @@
 
   @include darkTheme {
     --hoverBg: var(--app-bg-gray);
-  }
-}
-
-.selectLabel {
-  border-radius: 4px;
-  line-height: 32px;
-  flex-grow: 1;
-
-  &.hasAction {
-    cursor: pointer;
-
-    &:hover {
-      background: var(--hoverBg);
-    }
   }
 }
 
