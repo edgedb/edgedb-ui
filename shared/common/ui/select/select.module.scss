@@ -1,11 +1,12 @@
 @import "../../mixins.scss";
 
 .select {
-  --hoverBg: rgba(0, 0, 0, 0.05);
+  --hoverBg: var(--app-bg-gray);
   position: relative;
   display: flex;
   align-items: center;
   border-radius: 4px;
+  color: var(--header-tab-text-colour);
 
   &.fullButton {
     cursor: pointer;
@@ -21,37 +22,18 @@
   }
 
   @include darkTheme {
-    --hoverBg: rgba(255, 255, 255, 0.05);
-  }
-}
-
-.selectLabel {
-  border-radius: 4px;
-  line-height: 32px;
-  color: var(--header-tab-text-colour);
-  padding: 0 6px;
-  flex-grow: 1;
-
-  &.hasAction {
-    cursor: pointer;
-
-    &:hover {
-      background: var(--hoverBg);
-    }
+    --hoverBg: var(--app-bg-gray);
   }
 }
 
 .tabDropdownButton {
   display: flex;
-  padding: 6px 5px;
+  margin-left: 8px;
   border-radius: 4px;
   cursor: pointer;
-  stroke: var(--dropdownButtonColour, #828282);
-  opacity: 0.5;
 
   &:hover {
     background: var(--hoverBg);
-    opacity: 1;
   }
 }
 

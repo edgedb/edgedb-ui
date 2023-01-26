@@ -173,7 +173,6 @@
 }
 
 .headerButtons {
-  // margin-left: auto;
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -189,6 +188,8 @@
   height: 28px;
   border-radius: 14px;
   padding: 0 12px;
+  font-weight: 500;
+  color: var(--btn-text-color);
 
   &:hover {
     background: #cecece;
@@ -288,9 +289,11 @@
   padding: 0 12px;
   margin-left: 8px;
   cursor: pointer;
+  font-weight: 500;
+  color: var(--btn-text-color);
 
   .filterIcon {
-    fill: currentColor;
+    fill: var(--btn-green);
     margin-right: 8px;
   }
 
@@ -308,12 +311,6 @@
 
     .openIcon {
       transform: rotate(180deg);
-    }
-  }
-
-  &.filterActive {
-    .filterIcon {
-      fill: #0ab280;
     }
   }
 }

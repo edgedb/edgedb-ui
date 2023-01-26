@@ -182,7 +182,7 @@ const SessionBarContent = observer(function SessionBarContent() {
       </div>
       {state.draftState ? (
         <div className={styles.openPanel} onClick={() => state.openPanel()}>
-          <div className={styles.openPanelButton}>
+          <div className={styles.panelButton}>
             {overflowCount ? <span>+{overflowCount}</span> : null}
             <ChevronDownIcon />
           </div>

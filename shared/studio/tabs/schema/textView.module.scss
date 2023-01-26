@@ -62,8 +62,11 @@
   background: #e3e3e3;
   height: 28px;
   border-radius: 14px;
-  padding: 0 8px;
+  padding: 0 8px 0 10px;
   margin-left: 0;
+  width: 94px;
+  display: flex;
+  justify-content: space-between;
 
   @include darkTheme {
     background: #242424;
@@ -402,10 +405,6 @@
   &.collapsed {
     transform: rotate(-90deg);
   }
-
-  // .itemHeader & {
-  //   top: 0px;
-  // }
 }
 
 .arrow {

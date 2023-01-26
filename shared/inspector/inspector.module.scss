@@ -32,7 +32,7 @@
 
 .showMore {
   position: absolute;
-  font-family: Inter, "sans-serif";
+  font-family: Roboto, "sans-serif";
   text-transform: uppercase;
   font-size: 12px;
   font-weight: 500;
@@ -226,7 +226,7 @@
 .actionButton {
   display: flex;
   align-items: center;
-  font-family: "Inter";
+  font-family: "Roboto";
   font-style: normal;
   font-weight: 500;
   font-size: 11px;
@@ -244,6 +244,7 @@
 .copyButton {
   svg {
     fill: currentColor;
+    margin-right: 6px;
   }
 }
 
@@ -255,7 +256,7 @@
 }
 
 .resultsHidden {
-  font-family: Inter;
+  font-family: Roboto;
   font-style: italic;
   font-weight: normal;
   display: inline-block;
