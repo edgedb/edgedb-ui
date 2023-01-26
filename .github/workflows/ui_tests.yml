@@ -16,9 +16,9 @@ jobs:
           submodules: true
 
       - name: Set up Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: lts
+          node-version: lts/*
 
       - name: Install EdgeDB
         uses: edgedb/setup-edgedb@v1
@@ -31,14 +31,12 @@ jobs:
       - name: Set up chromedriver
         uses: nanasess/setup-chromedriver@v1
 
-      - name: cd web
-        run: |
-          cd web
-
       - name: Install dev deps
+        working-directory: web
         run: |
           yarn
 
       - name: Run tests
+        working-directory: web
         run: |
           yarn test
