@@ -31,7 +31,7 @@
   "scripts": {
     "start": "BROWSER=none craco start",
     "build": "craco build",
-    "test": "react-scripts test",
+    "test": "jest",
     "eject": "react-scripts eject",
     "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server",
     "open-browser": "node openBrowser.js"
@@ -55,6 +55,10 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^6.4.3"
+    "@craco/craco": "^6.4.3",
+    "@types/selenium-webdriver": "^4.1.10",
+    "jest": "^29.4.0",
+    "selenium-webdriver": "^4.8.0",
+    "ts-jest": "^29.0.5"
   }
 }
