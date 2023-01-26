@@ -32,7 +32,7 @@ class SeleniumEnvironment extends NodeEnvironment {
 
   async teardown() {
     if (this.global.driver) {
-      this.global.driver.quit();
+      await this.global.driver.quit();
     }
 
     await super.teardown();
