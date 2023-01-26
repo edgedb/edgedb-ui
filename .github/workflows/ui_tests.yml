@@ -1,0 +1,44 @@
+name: UI tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 50
+          submodules: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: lts
+
+      - name: Install EdgeDB
+        uses: edgedb/setup-edgedb@v1
+        with:
+          server-version: stable
+
+      - name: Set up chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Set up chromedriver
+        uses: nanasess/setup-chromedriver@v1
+
+      - name: cd web
+        run: |
+          cd web
+
+      - name: Install dev deps
+        run: |
+          yarn
+
+      - name: Run tests
+        run: |
+          yarn test
