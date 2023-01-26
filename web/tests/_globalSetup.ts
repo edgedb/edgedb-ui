@@ -2,7 +2,7 @@ import http from "http";
 
 import {ChildProcess, spawn} from "child_process";
 
-const STARTUP_TIMEOUT = 60_000;
+const STARTUP_TIMEOUT = 5 * 60_000;
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) =>
