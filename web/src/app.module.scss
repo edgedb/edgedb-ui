@@ -57,6 +57,7 @@
   --syntax-comment: #7f7f7f;
   --syntax-mod: #838383;
 
+  --cursor-color: #808080;
   --btn-text-hover: #fafafa;
 
   @include darkTheme {
@@ -89,6 +90,7 @@
     --syntax-comment: #7f7f7f;
     --syntax-mod: #9f9f9f;
 
+    --cursor-color: #595959;
     --btn-text-hover: #141414;
   }
 }

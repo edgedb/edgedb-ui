@@ -56,7 +56,6 @@ const lightThemeSpec: ThemeSpec = {
   "&.cm-focused .cm-matchingBracket": {
     background: "none",
     outline: "1px solid rgba(0,0,0,0.2)",
-    // borderRadius: "1px",
   },
   "&.cm-focused .cm-nonmatchingBracket": {
     background: "none",
