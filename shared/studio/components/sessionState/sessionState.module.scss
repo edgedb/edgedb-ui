@@ -76,8 +76,6 @@
   }
 }
 
-//
-
 .sessionBarWrapper {
   height: 0;
   transition: height 0.2s;
@@ -145,32 +143,6 @@
     padding: 8px;
     align-self: flex-start;
     cursor: pointer;
-
-    .openPanelButton {
-      background: #26c395;
-      color: #fff;
-      height: 26px;
-      padding: 0 7px;
-      display: flex;
-      align-items: center;
-      border-radius: 13px;
-
-      span {
-        font-weight: 500;
-        font-size: 14px;
-        margin-right: 6px;
-      }
-
-      svg {
-        width: 12px;
-        margin-top: 2px;
-      }
-
-      @include darkTheme {
-        background: #0d805e;
-        color: #141414;
-      }
-    }
   }
 
   .emptySessionBar {
@@ -189,6 +161,33 @@
       opacity: 0;
       pointer-events: none;
     }
+  }
+}
+
+.panelButton {
+  background: #26c395;
+  color: #fff;
+  height: 26px;
+  padding: 0 7px;
+  display: flex;
+  align-items: center;
+  border-radius: 13px;
+  cursor: pointer;
+
+  span {
+    font-weight: 500;
+    font-size: 14px;
+    margin-right: 6px;
+  }
+
+  svg {
+    width: 12px;
+    margin-top: 2px;
+  }
+
+  @include darkTheme {
+    background: #0d805e;
+    color: #141414;
   }
 }
 
@@ -265,17 +264,11 @@
   pointer-events: auto;
 
   .closePanel {
+    @extend .panelButton;
     position: absolute;
     top: 0;
     right: 0;
-    padding: 8px;
     margin: 8px;
-    cursor: pointer;
-    opacity: 0.5;
-
-    &:hover {
-      opacity: 0.7;
-    }
   }
 
   .searchBar {
@@ -310,6 +303,11 @@
         padding: 0 10px;
         padding-left: 32px;
         flex-grow: 1;
+        cursor: pointer;
+
+        &:focus {
+          background: var(--app-bg);
+        }
       }
     }
   }
@@ -386,10 +384,10 @@
     --inputBg: #fafafa;
 
     &.inactive {
-      .itemHeader,
       .itemValue {
         opacity: 0.6;
         pointer-events: none;
+        font-weight: 500;
       }
     }
 
@@ -424,12 +422,12 @@
     font-style: italic;
     margin-top: 6px;
     font-size: 13px;
-    opacity: 0.7;
+    color: var(--font-inactive-gray);
   }
 
   .itemName {
     font-weight: 500;
-
+    color: var(--btn-text-color);
     span {
       opacity: 0.7;
     }
@@ -447,8 +445,8 @@
 
   .itemType {
     font-size: 13px;
-    opacity: 0.6;
     margin-left: 8px;
+    color: #adadad;
   }
 
   .itemUpdate {
