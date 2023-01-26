@@ -79,6 +79,7 @@ export default async function () {
     edbServerProc = spawn("edgedb-server", ["--devmode"], {
       env: {...process.env, EDGEDB_DEBUG_HTTP_INJECT_CORS: "1"},
     }) as ChildProcess;
+    edbServerProc.stderr?.pipe(process.stdout);
   }
 
   let uiServerProc: ChildProcess | null = null;
@@ -91,6 +92,7 @@ export default async function () {
       // @ts-ignore
       env: {...process.env, NODE_ENV: undefined},
     }) as ChildProcess;
+    // uiServerProc.stdout?.pipe(process.stdout);
   }
 
   await Promise.all([
