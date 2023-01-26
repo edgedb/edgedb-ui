@@ -49,12 +49,10 @@ async function checkUIServerAlive() {
       if (res.statusCode === 200) {
         resolve(true);
       } else {
-        console.log(res.statusCode);
         resolve(false);
       }
     });
     req.on("error", (err) => {
-      console.log(err);
       req.destroy();
       resolve(false);
     });
@@ -87,7 +85,7 @@ export default async function () {
     edbServerProc = spawn(srvcmd, args, {
       env: {...process.env, EDGEDB_DEBUG_HTTP_INJECT_CORS: "1"},
     }) as ChildProcess;
-    edbServerProc.on("close", (code) => {
+    edbServerProc.once("close", (code) => {
       if (!edbServerAlive.done) {
         edbServerAlive.setError(
           `EdgeDB server failed to start with exit code: ${code}`
@@ -109,7 +107,7 @@ export default async function () {
       // @ts-ignore
       env: {...process.env, NODE_ENV: undefined},
     }) as ChildProcess;
-    uiServerProc.on("close", (code) => {
+    uiServerProc.once("close", (code) => {
       if (!uiServerAlive.done) {
         uiServerAlive.setError(
           `UI server failed to start with exit code: ${code}`
@@ -117,8 +115,6 @@ export default async function () {
       }
     });
     waitUntilAlive(checkUIServerAlive, uiServerAlive);
-
-    uiServerProc.stdout?.pipe(process.stdout);
   }
 
   await Promise.all([
