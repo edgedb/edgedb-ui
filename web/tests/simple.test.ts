@@ -6,7 +6,7 @@ test("select version query", async () => {
   const editor = await driver.findElement(By.className("cm-content"));
   await editor.sendKeys("select sys::get_version_as_str()");
 
-  const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+  const runButton = driver.findElement(ByUIClass("repl_runButton"));
   await runButton.click();
 
   const versionStrEl = await driver.wait(

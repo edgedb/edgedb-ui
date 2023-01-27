@@ -1,7 +1,14 @@
-import type {WebDriver, until, By as _By} from "selenium-webdriver";
+import type {WebDriver} from "selenium-webdriver";
 
 declare global {
   const driver: WebDriver;
-  const until: until;
-  class By extends _By {}
+  export {driver};
+
+  export {
+    until,
+    By,
+    Key,
+    Condition,
+    error as SeleniumError,
+  } from "selenium-webdriver";
 }
