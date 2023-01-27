@@ -1,7 +1,7 @@
 import http from "http";
 import {ChildProcess, spawn} from "child_process";
 
-import createClient, {UnknownDatabaseError} from "edgedb";
+import createClient, {AccessError, UnknownDatabaseError} from "edgedb";
 import Event from "edgedb/dist/primitives/event";
 
 import {schemaScript} from "@edgedb/studio/tabs/dashboard/exampleSchema";
@@ -136,13 +136,23 @@ export default async function () {
     if (!(err instanceof UnknownDatabaseError)) throw err;
   }
   await client.execute("create database _test");
-  await sleep(1000);
   const testClient = createClient({
     port: 5656,
     tlsSecurity: "insecure",
     database: "_test",
   });
-  await testClient.execute(schemaScript);
+  for (let i = 0; i < 10; i++) {
+    await sleep(500);
+
+    try {
+      await testClient.execute(schemaScript);
+      break;
+    } catch (err) {
+      if (!(err instanceof AccessError)) {
+        throw err;
+      }
+    }
+  }
   console.log("... Done");
 
   // @ts-ignore
