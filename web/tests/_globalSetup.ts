@@ -1,8 +1,10 @@
+import http from "http";
+import {ChildProcess, spawn} from "child_process";
+
+import createClient, {UnknownDatabaseError} from "edgedb";
 import Event from "edgedb/dist/primitives/event";
 
-import http from "http";
-
-import {ChildProcess, spawn} from "child_process";
+import {schemaScript} from "@edgedb/studio/tabs/dashboard/exampleSchema";
 
 const STARTUP_TIMEOUT = 5 * 60_000;
 
@@ -125,6 +127,23 @@ export default async function () {
       if (edbServerProc) console.log("...EdgeDB server running");
     }),
   ]);
+
+  console.log("Creating '_test' database...");
+  const client = createClient({port: 5656, tlsSecurity: "insecure"});
+  try {
+    await client.execute("drop database _test");
+  } catch (err) {
+    if (!(err instanceof UnknownDatabaseError)) throw err;
+  }
+  await client.execute("create database _test");
+  await sleep(1000);
+  const testClient = createClient({
+    port: 5656,
+    tlsSecurity: "insecure",
+    database: "_test",
+  });
+  await testClient.execute(schemaScript);
+  console.log("... Done");
 
   // @ts-ignore
   globalThis.uiServerProc = uiServerProc;

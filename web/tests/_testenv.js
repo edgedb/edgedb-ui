@@ -1,6 +1,6 @@
 const NodeEnvironment = require("jest-environment-node").TestEnvironment;
 
-const {Builder, By, until} = require("selenium-webdriver");
+const {Builder, By, until, Key, error} = require("selenium-webdriver");
 const chrome = require("selenium-webdriver/chrome");
 
 let opts = new chrome.Options();
@@ -26,8 +26,11 @@ class SeleniumEnvironment extends NodeEnvironment {
     }
 
     this.global.driver = driver;
+
     this.global.By = By;
     this.global.until = until;
+    this.global.Key = Key;
+    this.global.SeleniumError = error;
   }
 
   async teardown() {
