@@ -38,17 +38,17 @@ export default function Button({
   const _shortcut = isMac ? macShortcut : shortcut;
 
   const _icon = loading ? (
-          <Spinner size={14} angle={135} strokeWidth={1.5} period={1.5} />
-        ) : (
-          icon
-        )
+    <Spinner size={14} angle={135} strokeWidth={1.5} period={1.5} />
+  ) : (
+    icon
+  );
 
   return (
     <button
       className={cn(styles.button, className, {
         [styles.largeButton]: size === "large",
         [styles.squareButton]: style === "square",
-        [styles.leftIcon]: !!leftIcon
+        [styles.leftIcon]: !!leftIcon,
       })}
       onClick={onClick}
       disabled={disabled}
