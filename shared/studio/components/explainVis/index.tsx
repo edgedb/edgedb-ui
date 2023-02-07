@@ -3,6 +3,7 @@ import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
 import {createContext, useContext, useEffect, useRef, useState} from "react";
+import {ChevronDownIcon} from "../../icons";
 
 import {QueryHistoryResultItem} from "../../tabs/queryEditor/state";
 
@@ -210,23 +211,30 @@ const FlamegraphNode = observer(function _FlamegraphNode({
       : plan.contextId;
 
   return (
-    <div className={styles.flamegraphNode} style={{width: `${width * 100}%`}}>
+    <div
+      className={styles.flamegraphNode}
+      style={{
+        width: `${width * 100}%`,
+        backgroundColor: `hsl(0, 100%, ${
+          100 -
+          (collapsedNode
+            ? state.isTimeGraph
+              ? plan.collapsedSelfTimePercent!
+              : plan.collapsedSelfCostPercent!
+            : state.isTimeGraph
+            ? plan.selfTimePercent!
+            : plan.selfCostPercent) /
+            2
+        }%)`,
+        ...(state.ctxId != null && state.ctxId === ctxId
+          ? {outline: `2px solid #0074e8`, zIndex: 1}
+          : undefined),
+      }}
+    >
       <div
         className={cn(styles.flamegraphBar, {
           [styles.selected]: state.selectedPlan === plan,
         })}
-        style={{
-          backgroundColor: `hsl(0, 100%, ${
-            100 -
-            (state.isTimeGraph
-              ? plan.selfTimePercent!
-              : plan.selfCostPercent) /
-              2
-          }%)`,
-          ...(state.ctxId != null && state.ctxId === ctxId
-            ? {outline: `2px solid #0074e8`, zIndex: 1}
-            : undefined),
-        }}
         onClick={() => state.setSelectedPlan(plan)}
         onMouseEnter={() => {
           if (ctxId != null) state.setCtxId(ctxId);
@@ -244,10 +252,12 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           <span>
             {plan.hasCollapsedNodes ? (
               <span
-                style={{padding: "0 2px"}}
+                className={cn(styles.collapseButton, {
+                  [styles.collapsed]: !!collapsedNode,
+                })}
                 onClick={() => state.toggleCollapsed(plan)}
               >
-                {collapsedNode ? "|v|" : "|^|"}
+                <ChevronDownIcon />
               </span>
             ) : null}
             {ctxId != null ? state.contexts.data[ctxId].text : plan.type}

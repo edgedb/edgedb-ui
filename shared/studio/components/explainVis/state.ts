@@ -17,7 +17,7 @@ export function createExplainState(rawExplainOutput: string) {
     contexts
   );
 
-  collapseToContextNodes(planTree);
+  collapseToContextNodes(planTree, planTree.totalTime, planTree.totalCost);
 
   return new ExplainState({
     rawData: rawExplainOutput,
@@ -103,7 +103,12 @@ export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
     .then(() => queryEditor.setHistoryCursor(0));
 }
 
-function collapseToContextNodes(plan: Plan, findNearestConextNode = false) {
+function collapseToContextNodes(
+  plan: Plan,
+  queryTotalTime: number | null,
+  queryTotalCost: number,
+  findNearestConextNode = false
+) {
   const childContextNodes: Plan[] = [];
 
   let foundNearestNode: Plan | null = null;
@@ -117,10 +122,15 @@ function collapseToContextNodes(plan: Plan, findNearestConextNode = false) {
       } else if (node.contextId !== foundNearestNode?.contextId) {
         childContextNodes.push(node);
       }
-      collapseToContextNodes(node);
+      collapseToContextNodes(node, queryTotalTime, queryTotalCost);
     } else {
       if (node.type === "Aggregate") {
-        const nearestNode = collapseToContextNodes(node, true);
+        const nearestNode = collapseToContextNodes(
+          node,
+          queryTotalTime,
+          queryTotalCost,
+          true
+        );
         if (nearestNode) {
           node.nearestContextNode = nearestNode;
           childContextNodes.push(node);
@@ -133,6 +143,20 @@ function collapseToContextNodes(plan: Plan, findNearestConextNode = false) {
 
   plan.childContextNodes = childContextNodes;
   plan.hasCollapsedNodes = !nodesEqual(childContextNodes, plan.subPlans);
+  plan.collapsedSelfTimePercent = plan.totalTime
+    ? ((plan.totalTime -
+        childContextNodes.reduce(
+          (sum, subplan) => sum + subplan.totalTime!,
+          0
+        )) /
+        queryTotalTime!) *
+      100
+    : undefined;
+  plan.collapsedSelfCostPercent =
+    ((plan.totalCost -
+      childContextNodes.reduce((sum, subplan) => sum + subplan.totalCost, 0)) /
+      queryTotalCost) *
+    100;
 
   return foundNearestNode;
 }
@@ -155,6 +179,8 @@ export interface Plan {
   selfCost: number;
   selfTimePercent: number | null;
   selfCostPercent: number;
+  collapsedSelfTimePercent?: number;
+  collapsedSelfCostPercent?: number;
   subPlans: Plan[];
   contextId: number | null;
   childContextNodes?: Plan[];
@@ -215,7 +241,7 @@ export function walkPlanNode(
 
   if (data.Contexts) {
     const rawCtxs = data.Contexts[0];
-    const rawCtx = rawCtxs[rawCtxs.length - 1];
+    const rawCtx = rawCtxs[0];
 
     const ctx = contexts.find(
       (ctx) =>

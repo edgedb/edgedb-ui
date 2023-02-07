@@ -218,22 +218,20 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     const ref = codeEditorRef.current?.ref;
     if (ref && explainState) {
       const mouseoverListener = (e: MouseEvent) => {
-        if (
-          (e.target as HTMLElement)?.classList.contains(
-            codeEditorStyles.explainContextMark
-          )
-        ) {
-          const ctxId = (e.target as HTMLElement).dataset.ctxId;
-          if (ctxId) {
-            explainState.setCtxId(parseInt(ctxId, 10));
-          }
+        const ctxId = (
+          (e.target as HTMLElement).closest(
+            `.${codeEditorStyles.explainContextMark}`
+          ) as HTMLElement
+        )?.dataset.ctxId;
+        if (ctxId) {
+          explainState.setCtxId(parseInt(ctxId, 10));
         }
       };
       const mouseoutListener = (e: MouseEvent) => {
         if (
-          (e.target as HTMLElement)?.classList.contains(
-            codeEditorStyles.explainContextMark
-          )
+          (e.target as HTMLElement).closest(
+            `.${codeEditorStyles.explainContextMark}`
+          ) != null
         ) {
           explainState.setCtxId(null);
         }

@@ -100,15 +100,16 @@
   @include hideScrollbar;
 
   &Node {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    margin: 0.5px;
+    padding: 0.5px;
   }
 
   &Bar {
     position: relative;
-    border: 1px solid rgba(0, 0, 0, 0.2);
     padding: 4px 0;
     white-space: nowrap;
-    border-radius: 3px;
-    margin: 0.5px;
     // background-clip: padding-box;
     cursor: pointer;
 
@@ -131,6 +132,19 @@
 
   &SubNodes {
     display: flex;
+    align-items: flex-start;
+  }
+
+  .collapseButton {
+    padding: 0 4px;
+
+    svg {
+      width: 11px;
+    }
+
+    &.collapsed svg {
+      transform: rotate(-90deg);
+    }
   }
 }
 
