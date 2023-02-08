@@ -578,6 +578,13 @@ export class DataInspector extends Model({
 
   @action
   setVisibleRowIndexes(startIndex: number, endIndex: number) {
+    if (startIndex > endIndex) {
+      // Sometimes react-window returns a startIndex greater than the endIndex
+      // when the data is cleared for a refresh, so ignore these updates.
+      // The next update when the refresh completes seems to be correct.
+      return;
+    }
+
     const startRow = this.getRowData(startIndex);
     const endRow = this.getRowData(endIndex);
 

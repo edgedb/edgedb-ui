@@ -7,13 +7,14 @@
     :global {
       .cm-cursorLayer {
         animation: none !important;
+        z-index: -1;
       }
 
       .cm-cursor {
         border: 0;
         margin: 0;
         width: 1ch;
-        backdrop-filter: grayscale(100%) contrast(1.5) invert(100%);
+        background: var(--cursor-color);
       }
     }
   }

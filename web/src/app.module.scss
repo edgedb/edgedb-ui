@@ -10,6 +10,7 @@
   flex-direction: column;
   user-select: none;
   font-size: 14px;
+  line-height: 16px;
   background-color: var(--app-bg);
   color: var(--app-text-colour);
 
@@ -30,13 +31,14 @@
 
   --app-bg: #ffffff;
   --app-panel-bg: #f5f5f5;
-  --app-card-bg: #ebebeb;
+  --app-card-bg: #e6e6e6;
   --app-card-outline: #c3c3c3;
   --app-text-colour: #4d4d4d;
   --app-accent-green: #0ccb93;
   --app-modal-overlay: rgba(0, 0, 0, 0.2);
   --app-modal-bg: #fff;
   --app-err-color: #cd9089;
+  --app-bg-gray: #f5f5f5;
 
   // Header
   --header-tab-text-colour: #3c3c3c;
@@ -57,6 +59,18 @@
   --syntax-comment: #7f7f7f;
   --syntax-mod: #838383;
 
+  // Fonts
+  --font-inactive-gray: #808080;
+  --font-active-gray: #666666;
+
+  // Buttons
+  --btn-text-color: #4c4c4c;
+  --btn-green: #0ccb93;
+  --btn-text-color: #333333;
+  --btn-text-hover: #fafafa;
+
+  --cursor-color: #808080;
+
   @include darkTheme {
     --app-bg: #141414;
     --app-panel-bg: #242424;
@@ -67,6 +81,7 @@
     --app-modal-overlay: rgba(0, 0, 0, 0.5);
     --app-modal-bg: #242424;
     --app-err-color: #a56c65;
+    --app-bg-gray: #2d2d2d;
 
     // Header
     --header-tab-text-colour: #f7f7f7;
@@ -86,5 +101,16 @@
     --syntax-orange: #f4e470;
     --syntax-comment: #7f7f7f;
     --syntax-mod: #9f9f9f;
+
+    // Fonts
+    --font-inactive-gray: #7d7d7d;
+    --font-active-gray: #a6a6a6;
+
+    // Buttons
+    --btn-green: #29b189;
+    --btn-text-color: #adadad;
+    --btn-text-hover: #141414;
+
+    --cursor-color: #595959;
   }
 }

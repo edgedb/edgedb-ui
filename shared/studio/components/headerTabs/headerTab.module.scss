@@ -2,29 +2,31 @@
   display: flex;
   align-items: center;
   margin-left: 58px;
-
-  font-family: "Inter", sans-serif;
 }
 
 .tab {
+  cursor: pointer;
   display: flex;
   align-items: center;
   font-size: 14px;
+  color: var(--font-inactive-gray);
+  font-weight: 600;
+  padding: 6px 10px;
+  & > svg {
+    fill: var(--font-inactive-gray);
+    margin-right: 8px;
+  }
 
-  .tabTitle {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-
+  &:hover {
+    color: var(--font-active-gray);
+    background: var(--app-bg-gray);
     & > svg {
-      fill: #adadad;
-      margin-right: 8px;
+      fill: var(--font-active-gray);
     }
   }
 }
 
 .tabSep {
-  margin: 0 4px;
-  margin-left: 2px;
+  margin: 0 8px;
   opacity: 0.5;
 }

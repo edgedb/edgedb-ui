@@ -154,6 +154,7 @@
   display: flex;
   align-items: center;
   height: 32px;
+  font-weight: 500;
 
   &.topLevel {
     background: #fafafa;
@@ -170,7 +171,7 @@
     font-family: Roboto Mono;
     line-height: 22px;
     border-radius: 14px;
-    color: #adadad;
+    color: #808080;
     padding: 0 8px;
     cursor: pointer;
 
@@ -184,7 +185,7 @@
   }
 
   .boolSelected {
-    background: #dadada;
+    background: #f5f5f5;
     color: #4c4c4c;
 
     @include darkTheme {
@@ -424,6 +425,11 @@
 .enumSelect {
   background: var(--inputBg, #fafafa);
   flex-grow: 1;
+  min-height: 32px;
+  padding: 0 8px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
 
   &:hover {
     background: var(--inputBg, #fafafa) !important;
