@@ -69,11 +69,18 @@
   @include darkTheme {
     background: #1f1f1f;
   }
+
+  .insertSelect {
+    margin-right: 16px;
+    font-weight: 500;
+    color: var(--btn-text-color);
+  }
 }
 
 .rowCount {
   margin: 0 auto;
-  font-size: 13px;
+  font-family: "Roboto Mono";
+  font-size: 14px;
 }
 
 .backButton,
@@ -236,10 +243,12 @@
 .headerToggle {
   height: 28px;
   margin: 4px;
-  margin-right: 8px;
+  margin-right: 16px;
   display: flex;
   align-items: center;
   cursor: pointer;
+  font-weight: 500;
+  color: var(--btn-text-color);
 
   input {
     position: relative;
@@ -249,6 +258,7 @@
     background: #e5e5e5;
     border-radius: 11px;
     margin: 5px;
+    margin-right: 8px;
     cursor: pointer;
 
     &:after {
@@ -287,7 +297,6 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
-  margin-left: 8px;
   cursor: pointer;
   font-weight: 500;
   color: var(--btn-text-color);
