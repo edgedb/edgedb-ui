@@ -208,8 +208,8 @@ const DataInspectorView = observer(function DataInspectorView({
             inspectorState.parentObject.editMode) ? (
             inspectorState.insertTypeNames.length > 1 ? (
               <Select
-                className={styles.headerSelect}
-                title="Insert..."
+                className={cn(styles.headerSelect, styles.insertSelect)}
+                title="Insert"
                 items={null}
                 actions={inspectorState.insertTypeNames.map((name) => ({
                   label: name,
