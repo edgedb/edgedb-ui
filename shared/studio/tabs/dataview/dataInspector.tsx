@@ -423,10 +423,10 @@ const GridCell = observer(function GridCell({
       if (countData !== null || insertedRow) {
         const counts: {[typename: string]: number} =
           field.multi || !linkEditState
-            ? countData.reduce((counts: any, {typename, count}: any) => {
+            ? countData?.reduce((counts: any, {typename, count}: any) => {
                 counts[typename] = count;
                 return counts;
-              }, {})
+              }, {}) ?? {}
             : {};
 
         if (linkEditState) {
