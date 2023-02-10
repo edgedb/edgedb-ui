@@ -12,6 +12,8 @@
   color: var(--font-inactive-gray);
   font-weight: 600;
   padding: 6px 10px;
+  --dropdown-item-color: var(--font-active-gray);
+
   & > svg {
     fill: var(--font-inactive-gray);
     margin-right: 8px;
