@@ -283,7 +283,7 @@ export class SessionState extends Model({
       ? Object.entries(this.draftState.globals).some(([name, global]) => {
           const snap = this.draftSnapshot!.globals[name];
           return (
-            (!global.active && snap?.active) ||
+            (snap?.active && global.active !== snap.active) ||
             (global.active &&
               !global.error &&
               (!snap || snap.value !== global.value))
@@ -292,14 +292,14 @@ export class SessionState extends Model({
           Object.entries(this.draftState.config).some(([name, config]) => {
             const snap = this.draftSnapshot!.config[name];
             return (
-              (!config.active && snap.active) ||
+              config.active !== snap.active ||
               (config.active && !config.error && snap.value !== config.value)
             );
           }) ||
           Object.entries(this.draftState.options).some(([name, option]) => {
             const snap = this.draftSnapshot!.options[name];
             return (
-              (!option.active && snap.active) ||
+              option.active !== snap.active ||
               (option.active && !option.error && snap.value !== option.value)
             );
           })
@@ -342,6 +342,7 @@ export class SessionState extends Model({
 
   @action
   updateActiveState() {
+    console.log("update active state");
     this.activeState = {
       globals: Object.entries(this.draftState!.globals)
         .filter(([_, global]) => global.active && !global.error)
