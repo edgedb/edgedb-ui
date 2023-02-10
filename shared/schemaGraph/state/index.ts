@@ -40,7 +40,7 @@ export const Schema = types
     get moduleNames() {
       const moduleNames = new Set<string>();
       for (const name of self.objects?.keys() ?? []) {
-        moduleNames.add(name.split("::")[0]);
+        moduleNames.add(name.split("::").slice(0, -1).join("::"));
       }
       return moduleNames;
     },
