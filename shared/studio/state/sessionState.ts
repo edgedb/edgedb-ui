@@ -283,7 +283,7 @@ export class SessionState extends Model({
       ? Object.entries(this.draftState.globals).some(([name, global]) => {
           const snap = this.draftSnapshot!.globals[name];
           return (
-            (snap?.active && global.active !== snap.active) ||
+            (snap && global.active !== snap.active) ||
             (global.active &&
               !global.error &&
               (!snap || snap.value !== global.value))
@@ -342,7 +342,6 @@ export class SessionState extends Model({
 
   @action
   updateActiveState() {
-    console.log("update active state");
     this.activeState = {
       globals: Object.entries(this.draftState!.globals)
         .filter(([_, global]) => global.active && !global.error)
