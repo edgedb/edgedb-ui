@@ -11,7 +11,7 @@ function killProcess(proc: ChildProcess, signal?: number | NodeJS.Signals) {
   });
 }
 
-export default async function () {
+export default async function globalTeardown() {
   // @ts-ignore
   const uiServerProc: ChildProcess = globalThis.uiServerProc;
 

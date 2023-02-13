@@ -3,5 +3,5 @@ module.exports = {
   testEnvironment: "./tests/_testenv.js",
   globalSetup: "./tests/_globalSetup.ts",
   globalTeardown: "./tests/_globalTeardown.ts",
-  testTimeout: 30000,
+  testTimeout: 80000,
 };

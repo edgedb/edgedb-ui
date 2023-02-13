@@ -61,7 +61,7 @@ async function checkUIServerAlive() {
   });
 }
 
-export default async function () {
+export default async function globalSetup() {
   console.log("\n");
 
   let edbServerProc: ChildProcess | null = null;
