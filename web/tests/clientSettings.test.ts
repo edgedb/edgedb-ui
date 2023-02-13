@@ -1,4 +1,4 @@
-import {ByUIClass, goToPage, uiClass} from "./_utils";
+import {ByUIClass, goToPage, uiClass, cmdCtrl} from "./_utils";
 
 describe("clientSettings:", () => {
   beforeAll(async () => {
@@ -24,7 +24,7 @@ describe("clientSettings:", () => {
           )} input`
         )
       )
-      .sendKeys(Key.chord(Key.COMMAND, "a"), "10");
+      .sendKeys(Key.chord(cmdCtrl, "a"), "10");
 
     // close panel
     await driver.findElement(ByUIClass("sessionState_closePanel")).click();
@@ -33,7 +33,7 @@ describe("clientSettings:", () => {
     const editor = await driver.findElement(By.className("cm-content"));
     await editor.sendKeys(
       "select range_unpack(range(1, 50))",
-      Key.chord(Key.COMMAND, Key.ENTER)
+      Key.chord(cmdCtrl, Key.ENTER)
     );
 
     const resultHiddenNote = driver.wait(
@@ -114,7 +114,7 @@ describe("clientSettings:", () => {
 
     await implicitLimitSettingElement
       .findElement(By.css("input"))
-      .sendKeys(Key.chord(Key.COMMAND, "a"), "20");
+      .sendKeys(Key.chord(cmdCtrl, "a"), "20");
 
     // close panel
     await driver.findElement(ByUIClass("sessionState_closePanel")).click();

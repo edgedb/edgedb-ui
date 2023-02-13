@@ -1,5 +1,5 @@
 import {createClient} from "edgedb";
-import type {Locator} from "selenium-webdriver";
+import type {Locator, WebElement} from "selenium-webdriver";
 
 export const client = createClient({port: 5656, tlsSecurity: "insecure"});
 
@@ -26,3 +26,18 @@ export async function waitUntilElementNotLocated(locator: Locator) {
     }
   }
 }
+
+export async function waitUntilElementsContentHasChanged(
+  element: WebElement,
+  initialContent: string,
+  waitDuration: number
+) {
+  return driver.wait(async () => {
+    const content = await element.getText();
+    return content !== initialContent;
+  }, waitDuration);
+}
+
+export const cmdCtrl = process.platform.toLowerCase().includes("darwin")
+  ? Key.COMMAND
+  : Key.CONTROL;
