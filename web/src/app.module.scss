@@ -64,11 +64,9 @@
   --font-active-gray: #666666;
 
   // Buttons
-  --btn-text-color: #4c4c4c;
-  --btn-green: #0ccb93;
   --btn-text-color: #333333;
+  --btn-green: #0ccb93;
   --btn-text-hover: #fafafa;
-
   --cursor-color: #808080;
 
   @include darkTheme {
