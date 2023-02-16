@@ -2,10 +2,22 @@ import Button from "@edgedb/common/ui/button";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import {createContext, useContext, useEffect, useRef, useState} from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {ChevronDownIcon} from "../../icons";
+import {useInstanceState} from "../../state/instance";
 
-import {QueryHistoryResultItem} from "../../tabs/queryEditor/state";
+import {
+  QueryEditor,
+  QueryHistoryResultItem,
+} from "../../tabs/queryEditor/state";
+import {getColor} from "./colormap";
 
 import styles from "./explainVis.module.scss";
 import {
@@ -15,28 +27,40 @@ import {
   reRunWithAnalyze,
 } from "./state";
 
-const ExplainContext = createContext<ExplainState>(null!);
+const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
 function useExplainState() {
   return useContext(ExplainContext);
 }
 
 interface ExplainVisProps {
+  editorState: QueryEditor;
   state: ExplainState | null;
   queryHistoryItem: QueryHistoryResultItem;
 }
 
-export function ExplainVis({state, queryHistoryItem}: ExplainVisProps) {
+export function ExplainVis({
+  editorState,
+  state,
+  queryHistoryItem,
+}: ExplainVisProps) {
   if (!state) {
     return <div>loading...</div>;
   }
 
+  const devMode = useInstanceState().instanceName === "_localdev";
+
   return (
-    <ExplainContext.Provider value={state}>
+    <ExplainContext.Provider value={[state, /*devMode*/ false]}>
       <div className={styles.explainVis}>
         <ExplainHeader queryHistoryItem={queryHistoryItem} />
         <Flamegraph />
         <PlanDetails />
+        {devMode ? (
+          <button onClick={() => editorState.setShowExplain(true)}>
+            big explain vis
+          </button>
+        ) : null}
       </div>
     </ExplainContext.Provider>
   );
@@ -47,7 +71,7 @@ const ExplainHeader = observer(function ExplainHeader({
 }: {
   queryHistoryItem: QueryHistoryResultItem;
 }) {
-  const state = useExplainState();
+  const state = useExplainState()[0];
 
   return (
     <div className={styles.explainHeader}>
@@ -96,7 +120,7 @@ const ExplainHeader = observer(function ExplainHeader({
 });
 
 const Flamegraph = observer(function Flamegraph() {
-  const state = useExplainState();
+  const state = useExplainState()[0];
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -118,13 +142,10 @@ const Flamegraph = observer(function Flamegraph() {
         onWheel={(e) => {
           if (e.ctrlKey) {
             const oldZoom = state.flamegraphZoom;
-            const newZoom = Math.max(1, oldZoom - e.deltaY / 200);
+            const newZoom = Math.max(1, oldZoom * (1 + e.deltaY / -400));
             state.setFlamegraphZoom(newZoom);
-
-            // const scrollLeft = scrollRef.current!.scrollLeft;
-            // const delta = newZoom / oldZoom - 1;
-            // console.log(scrollLeft, delta, scrollLeft * delta);
-            // scrollRef.current!.scrollLeft = scrollLeft + scrollLeft * delta;
+          } else {
+            scrollRef.current!.scrollLeft += e.deltaY;
           }
         }}
       >
@@ -134,7 +155,7 @@ const Flamegraph = observer(function Flamegraph() {
             padding: "4px 8px",
           }}
         >
-          <FlamegraphNode plan={state.planTree.data} />
+          <FlamegraphNode plan={state.planTree.data} isRoot />
         </div>
       </div>
     </>
@@ -142,7 +163,7 @@ const Flamegraph = observer(function Flamegraph() {
 });
 
 const PlanDetails = observer(function PlanDetails() {
-  const state = useExplainState();
+  const state = useExplainState()[0];
 
   const selectedPlan = state.selectedPlan;
 
@@ -157,9 +178,10 @@ const PlanDetails = observer(function PlanDetails() {
               "ms"
             : selectedPlan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
           ·{" "}
-          {(state.isTimeGraph
-            ? selectedPlan.selfTimePercent!
-            : selectedPlan.selfCostPercent
+          {(
+            (state.isTimeGraph
+              ? selectedPlan.selfTimePercent!
+              : selectedPlan.selfCostPercent) * 100
           )
             .toPrecision(2)
             .replace(/\.?0+$/, "")}
@@ -194,47 +216,49 @@ const PlanDetails = observer(function PlanDetails() {
 const FlamegraphNode = observer(function _FlamegraphNode({
   plan,
   width = 1,
+  altBg = false,
+  isRoot = false,
 }: {
   plan: Plan;
   width?: number;
+  altBg?: boolean;
+  isRoot?: boolean;
 }) {
-  const state = useExplainState();
+  const [state, devMode] = useExplainState();
 
-  const collapsedNode =
-    plan.hasCollapsedNodes && !state.expandedNodes.has(plan);
-
-  const subPlans = collapsedNode ? plan.childContextNodes! : plan.subPlans;
+  const expandedNode =
+    devMode && plan.hasCollapsedPlans && state.expandedNodes.has(plan);
 
   const ctxId =
-    plan.nearestContextNode && collapsedNode
-      ? plan.nearestContextNode.contextId!
+    plan.nearestContextPlan && !expandedNode
+      ? plan.nearestContextPlan.contextId!
       : plan.contextId;
+
+  const subPlans = expandedNode
+    ? plan.fullSubPlans
+    : ctxId != null || isRoot
+    ? plan.subPlans!
+    : plan.fullSubPlans;
+
+  const selfPercent = state.isTimeGraph
+    ? plan.selfTimePercent!
+    : plan.selfCostPercent;
 
   return (
     <div
-      className={styles.flamegraphNode}
+      className={cn(styles.flamegraphNode, {
+        [styles.altBg]: altBg,
+        [styles.selected]: state.selectedPlan === plan,
+      })}
       style={{
-        width: `${width * 100}%`,
-        backgroundColor: `hsl(0, 100%, ${
-          100 -
-          (collapsedNode
-            ? state.isTimeGraph
-              ? plan.collapsedSelfTimePercent!
-              : plan.collapsedSelfCostPercent!
-            : state.isTimeGraph
-            ? plan.selfTimePercent!
-            : plan.selfCostPercent) /
-            2
-        }%)`,
+        width: `calc(${width * 100}% - 2px)`,
         ...(state.ctxId != null && state.ctxId === ctxId
           ? {outline: `2px solid #0074e8`, zIndex: 1}
           : undefined),
       }}
     >
       <div
-        className={cn(styles.flamegraphBar, {
-          [styles.selected]: state.selectedPlan === plan,
-        })}
+        className={cn(styles.flamegraphBar)}
         onClick={() => state.setSelectedPlan(plan)}
         onMouseEnter={() => {
           if (ctxId != null) state.setCtxId(ctxId);
@@ -244,23 +268,35 @@ const FlamegraphNode = observer(function _FlamegraphNode({
         }}
       >
         <div
+          className={styles.selfTimeIndicator}
+          style={{
+            backgroundColor: getColor(selfPercent),
+          }}
+        />
+        <div
           className={styles.overflowContainer}
           style={{
             opacity: ctxId != null ? 1 : 0.5,
           }}
         >
           <span>
-            {plan.hasCollapsedNodes ? (
+            {devMode && plan.hasCollapsedPlans ? (
               <span
                 className={cn(styles.collapseButton, {
-                  [styles.collapsed]: !!collapsedNode,
+                  [styles.collapsed]: !expandedNode,
                 })}
                 onClick={() => state.toggleCollapsed(plan)}
               >
                 <ChevronDownIcon />
               </span>
             ) : null}
-            {ctxId != null ? state.contexts.data[ctxId].text : plan.type}
+            {ctxId != null ? (
+              <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
+            ) : isRoot ? (
+              <i>Query</i>
+            ) : (
+              plan.type
+            )}
           </span>
         </div>
       </div>
@@ -269,6 +305,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           {subPlans.map((subplan, i) => (
             <FlamegraphNode
               key={i}
+              altBg={!altBg}
               plan={subplan}
               width={
                 state.isTimeGraph
@@ -296,8 +333,6 @@ export function TestExplainVis({
 
   const state = createExplainState(rawOutput!);
 
-  console.log(state.contexts);
-
   return (
     <div className={styles.explainVisTesting}>
       <button onClick={() => closeExplain()}>close</button>
@@ -320,7 +355,7 @@ const Visualisations = observer(function Visualisations({
   buffers: any;
 }) {
   return (
-    <ExplainContext.Provider value={state}>
+    <ExplainContext.Provider value={[state, true]}>
       <div className={styles.flamegraph}>
         <FlamegraphNode plan={state.planTree.data} />
       </div>
@@ -334,6 +369,7 @@ const Visualisations = observer(function Visualisations({
                   selfPercent: state.selectedPlan.selfTimePercent,
                   ...state.selectedPlan.raw,
                   Plans: undefined,
+                  CollapsedPlans: undefined,
                 },
                 null,
                 2
@@ -348,8 +384,8 @@ const Visualisations = observer(function Visualisations({
               <CodeBlock
                 code={buf[0]}
                 customRanges={
-                  state.contextsByIdx[idx]
-                    ? state.contextsByIdx[idx].map((range) => ({
+                  state.contextsByBufIdx[idx]
+                    ? state.contextsByBufIdx[idx].map((range) => ({
                         range: [range.start, range.end],
                         renderer: (_, content) => (
                           <>
@@ -358,22 +394,19 @@ const Visualisations = observer(function Visualisations({
                                 border: "1px solid #d7d7d7",
                                 borderRadius: 3,
                                 backgroundColor: `hsl(0, 100%, ${
-                                  100 - range.selfPercent / 2
+                                  100 - range.selfTimePercent! / 2
                                 }%)`,
                                 outline:
                                   state.ctxId === range.id
                                     ? `2px solid #0074e8`
                                     : undefined,
-                                // textDecoration: range.linked
-                                //   ? "line-through"
-                                //   : undefined,
                               }}
                               onMouseEnter={() => state.setCtxId(range.id)}
                               onMouseLeave={() => state.setCtxId(null)}
                             >
                               {content}
                             </span>
-                            {range.linked ? (
+                            {range.linkedBufIdx ? (
                               <span
                                 style={{
                                   fontStyle: "italic",
@@ -381,7 +414,7 @@ const Visualisations = observer(function Visualisations({
                                 }}
                               >
                                 {" "}
-                                := {range.linked}
+                                := {state.buffers.data[range.linkedBufIdx - 1]}
                               </span>
                             ) : null}
                           </>
@@ -441,9 +474,7 @@ function PlanNode({plan}: {plan: Plan}) {
           {plan.raw.Contexts ? (
             <>
               Contexts:{" "}
-              {JSON.stringify(
-                plan.raw.Contexts?.[0].map((ctx: any) => ctx.text)
-              )}
+              {JSON.stringify(plan.raw.Contexts?.map((ctx: any) => ctx.text))}
             </>
           ) : null}
           <details>
@@ -462,9 +493,9 @@ function PlanNode({plan}: {plan: Plan}) {
         </div>
       </div>
 
-      {plan.subPlans.length ? (
+      {plan.fullSubPlans.length ? (
         <div className={styles.planSubTree}>
-          {plan.subPlans.map((subplan) => (
+          {plan.fullSubPlans.map((subplan) => (
             <PlanNode plan={subplan} />
           ))}
         </div>

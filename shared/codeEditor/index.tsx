@@ -26,6 +26,7 @@ import {
   KeyBinding,
   lineNumbers,
   Decoration,
+  WidgetType,
 } from "@codemirror/view";
 import {
   defaultKeymap,
@@ -94,31 +95,95 @@ function getErrorExtension(range: [number, number], doc: Text) {
 
 const explainContextsComp = new Compartment();
 
-type ExplainContexts = {
-  id: number;
-  start: number;
-  end: number;
-  selfPercent: number;
-  selected: boolean;
-}[];
+interface ExplainContextsData {
+  selectedCtxId: number | null;
+  contexts: {
+    id: number;
+    bufIdx: number;
+    start: number;
+    end: number;
+    text: string;
+    selfTimePercent?: number;
+    selfCostPercent: number;
+    color: string;
+    linkedBufIdx: number | null;
+  }[][];
+  buffers: string[];
+}
 
-function getExplainContextsExtension(contexts: ExplainContexts) {
+class ExplainContextSnippetWidget extends WidgetType {
+  constructor(
+    readonly content: string,
+    readonly ctxs: ExplainContextsData["contexts"][number],
+    readonly selectedCtxId: number | null
+  ) {
+    super();
+  }
+
+  eq(other: ExplainContextSnippetWidget) {
+    return (
+      other.content === this.content &&
+      other.selectedCtxId === this.selectedCtxId &&
+      other.ctxs === this.ctxs
+    );
+  }
+
+  toDOM() {
+    let el = document.createElement("span");
+    el.setAttribute("aria-hidden", "true");
+    el.className = styles.explainContextSnippet;
+    let i = 0;
+    for (const ctx of this.ctxs) {
+      el.appendChild(
+        document.createTextNode(this.content.slice(i, ctx.start))
+      );
+      const ctxEl = document.createElement("span");
+      ctxEl.classList.add(styles.explainContextMark);
+      if (this.selectedCtxId === ctx.id) {
+        ctxEl.classList.add(styles.selected);
+      }
+      ctxEl.dataset.ctxId = ctx.id.toString();
+      ctxEl.style.setProperty("--ctxColor", ctx.color);
+      ctxEl.textContent = this.content.slice(ctx.start, ctx.end);
+      el.appendChild(ctxEl);
+      i = ctx.end;
+    }
+    el.appendChild(document.createTextNode(this.content.slice(i)));
+    return el;
+  }
+}
+
+function getExplainContextsExtension({
+  selectedCtxId,
+  contexts,
+  buffers,
+}: ExplainContextsData) {
   const decos: Range<Decoration>[] = [];
 
-  for (const ctx of contexts) {
+  for (const ctx of contexts[0]) {
     decos.push(
       Decoration.mark({
         class: cn(styles.explainContextMark, {
-          [styles.selected]: ctx.selected,
+          [styles.selected]: ctx.id === selectedCtxId,
         }),
         attributes: {
-          style: `background-color: ${`hsl(0, 100%, ${
-            100 - ctx.selfPercent / 2
-          }%)`}`,
+          style: `--ctxColor: ${ctx.color}`,
           "data-ctx-id": ctx.id.toString(),
         },
       }).range(ctx.start, ctx.end)
     );
+    if (ctx.linkedBufIdx != null) {
+      decos.push(
+        Decoration.widget({
+          widget: new ExplainContextSnippetWidget(
+            buffers[ctx.linkedBufIdx - 1],
+            contexts[ctx.linkedBufIdx],
+            selectedCtxId
+          ),
+          side: 1,
+        }).range(ctx.end)
+      );
+    }
   }
 
   return EditorView.decorations.of(RangeSet.of(decos, true));
@@ -158,7 +223,7 @@ export interface CodeEditorProps {
   noPadding?: boolean;
   renderWhitespace?: boolean;
   errorUnderline?: [number, number];
-  explainContexts?: ExplainContexts;
+  explainContexts?: ExplainContextsData;
 }
 
 export interface CodeEditorRef {
@@ -201,7 +266,7 @@ export function createCodeEditor({
     schemaObjects?: Map<string, SchemaObjectType>;
     renderWhitespace?: boolean;
     errorUnderline?: [number, number];
-    explainContexts?: ExplainContexts;
+    explainContexts?: ExplainContextsData;
   }) {
     return EditorState.create({
       doc,

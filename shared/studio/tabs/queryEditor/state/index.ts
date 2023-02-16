@@ -511,6 +511,7 @@ export class QueryEditor extends Model({
       });
       return {success: true, capabilities, status};
     } catch (e: any) {
+      console.error(e);
       this.addHistoryCell({
         queryData,
         timestamp,

@@ -218,11 +218,17 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     const ref = codeEditorRef.current?.ref;
     if (ref && explainState) {
       const mouseoverListener = (e: MouseEvent) => {
-        const ctxId = (
-          (e.target as HTMLElement).closest(
-            `.${codeEditorStyles.explainContextMark}`
-          ) as HTMLElement
-        )?.dataset.ctxId;
+        let target = (e.target as HTMLElement).closest(
+          `.${codeEditorStyles.explainContextMark}`
+        ) as HTMLElement;
+        while (
+          target?.parentElement?.classList.contains(
+            codeEditorStyles.explainContextMark
+          )
+        ) {
+          target = target.parentElement;
+        }
+        const ctxId = target?.dataset.ctxId;
         if (ctxId) {
           explainState.setCtxId(parseInt(ctxId, 10));
         }
@@ -268,13 +274,12 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
             : undefined
         }
         explainContexts={
-          editorState.showEditorResultDecorations
-            ? explainState?.contexts.data
-                .filter((ctx) => ctx.bufIdx === 0)
-                .map((ctx) => ({
-                  ...ctx,
-                  selected: explainState?.ctxId === ctx.id,
-                }))
+          editorState.showEditorResultDecorations && explainState
+            ? {
+                selectedCtxId: explainState.ctxId,
+                contexts: explainState.contextsByBufIdx,
+                buffers: explainState.buffers.data,
+              }
             : undefined
         }
       />
@@ -315,15 +320,11 @@ const QueryResult = observer(function QueryResult() {
     if (result.hasResult) {
       if (result.status === "EXPLAIN") {
         content = (
-          <>
-            <ExplainVis
-              state={result.explainState}
-              queryHistoryItem={result}
-            />
-            <button onClick={() => editorState.setShowExplain(true)}>
-              big explain vis
-            </button>
-          </>
+          <ExplainVis
+            editorState={editorState}
+            state={result.explainState}
+            queryHistoryItem={result}
+          />
         );
       } else if (result.inspectorState) {
         content = (

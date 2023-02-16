@@ -1,10 +1,12 @@
 import {action, computed, observable} from "mobx";
 import {frozen, Frozen, model, Model, prop} from "mobx-keystone";
+import {instanceCtx} from "../../state/instance";
 import {
   EditorKind,
   queryEditorCtx,
   QueryHistoryResultItem,
 } from "../../tabs/queryEditor/state";
+import {getColor} from "./colormap";
 
 export function createExplainState(rawExplainOutput: string) {
   const rawData = JSON.parse(rawExplainOutput)[0];
@@ -12,17 +14,16 @@ export function createExplainState(rawExplainOutput: string) {
   const contexts: Contexts = [];
   const planTree = walkPlanNode(
     rawData.Plan,
-    rawData.Plan["Actual Total Time"] ?? null,
+    rawData.Plan["FullTotalTime"] ?? null,
     rawData.Plan["Total Cost"],
     contexts
   );
-
-  collapseToContextNodes(planTree, planTree.totalTime, planTree.totalCost);
 
   return new ExplainState({
     rawData: rawExplainOutput,
     planTree: frozen(planTree),
     contexts: frozen(contexts),
+    buffers: frozen(rawData.Buffers.map((buf: any) => buf[0]).slice(1)),
     flamegraphType: planTree.totalTime != null ? "time" : "cost",
   });
 }
@@ -32,6 +33,7 @@ export class ExplainState extends Model({
   rawData: prop<string>(),
   planTree: prop<Frozen<Plan>>(),
   contexts: prop<Frozen<Contexts>>(),
+  buffers: prop<Frozen<string[]>>(),
 
   ctxId: prop<number | null>(null).withSetter(),
 
@@ -70,7 +72,7 @@ export class ExplainState extends Model({
   }
 
   @computed
-  get contextsByIdx() {
+  get contextsByBufIdx() {
     const ctxs = this.contexts.data.reduce((ctxs, ctx) => {
       if (ctxs[ctx.bufIdx] == null) {
         ctxs[ctx.bufIdx] = [];
@@ -103,64 +105,6 @@ export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
     .then(() => queryEditor.setHistoryCursor(0));
 }
 
-function collapseToContextNodes(
-  plan: Plan,
-  queryTotalTime: number | null,
-  queryTotalCost: number,
-  findNearestConextNode = false
-) {
-  const childContextNodes: Plan[] = [];
-
-  let foundNearestNode: Plan | null = null;
-
-  const unvisited = [...plan.subPlans];
-  while (unvisited.length) {
-    const node = unvisited.shift()!;
-    if (node.contextId != null) {
-      if (findNearestConextNode && !foundNearestNode) {
-        foundNearestNode = node;
-      } else if (node.contextId !== foundNearestNode?.contextId) {
-        childContextNodes.push(node);
-      }
-      collapseToContextNodes(node, queryTotalTime, queryTotalCost);
-    } else {
-      if (node.type === "Aggregate") {
-        const nearestNode = collapseToContextNodes(
-          node,
-          queryTotalTime,
-          queryTotalCost,
-          true
-        );
-        if (nearestNode) {
-          node.nearestContextNode = nearestNode;
-          childContextNodes.push(node);
-        }
-      } else {
-        unvisited.push(...node.subPlans);
-      }
-    }
-  }
-
-  plan.childContextNodes = childContextNodes;
-  plan.hasCollapsedNodes = !nodesEqual(childContextNodes, plan.subPlans);
-  plan.collapsedSelfTimePercent = plan.totalTime
-    ? ((plan.totalTime -
-        childContextNodes.reduce(
-          (sum, subplan) => sum + subplan.totalTime!,
-          0
-        )) /
-        queryTotalTime!) *
-      100
-    : undefined;
-  plan.collapsedSelfCostPercent =
-    ((plan.totalCost -
-      childContextNodes.reduce((sum, subplan) => sum + subplan.totalCost, 0)) /
-      queryTotalCost) *
-    100;
-
-  return foundNearestNode;
-}
-
 function nodesEqual(l: Plan[], r: Plan[]) {
   if (l.length !== r.length) {
     return false;
@@ -179,13 +123,11 @@ export interface Plan {
   selfCost: number;
   selfTimePercent: number | null;
   selfCostPercent: number;
-  collapsedSelfTimePercent?: number;
-  collapsedSelfCostPercent?: number;
-  subPlans: Plan[];
+  subPlans?: Plan[];
+  nearestContextPlan?: Plan;
   contextId: number | null;
-  childContextNodes?: Plan[];
-  hasCollapsedNodes?: boolean;
-  nearestContextNode?: Plan;
+  hasCollapsedPlans: boolean;
+  fullSubPlans: Plan[];
   raw: any;
 }
 
@@ -195,8 +137,10 @@ export interface Context {
   start: number;
   end: number;
   text: string;
-  selfPercent: number;
-  linked: string | null;
+  selfTimePercent?: number;
+  selfCostPercent: number;
+  color: string;
+  linkedBufIdx: number | null;
 }
 
 export type Contexts = Context[];
@@ -205,43 +149,41 @@ export function walkPlanNode(
   data: any,
   queryTotalTime: number | null,
   queryTotalCost: number,
-  contexts: Contexts
+  contexts: Contexts,
+  _replacedPlanNodes?: any[]
 ): Plan {
-  const subPlans: Plan[] = Array.isArray(data.Plans)
-    ? data.Plans.map((subplan: any) =>
-        walkPlanNode(subplan, queryTotalTime, queryTotalCost, contexts)
-      )
+  const _childContextNodes =
+    data.CollapsedPlans || data.NearestContextPlan
+      ? [data.NearestContextPlan, ...(data.CollapsedPlans ?? [])]
+      : undefined;
+
+  const replacedPlanNodes = _childContextNodes ?? _replacedPlanNodes!;
+  const fullSubPlans: Plan[] = Array.isArray(data.Plans)
+    ? data.Plans.map((subplan: any) => {
+        const plan = walkPlanNode(
+          typeof subplan === "number" ? replacedPlanNodes[subplan] : subplan,
+          queryTotalTime,
+          queryTotalCost,
+          contexts,
+          replacedPlanNodes
+        );
+        if (typeof subplan === "number") {
+          replacedPlanNodes[subplan] = plan;
+        }
+        return plan;
+      })
     : [];
 
-  let totalTime: number | null = null;
-  let selfTime: number | null = null;
-  let selfTimePercent: number | null = null;
-  if (queryTotalTime != null) {
-    totalTime = data["Actual Total Time"] * (data["Actual Loops"] ?? 1);
-    const childTime = subPlans.reduce(
-      (sum, subplan) => sum + subplan.totalTime!,
-      0
-    );
-
-    selfTime = totalTime - childTime;
-    selfTimePercent = (selfTime / queryTotalTime) * 100;
-  }
-
-  const totalCost = data["Total Cost"];
-
-  const childCost = subPlans.reduce(
-    (sum, subplan) => sum + subplan.totalCost,
-    0
-  );
-
-  const selfCost = totalCost - childCost;
-  const selfCostPercent = (selfCost / queryTotalCost) * 100;
+  const selfTime = data.CollapsedSelfTime || data.SelfTime;
+  const selfCost = data.CollapsedSelfCost || data.SelfCost;
+  const selfTimePercent = selfTime && selfTime / queryTotalTime!;
+  const selfCostPercent = selfCost / queryTotalCost;
 
   let contextId = null;
 
   if (data.Contexts) {
-    const rawCtxs = data.Contexts[0];
-    const rawCtx = rawCtxs[0];
+    const rawCtxs = data.Contexts;
+    const rawCtx = rawCtxs[data.SuggestedDisplayCtxIdx ?? 0];
 
     const ctx = contexts.find(
       (ctx) =>
@@ -262,24 +204,63 @@ export function walkPlanNode(
         start: rawCtx.start,
         end: rawCtx.end,
         text: rawCtx.text,
-        selfPercent: selfTimePercent ?? selfCost,
-        linked: linked?.text ?? null,
+        selfTimePercent,
+        selfCostPercent,
+        color: getColor(selfTimePercent ?? selfCostPercent),
+        linkedBufIdx: linked?.buffer_idx ?? null,
       });
     } else {
       contextId = ctx.id;
     }
   }
 
+  const [nearestContextPlan, ..._subPlans] = _childContextNodes ?? [];
+
+  const subPlans = [...(nearestContextPlan?.subPlans ?? []), ..._subPlans];
+
   return {
     type: data["Node Type"],
-    totalTime,
-    totalCost,
+    totalTime: data.FullTotalTime,
+    totalCost: data["Total Cost"],
     selfTime,
     selfCost,
     selfTimePercent,
     selfCostPercent,
     contextId,
     subPlans,
+    nearestContextPlan,
+    fullSubPlans,
+    hasCollapsedPlans:
+      !!_childContextNodes && !nodesEqual(fullSubPlans, subPlans),
     raw: data,
   };
 }
+
+// Result of explain query is output as a json string containing a tree of plan
+// nodes. Where possible plans are annotated with `Contexts`, a list of
+// locations in the original query or schema that map to the plan node.
+// On Plans with `Contexts`, the `SuggestedDisplayCtxIdx` field is the index of
+// the widest context that the plan does not share with sibling or parent
+// plan nodes.
+//
+// interface ExplainOutput {
+//   Buffers: [
+//     string, // query string or schema snippet
+//     string // source
+//   ][],
+//   Plan: PlanNode
+// }
+//
+// interface PlanNode {
+//   "Node Type": string,
+//   CollapsedPlans: PlanNode[],
+//   Plans: (PlanNode | number)[],
+//   NearestContextPlan?: PlanNode,
+//   Contexts?: {
+//     start: number,
+//     end: number,
+//     buffer_idx: number,
+//     text: string
+//   }[]
+//   SuggestedDisplayCtxIdx?: number;
+// }
