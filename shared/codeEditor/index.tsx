@@ -80,7 +80,8 @@ function getErrorExtension(range: [number, number], doc: Text) {
     return [];
   }
 
-  const decos: Range<Decoration>[] = [errorUnderlineMark.range(...range)];
+  const decos: Range<Decoration>[] =
+    range[0] !== range[1] ? [errorUnderlineMark.range(...range)] : [];
 
   const startLine = doc.lineAt(range[0]).number;
   const endLine = doc.lineAt(range[1]).number;
