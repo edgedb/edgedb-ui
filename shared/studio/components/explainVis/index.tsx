@@ -27,9 +27,11 @@ import {
   reRunWithAnalyze,
 } from "./state";
 
+import {Treemap, TreemapNode} from "./treemapLayout";
+
 const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
-function useExplainState() {
+export function useExplainState() {
   return useContext(ExplainContext);
 }
 
@@ -39,7 +41,7 @@ interface ExplainVisProps {
   queryHistoryItem: QueryHistoryResultItem;
 }
 
-export function ExplainVis({
+export const ExplainVis = observer(function ExplainVis({
   editorState,
   state,
   queryHistoryItem,
@@ -54,7 +56,7 @@ export function ExplainVis({
     <ExplainContext.Provider value={[state, /*devMode*/ false]}>
       <div className={styles.explainVis}>
         <ExplainHeader queryHistoryItem={queryHistoryItem} />
-        <Flamegraph />
+        {state.showFlamegraph ? <Flamegraph /> : <Treemap />}
         <PlanDetails />
         {devMode ? (
           <button onClick={() => editorState.setShowExplain(true)}>
@@ -64,7 +66,7 @@ export function ExplainVis({
       </div>
     </ExplainContext.Provider>
   );
-}
+});
 
 const ExplainHeader = observer(function ExplainHeader({
   queryHistoryItem,
@@ -87,6 +89,9 @@ const ExplainHeader = observer(function ExplainHeader({
             </div>
           </div>
         ) : null}
+        <span onClick={() => state.setShowFlamegraph(!state.showFlamegraph)}>
+          {state.showFlamegraph ? "Show treemap" : "Show flamegraph"}
+        </span>
       </div>
       <div className={styles.typeSwitcher}>
         <div

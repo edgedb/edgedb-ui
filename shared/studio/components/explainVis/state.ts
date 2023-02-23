@@ -1,5 +1,12 @@
 import {action, computed, observable} from "mobx";
-import {frozen, Frozen, model, Model, prop} from "mobx-keystone";
+import {
+  frozen,
+  Frozen,
+  FrozenCheckMode,
+  model,
+  Model,
+  prop,
+} from "mobx-keystone";
 import {instanceCtx} from "../../state/instance";
 import {
   EditorKind,
@@ -21,7 +28,7 @@ export function createExplainState(rawExplainOutput: string) {
 
   return new ExplainState({
     rawData: rawExplainOutput,
-    planTree: frozen(planTree),
+    planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.Buffers.map((buf: any) => buf[0]).slice(1)),
     flamegraphType: planTree.totalTime != null ? "time" : "cost",
@@ -37,6 +44,7 @@ export class ExplainState extends Model({
 
   ctxId: prop<number | null>(null).withSetter(),
 
+  showFlamegraph: prop(false).withSetter(),
   flamegraphType: prop<"cost" | "time">().withSetter(),
   flamegraphZoom: prop<number>(1).withSetter(),
 }) {
@@ -46,6 +54,14 @@ export class ExplainState extends Model({
   @action
   setSelectedPlan(plan: Plan | null) {
     this.selectedPlan = plan;
+  }
+
+  @observable.ref
+  focusedPlan: Plan | null = null;
+
+  @action
+  setFocusedPlan(plan: Plan | null) {
+    this.focusedPlan = plan;
   }
 
   @observable.shallow
@@ -81,7 +97,7 @@ export class ExplainState extends Model({
       return ctxs;
     }, [] as Contexts[]);
     for (const ctx of ctxs) {
-      ctx.sort((a, b) => a.start - b.start);
+      ctx?.sort((a, b) => a.start - b.start);
     }
     return ctxs;
   }
@@ -116,6 +132,7 @@ function nodesEqual(l: Plan[], r: Plan[]) {
 }
 
 export interface Plan {
+  parent: Plan | null;
   type: string;
   totalTime: number | null;
   totalCost: number;
@@ -216,9 +233,13 @@ export function walkPlanNode(
 
   const [nearestContextPlan, ..._subPlans] = _childContextNodes ?? [];
 
-  const subPlans = [...(nearestContextPlan?.subPlans ?? []), ..._subPlans];
+  const subPlans = [
+    ...(nearestContextPlan?.subPlans ?? []),
+    ..._subPlans,
+  ].sort((a, b) => b.totalTime - a.totalTime);
 
-  return {
+  const plan = {
+    parent: null,
     type: data["Node Type"],
     totalTime: data.FullTotalTime,
     totalCost: data["Total Cost"],
@@ -234,6 +255,12 @@ export function walkPlanNode(
       !!_childContextNodes && !nodesEqual(fullSubPlans, subPlans),
     raw: data,
   };
+
+  for (const subplan of subPlans) {
+    subplan.parent = plan;
+  }
+
+  return plan;
 }
 
 // Result of explain query is output as a json string containing a tree of plan
