@@ -5,6 +5,7 @@ import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
+import codeEditorStyles from "@edgedb/code-editor/codeEditor.module.scss";
 
 import styles from "./repl.module.scss";
 
@@ -38,6 +39,7 @@ import {
 import {InspectorState} from "@edgedb/inspector/state";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 import Spinner from "@edgedb/common/ui/spinner";
+import {ExplainVis, TestExplainVis} from "../../components/explainVis";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const dbState = useDatabaseState();
@@ -160,6 +162,17 @@ export const QueryEditorView = observer(function QueryEditorView() {
           </ExtendedViewerContext.Provider>
         </div>
       ) : null}
+
+      {editorState.showExplain &&
+      (editorState.currentResult as QueryHistoryResultItem).explainState ? (
+        <TestExplainVis
+          closeExplain={() => editorState.setShowExplain(false)}
+          explainOutput={
+            (editorState.currentResult as QueryHistoryResultItem).explainState!
+              .rawData
+          }
+        />
+      ) : null}
     </div>
   );
 });
@@ -195,6 +208,51 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     codeEditorRef.current?.focus();
   }, []);
 
+  const explainState =
+    editorState.currentResult instanceof QueryHistoryResultItem &&
+    editorState.currentResult.status === "EXPLAIN"
+      ? editorState.currentResult.explainState
+      : null;
+
+  useEffect(() => {
+    const ref = codeEditorRef.current?.ref;
+    if (ref && explainState) {
+      const mouseoverListener = (e: MouseEvent) => {
+        let target = (e.target as HTMLElement).closest(
+          `.${codeEditorStyles.explainContextMark}`
+        ) as HTMLElement;
+        while (
+          target?.parentElement?.classList.contains(
+            codeEditorStyles.explainContextMark
+          )
+        ) {
+          target = target.parentElement;
+        }
+        const ctxId = target?.dataset.ctxId;
+        if (ctxId) {
+          explainState.setCtxId(parseInt(ctxId, 10));
+        }
+      };
+      const mouseoutListener = (e: MouseEvent) => {
+        if (
+          (e.target as HTMLElement).closest(
+            `.${codeEditorStyles.explainContextMark}`
+          ) != null
+        ) {
+          explainState.setCtxId(null);
+        }
+      };
+
+      ref.addEventListener("mouseover", mouseoverListener);
+      ref.addEventListener("mouseout", mouseoutListener);
+
+      return () => {
+        ref.removeEventListener("mouseover", mouseoverListener);
+        ref.removeEventListener("mouseout", mouseoutListener);
+      };
+    }
+  }, [codeEditorRef, explainState]);
+
   return (
     <CustomScrollbars
       className={styles.scrollWrapper}
@@ -210,9 +268,18 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
         readonly={editorState.showHistory}
         schemaObjects={dbState.schemaData?.objectsByName}
         errorUnderline={
-          editorState.showErrorUnderline &&
+          editorState.showEditorResultDecorations &&
           editorState.currentResult instanceof QueryHistoryErrorItem
             ? editorState.currentResult.error.data.range
+            : undefined
+        }
+        explainContexts={
+          editorState.showEditorResultDecorations && explainState
+            ? {
+                selectedCtxId: explainState.ctxId,
+                contexts: explainState.contextsByBufIdx,
+                buffers: explainState.buffers.data,
+              }
             : undefined
         }
       />
@@ -251,7 +318,15 @@ const QueryResult = observer(function QueryResult() {
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
-      if (result.inspectorState) {
+      if (result.status === "EXPLAIN") {
+        content = (
+          <ExplainVis
+            editorState={editorState}
+            state={result.explainState}
+            queryHistoryItem={result}
+          />
+        );
+      } else if (result.inspectorState) {
         content = (
           <ResultInspector
             key={result.$modelId}

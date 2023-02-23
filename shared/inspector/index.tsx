@@ -244,6 +244,7 @@ const Row = observer(function Row({
       }}
     >
       <InspectorRow
+        key={item.id}
         index={index}
         item={item}
         state={state}

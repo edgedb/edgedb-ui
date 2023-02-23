@@ -1,5 +1,21 @@
 import {SyntaxNode} from "@lezer/common";
 
+import {parser} from "@edgedb/lang-edgeql";
+
+export function splitQueryIntoStatements(queryString: string) {
+  const syntaxTree = parser.parse(queryString);
+
+  const statements: string[] = [];
+  let node = syntaxTree.topNode.firstChild;
+  while (node) {
+    if (node.name === "Statement") {
+      statements.push(getNodeText(queryString, node));
+    }
+    node = node.nextSibling;
+  }
+  return statements;
+}
+
 export function getNodeText(query: string, node: SyntaxNode): string {
   return query.slice(node.from, node.to);
 }

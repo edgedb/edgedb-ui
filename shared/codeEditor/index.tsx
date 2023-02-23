@@ -26,6 +26,7 @@ import {
   KeyBinding,
   lineNumbers,
   Decoration,
+  WidgetType,
 } from "@codemirror/view";
 import {
   defaultKeymap,
@@ -80,12 +81,109 @@ function getErrorExtension(range: [number, number], doc: Text) {
     return [];
   }
 
-  const decos: Range<Decoration>[] = [errorUnderlineMark.range(...range)];
+  const decos: Range<Decoration>[] =
+    range[0] !== range[1] ? [errorUnderlineMark.range(...range)] : [];
 
   const startLine = doc.lineAt(range[0]).number;
   const endLine = doc.lineAt(range[1]).number;
   for (let i = startLine; i <= endLine; i++) {
     decos.push(errorLineHighlight.range(doc.line(i).from));
+  }
+
+  return EditorView.decorations.of(RangeSet.of(decos, true));
+}
+
+const explainContextsComp = new Compartment();
+
+interface ExplainContextsData {
+  selectedCtxId: number | null;
+  contexts: {
+    id: number;
+    bufIdx: number;
+    start: number;
+    end: number;
+    text: string;
+    selfTimePercent?: number;
+    selfCostPercent: number;
+    color: string;
+    linkedBufIdx: number | null;
+  }[][];
+  buffers: string[];
+}
+
+class ExplainContextSnippetWidget extends WidgetType {
+  constructor(
+    readonly content: string,
+    readonly ctxs: ExplainContextsData["contexts"][number],
+    readonly selectedCtxId: number | null
+  ) {
+    super();
+  }
+
+  eq(other: ExplainContextSnippetWidget) {
+    return (
+      other.content === this.content &&
+      other.selectedCtxId === this.selectedCtxId &&
+      other.ctxs === this.ctxs
+    );
+  }
+
+  toDOM() {
+    let el = document.createElement("span");
+    el.setAttribute("aria-hidden", "true");
+    el.className = styles.explainContextSnippet;
+    let i = 0;
+    for (const ctx of this.ctxs) {
+      el.appendChild(
+        document.createTextNode(this.content.slice(i, ctx.start))
+      );
+      const ctxEl = document.createElement("span");
+      ctxEl.classList.add(styles.explainContextMark);
+      if (this.selectedCtxId === ctx.id) {
+        ctxEl.classList.add(styles.selected);
+      }
+      ctxEl.dataset.ctxId = ctx.id.toString();
+      ctxEl.style.setProperty("--ctxColor", ctx.color);
+      ctxEl.textContent = this.content.slice(ctx.start, ctx.end);
+      el.appendChild(ctxEl);
+      i = ctx.end;
+    }
+    el.appendChild(document.createTextNode(this.content.slice(i)));
+    return el;
+  }
+}
+
+function getExplainContextsExtension({
+  selectedCtxId,
+  contexts,
+  buffers,
+}: ExplainContextsData) {
+  const decos: Range<Decoration>[] = [];
+
+  for (const ctx of contexts[0]) {
+    decos.push(
+      Decoration.mark({
+        class: cn(styles.explainContextMark, {
+          [styles.selected]: ctx.id === selectedCtxId,
+        }),
+        attributes: {
+          style: `--ctxColor: ${ctx.color}`,
+          "data-ctx-id": ctx.id.toString(),
+        },
+      }).range(ctx.start, ctx.end)
+    );
+    if (ctx.linkedBufIdx != null) {
+      decos.push(
+        Decoration.widget({
+          widget: new ExplainContextSnippetWidget(
+            buffers[ctx.linkedBufIdx - 1],
+            contexts[ctx.linkedBufIdx],
+            selectedCtxId
+          ),
+          side: 1,
+        }).range(ctx.end)
+      );
+    }
   }
 
   return EditorView.decorations.of(RangeSet.of(decos, true));
@@ -125,9 +223,11 @@ export interface CodeEditorProps {
   noPadding?: boolean;
   renderWhitespace?: boolean;
   errorUnderline?: [number, number];
+  explainContexts?: ExplainContextsData;
 }
 
 export interface CodeEditorRef {
+  ref: HTMLDivElement;
   focus: () => void;
   dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) => void;
 }
@@ -156,6 +256,7 @@ export function createCodeEditor({
     schemaObjects,
     renderWhitespace,
     errorUnderline,
+    explainContexts,
   }: {
     doc: Text;
     onChange: (value: Text) => void;
@@ -165,6 +266,7 @@ export function createCodeEditor({
     schemaObjects?: Map<string, SchemaObjectType>;
     renderWhitespace?: boolean;
     errorUnderline?: [number, number];
+    explainContexts?: ExplainContextsData;
   }) {
     return EditorState.create({
       doc,
@@ -230,6 +332,9 @@ export function createCodeEditor({
         errorUnderlineComp.of(
           errorUnderline ? getErrorExtension(errorUnderline, doc) : []
         ),
+        explainContextsComp.of(
+          explainContexts ? getExplainContextsExtension(explainContexts) : []
+        ),
         customExtensions,
       ],
     });
@@ -246,17 +351,23 @@ export function createCodeEditor({
       useDarkTheme,
       renderWhitespace,
       errorUnderline,
+      explainContexts,
     }: CodeEditorProps,
     componentRef
   ) {
     const ref = useRef<HTMLDivElement>(null);
     const view = useRef<EditorView | null>(null);
 
-    useImperativeHandle<unknown, CodeEditorRef>(componentRef, () => ({
-      focus: () => view.current?.focus(),
-      dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
-        view.current?.dispatch({effects}),
-    }));
+    useImperativeHandle<unknown, CodeEditorRef>(
+      componentRef,
+      () => ({
+        ref: ref.current,
+        focus: () => view.current?.focus(),
+        dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
+          view.current?.dispatch({effects}),
+      }),
+      [ref]
+    );
 
     useEffect(() => {
       if (ref.current) {
@@ -270,6 +381,7 @@ export function createCodeEditor({
             schemaObjects,
             renderWhitespace,
             errorUnderline,
+            explainContexts,
           }),
           parent: ref.current,
         });
@@ -292,6 +404,7 @@ export function createCodeEditor({
             schemaObjects,
             renderWhitespace,
             errorUnderline,
+            explainContexts,
           })
         );
       }
@@ -378,6 +491,14 @@ export function createCodeEditor({
         ),
       });
     }, [errorUnderline]);
+
+    useLayoutEffect(() => {
+      view.current?.dispatch({
+        effects: explainContextsComp.reconfigure(
+          explainContexts ? getExplainContextsExtension(explainContexts) : []
+        ),
+      });
+    }, [explainContexts]);
 
     useEffect(() => {
       if (!noPadding && ref.current?.firstChild) {
