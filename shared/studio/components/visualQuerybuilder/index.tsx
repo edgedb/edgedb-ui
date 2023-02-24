@@ -13,7 +13,7 @@ import {
 } from "./state";
 import {SchemaObjectType, SchemaProperty} from "@edgedb/common/schemaData";
 
-import styles from "./querybuilder.module.scss";
+import styles from "./queryBuilder.module.scss";
 import {Select} from "@edgedb/common/ui/select";
 import {DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
