@@ -1,0 +1,260 @@
+@import "@edgedb/common/mixins.scss";
+
+.queryBuilder {
+  font-family: "Roboto Mono", monospace;
+  font-size: 15px;
+  line-height: 28px;
+  overflow: auto;
+  width: 100%;
+  white-space: nowrap;
+
+  @include hideScrollbar;
+
+  &.editingDisabled {
+    pointer-events: none;
+  }
+}
+
+.scrollWrapper {
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.scrollInner {
+  padding: 8px 16px;
+  padding-bottom: 48px;
+}
+
+.controls {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  margin: 8px;
+  pointer-events: none;
+
+  .runButton {
+    --buttonBg: var(--app-accent-green);
+    --buttonTextColour: #0a4634;
+    align-self: flex-start;
+    flex-shrink: 0;
+    pointer-events: auto;
+  }
+}
+
+.select {
+  line-height: 24px;
+  height: 30px;
+  margin: -1px 2px;
+
+  --dropdownButtonColour: transparent;
+}
+
+.inactive {
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 2px 0;
+
+  label {
+    cursor: pointer;
+  }
+}
+
+.modRow {
+  display: flex;
+  padding: 2px 0;
+  margin: 8px 0;
+  margin-left: 2ch;
+
+  &.indent {
+    margin-left: 4ch;
+  }
+
+  input {
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    margin-left: 4px;
+    border: 1px solid var(--inputBorderColour, #d4d4d4);
+    border-radius: 4px;
+    outline: 0;
+    padding: 0 6px;
+    color: var(--form-field-text-colour);
+    box-sizing: border-box;
+    width: 201px;
+
+    &:focus,
+    &:hover {
+      background: var(--app-bg);
+      border-color: var(--inputBorderColour, #047cff);
+      border-width: 2px;
+    }
+
+    &.error {
+      --inputBorderColour: var(--app-err-color);
+    }
+  }
+
+  &:hover {
+    & > input:not(:focus),
+    & > .filterExpr > input:not(:focus) {
+      background: var(--app-bg);
+      border-color: var(--inputBorderColour, #bbb);
+      border-radius: 4px;
+    }
+
+    & > .select,
+    & > .filterExpr > .select {
+      background: var(--app-bg);
+      --dropdownButtonColour: #aaa;
+    }
+  }
+}
+
+.keyword {
+  color: var(--syntax-purple);
+}
+
+.addModifiers {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+
+  opacity: 0.3;
+
+  .shapeBlock:hover > .row > & {
+    opacity: 1;
+  }
+}
+
+.modButton {
+  font-size: 13px;
+  border: 1px solid #adadad;
+  border-radius: 11px;
+  height: 20px;
+  line-height: 20px;
+  margin-right: 8px;
+  padding: 0 8px;
+  opacity: 0.6;
+  font-style: italic;
+  cursor: pointer;
+
+  &:before {
+    content: "+";
+    font-style: normal;
+    margin-right: 4px;
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.filterGroup {
+  border-radius: 4px;
+
+  &.nested {
+    margin-left: 1ch;
+    background: var(--form-group-bg);
+    padding: 6px;
+    margin-bottom: 6px;
+
+    & > .modRow {
+      margin: 8px 0;
+
+      &.indent {
+        margin-left: 2ch;
+      }
+
+      &:first-child:before {
+        content: "(";
+      }
+      &:nth-last-child(2):after {
+        content: ")";
+      }
+    }
+
+    &.altBg {
+      background: #f5f5f5;
+    }
+  }
+
+  & > .modRow:last-child {
+    opacity: 0.3;
+  }
+
+  &:hover > .modRow:last-child {
+    opacity: 1;
+  }
+}
+
+.checkbox {
+  appearance: none;
+  cursor: pointer;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid var(--app-text-colour);
+  border-radius: 2px;
+  background: var(--app-panel-bg);
+
+  &:checked {
+    border: 1px solid var(--app-bg);
+    background: var(--app-bg);
+    background-image: url("../../icons/checkbox_checked.svg");
+  }
+}
+
+.filterExpr {
+  display: flex;
+}
+
+.propType {
+  opacity: 0.8;
+  margin: 0 0.5ch;
+}
+
+.removeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  opacity: 0;
+  cursor: pointer;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:hover {
+    opacity: 1 !important;
+
+    svg {
+      fill: var(--app-err-color);
+    }
+  }
+
+  .modRow:hover > & {
+    opacity: 0.3;
+  }
+}
+
+.orderByBlock {
+  & > .modRow:last-child {
+    opacity: 0.3;
+  }
+
+  &:hover > .modRow:last-child {
+    opacity: 1;
+  }
+}
