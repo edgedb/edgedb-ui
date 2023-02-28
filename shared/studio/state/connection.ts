@@ -24,6 +24,7 @@ import {
 } from "../utils/decodeRawBuffer";
 import {instanceCtx, InstanceState} from "./instance";
 import {sessionStateCtx} from "./sessionState";
+import {splitQueryIntoStatements} from "../utils/syntaxTree";
 
 export {Capabilities};
 export type {QueryParams};
@@ -205,6 +206,16 @@ export class Connection extends Model({
         return;
       }
 
+      const statements = splitQueryIntoStatements(queryString);
+      const lastStatement = statements[statements.length - 1];
+      const isExplain = lastStatement && /^\s*explain/i.test(lastStatement);
+
+      if (isExplain) {
+        console.log(
+          "explain query; disabling typename injection + implicit limits"
+        );
+      }
+
       const startTime = performance.now();
 
       let inCodec, outCodec, outCodecBuf, capabilities, _;
@@ -214,7 +225,11 @@ export class Connection extends Model({
           this._codecCache.get(queryString)!;
       } else {
         [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
-          await this.conn.rawParse(queryString, state, queryOptions);
+          await this.conn.rawParse(
+            queryString,
+            state,
+            isExplain ? {} : queryOptions
+          );
         this._codecCache.set(queryString, [
           inCodec,
           outCodec,
@@ -233,7 +248,7 @@ export class Connection extends Model({
         queryString,
         state,
         outCodec,
-        {...queryOptions, implicitLimit: opts.implicitLimit},
+        isExplain ? {} : {...queryOptions, implicitLimit: opts.implicitLimit},
         inCodec,
         params
       );

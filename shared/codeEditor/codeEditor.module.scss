@@ -33,6 +33,36 @@
       background: rgba(255, 0, 0, 0.2);
     }
   }
+
+  .explainContextMark {
+    position: relative;
+    border-radius: 4px;
+
+    &:after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      border-bottom: 3px solid var(--ctxColor);
+      // z-index: -1;
+    }
+
+    &.selected {
+      outline: 2px solid #0074e8;
+    }
+  }
+
+  .explainContextSnippet {
+    background: #e1e1e1;
+    border-radius: 4px;
+    padding: 2px 1px;
+    font-style: italic;
+
+    &:before {
+      content: " := ";
+    }
+  }
 }
 
 // .terminalCursor {
