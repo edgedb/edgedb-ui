@@ -26,7 +26,7 @@ describe("queryEditor:", () => {
 
       // run the query
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
-      runButton.click();
+      await runButton.click();
 
       const errorElement = driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
@@ -58,7 +58,7 @@ describe("queryEditor:", () => {
 
       // run the query
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
-      runButton.click();
+      await runButton.click();
 
       const errorElement = driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
@@ -149,47 +149,69 @@ describe("queryEditor:", () => {
 
       waitUntilElementNotLocated(ByUIClass("repl_extendedViewerContainer"));
     });
+
+    test("open history and choose item to edit", async () => {
+      // save the current editor text to be able to compare it later with the other one from history
+      const editor = await driver.findElement(By.className("cm-content"));
+      const draftQuery = await editor.getText();
+
+      (await driver.findElement(ByUIClass("repl_historyButton"))).click();
+
+      const history = await driver.wait(
+        until.elementLocated(ByUIClass("repl_history"))
+      );
+
+      // click on first history query (that is not draft query)
+      (await history.findElements(ByUIClass("repl_historyItem")))[1].click();
+
+      // click on edit button
+      (await history.findElement(ByUIClass("repl_editButton"))).click();
+
+      expect(editor.getText()).not.toBe(draftQuery);
+
+      // history sidebar is closed
+      waitUntilElementNotLocated(ByUIClass("repl_history"));
+    });
   });
 
   describe("builder", () => {
     beforeAll(async () => {
       await driver.wait(until.elementLocated(ByUIClass("repl_tabs")));
       const editorTabs = await driver.findElements(ByUIClass("repl_tab"));
-
       // click on builder tab
-      await editorTabs[1].click();
-
+      await driver.actions({async: true}).click(editorTabs[1]).perform();
       // wait for builder window to show
       await driver.wait(
         until.elementLocated(ByUIClass("queryBuilder_queryBuilder"))
       );
     });
-
     test("queryBuilder renders correctly", async () => {
+      await driver.wait(until.elementLocated(ByUIClass("repl_tabs")));
+      const editorTabs = await driver.findElements(ByUIClass("repl_tab"));
+      // click on builder tab
+      await driver.actions({async: true}).click(editorTabs[1]).perform();
+      // wait for builder window to show
+      await driver.wait(
+        until.elementLocated(ByUIClass("queryBuilder_queryBuilder"))
+      );
       // select keyword should be shown
       const selectKeyword = await driver.findElement(
         ByUIClass("queryBuilder_keyword")
       );
-
       expect(await selectKeyword.getText()).toBe("select");
-
       // select dropdown with all existing db objects should be shown
       await driver.findElement(
         By.css(`${uiClass("select_select")}${uiClass("select_fullButton")}`)
       );
-
       // id checkbox should exists
       const idCheckbox = await driver.findElement(
         ByUIClass("queryBuilder_inactive")
       );
-
       expect(await idCheckbox.getText()).toBe("id");
-
       // 4 query modifiers should be visible
       const modButtons = await driver.findElements(
         ByUIClass("queryBuilder_modButton")
       );
-
       expect(await modButtons.length).toBe(4);
       expect(await modButtons[0].getText()).toBe("filter");
       expect(await modButtons[1].getText()).toBe("order by");
