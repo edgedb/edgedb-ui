@@ -13,6 +13,32 @@
   &.editingDisabled {
     pointer-events: none;
   }
+
+  .emptySchemaText {
+    font-size: 14px;
+    line-height: 24px;
+    max-width: 392px;
+    white-space: normal;
+    padding: 30px;
+    color: #000;
+    font-family: Roboto, sans-serif;
+
+    @include darkTheme {
+      color: #b3b3b3;
+    }
+
+    a {
+      color: var(--btn-green);
+      font-weight: 600;
+      text-decoration: none;
+    }
+  }
+}
+
+.flexCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .scrollWrapper {

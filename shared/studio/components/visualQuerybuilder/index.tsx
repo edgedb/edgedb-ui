@@ -35,7 +35,7 @@ export const VisualQuerybuilder = observer(function VisualQuerybuilder({
       new QueryBuilderShape({
         typename: [...schemaData.objects.values()].find(
           (type) => !type.builtin
-        )!.name,
+        )?.name,
       })
     );
   }
@@ -65,34 +65,49 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
         <div
           className={cn(styles.queryBuilder, {
             [styles.editingDisabled]: editorState.showHistory,
+            [styles.flexCenter]: !schemaObjectTypes.length,
           })}
         >
-          <div className={styles.scrollInner}>
-            <div className={styles.shapeBlock}>
-              <div className={styles.row}>
-                <span className={styles.keyword}>select</span>{" "}
-                <Select
-                  items={schemaObjectTypes.map((type) => ({
-                    label: type.name,
-                    action: () =>
-                      state.setRoot(
-                        new QueryBuilderShape({typename: type.name})
-                      ),
-                  }))}
-                  selectedItemIndex={schemaObjectTypes.findIndex(
-                    (type) => type.name === state.root.typename
-                  )}
-                />{" "}
-                {"{"}
+          {schemaObjectTypes.length ? (
+            <div className={styles.scrollInner}>
+              <div className={styles.shapeBlock}>
+                <div className={styles.row}>
+                  <span className={styles.keyword}>select</span>{" "}
+                  <Select
+                    items={schemaObjectTypes.map((type) => ({
+                      label: type.name,
+                      action: () =>
+                        state.setRoot(
+                          new QueryBuilderShape({typename: type.name})
+                        ),
+                    }))}
+                    selectedItemIndex={schemaObjectTypes.findIndex(
+                      (type) => type.name === state.root.typename
+                    )}
+                  />{" "}
+                  {"{"}
+                </div>
+                <QueryBuilderShapeRenderer
+                  shape={state.root}
+                  schemaType={
+                    schemaData.objectsByName.get(state.root.typename!)!
+                  }
+                />
               </div>
-              <QueryBuilderShapeRenderer
-                shape={state.root}
-                schemaType={
-                  schemaData.objectsByName.get(state.root.typename!)!
-                }
-              />
             </div>
-          </div>
+          ) : (
+            <p className={styles.emptySchemaText}>
+              The query builder UI requires a database with a non-empty schema.
+              Check out the{" "}
+              <a
+                href="https://www.edgedb.com/docs/intro/quickstart"
+                target="_blank"
+              >
+                Getting Started
+              </a>{" "}
+              guide to learn how to set things up.
+            </p>
+          )}
         </div>
       </CustomScrollbars>
 
