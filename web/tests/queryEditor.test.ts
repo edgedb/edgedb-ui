@@ -172,6 +172,31 @@ describe("queryEditor:", () => {
       // history sidebar is closed
       waitUntilElementNotLocated(ByUIClass("repl_history"));
     });
+
+    test("open history and choose item to edit by double clicking it", async () => {
+      // save the current editor text to be able to compare it later with the other one from history
+      const editor = await driver.findElement(By.className("cm-content"));
+      const draftQuery = await editor.getText();
+
+      (await driver.findElement(ByUIClass("repl_historyButton"))).click();
+
+      await driver.wait(until.elementLocated(ByUIClass("repl_history")));
+
+      // click on 2nd history query
+      const historyItems = await driver.findElements(
+        ByUIClass("repl_historyItem")
+      );
+
+      await driver
+        .actions({async: true})
+        .doubleClick(historyItems[2])
+        .perform();
+
+      expect(editor.getText()).not.toBe(draftQuery);
+
+      // history sidebar is closed
+      waitUntilElementNotLocated(ByUIClass("repl_history"));
+    });
   });
 
   describe("builder", () => {
