@@ -65,7 +65,7 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
         <div
           className={cn(styles.queryBuilder, {
             [styles.editingDisabled]: editorState.showHistory,
-            [styles.flex]: !schemaObjectTypes.length,
+            [styles.flexCenter]: !schemaObjectTypes.length,
           })}
         >
           {schemaObjectTypes.length ? (
