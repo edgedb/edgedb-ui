@@ -8,37 +8,38 @@ import {
 describe("queryEditor:", () => {
   beforeAll(async () => {
     await goToPage("_test/editor");
-  });
-  describe("editor", () => {
-    beforeAll(async () => {
-      await goToPage("_test/editor");
 
-      // wait until schema and data loaded
-      await driver.wait(
-        until.elementLocated(ByUIClass("codeEditor_codeEditor"))
-      );
-    });
+    // wait until schema and data loaded
+    await driver.wait(
+      until.elementLocated(ByUIClass("codeEditor_codeEditor"))
+    );
+  });
+
+  describe("editor", () => {
     test("enter invalid query: InvalidReferenceError", async () => {
+      driver.navigate().refresh();
+
       const editor = await driver.findElement(By.className("cm-content"));
+
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015"
       );
 
       // run the query
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
-      runButton.click();
+      await runButton.click();
 
       const errorElement = driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
-      const errorName = await errorElement.findElement(
+      const error = await errorElement.findElement(
         ByUIClass("repl_errorName")
       );
 
-      expect(
-        (await errorName.getText()).includes("InvalidReferenceError")
-      ).toBe(true);
+      expect((await error.getText()).includes("InvalidReferenceError")).toBe(
+        true
+      );
 
       const errorHint = await errorElement.findElement(
         ByUIClass("repl_errorHint")
@@ -50,39 +51,41 @@ describe("queryEditor:", () => {
     });
 
     test("enter invalid query: EdgeQLSyntaxError", async () => {
+      driver.navigate().refresh();
+
       const editor = await driver.findElement(By.className("cm-content"));
-      await editor.clear();
+
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015)"
       );
 
       // run the query
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
-      runButton.click();
+      await runButton.click();
 
       const errorElement = driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
-      const errorName = await errorElement.findElement(
+      const error = await errorElement.findElement(
         ByUIClass("repl_errorName")
       );
 
-      expect((await errorName.getText()).includes("EdgeQLSyntaxError")).toBe(
-        true
-      );
+      expect((await error.getText()).includes("EdgeQLSyntaxError")).toBe(true);
     });
 
-    test("enter valid query and get results", async () => {
+    test("enter valid query, get results, copy and view them", async () => {
+      driver.navigate().refresh();
+
       const editor = await driver.findElement(By.className("cm-content"));
-      await editor.clear();
+
       await editor.sendKeys(
         "select Movie { title } filter .release_year = 2015"
       );
 
       // run the query
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
-      runButton.click();
+      await runButton.click();
 
       const inspector = driver.wait(
         until.elementLocated(ByUIClass("repl_inspector"))
@@ -94,31 +97,21 @@ describe("queryEditor:", () => {
 
       expect(await results[0].getText()).toBe("Ant-Man");
       expect(await results[1].getText()).toBe("Avengers: Age of Ultron");
-    });
 
-    test("there should be copy buttons for the whole result and for all its parts", async () => {
-      const inspector = driver.wait(
-        until.elementLocated(ByUIClass("repl_inspector"))
-      );
-
+      // there should be copy buttons for the whole result and for all its parts
       const copyButtons = await inspector.findElements(
         ByUIClass("inspector_copyButton")
       );
 
       // there should be copy options for the whole result and every result's parts and their parts
-      expect(await copyButtons.length).toBe(5);
+      expect(copyButtons.length).toBe(5);
       expect(await copyButtons[0].getAttribute("innerText")).toBe("COPY");
 
-      //copy the whole result to the clipboard
+      // copy the whole result to the clipboard
       await copyButtons[0].click();
       expect(await copyButtons[0].getAttribute("innerText")).toBe("COPIED");
-    });
 
-    test("when clicking on view button, new window is opened", async () => {
-      const inspector = driver.wait(
-        until.elementLocated(ByUIClass("repl_inspector"))
-      );
-
+      // when clicking on view button, new window is opened
       const viewButtons = await inspector.findElements(
         ByUIClass("inspector_openExtendedButton")
       );
@@ -128,12 +121,12 @@ describe("queryEditor:", () => {
       await viewButtons[0].click();
 
       // wait for the view window to open
-      const viewer = await driver.wait(
+      const viewWindow = await driver.wait(
         until.elementLocated(ByUIClass("repl_extendedViewerContainer"))
       );
 
       // linewrap / show whitespace
-      const actionButtons = await viewer.findElements(
+      const actionButtons = await viewWindow.findElements(
         ByUIClass("shared_actionButton")
       );
 
@@ -145,20 +138,64 @@ describe("queryEditor:", () => {
         "SHOW WHITESPACE"
       );
 
-      (await viewer.findElement(ByUIClass("shared_closeAction"))).click();
+      (await viewWindow.findElement(ByUIClass("shared_closeAction"))).click();
 
-      waitUntilElementNotLocated(ByUIClass("repl_extendedViewerContainer"));
+      await waitUntilElementNotLocated(
+        ByUIClass("repl_extendedViewerContainer")
+      );
+    });
+
+    test("open history and choose item to edit", async () => {
+      // firstly run some query to be sure there's something in the history
+      const editor = await driver.findElement(By.className("cm-content"));
+      await editor.clear();
+
+      await editor.sendKeys("select 1 + 1");
+
+      // run the query and populate the history
+      const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+      await runButton.click();
+
+      // write something else in the editor
+      await editor.clear();
+      await editor.sendKeys("select 2 + 2");
+
+      // save the current editor text to be able to compare it later with the other one from history
+      const draftQuery = await editor.getText();
+
+      (await driver.findElement(ByUIClass("repl_historyButton"))).click();
+
+      await driver.wait(until.elementLocated(ByUIClass("repl_history")));
+      // the element get rerendered and we need to get it again in order to avoid stale reference err
+      await driver.wait(until.elementLocated(ByUIClass("repl_history")));
+
+      // click on first history query (that is not draft query)
+      (await driver.findElements(ByUIClass("repl_historyItem")))[1].click();
+
+      // click on edit button
+      (
+        await driver.wait(
+          until.elementLocated(ByUIClass("repl_editButton")),
+          2000
+        )
+      ).click();
+
+      expect(await editor.getText()).not.toBe(draftQuery);
+
+      // history sidebar is closed
+      await waitUntilElementNotLocated(ByUIClass("repl_history"));
     });
   });
 
   describe("builder", () => {
     beforeAll(async () => {
-      await driver.wait(until.elementLocated(ByUIClass("repl_tabs")));
-      const editorTabs = await driver.findElements(ByUIClass("repl_tab"));
+      const editorTabs = await driver.wait(
+        until.elementLocated(ByUIClass("repl_tabs"))
+      );
 
+      const tabs = await editorTabs.findElements(ByUIClass("repl_tab"));
       // click on builder tab
-      await editorTabs[1].click();
-
+      await driver.actions({async: true}).click(tabs[1]).perform();
       // wait for builder window to show
       await driver.wait(
         until.elementLocated(ByUIClass("queryBuilder_queryBuilder"))
@@ -170,27 +207,21 @@ describe("queryEditor:", () => {
       const selectKeyword = await driver.findElement(
         ByUIClass("queryBuilder_keyword")
       );
-
       expect(await selectKeyword.getText()).toBe("select");
-
       // select dropdown with all existing db objects should be shown
       await driver.findElement(
         By.css(`${uiClass("select_select")}${uiClass("select_fullButton")}`)
       );
-
       // id checkbox should exists
       const idCheckbox = await driver.findElement(
         ByUIClass("queryBuilder_inactive")
       );
-
       expect(await idCheckbox.getText()).toBe("id");
-
       // 4 query modifiers should be visible
       const modButtons = await driver.findElements(
         ByUIClass("queryBuilder_modButton")
       );
-
-      expect(await modButtons.length).toBe(4);
+      expect(modButtons.length).toBe(4);
       expect(await modButtons[0].getText()).toBe("filter");
       expect(await modButtons[1].getText()).toBe("order by");
       expect(await modButtons[2].getText()).toBe("offset");

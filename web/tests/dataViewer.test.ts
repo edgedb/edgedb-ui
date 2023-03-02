@@ -118,7 +118,7 @@ describe("dataViewer:", () => {
       const applyFilterButton = await driver.findElement(
         ByUIClass("dataview_applyFilterButton")
       );
-      applyFilterButton.click();
+      await applyFilterButton.click();
 
       // wait for rerender to finish
       await waitUntilElementsContentHasChanged(
