@@ -67,6 +67,11 @@ const HistoryPanelInner = observer(
       (ref as RefObject<HTMLDivElement>).current?.focus();
     }, []);
 
+    const closeHistory = () => {
+      state.setHistoryCursor(-1);
+      state.setShowHistory(false);
+    };
+
     return (
       <div
         ref={ref}
@@ -86,14 +91,11 @@ const HistoryPanelInner = observer(
       >
         <HistoryList state={state} />
         <div className={styles.historyControls}>
-          <Button
-            label={"Close"}
-            onClick={() => state.setShowHistory(false)}
-          />
+          <Button label={"Cancel"} onClick={closeHistory} />
           {state.historyCursor !== -1 ? (
             <Button
               className={styles.editButton}
-              label={"Edit"}
+              label={"Load"}
               onClick={() => state.setShowHistory(false, false)}
             />
           ) : null}
