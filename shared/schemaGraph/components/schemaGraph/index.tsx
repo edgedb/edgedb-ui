@@ -4,6 +4,7 @@ import {observer} from "mobx-react";
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";
 import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
+import {useNavigate} from "react-router-dom";
 
 import SchemaNode from "./SchemaNode";
 import SchemaLink from "./SchemaLink";
@@ -97,6 +98,8 @@ export default observer(function SchemaGraph({
   const schemaState = useSchemaState();
   const schemaGraphState = schemaState.graph;
 
+  const navigate = useNavigate();
+
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const viewport = schemaGraphState.viewport;
@@ -160,10 +163,18 @@ export default observer(function SchemaGraph({
     translate(${viewport.position.x}px, ${viewport.position.y}px)
     scale(${viewport.zoomLevel})`;
 
+  const handleClickOutside = (event) => {
+    if (event.target === event.currentTarget) {
+      schemaState.deselectAll();
+      navigate("schema");
+    }
+  };
+
   return (
     <div
       ref={viewportRef}
       className={cn(styles.schemaGraph, className)}
+      onClick={handleClickOutside}
       onMouseDown={graphDragHandler}
       onWheel={scrollHandler}
       onDoubleClick={(e) => {
@@ -172,7 +183,11 @@ export default observer(function SchemaGraph({
         }
       }}
     >
-      <div className={styles.transformContainer} style={{transform}}>
+      <div
+        className={styles.transformContainer}
+        style={{transform}}
+        onClick={handleClickOutside}
+      >
         {schemaGraphState.isLoaded ? (
           <SchemaGraphCanvas debug={debug} />
         ) : null}
