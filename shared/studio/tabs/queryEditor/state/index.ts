@@ -1,4 +1,4 @@
-import {action, computed, observable, runInAction} from "mobx";
+import {action, computed, observable} from "mobx";
 import {
   model,
   Model,
@@ -8,7 +8,6 @@ import {
   modelFlow,
   _async,
   _await,
-  findParent,
   ModelCreationData,
   Frozen,
   frozen,
@@ -16,7 +15,6 @@ import {
   getSnapshot,
   createContext as createMobxContext,
   fromSnapshot,
-  clone,
   SnapshotOutOf,
 } from "mobx-keystone";
 
@@ -150,6 +148,8 @@ export class QueryEditor extends Model({
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
 
   showExplain: prop(false).withSetter(),
+
+  loadedQueryIndex: prop(-1).withSetter(),
 }) {
   @observable queryRunning = false;
 

@@ -90,15 +90,8 @@ const HistoryPanelInner = observer(
         }}
       >
         <HistoryList state={state} />
-        <div className={styles.historyControls}>
+        <div className={styles.closeHistory}>
           <Button label={"Cancel"} onClick={closeHistory} />
-          {state.historyCursor !== -1 ? (
-            <Button
-              className={styles.editButton}
-              label={"Load"}
-              onClick={() => state.setShowHistory(false, false)}
-            />
-          ) : null}
         </div>
       </div>
     );
@@ -136,6 +129,11 @@ const HistoryList = observer(function HistoryList({
     listRef.current?.resetAfterIndex(0);
   }, [historyList.length]);
 
+  const loadQuery = (index: number) => {
+    state.setShowHistory(false, false);
+    state.setLoadedQueryIndex(index);
+  };
+
   return (
     <div ref={ref} className={styles.historyListWrapper}>
       <List
@@ -155,6 +153,7 @@ const HistoryList = observer(function HistoryList({
             index={index - 1}
             item={historyList[index - 1] ?? null}
             styleTop={style.top}
+            loadQuery={loadQuery}
           />
         )}
       </List>
@@ -167,11 +166,13 @@ const HistoryItem = observer(function HistoryItem({
   index,
   item,
   styleTop,
+  loadQuery,
 }: {
   state: QueryEditor;
   index: number;
   item: QueryHistoryItem | null;
   styleTop: any;
+  loadQuery: (index: number) => void;
 }) {
   if (item == null && index !== -1) {
     state.fetchQueryHistory();
@@ -191,7 +192,6 @@ const HistoryItem = observer(function HistoryItem({
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
       onClick={() => state.setHistoryCursor(index)}
-      onDoubleClick={() => state.setShowHistory(false, false)}
     >
       {item ? (
         <>
@@ -207,6 +207,15 @@ const HistoryItem = observer(function HistoryItem({
           >
             <RelativeTime timestamp={item.timestamp} />
           </div>
+          {state.loadedQueryIndex !== index && (
+            <Button
+              className={cn(styles.editButton, {
+                [styles.visibleButton]: state.historyCursor === index,
+              })}
+              label={"Load"}
+              onClick={() => loadQuery(index)}
+            />
+          )}
         </>
       ) : (
         "draft query"
