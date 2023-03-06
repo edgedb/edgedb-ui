@@ -6,7 +6,11 @@
   display: flex;
   align-items: center;
   border-radius: 4px;
-  color: var(--header-tab-text-colour);
+  color: var(--select-option-color, #6b6b6b);
+
+  svg {
+    color: var(--svg-color, --select-option-color, #6b6b6b);
+  }
 
   &.fullButton {
     cursor: pointer;
