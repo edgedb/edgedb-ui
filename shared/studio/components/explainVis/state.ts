@@ -5,6 +5,7 @@ import {
   FrozenCheckMode,
   model,
   Model,
+  modelAction,
   prop,
 } from "mobx-keystone";
 import {instanceCtx} from "../../state/instance";
@@ -31,7 +32,7 @@ export function createExplainState(rawExplainOutput: string) {
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.Buffers.map((buf: any) => buf[0]).slice(1)),
-    flamegraphType: planTree.totalTime != null ? "time" : "cost",
+    graphType: planTree.totalTime != null ? "time" : "cost",
   });
 }
 
@@ -44,24 +45,137 @@ export class ExplainState extends Model({
 
   ctxId: prop<number | null>(null).withSetter(),
 
-  showFlamegraph: prop(false).withSetter(),
-  flamegraphType: prop<"cost" | "time">().withSetter(),
-  flamegraphZoom: prop<number>(1).withSetter(),
+  showFlamegraph: prop(false),
+  graphType: prop<"cost" | "time">().withSetter(),
+  flamegraphZoomOffset: prop<[number, number]>(() => [1, 0]),
 }) {
-  @observable.ref
-  selectedPlan: Plan | null = null;
+  @modelAction
+  setShowFlamegraph(val: boolean) {
+    this.showFlamegraph = val;
+    if (val) {
+      this.treemapTransition = null;
+    }
+  }
+
+  @computed
+  get maxFlamegraphZoom() {
+    return this.planTree.data[this.isTimeGraph ? "totalTime" : "totalCost"]!;
+  }
+
+  @modelAction
+  setFlamegraphZoom(_newZoom: number, center: number = 0) {
+    const newZoom = Math.min(Math.max(1, _newZoom), this.maxFlamegraphZoom);
+
+    const width = this.flamegraphWidth;
+    const [zoom, offset] = this.flamegraphZoomOffset;
+
+    const oldCenterPercent = (center + offset) / (zoom * width);
+    const newTotalOffset = newZoom * width * oldCenterPercent;
+    const newOffset = Math.min(
+      Math.max(0, newTotalOffset - center),
+      (newZoom - 1) * width
+    );
+
+    this.flamegraphZoomOffset = [newZoom, newOffset];
+  }
+
+  @modelAction
+  setFlamegraphOffset(offset: number) {
+    const [zoom] = this.flamegraphZoomOffset;
+    this.flamegraphZoomOffset = [
+      zoom,
+      Math.min(Math.max(0, offset), (zoom - 1) * this.flamegraphWidth),
+    ];
+  }
+
+  @observable
+  flamegraphWidth = 0;
 
   @action
-  setSelectedPlan(plan: Plan | null) {
+  setFlamegraphWidth(width: number) {
+    const oldWidth = this.flamegraphWidth;
+    this.flamegraphWidth = width;
+    if (oldWidth) {
+      const [zoom, offset] = this.flamegraphZoomOffset;
+      this.setFlamegraphOffset(offset - (oldWidth - width) * zoom * 0.5);
+    }
+  }
+
+  @observable.ref
+  selectedPlan: Plan = this.planTree.data;
+
+  @action
+  setSelectedPlan(plan: Plan) {
     this.selectedPlan = plan;
   }
 
   @observable.ref
   focusedPlan: Plan | null = null;
 
+  // @action
+  // setFocusedPlan(plan: Plan | null) {
+  //   this.focusedPlan = plan;
+  // }
+
+  treemapContainerRef: HTMLDivElement | null = null;
+
+  @observable.ref
+  treemapTransition: {
+    kind: "in" | "out";
+    from: Plan;
+    pos?: {top: number; left: number; width: number; height: number};
+  } | null = null;
+
   @action
-  setFocusedPlan(plan: Plan | null) {
-    this.focusedPlan = plan;
+  treemapZoomIn(toPlan: Plan, el: HTMLDivElement) {
+    if (toPlan === this.focusedPlan) {
+      return;
+    }
+    const contRect = this.treemapContainerRef!.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    this.treemapTransition = {
+      kind: "in",
+      from: this.focusedPlan ?? this.planTree.data,
+      pos: {
+        top: (rect.top - contRect.top - 2) / contRect.height,
+        left: (rect.left - contRect.left - 2) / contRect.width,
+        width: (rect.width + 4) / contRect.width,
+        height: (rect.height + 4) / contRect.height,
+      },
+    };
+    this.focusedPlan = toPlan;
+  }
+
+  @action
+  treemapZoomOut(toPlan: Plan | null) {
+    if (toPlan === this.focusedPlan) {
+      return;
+    }
+    this.treemapTransition = {
+      kind: "out",
+      from: this.focusedPlan!,
+    };
+    this.focusedPlan = toPlan;
+  }
+
+  @action
+  updateTreemapTransitionPos(el: HTMLDivElement) {
+    const contRect = this.treemapContainerRef!.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    this.treemapTransition = {
+      ...this.treemapTransition!,
+      pos: {
+        top: (rect.top - contRect.top - 2) / contRect.height,
+        left: (rect.left - contRect.left - 2) / contRect.width,
+        width: (rect.width + 4) / contRect.width,
+        height: (rect.height + 4) / contRect.height,
+      },
+    };
+  }
+
+  @action
+  finishTreemapTransition() {
+    this.treemapTransition = null;
   }
 
   @observable.shallow
@@ -78,7 +192,7 @@ export class ExplainState extends Model({
 
   @computed
   get isTimeGraph() {
-    return this.flamegraphType === "time";
+    return this.graphType === "time";
   }
 
   copyRawDataToClipboard() {
@@ -97,7 +211,9 @@ export class ExplainState extends Model({
       return ctxs;
     }, [] as Contexts[]);
     for (const ctx of ctxs) {
-      ctx?.sort((a, b) => a.start - b.start);
+      ctx?.sort((a, b) =>
+        a.start == b.start ? a.end - b.end : a.start - b.start
+      );
     }
     return ctxs;
   }
@@ -132,7 +248,9 @@ function nodesEqual(l: Plan[], r: Plan[]) {
 }
 
 export interface Plan {
+  id: number;
   parent: Plan | null;
+  childDepth: number;
   type: string;
   totalTime: number | null;
   totalCost: number;
@@ -161,6 +279,8 @@ export interface Context {
 }
 
 export type Contexts = Context[];
+
+let _planIdCounter = 0;
 
 export function walkPlanNode(
   data: any,
@@ -236,10 +356,18 @@ export function walkPlanNode(
   const subPlans = [
     ...(nearestContextPlan?.subPlans ?? []),
     ..._subPlans,
-  ].sort((a, b) => b.totalTime - a.totalTime);
+  ] as Plan[];
 
-  const plan = {
+  if (data.FullTotalTime != null) {
+    subPlans.sort((a, b) => b.totalTime! - a.totalTime!);
+  }
+
+  const plan: Plan = {
+    id: _planIdCounter++,
     parent: null,
+    childDepth: subPlans.length
+      ? Math.max(...subPlans.map((subplan) => subplan.childDepth)) + 1
+      : 0,
     type: data["Node Type"],
     totalTime: data.FullTotalTime,
     totalCost: data["Total Cost"],

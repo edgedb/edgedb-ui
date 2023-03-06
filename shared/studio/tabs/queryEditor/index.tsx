@@ -40,6 +40,7 @@ import {InspectorState} from "@edgedb/inspector/state";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 import Spinner from "@edgedb/common/ui/spinner";
 import {ExplainVis, TestExplainVis} from "../../components/explainVis";
+import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const dbState = useDatabaseState();
@@ -254,36 +255,46 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
   }, [codeEditorRef, explainState]);
 
   return (
-    <CustomScrollbars
-      className={styles.scrollWrapper}
-      scrollClass="cm-scroller"
-      innerClass="cm-content"
-    >
-      <CodeEditor
-        ref={codeEditorRef}
-        code={editorState.currentQueryData[EditorKind.EdgeQL]}
-        onChange={onChange}
-        keybindings={keybindings}
-        useDarkTheme={theme === Theme.dark}
-        readonly={editorState.showHistory}
-        schemaObjects={dbState.schemaData?.objectsByName}
-        errorUnderline={
-          editorState.showEditorResultDecorations &&
-          editorState.currentResult instanceof QueryHistoryErrorItem
-            ? editorState.currentResult.error.data.range
-            : undefined
-        }
-        explainContexts={
-          editorState.showEditorResultDecorations && explainState
-            ? {
-                selectedCtxId: explainState.ctxId,
-                contexts: explainState.contextsByBufIdx,
-                buffers: explainState.buffers.data,
-              }
-            : undefined
-        }
-      />
-    </CustomScrollbars>
+    <>
+      <CustomScrollbars
+        className={styles.scrollWrapper}
+        scrollClass="cm-scroller"
+        innerClass="cm-content"
+      >
+        <CodeEditor
+          ref={codeEditorRef}
+          code={editorState.currentQueryData[EditorKind.EdgeQL]}
+          onChange={onChange}
+          keybindings={keybindings}
+          useDarkTheme={theme === Theme.dark}
+          readonly={editorState.showHistory}
+          schemaObjects={dbState.schemaData?.objectsByName}
+          errorUnderline={
+            editorState.showEditorResultDecorations &&
+            editorState.currentResult instanceof QueryHistoryErrorItem
+              ? editorState.currentResult.error.data.range
+              : undefined
+          }
+          explainContexts={
+            editorState.showEditorResultDecorations && explainState
+              ? {
+                  selectedCtxId: explainState.ctxId,
+                  contexts: explainState.contextsByBufIdx,
+                  buffers: explainState.buffers.data,
+                }
+              : undefined
+          }
+        />
+      </CustomScrollbars>
+      {codeEditorRef.current &&
+      editorState.showEditorResultDecorations &&
+      explainState ? (
+        <CodeEditorExplainContexts
+          editorRef={codeEditorRef.current}
+          state={explainState}
+        />
+      ) : null}
+    </>
   );
 });
 

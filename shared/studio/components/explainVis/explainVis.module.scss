@@ -94,41 +94,36 @@
 }
 
 .flamegraph {
+  position: relative;
   flex-grow: 1;
   overflow: hidden;
 
-  @include hideScrollbar;
-
   &Node {
-    // border: 1px solid rgba(0, 0, 0, 0.2);
+    position: absolute;
     border-radius: 3px;
-    // margin: 0.5px;
-    // padding: 0.5px;
-    background: #e9e9e9;
-    margin: 1px;
+    background: #fff;
+    margin: 2px;
 
-    &.altBg {
-      background: #dcdcdc;
-    }
-
-    &.selected {
-      background: #fafafa;
+    &.selected:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
     }
   }
 
   &Bar {
     position: relative;
-    padding: 8px 0 4px 0;
+    height: 20px;
+    padding: 6px 0;
     white-space: nowrap;
-    // background-clip: padding-box;
+    overflow: hidden;
     cursor: pointer;
 
-    .overflowContainer {
-      overflow: hidden;
-      position: sticky;
-      left: 4px;
-      width: max-content;
-      max-width: 100%;
+    .flamegraphLabel {
+      position: absolute;
+      margin: 0 6px;
 
       pre {
         font-family: inherit;
@@ -137,25 +132,30 @@
         margin: 0;
       }
 
-      > span {
-        margin: 4px;
-      }
+      // > span {
+      //   margin: 4px;
+      // }
     }
   }
 
-  .selfTimeIndicator {
-    height: 4px;
+  &HiddenNodes {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    border-radius: 4px;
+    border-radius: 3px;
     background: #fff;
+    opacity: 0.5;
+    overflow: hidden;
+    margin: 2px;
+
+    span {
+      display: block;
+      white-space: nowrap;
+      padding: 6px 4px;
+      height: 20px;
+    }
   }
 
   &SubNodes {
-    display: flex;
-    align-items: flex-start;
+    position: relative;
   }
 
   .collapseButton {
@@ -227,7 +227,7 @@
 
   > :last-child {
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
   }
 
   .typeSwitcher {
@@ -235,9 +235,9 @@
     align-items: center;
     padding: 0 3px;
     height: 28px;
-    background: #e6e6e6;
+    background: #dfdfdf;
     border-radius: 14px;
-    margin: 0 16px;
+    margin: 0 8px;
   }
 
   .switcherButton {
@@ -255,7 +255,7 @@
     cursor: pointer;
 
     &.selected {
-      background: #f5f5f5;
+      background: #fafafa;
     }
 
     &.disabled {
@@ -305,23 +305,29 @@
 
   .treemapItem {
     position: absolute;
-    background: rgba(255, 255, 255);
+    background: #fff;
     border-radius: 3px;
     z-index: 1;
     margin: 2px;
     box-sizing: border-box;
-    background: #e9e9e9;
 
-    &.altBg {
-      background: #dcdcdc;
-
-      > .hiddenPlans {
-        background: #e9e9e9;
-      }
+    &.transitionActive {
+      transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s;
     }
 
-    &.selected {
-      background: #fafafa;
+    .treemapItemInner {
+      position: relative;
+      margin: 2px;
+      width: calc(100% - 4px);
+      height: calc(100% - 4px);
+    }
+
+    &.selected:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
     }
 
     .planName,
@@ -358,7 +364,8 @@
     }
 
     .hiddenPlans {
-      background: #dcdcdc;
+      background: #fff;
+      opacity: 0.5;
       margin: 2px;
       border-radius: 3px;
     }
@@ -368,8 +375,14 @@
 .treemapBreadcrumbs {
   display: flex;
   margin: 0 8px;
+  height: 28px;
   flex-shrink: 0;
   overflow-x: auto;
+  transition: height 0.2s;
+
+  &.hidden {
+    height: 0px;
+  }
 
   @include hideScrollbar;
 
@@ -398,6 +411,19 @@
       display: inline;
       white-space: nowrap;
       margin: 0;
+    }
+  }
+}
+
+.explainContextsContainer {
+  z-index: -1;
+
+  .explainContextRect {
+    position: absolute;
+    border-radius: 3px;
+
+    &.highlighted {
+      outline: 2px solid #0074e8;
     }
   }
 }

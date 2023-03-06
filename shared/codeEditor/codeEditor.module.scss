@@ -35,22 +35,6 @@
   }
 
   .explainContextMark {
-    position: relative;
-    border-radius: 4px;
-
-    &:after {
-      content: "";
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      right: 0;
-      border-bottom: 3px solid var(--ctxColor);
-      // z-index: -1;
-    }
-
-    &.selected {
-      outline: 2px solid #0074e8;
-    }
   }
 
   .explainContextSnippet {

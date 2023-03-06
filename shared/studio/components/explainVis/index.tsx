@@ -1,3 +1,4 @@
+import {useResize} from "@edgedb/common/hooks/useResize";
 import Button from "@edgedb/common/ui/button";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
@@ -17,7 +18,6 @@ import {
   QueryEditor,
   QueryHistoryResultItem,
 } from "../../tabs/queryEditor/state";
-import {getColor} from "./colormap";
 
 import styles from "./explainVis.module.scss";
 import {
@@ -27,7 +27,7 @@ import {
   reRunWithAnalyze,
 } from "./state";
 
-import {Treemap, TreemapNode} from "./treemapLayout";
+import {palette, Treemap, TreemapNode} from "./treemapLayout";
 
 const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
@@ -50,7 +50,7 @@ export const ExplainVis = observer(function ExplainVis({
     return <div>loading...</div>;
   }
 
-  const devMode = useInstanceState().instanceName === "_localdev";
+  // const devMode = useInstanceState().instanceName === "_localdev";
 
   return (
     <ExplainContext.Provider value={[state, /*devMode*/ false]}>
@@ -58,11 +58,11 @@ export const ExplainVis = observer(function ExplainVis({
         <ExplainHeader queryHistoryItem={queryHistoryItem} />
         {state.showFlamegraph ? <Flamegraph /> : <Treemap />}
         <PlanDetails />
-        {devMode ? (
+        {/* {devMode ? (
           <button onClick={() => editorState.setShowExplain(true)}>
             big explain vis
           </button>
-        ) : null}
+        ) : null} */}
       </div>
     </ExplainContext.Provider>
   );
@@ -89,37 +89,54 @@ const ExplainHeader = observer(function ExplainHeader({
             </div>
           </div>
         ) : null}
-        <span onClick={() => state.setShowFlamegraph(!state.showFlamegraph)}>
-          {state.showFlamegraph ? "Show treemap" : "Show flamegraph"}
-        </span>
       </div>
-      <div className={styles.typeSwitcher}>
-        <div
-          className={cn(styles.switcherButton, {
-            [styles.selected]: state.flamegraphType === "time",
-            [styles.disabled]: state.planTree.data.totalTime == null,
-          })}
-          onClick={() => state.setFlamegraphType("time")}
-        >
-          Time
+      <div className={styles.switchers}>
+        <div className={styles.typeSwitcher}>
+          <div
+            className={cn(styles.switcherButton, {
+              [styles.selected]: !state.showFlamegraph,
+            })}
+            onClick={() => state.setShowFlamegraph(false)}
+          >
+            Area
+          </div>
+          <div
+            className={cn(styles.switcherButton, {
+              [styles.selected]: state.showFlamegraph,
+            })}
+            onClick={() => state.setShowFlamegraph(true)}
+          >
+            Flame
+          </div>
         </div>
-        <div
-          className={cn(styles.switcherButton, {
-            [styles.selected]: state.flamegraphType === "cost",
-          })}
-          onClick={() => state.setFlamegraphType("cost")}
-        >
-          Cost
+        <div className={styles.typeSwitcher}>
+          <div
+            className={cn(styles.switcherButton, {
+              [styles.selected]: state.graphType === "time",
+              [styles.disabled]: state.planTree.data.totalTime == null,
+            })}
+            onClick={() => state.setGraphType("time")}
+          >
+            Time
+          </div>
+          <div
+            className={cn(styles.switcherButton, {
+              [styles.selected]: state.graphType === "cost",
+            })}
+            onClick={() => state.setGraphType("cost")}
+          >
+            Cost
+          </div>
         </div>
       </div>
-      <div>
+      {/* <div>
         <div
           className={styles.copyRawDataButton}
           onClick={() => state.copyRawDataToClipboard()}
         >
           Copy Raw Data
         </div>
-      </div>
+      </div> */}
     </div>
   );
 });
@@ -127,40 +144,61 @@ const ExplainHeader = observer(function ExplainHeader({
 const Flamegraph = observer(function Flamegraph() {
   const state = useExplainState()[0];
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useResize(containerRef, ({width}) => state.setFlamegraphWidth(width - 12));
+
+  const width = state.flamegraphWidth;
+  const [zoom, offset] = state.flamegraphZoomOffset;
 
   const range =
-    state.planTree.data[state.isTimeGraph ? "totalTime" : "totalCost"]! /
-    state.flamegraphZoom;
+    state.planTree.data[state.isTimeGraph ? "totalTime" : "totalCost"]! / zoom;
 
   return (
     <>
       <div className={styles.graphScale}>
         <span>
-          {state.isTimeGraph ? range.toPrecision(3) + "ms" : range.toFixed(3)}
+          {state.isTimeGraph ? range.toFixed(0) + "ms" : range.toFixed(0)}
         </span>
         {/* <span onClick={() => state.setFlamegraphZoom(1)}>reset</span> */}
       </div>
       <div
-        ref={scrollRef}
+        ref={containerRef}
         className={styles.flamegraph}
         onWheel={(e) => {
+          const [zoom, offset] = state.flamegraphZoomOffset;
           if (e.ctrlKey) {
-            const oldZoom = state.flamegraphZoom;
-            const newZoom = Math.max(1, oldZoom * (1 + e.deltaY / -400));
-            state.setFlamegraphZoom(newZoom);
+            const mouseOffset =
+              e.clientX -
+              containerRef.current!.getBoundingClientRect().left -
+              8;
+
+            const newZoom = Math.min(
+              Math.max(1, zoom * (1 + e.deltaY / -400)),
+              state.maxFlamegraphZoom
+            );
+
+            state.setFlamegraphZoom(newZoom, mouseOffset);
           } else {
-            scrollRef.current!.scrollLeft += e.deltaY;
+            state.setFlamegraphOffset(offset + e.deltaY);
           }
         }}
       >
         <div
           style={{
-            width: `calc(${state.flamegraphZoom * 100}% - 16px)`,
-            padding: "4px 8px",
+            position: "absolute",
+            left: -offset + 6,
           }}
         >
-          <FlamegraphNode plan={state.planTree.data} isRoot />
+          {width ? (
+            <FlamegraphNode
+              plan={state.planTree.data}
+              depth={0}
+              width={width * zoom}
+              left={0}
+              visibleRange={[offset - 16, offset + width + 16]}
+            />
+          ) : null}
         </div>
       </div>
     </>
@@ -220,14 +258,16 @@ const PlanDetails = observer(function PlanDetails() {
 
 const FlamegraphNode = observer(function _FlamegraphNode({
   plan,
-  width = 1,
-  altBg = false,
-  isRoot = false,
+  left,
+  width,
+  depth,
+  visibleRange,
 }: {
   plan: Plan;
-  width?: number;
-  altBg?: boolean;
-  isRoot?: boolean;
+  left: number;
+  width: number;
+  depth: number;
+  visibleRange: [number, number];
 }) {
   const [state, devMode] = useExplainState();
 
@@ -241,22 +281,72 @@ const FlamegraphNode = observer(function _FlamegraphNode({
 
   const subPlans = expandedNode
     ? plan.fullSubPlans
-    : ctxId != null || isRoot
+    : ctxId != null || depth === 0
     ? plan.subPlans!
     : plan.fullSubPlans;
 
-  const selfPercent = state.isTimeGraph
-    ? plan.selfTimePercent!
-    : plan.selfCostPercent;
+  const sortedSubplans: {
+    subplan: Plan;
+    childWidth: number;
+  }[] = [];
+  let hiddenCount = 0;
+  let hiddenWidth = 0;
+  for (const subplan of subPlans) {
+    if (
+      (subplan.nearestContextPlan?.contextId ?? subplan.contextId) === ctxId
+    ) {
+      continue;
+    }
+
+    const childWidth =
+      (state.isTimeGraph
+        ? subplan.totalTime! / plan.totalTime!
+        : subplan.totalCost / plan.totalCost) *
+      (width - 8);
+    if (childWidth > 14) {
+      sortedSubplans.push({subplan, childWidth});
+    } else {
+      hiddenCount++;
+      hiddenWidth += childWidth;
+    }
+  }
+  sortedSubplans.sort((a, b) => b.childWidth - a.childWidth);
+
+  let childLeft = 2;
+  const childNodes: JSX.Element[] = [];
+  for (const {subplan, childWidth} of sortedSubplans) {
+    if (
+      childLeft <= visibleRange[1] &&
+      childLeft + childWidth >= visibleRange[0]
+    ) {
+      childNodes.push(
+        <FlamegraphNode
+          key={childNodes.length}
+          plan={subplan}
+          depth={depth + 1}
+          width={childWidth}
+          left={childLeft}
+          visibleRange={[
+            visibleRange[0] - childLeft - 2,
+            visibleRange[1] - childLeft,
+          ]}
+        />
+      );
+    }
+    childLeft += childWidth;
+  }
 
   return (
     <div
       className={cn(styles.flamegraphNode, {
-        [styles.altBg]: altBg,
         [styles.selected]: state.selectedPlan === plan,
       })}
       style={{
-        width: `calc(${width * 100}% - 2px)`,
+        backgroundColor: depth
+          ? palette[(depth - 1) % palette.length]
+          : undefined,
+        width: width - 4,
+        left: left,
         ...(state.ctxId != null && state.ctxId === ctxId
           ? {outline: `2px solid #0074e8`, zIndex: 1}
           : undefined),
@@ -273,52 +363,45 @@ const FlamegraphNode = observer(function _FlamegraphNode({
         }}
       >
         <div
-          className={styles.selfTimeIndicator}
+          className={styles.flamegraphLabel}
           style={{
-            backgroundColor: getColor(selfPercent),
-          }}
-        />
-        <div
-          className={styles.overflowContainer}
-          style={{
+            left: Math.max(0, visibleRange[0] + 8),
             opacity: ctxId != null ? 1 : 0.5,
           }}
         >
-          <span>
-            {devMode && plan.hasCollapsedPlans ? (
-              <span
-                className={cn(styles.collapseButton, {
-                  [styles.collapsed]: !expandedNode,
-                })}
-                onClick={() => state.toggleCollapsed(plan)}
-              >
-                <ChevronDownIcon />
-              </span>
-            ) : null}
-            {ctxId != null ? (
-              <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
-            ) : isRoot ? (
-              <i>Query</i>
-            ) : (
-              plan.type
-            )}
-          </span>
+          {devMode && plan.hasCollapsedPlans ? (
+            <span
+              className={cn(styles.collapseButton, {
+                [styles.collapsed]: !expandedNode,
+              })}
+              onClick={() => state.toggleCollapsed(plan)}
+            >
+              <ChevronDownIcon />
+            </span>
+          ) : null}
+          {ctxId != null ? (
+            <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
+          ) : depth === 0 ? (
+            <i>Query</i>
+          ) : (
+            plan.type
+          )}
         </div>
       </div>
-      {subPlans.length ? (
-        <div className={styles.flamegraphSubNodes}>
-          {subPlans.map((subplan, i) => (
-            <FlamegraphNode
-              key={i}
-              altBg={!altBg}
-              plan={subplan}
-              width={
-                state.isTimeGraph
-                  ? subplan.totalTime! / plan.totalTime!
-                  : subplan.totalCost / plan.totalCost
-              }
-            />
-          ))}
+      {sortedSubplans.length || hiddenCount ? (
+        <div
+          className={styles.flamegraphSubNodes}
+          style={{height: plan.childDepth * 38}}
+        >
+          {childNodes}
+          {hiddenCount ? (
+            <div
+              className={styles.flamegraphHiddenNodes}
+              style={{width: Math.max(0, hiddenWidth - 4), left: childLeft}}
+            >
+              <span>{hiddenCount} hidden</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -362,7 +445,11 @@ const Visualisations = observer(function Visualisations({
   return (
     <ExplainContext.Provider value={[state, true]}>
       <div className={styles.flamegraph}>
-        <FlamegraphNode plan={state.planTree.data} />
+        {/* <FlamegraphNode
+          plan={state.planTree.data}
+          depth={0}
+          parentWidth={800}
+        /> */}
       </div>
       <div className={styles.main}>
         <div style={{width: "50%"}}>

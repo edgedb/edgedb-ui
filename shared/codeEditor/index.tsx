@@ -133,7 +133,7 @@ class ExplainContextSnippetWidget extends WidgetType {
     el.setAttribute("aria-hidden", "true");
     el.className = styles.explainContextSnippet;
     let i = 0;
-    for (const ctx of this.ctxs) {
+    for (const ctx of this.ctxs ?? []) {
       el.appendChild(
         document.createTextNode(this.content.slice(i, ctx.start))
       );
@@ -163,11 +163,9 @@ function getExplainContextsExtension({
   for (const ctx of contexts[0]) {
     decos.push(
       Decoration.mark({
-        class: cn(styles.explainContextMark, {
-          [styles.selected]: ctx.id === selectedCtxId,
-        }),
+        class: styles.explainContextMark,
         attributes: {
-          style: `--ctxColor: ${ctx.color}`,
+          // style: `--ctxColor: ${ctx.color}`,
           "data-ctx-id": ctx.id.toString(),
         },
       }).range(ctx.start, ctx.end)
@@ -228,6 +226,7 @@ export interface CodeEditorProps {
 
 export interface CodeEditorRef {
   ref: HTMLDivElement;
+  view: () => EditorView;
   focus: () => void;
   dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) => void;
 }
@@ -362,6 +361,7 @@ export function createCodeEditor({
       componentRef,
       () => ({
         ref: ref.current,
+        view: () => view.current,
         focus: () => view.current?.focus(),
         dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
           view.current?.dispatch({effects}),
