@@ -170,8 +170,10 @@ describe("queryEditor:", () => {
       await driver.wait(until.elementLocated(ByUIClass("repl_history")));
 
       // click on first history query (that is not draft query)
-      (await driver.findElements(ByUIClass("repl_historyItem")))[1].click();
-
+      const firstItem = await driver.findElements(
+        ByUIClass("repl_historyItem")
+      );
+      await firstItem[1].click();
       // click on edit button
       (
         await driver.wait(
