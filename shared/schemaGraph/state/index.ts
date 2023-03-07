@@ -80,6 +80,10 @@ export const Schema = types
       self.selectedObjectName = objectName;
       self.selectedLinkName = linkName;
     },
+    deselectAll() {
+      self.selectedObjectName = "";
+      self.selectedLinkName = "";
+    },
   }));
 
 // eslint-disable-next-line

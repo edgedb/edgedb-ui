@@ -1,5 +1,6 @@
 import React from "react";
 import {observer} from "mobx-react";
+import {useNavigate, createSearchParams} from "react-router-dom";
 
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";
@@ -17,6 +18,15 @@ export default observer(function SchemaNodeObject(props: ISchemaNodeProps) {
   const isObjectSelected = schemaState.selectedObjectName === props.node.id;
 
   const objectName = object.name.split("::");
+
+  const navigate = useNavigate();
+
+  const handleSelectObject = () => {
+    schemaState.selectObject(props.node.id);
+    navigate({
+      search: createSearchParams({focus: object.name}).toString(),
+    });
+  };
 
   const properties = object.properties.map((prop) => {
     return (
@@ -53,7 +63,7 @@ export default observer(function SchemaNodeObject(props: ISchemaNodeProps) {
         object.is_abstract ? styles.abstract : null,
         isObjectSelected ? styles.selectedNode : null
       )}
-      onClickCapture={() => schemaState.selectObject(props.node.id)}
+      onClickCapture={handleSelectObject}
     >
       <div
         className={styles.header}
