@@ -421,7 +421,8 @@
   .itemDesc {
     font-style: italic;
     margin-top: 6px;
-    font-size: 13px;
+    font-size: 14px;
+    line-height: 16px;
     color: var(--font-inactive-gray);
   }
 
@@ -436,8 +437,12 @@
       opacity: 1;
       background: #49d8ad;
       border-radius: 2px;
+    }
 
-      @include darkTheme {
+    @include darkTheme {
+      color: #adadad;
+
+      .nameMatch {
         background: #0b8a64;
       }
     }
@@ -448,6 +453,10 @@
     font-weight: 500;
     margin-left: 8px;
     color: #adadad;
+
+    @include darkTheme {
+      opacity: 0.5;
+    }
   }
 
   .itemUpdate {
