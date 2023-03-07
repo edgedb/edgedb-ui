@@ -59,6 +59,7 @@
 
 .moduleSelect,
 .typeFilterSelect {
+  --svg-color: #a7a7a7;
   background: #e3e3e3;
   height: 28px;
   border-radius: 14px;
@@ -67,6 +68,7 @@
   width: 94px;
   display: flex;
   justify-content: space-between;
+  font-weight: 500;
 
   @include darkTheme {
     background: #242424;
