@@ -19,7 +19,9 @@ describe("queryEditor:", () => {
     test("enter invalid query: InvalidReferenceError", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015"
@@ -29,7 +31,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const errorElement = driver.wait(
+      const errorElement = await driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
@@ -53,7 +55,9 @@ describe("queryEditor:", () => {
     test("enter invalid query: EdgeQLSyntaxError", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015)"
@@ -63,7 +67,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const errorElement = driver.wait(
+      const errorElement = await driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
@@ -77,7 +81,9 @@ describe("queryEditor:", () => {
     test("enter valid query, get results, copy and view them", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .release_year = 2015"
@@ -87,7 +93,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const inspector = driver.wait(
+      const inspector = await driver.wait(
         until.elementLocated(ByUIClass("repl_inspector"))
       );
 
