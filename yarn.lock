@@ -12447,7 +12447,7 @@ __metadata:
     jszip: ^3.10.0
     tmp: ^0.2.1
     ws: ">=8.11.0"
-  checksum: 7bbd6b6073ffb8b3f454a9a15199686ec3ec10e69a7500fda06324733bfd51415e205dc9eba448fc48acb0897200e550599eb32d41af7bb8fa7ee22cb2261690
+  checksum: 0245389cc954427436535f9c6ebe978d1aa27aeaf7db61c4ecb28fecdaf1c41e356fa40c291e1020b1fba04cb91944a60c14c385857183eb8e0479b8845c1756
   languageName: node
   linkType: hard
 
