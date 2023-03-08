@@ -148,8 +148,6 @@ export class QueryEditor extends Model({
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
 
   showExplain: prop(false).withSetter(),
-
-  loadedQueryIndex: prop(-1).withSetter(),
 }) {
   @observable queryRunning = false;
 
@@ -457,6 +455,50 @@ export class QueryEditor extends Model({
 
     this.queryHistory.unshift(historyItem);
     this.currentResult = historyItem;
+  }
+
+  @modelAction
+  loadQuery(this: QueryEditor) {
+    const draftQuery = this.draftQueryData;
+
+    const query =
+      draftQuery?.selectedEditor === EditorKind.EdgeQL
+        ? draftQuery[0].query.toString().trim()
+        : draftQuery?.selectedEditor === EditorKind.VisualBuilder
+        ? draftQuery[1].query
+        : null;
+
+    if (query) {
+      const queryData: HistoryItemQueryData =
+        draftQuery?.selectedEditor === EditorKind.EdgeQL
+          ? {
+              kind: EditorKind.EdgeQL,
+              query,
+              params: null,
+            }
+          : {
+              kind: EditorKind.VisualBuilder,
+              state: getSnapshot(draftQuery![EditorKind.VisualBuilder]),
+            };
+
+      const timestamp = Date.now();
+      const thumbnailData = getThumbnailData({query});
+
+      this.addHistoryCell({
+        queryData,
+        timestamp,
+        thumbnailData,
+        result: null,
+        outCodecBuf: Buffer.from([]),
+        resultBuf: Buffer.from([]),
+        status: "",
+        implicitLimit: 0,
+      });
+    }
+
+    this._saveDraftQueryData();
+    this.setHistoryCursor(-1);
+    this.setShowHistory(false, false);
   }
 
   @modelFlow

@@ -85,6 +85,7 @@ const HistoryPanelInner = observer(
           } else if (e.key === "ArrowDown") {
             state.navigateQueryHistory(1);
           } else if (e.key === "Enter") {
+            state.loadQuery();
             state.setShowHistory(false, false);
           }
         }}
@@ -129,9 +130,9 @@ const HistoryList = observer(function HistoryList({
     listRef.current?.resetAfterIndex(0);
   }, [historyList.length]);
 
-  const loadQuery = (index: number) => {
-    state.setShowHistory(false, false);
-    state.setLoadedQueryIndex(index);
+  const loadQuery = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    state.loadQuery();
   };
 
   return (
@@ -172,7 +173,7 @@ const HistoryItem = observer(function HistoryItem({
   index: number;
   item: QueryHistoryItem | null;
   styleTop: any;
-  loadQuery: (index: number) => void;
+  loadQuery: (e: React.MouseEvent) => void;
 }) {
   if (item == null && index !== -1) {
     state.fetchQueryHistory();
@@ -207,15 +208,11 @@ const HistoryItem = observer(function HistoryItem({
           >
             <RelativeTime timestamp={item.timestamp} />
           </div>
-          {state.loadedQueryIndex !== index && (
-            <Button
-              className={cn(styles.editButton, {
-                [styles.visibleButton]: state.historyCursor === index,
-              })}
-              label={"Load"}
-              onClick={() => loadQuery(index)}
-            />
-          )}
+          <Button
+            className={cn(styles.editButton)}
+            label={"Load"}
+            onClick={loadQuery}
+          />
         </>
       ) : (
         "draft query"

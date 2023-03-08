@@ -354,10 +354,6 @@ $historyTransitionTime: 0.15s;
     opacity: 0;
   }
 
-  .visibleButton {
-    opacity: 1;
-  }
-
   @include darkTheme {
     background: #4c4c4c;
   }
