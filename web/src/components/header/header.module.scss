@@ -13,11 +13,6 @@
   }
 }
 
-.title {
-  display: flex;
-  align-items: center;
-}
-
 .subtitle {
   display: flex;
   font-family: "EdgeDB";
@@ -35,7 +30,14 @@
 .logo {
   fill: #4f4f4f;
 
+  g {
+    fill: #848484;
+  }
+
   @include darkTheme {
     fill: #f7f7f7;
+    g {
+      fill: #c1c1c1;
+    }
   }
 }

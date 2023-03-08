@@ -7,10 +7,9 @@ import {ModalTextField} from "@edgedb/common/ui/modal";
 import {serverUrl, setAuthToken} from "src/state/models/app";
 import {SCRAMAuth} from "src/utils/scram";
 
-import {TitleLogo} from "../header";
-
 import styles from "./loginPage.module.scss";
 import {ArrowRight} from "@edgedb/studio/icons";
+import {Logo} from "../header";
 
 export default function LoginPage() {
   const [error, setError] = useState<Error | null>(null);
@@ -36,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className={styles.loginPage}>
-      <TitleLogo className={styles.title} />
+      <Logo className={styles.title} />
       <form className={styles.loginForm} onSubmit={onSubmit}>
         <ModalTextField
           label="Username"
