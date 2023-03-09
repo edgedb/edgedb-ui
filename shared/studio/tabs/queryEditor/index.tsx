@@ -341,7 +341,12 @@ const QueryResult = observer(function QueryResult() {
         );
       }
     } else {
-      content = <div className={styles.queryStatus}>OK: {result.status}</div>;
+      content = (
+        <div className={styles.queryStatus}>
+          {result.status && "OK:"}
+          {result.status}
+        </div>
+      );
     }
   } else if (result instanceof QueryHistoryErrorItem) {
     content = (

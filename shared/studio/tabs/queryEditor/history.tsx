@@ -130,8 +130,10 @@ const HistoryList = observer(function HistoryList({
     listRef.current?.resetAfterIndex(0);
   }, [historyList.length]);
 
-  const loadQuery = (e: React.MouseEvent) => {
+  const loadQuery = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
+
+    state.setHistoryCursor(index);
     state.loadQuery();
   };
 
@@ -154,7 +156,7 @@ const HistoryList = observer(function HistoryList({
             index={index - 1}
             item={historyList[index - 1] ?? null}
             styleTop={style.top}
-            loadQuery={loadQuery}
+            loadQuery={(e) => loadQuery(e, index - 1)}
           />
         )}
       </List>
@@ -192,7 +194,11 @@ const HistoryItem = observer(function HistoryItem({
         [styles.draft]: !item,
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
-      onClick={() => state.setHistoryCursor(index)}
+      onClick={() => {
+        state.setHistoryCursor(index);
+        console.log("draft", state.currentQueryData);
+        console.log("result", state.currentResult?.queryData);
+      }}
     >
       {item ? (
         <>
@@ -208,11 +214,15 @@ const HistoryItem = observer(function HistoryItem({
           >
             <RelativeTime timestamp={item.timestamp} />
           </div>
-          <Button
-            className={cn(styles.editButton)}
-            label={"Load"}
-            onClick={loadQuery}
-          />
+          {
+            <Button
+              className={cn(styles.loadButton, {
+                [styles.visible]: state.historyCursor === index,
+              })}
+              label={"Load"}
+              onClick={loadQuery}
+            />
+          }
         </>
       ) : (
         "draft query"

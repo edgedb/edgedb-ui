@@ -266,6 +266,7 @@ export class QueryEditor extends Model({
     this.showHistory = show;
     if (show) {
       this._saveDraftQueryData();
+      this.setHistoryCursor(-1);
     } else if (restoreDraft) {
       this._restoreDraftQueryData();
     }
@@ -468,13 +469,22 @@ export class QueryEditor extends Model({
         ? draftQuery[1].query
         : null;
 
+    const paramsData =
+      this.selectedEditor === EditorKind.EdgeQL
+        ? this.queryParamsEditor.getParamsData()
+        : null;
+
+    const implicitLimit = sessionStateCtx
+      .get(this)!
+      .activeState.options.find((opt) => opt.name === "Implicit Limit")?.value;
+
     if (query) {
       const queryData: HistoryItemQueryData =
         draftQuery?.selectedEditor === EditorKind.EdgeQL
           ? {
               kind: EditorKind.EdgeQL,
               query,
-              params: null,
+              params: paramsData ? frozen(paramsData) : null,
             }
           : {
               kind: EditorKind.VisualBuilder,
@@ -492,12 +502,11 @@ export class QueryEditor extends Model({
         outCodecBuf: Buffer.from([]),
         resultBuf: Buffer.from([]),
         status: "",
-        implicitLimit: 0,
+        implicitLimit: Number(implicitLimit),
       });
     }
 
     this._saveDraftQueryData();
-    this.setHistoryCursor(-1);
     this.setShowHistory(false, false);
   }
 

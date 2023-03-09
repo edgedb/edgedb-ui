@@ -252,7 +252,7 @@ $historyTransitionTime: 0.15s;
   &:hover {
     background: #fafafa;
 
-    .editButton {
+    .loadButton {
       opacity: 1;
     }
   }
@@ -346,12 +346,16 @@ $historyTransitionTime: 0.15s;
     }
   }
 
-  .editButton {
+  .loadButton {
     --buttonBg: #49d8ad;
     position: absolute;
     left: 0;
     bottom: 0;
     opacity: 0;
+  }
+
+  .visible {
+    opacity: 1;
   }
 
   @include darkTheme {
