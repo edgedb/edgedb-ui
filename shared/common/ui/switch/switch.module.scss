@@ -1,0 +1,65 @@
+@import "../../mixins.scss";
+
+.container {
+  display: flex;
+  align-items: center;
+  margin-right: 32px;
+
+  p {
+    font-size: 12px;
+    font-family: "Roboto";
+    line-height: 14px;
+    font-weight: 500;
+    color: #666666;
+    margin: 0;
+    padding: 4px 0;
+
+    &:first-of-type {
+      padding-right: 8px;
+    }
+
+    &:nth-of-type(2) {
+      padding-left: 8px;
+    }
+  }
+
+  .hoverable {
+    cursor: pointer;
+
+    &:hover {
+      color: #00bc85;
+    }
+  }
+
+  .trackContainer {
+    padding: 4px 0;
+    .track {
+      display: flex;
+      width: 28px;
+      height: 16px;
+      border-radius: 8px;
+      background: #d3d3d3;
+      cursor: pointer;
+
+      @include darkTheme {
+        background: #141414;
+      }
+    }
+  }
+
+  .rightActive {
+    justify-content: right;
+  }
+
+  .switch {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--switchSize, 18px);
+    margin: 3px;
+    background: #fff;
+
+    @include darkTheme {
+      background: #333;
+    }
+  }
+}

@@ -19,9 +19,6 @@
     align-items: flex-start;
   }
 
-  .plainNodeWrapper {
-  }
-
   .planNode {
     position: relative;
     border: 1px solid #aaa;
@@ -65,6 +62,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #fff;
 }
 
 .graphScale {
@@ -177,38 +175,45 @@
 
 .planDetails {
   background: #ececec;
-  border-radius: 6px;
-  margin: 12px;
-  padding: 12px;
-  font-family: "Inter";
+  font-family: "Roboto";
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
 
   .header {
-    font-weight: 500;
-    font-size: 15px;
-    margin-bottom: 6px;
+    padding: 10px 16px 10px 8px;
+    background: #e5e5e5;
 
     .nodeType {
-      color: #313131;
-      margin-right: 14px;
+      color: #595959;
+      margin-right: 4px;
+      font-weight: 700;
     }
 
     .stats {
-      font-size: 14px;
-      opacity: 0.7;
+      color: #999999;
+
+      .statsResults {
+        color: #595959;
+      }
     }
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(4, auto);
-    column-gap: 8px;
-    width: max-content;
-    color: #414141;
-    line-height: 22px;
+  .results {
+    background: #f2f2f2;
+    display: flex;
+    column-gap: 32px;
+    padding: 10px 16px 10px 8px;
 
-    .label {
-      text-align: end;
-      opacity: 0.8;
+    .result {
+      display: flex;
+      flex-direction: column;
+      color: #595959;
+
+      .label {
+        color: #999999;
+        margin-right: 4px;
+      }
     }
   }
 }
@@ -222,66 +227,36 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  margin: 4px 16px;
-  margin-top: 12px;
+  padding: 6px 8px;
+  background: #f7f7f7;
+
+  .switchers {
+    display: flex;
+  }
 
   > :last-child {
     display: flex;
-    justify-content: flex-end;
+    // justify-content: flex-end;
   }
 
-  .typeSwitcher {
-    display: flex;
-    align-items: center;
-    padding: 0 3px;
-    height: 28px;
-    background: #dfdfdf;
-    border-radius: 14px;
-    margin: 0 8px;
-  }
-
-  .switcherButton {
-    height: 22px;
-    display: flex;
-
-    align-items: center;
-    border-radius: 11px;
-    padding: 0 12px;
-    font-family: "Inter";
-    font-weight: 500;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #656565;
-    cursor: pointer;
-
-    &.selected {
-      background: #fafafa;
-    }
-
-    &.disabled {
-      opacity: 0.3;
-      pointer-events: none;
-    }
-  }
-
-  .copyRawDataButton {
-    display: flex;
-    height: 28px;
-    align-items: center;
-    background: #e8e8e8;
-    border-radius: 14px;
-    padding: 0 12px;
-    font-family: "Inter";
-    font-weight: 500;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #5b5b5b;
-    cursor: pointer;
-  }
+  // .copyRawDataButton {
+  //   display: flex;
+  //   height: 28px;
+  //   align-items: center;
+  //   background: #e8e8e8;
+  //   border-radius: 14px;
+  //   padding: 0 12px;
+  //   font-family: "Inter";
+  //   font-weight: 500;
+  //   font-size: 12px;
+  //   text-transform: uppercase;
+  //   color: #5b5b5b;
+  //   cursor: pointer;
+  // }
 
   .rerunWithAnalyze {
     font-family: "Inter";
-    text-align: end;
+    text-align: start;
 
     .message {
       font-size: 14px;
@@ -299,16 +274,14 @@
 
 .treemapContainer {
   height: 100%;
-  margin: 6px;
-  margin-bottom: 0;
   position: relative;
+  background: #fff;
+  margin: 4px 0;
 
   .treemapItem {
     position: absolute;
     background: #fff;
-    border-radius: 3px;
     z-index: 1;
-    margin: 2px;
     box-sizing: border-box;
 
     &.transitionActive {
@@ -326,7 +299,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      border-radius: 3px;
+      // border-radius: 3px;
       background: rgba(255, 255, 255, 0.3);
     }
 
@@ -367,7 +340,7 @@
       background: #fff;
       opacity: 0.5;
       margin: 2px;
-      border-radius: 3px;
+      // border-radius: 3px;
     }
   }
 }
@@ -420,7 +393,9 @@
 
   .explainContextRect {
     position: absolute;
-    border-radius: 3px;
+    background: #fff;
+    // border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
 
     &.highlighted {
       outline: 2px solid #0074e8;

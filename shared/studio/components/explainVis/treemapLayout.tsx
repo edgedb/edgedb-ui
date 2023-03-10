@@ -16,7 +16,7 @@ import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
 
-export const palette = ["#cbcff5", "#fdf5e2", "#d6e9ff", "#e6fff8"];
+export const palette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
 
 function getPlanDepth(plan: Plan) {
   let depth = 0;

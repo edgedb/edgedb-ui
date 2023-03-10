@@ -1,18 +1,11 @@
 import {useResize} from "@edgedb/common/hooks/useResize";
-import Button from "@edgedb/common/ui/button";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import {Switch, SwitchState} from "@edgedb/common/ui/switch";
+
+import {createContext, useContext, useRef} from "react";
 import {ChevronDownIcon} from "../../icons";
-import {useInstanceState} from "../../state/instance";
 
 import {
   QueryEditor,
@@ -23,11 +16,12 @@ import styles from "./explainVis.module.scss";
 import {
   createExplainState,
   ExplainState,
+  graphType,
   Plan,
   reRunWithAnalyze,
 } from "./state";
 
-import {palette, Treemap, TreemapNode} from "./treemapLayout";
+import {palette, Treemap} from "./treemapLayout";
 
 const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
@@ -77,39 +71,22 @@ const ExplainHeader = observer(function ExplainHeader({
 
   return (
     <div className={styles.explainHeader}>
-      <div>
-        {state.planTree.data.totalTime == null ? (
-          <div className={styles.rerunWithAnalyze}>
-            <div className={styles.message}>Timing data not available</div>
-            <div
-              className={styles.button}
-              onClick={() => reRunWithAnalyze(queryHistoryItem)}
-            >
-              Re-run query using explain analyze
-            </div>
-          </div>
-        ) : null}
-      </div>
       <div className={styles.switchers}>
-        <div className={styles.typeSwitcher}>
-          <div
-            className={cn(styles.switcherButton, {
-              [styles.selected]: !state.showFlamegraph,
-            })}
-            onClick={() => state.setShowFlamegraph(false)}
-          >
-            Area
-          </div>
-          <div
-            className={cn(styles.switcherButton, {
-              [styles.selected]: state.showFlamegraph,
-            })}
-            onClick={() => state.setShowFlamegraph(true)}
-          >
-            Flame
-          </div>
-        </div>
-        <div className={styles.typeSwitcher}>
+        <Switch
+          leftLabel="Area"
+          rightLabel="Flame"
+          onClick={() => state.setShowFlamegraph(!state.showFlamegraph)}
+        />
+        <Switch
+          leftLabel="Time"
+          rightLabel="Cost"
+          onClick={() =>
+            state.isTimeGraph
+              ? state.setGraphType(graphType.cost)
+              : state.setGraphType(graphType.time)
+          }
+        />
+        {/* <div className={styles.typeSwitcher}>
           <div
             className={cn(styles.switcherButton, {
               [styles.selected]: state.graphType === "time",
@@ -128,15 +105,28 @@ const ExplainHeader = observer(function ExplainHeader({
             Cost
           </div>
         </div>
-      </div>
-      {/* <div>
-        <div
+      </div> */}
+        {/* <div> */}
+        {/* <div
           className={styles.copyRawDataButton}
           onClick={() => state.copyRawDataToClipboard()}
         >
           Copy Raw Data
-        </div>
-      </div> */}
+        </div> */}
+      </div>
+      <div>
+        {state.planTree.data.totalTime == null ? (
+          <div className={styles.rerunWithAnalyze}>
+            <div className={styles.message}>Timing data not available</div>
+            <div
+              className={styles.button}
+              onClick={() => reRunWithAnalyze(queryHistoryItem)}
+            >
+              Re-run query using explain analyze
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 });
@@ -213,40 +203,51 @@ const PlanDetails = observer(function PlanDetails() {
   return selectedPlan ? (
     <div className={styles.planDetails}>
       <div className={styles.header}>
-        <span className={styles.nodeType}>{selectedPlan.type}</span>
+        <span className={styles.nodeType}>{selectedPlan.type}:</span>
         <span className={styles.stats}>
-          Self {state.isTimeGraph ? "Time" : "Cost"} &nbsp;
-          {state.isTimeGraph
-            ? selectedPlan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") +
-              "ms"
-            : selectedPlan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
-          ·{" "}
-          {(
-            (state.isTimeGraph
-              ? selectedPlan.selfTimePercent!
-              : selectedPlan.selfCostPercent) * 100
-          )
-            .toPrecision(2)
-            .replace(/\.?0+$/, "")}
-          %
+          Self {state.isTimeGraph ? "Time:" : "Cost:"}
+          <span className={styles.statsResults}>
+            {state.isTimeGraph
+              ? selectedPlan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") +
+                "ms"
+              : selectedPlan.selfCost
+                  .toPrecision(5)
+                  .replace(/\.?0+$/, "")}{" "}
+            &nbsp; &nbsp;
+            {(
+              (state.isTimeGraph
+                ? selectedPlan.selfTimePercent!
+                : selectedPlan.selfCostPercent) * 100
+            )
+              .toPrecision(2)
+              .replace(/\.?0+$/, "")}
+            %
+          </span>
         </span>
       </div>
-      <div></div>
-      <div className={styles.grid}>
-        {[
-          ["Startup Cost", 'startup_cost'],
-          ["Startup Time", 'actual_startup_time'],
-          ["Total Cost", 'total_cost'],
-          ["Total Time", 'actual_total_time'],
-        ].map(([name, key], i) => (
-          <>
-            <span className={styles.label}>{name}:</span>
-            <span>
-              {selectedPlan.raw[key]}
-              {i % 2 != 0 ? "ms" : ""}
-            </span>
-          </>
-        ))}
+      <div className={styles.results}>
+        <div className={styles.result}>
+          {[
+            ["Startup Cost", "startup_cost"],
+            ["Total Cost", "total_cost"],
+          ].map(([name, key], i) => (
+            <div>
+              <span className={styles.label}>{name}:</span>
+              <span>{selectedPlan.raw[key]}</span>
+            </div>
+          ))}
+        </div>
+        <div className={styles.result}>
+          {[
+            ["Startup Time", "actual_startup_time"],
+            ["Total Time", "actual_total_time"],
+          ].map(([name, key], i) => (
+            <div>
+              <span className={styles.label}>{name}:</span>
+              <span>{selectedPlan.raw[key]}ms</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   ) : (
@@ -549,10 +550,10 @@ function PlanNode({plan}: {plan: Plan}) {
           <b>{plan.type}</b>
           <div className={styles.grid}>
             {[
-              ["Startup Cost", 'startup_cost'],
-              ["Actual Startup Time", 'actual_startup_time'],
-              ["Total Cost", 'total_cost'],
-              ["Actual Total Time", 'actual_total_time'],
+              ["Startup Cost", "startup_cost"],
+              ["Actual Startup Time", "actual_startup_time"],
+              ["Total Cost", "total_cost"],
+              ["Actual Total Time", "actual_total_time"],
             ].map(([key, prop], i) => (
               <>
                 <span>{key}:</span>
