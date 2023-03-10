@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, reaction} from "mobx";
 import {
   model,
   Model,
@@ -174,6 +174,18 @@ export class QueryEditor extends Model({
     if (kind === EditorKind.EdgeQL) {
       this.showEditorResultDecorations = false;
     }
+  }
+
+  onAttachedToRootStore() {
+    const disposer = reaction(
+      () => getSnapshot(this.currentQueryData[EditorKind.VisualBuilder]),
+      () => {
+        if (!this.queryIsEdited) this.queryIsEdited = true;
+      }
+    );
+    return () => {
+      disposer();
+    };
   }
 
   @computed
