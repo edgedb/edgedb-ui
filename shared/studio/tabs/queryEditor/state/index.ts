@@ -163,10 +163,14 @@ export class QueryEditor extends Model({
   @observable
   showEditorResultDecorations = false;
 
+  @observable
+  queryIsEdited = false;
+
   @action
   setCurrentQueryData<T extends EditorKind>(kind: T, data: QueryData[T]) {
     this.currentQueryData[kind] = data;
     this.historyCursor = -1;
+    if (!this.queryIsEdited) this.queryIsEdited = true;
     if (kind === EditorKind.EdgeQL) {
       this.showEditorResultDecorations = false;
     }
@@ -459,7 +463,7 @@ export class QueryEditor extends Model({
   }
 
   @modelAction
-  loadQuery(this: QueryEditor) {
+  saveQuery(this: QueryEditor) {
     const draftQuery = this.draftQueryData;
 
     const query =
@@ -505,9 +509,6 @@ export class QueryEditor extends Model({
         implicitLimit: Number(implicitLimit),
       });
     }
-
-    this._saveDraftQueryData();
-    this.setShowHistory(false, false);
   }
 
   @modelFlow

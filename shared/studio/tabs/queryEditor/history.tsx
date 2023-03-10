@@ -85,8 +85,9 @@ const HistoryPanelInner = observer(
           } else if (e.key === "ArrowDown") {
             state.navigateQueryHistory(1);
           } else if (e.key === "Enter") {
-            state.loadQuery();
+            if (state.queryIsEdited) state.saveQuery();
             state.setShowHistory(false, false);
+            state.queryIsEdited = false;
           }
         }}
       >
@@ -132,9 +133,10 @@ const HistoryList = observer(function HistoryList({
 
   const loadQuery = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-
     state.setHistoryCursor(index);
-    state.loadQuery();
+    if (state.queryIsEdited) state.saveQuery();
+    state.setShowHistory(false, false);
+    state.queryIsEdited = false;
   };
 
   return (
@@ -194,11 +196,7 @@ const HistoryItem = observer(function HistoryItem({
         [styles.draft]: !item,
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
-      onClick={() => {
-        state.setHistoryCursor(index);
-        console.log("draft", state.currentQueryData);
-        console.log("result", state.currentResult?.queryData);
-      }}
+      onClick={() => state.setHistoryCursor(index)}
     >
       {item ? (
         <>
