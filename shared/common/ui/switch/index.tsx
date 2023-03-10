@@ -33,7 +33,10 @@ export const Switch = ({
   return (
     <div className={cn(styles.container, classes)}>
       <p
-        className={cn({[styles.hoverable]: rightActive})}
+        className={cn({
+          [styles.hoverable]: rightActive,
+          [styles.active]: !rightActive,
+        })}
         onClick={handleClick}
       >
         {leftLabel}
@@ -44,7 +47,10 @@ export const Switch = ({
         </div>
       </div>
       <p
-        className={cn({[styles.hoverable]: !rightActive})}
+        className={cn({
+          [styles.hoverable]: !rightActive,
+          [styles.active]: rightActive,
+        })}
         onClick={handleClick}
       >
         {rightLabel}

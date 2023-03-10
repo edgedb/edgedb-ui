@@ -276,11 +276,16 @@
   height: 100%;
   position: relative;
   background: #fff;
-  margin: 4px 0;
+  margin: 2px 0;
+
+  .outmostItem {
+    width: 100%;
+    height: 100%;
+  }
 
   .treemapItem {
     position: absolute;
-    background: #fff;
+    background: #d5d8ef;
     z-index: 1;
     box-sizing: border-box;
 
@@ -299,7 +304,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      // border-radius: 3px;
+      border-radius: 3px;
       background: rgba(255, 255, 255, 0.3);
     }
 
@@ -340,18 +345,23 @@
       background: #fff;
       opacity: 0.5;
       margin: 2px;
-      // border-radius: 3px;
+      border-radius: 3px;
     }
   }
 }
 
 .treemapBreadcrumbs {
   display: flex;
-  margin: 0 8px;
   height: 28px;
+  color: #666666;
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 15px;
   flex-shrink: 0;
   overflow-x: auto;
   transition: height 0.2s;
+  background: #f7f7f7;
+  margin-top: 2px;
 
   &.hidden {
     height: 0px;
@@ -394,7 +404,7 @@
   .explainContextRect {
     position: absolute;
     background: #fff;
-    // border-radius: 3px;
+    border-radius: 3px;
     border: 1px solid rgba(0, 0, 0, 0.15);
 
     &.highlighted {

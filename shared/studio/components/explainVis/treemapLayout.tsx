@@ -228,7 +228,7 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                   {ctxId != null ? (
                     <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
                   ) : i === 0 ? (
-                    <i>Query</i>
+                    <span>Query</span>
                   ) : (
                     plan.type
                   )}
@@ -332,13 +332,11 @@ export const TreemapNode = observer(
         })}
         data-plan-id={plan.id}
         style={{
-          backgroundColor: depth
-            ? palette[(depth - 1) % palette.length]
-            : undefined,
+          backgroundColor: depth ? palette[depth % palette.length] : undefined,
           top: pos.top * 100 + "%",
           left: pos.left * 100 + "%",
-          width: `calc(${pos.width * 100}% - 4px)`,
-          height: `calc(${pos.height * 100}% - 4px)`,
+          width: depth === 0 ? "100%" : `calc(${pos.width * 100}% - 4px)`,
+          height: depth === 0 ? "100%" : `calc(${pos.height * 100}% - 4px)`,
           ...(state.ctxId != null && state.ctxId === ctxId
             ? {outline: `2px solid #0074e8`, zIndex: 1}
             : undefined),
