@@ -183,7 +183,7 @@ describe("queryEditor:", () => {
       // click on edit button
       (
         await driver.wait(
-          until.elementLocated(ByUIClass("repl_editButton")),
+          until.elementLocated(ByUIClass("repl_loadButton")),
           2000
         )
       ).click();
