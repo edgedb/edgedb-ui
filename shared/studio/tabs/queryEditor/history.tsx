@@ -133,7 +133,11 @@ const HistoryList = observer(function HistoryList({
 
   const loadQuery = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
-    state.setHistoryCursor(index);
+    if (state.historyCursor !== index) {
+      state.queryIsLoading = true;
+      state.setHistoryCursor(index);
+    }
+
     if (state.queryIsEdited) state.saveQuery();
     state.setShowHistory(false, false);
     state.queryIsEdited = false;
@@ -196,7 +200,10 @@ const HistoryItem = observer(function HistoryItem({
         [styles.draft]: !item,
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
-      onClick={() => state.setHistoryCursor(index)}
+      onClick={() => {
+        state.queryIsLoading = true;
+        state.setHistoryCursor(index);
+      }}
     >
       {item ? (
         <>

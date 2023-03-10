@@ -166,6 +166,9 @@ export class QueryEditor extends Model({
   @observable
   queryIsEdited = false;
 
+  @observable
+  queryIsLoading = false;
+
   @action
   setCurrentQueryData<T extends EditorKind>(kind: T, data: QueryData[T]) {
     this.currentQueryData[kind] = data;
@@ -180,9 +183,12 @@ export class QueryEditor extends Model({
     const disposer = reaction(
       () => getSnapshot(this.currentQueryData[EditorKind.VisualBuilder]),
       () => {
-        if (!this.queryIsEdited) this.queryIsEdited = true;
+        if (!this.queryIsLoading && !this.queryIsEdited)
+          this.queryIsEdited = true;
+        else if (this.queryIsLoading) this.queryIsLoading = false;
       }
     );
+
     return () => {
       disposer();
     };
@@ -573,6 +579,7 @@ export class QueryEditor extends Model({
         status,
         implicitLimit: Number(implicitLimit),
       });
+      this.queryIsEdited = false;
       return {success: true, capabilities, status};
     } catch (e: any) {
       console.error(e);
@@ -583,6 +590,7 @@ export class QueryEditor extends Model({
         error: extractErrorDetails(e, query),
       });
     }
+    this.queryIsEdited = false;
     return {success: false};
   });
 
