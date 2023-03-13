@@ -67,11 +67,6 @@ const HistoryPanelInner = observer(
       (ref as RefObject<HTMLDivElement>).current?.focus();
     }, []);
 
-    const closeHistory = () => {
-      state.setHistoryCursor(-1);
-      state.setShowHistory(false);
-    };
-
     return (
       <div
         ref={ref}
@@ -85,15 +80,16 @@ const HistoryPanelInner = observer(
           } else if (e.key === "ArrowDown") {
             state.navigateQueryHistory(1);
           } else if (e.key === "Enter") {
-            if (state.queryIsEdited) state.saveQuery();
-            state.setShowHistory(false, false);
-            state.queryIsEdited = false;
+            state.loadHistoryItem();
           }
         }}
       >
         <HistoryList state={state} />
         <div className={styles.closeHistory}>
-          <Button label={"Cancel"} onClick={closeHistory} />
+          <Button
+            label={"Cancel"}
+            onClick={() => state.setShowHistory(false)}
+          />
         </div>
       </div>
     );
@@ -131,18 +127,6 @@ const HistoryList = observer(function HistoryList({
     listRef.current?.resetAfterIndex(0);
   }, [historyList.length]);
 
-  const loadQuery = (e: React.MouseEvent, index: number) => {
-    e.stopPropagation();
-    if (state.historyCursor !== index) {
-      state.queryIsLoading = true;
-      state.setHistoryCursor(index);
-    }
-
-    if (state.queryIsEdited) state.saveQuery();
-    state.setShowHistory(false, false);
-    state.queryIsEdited = false;
-  };
-
   return (
     <div ref={ref} className={styles.historyListWrapper}>
       <List
@@ -162,7 +146,6 @@ const HistoryList = observer(function HistoryList({
             index={index - 1}
             item={historyList[index - 1] ?? null}
             styleTop={style.top}
-            loadQuery={(e) => loadQuery(e, index - 1)}
           />
         )}
       </List>
@@ -175,13 +158,11 @@ const HistoryItem = observer(function HistoryItem({
   index,
   item,
   styleTop,
-  loadQuery,
 }: {
   state: QueryEditor;
   index: number;
   item: QueryHistoryItem | null;
   styleTop: any;
-  loadQuery: (e: React.MouseEvent) => void;
 }) {
   if (item == null && index !== -1) {
     state.fetchQueryHistory();
@@ -200,10 +181,7 @@ const HistoryItem = observer(function HistoryItem({
         [styles.draft]: !item,
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
-      onClick={() => {
-        state.queryIsLoading = true;
-        state.setHistoryCursor(index);
-      }}
+      onClick={() => state.previewHistoryItem(index)}
     >
       {item ? (
         <>
@@ -225,7 +203,10 @@ const HistoryItem = observer(function HistoryItem({
                 [styles.visible]: state.historyCursor === index,
               })}
               label={"Load"}
-              onClick={loadQuery}
+              onClick={(e) => {
+                e.stopPropagation();
+                state.loadHistoryItem(index);
+              }}
             />
           }
         </>

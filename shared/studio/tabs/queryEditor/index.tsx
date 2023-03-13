@@ -200,7 +200,7 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
   );
 
   const onChange = useCallback(
-    (value: Text) => editorState.setCurrentQueryData(EditorKind.EdgeQL, value),
+    (value: Text) => editorState.setEdgeQL(value),
     [editorState]
   );
 
