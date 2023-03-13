@@ -43,7 +43,7 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
       const offsetTop = scrollRect.top - scrollerEl.scrollTop;
       const offsetLeft = scrollRect.left - scrollerEl.scrollLeft;
 
-      const ctxs = state.contextsByBufIdx[0];
+      const ctxs = state.contextsByBufIdx[0] ?? [];
       rects = [];
       let parentCtxs: Context[] = [];
       for (const ctx of ctxs) {
@@ -106,33 +106,9 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     };
     scrollerEl.addEventListener("scroll", scrollListener);
 
-    const hoverListener = (e: MouseEvent) => {
-      const scrollRect = scrollerEl.getBoundingClientRect();
-      const x = e.clientX - scrollRect.left,
-        y = e.clientY - scrollRect.top + scrollerEl.scrollTop;
-
-      let depth = 0;
-      let ctxId: number | null = null;
-      for (const rect of rects) {
-        if (
-          rect.depth >= depth &&
-          x >= rect.left &&
-          x <= rect.left + rect.width &&
-          y >= rect.top &&
-          y <= rect.top + rect.height
-        ) {
-          ctxId = rect.id;
-          depth = rect.depth;
-        }
-      }
-      state.setCtxId(ctxId);
-    };
-    scrollerEl.addEventListener("mousemove", hoverListener);
-
     return () => {
       scrollerEl.removeChild(containerEl);
       scrollerEl.removeEventListener("scroll", scrollListener);
-      scrollerEl.removeEventListener("mousemove", hoverListener);
     };
   }, [state]);
 

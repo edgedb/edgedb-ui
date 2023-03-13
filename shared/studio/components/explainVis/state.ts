@@ -64,7 +64,12 @@ export class ExplainState extends Model({
 
   @computed
   get maxFlamegraphZoom() {
-    return this.planTree.data[this.isTimeGraph ? "totalTime" : "totalCost"]!;
+    return Math.max(
+      1,
+      this.isTimeGraph
+        ? this.planTree.data.totalTime! * 10
+        : this.planTree.data.totalCost
+    );
   }
 
   @modelAction

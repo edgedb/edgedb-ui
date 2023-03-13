@@ -215,45 +215,6 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
       ? editorState.currentResult.explainState
       : null;
 
-  useEffect(() => {
-    const ref = codeEditorRef.current?.ref;
-    if (ref && explainState) {
-      const mouseoverListener = (e: MouseEvent) => {
-        let target = (e.target as HTMLElement).closest(
-          `.${codeEditorStyles.explainContextMark}`
-        ) as HTMLElement;
-        while (
-          target?.parentElement?.classList.contains(
-            codeEditorStyles.explainContextMark
-          )
-        ) {
-          target = target.parentElement;
-        }
-        const ctxId = target?.dataset.ctxId;
-        if (ctxId) {
-          explainState.setCtxId(parseInt(ctxId, 10));
-        }
-      };
-      const mouseoutListener = (e: MouseEvent) => {
-        if (
-          (e.target as HTMLElement).closest(
-            `.${codeEditorStyles.explainContextMark}`
-          ) != null
-        ) {
-          explainState.setCtxId(null);
-        }
-      };
-
-      ref.addEventListener("mouseover", mouseoverListener);
-      ref.addEventListener("mouseout", mouseoutListener);
-
-      return () => {
-        ref.removeEventListener("mouseover", mouseoverListener);
-        ref.removeEventListener("mouseout", mouseoutListener);
-      };
-    }
-  }, [codeEditorRef, explainState]);
-
   return (
     <>
       <CustomScrollbars
@@ -278,7 +239,6 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
           explainContexts={
             editorState.showEditorResultDecorations && explainState
               ? {
-                  selectedCtxId: explainState.ctxId,
                   contexts: explainState.contextsByBufIdx,
                   buffers: explainState.buffers.data,
                 }

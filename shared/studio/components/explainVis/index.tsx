@@ -148,7 +148,9 @@ const Flamegraph = observer(function Flamegraph() {
     <>
       <div className={styles.graphScale}>
         <span>
-          {state.isTimeGraph ? range.toFixed(0) + "ms" : range.toFixed(0)}
+          {state.isTimeGraph
+            ? range.toFixed(range < 1 ? 1 : 0) + "ms"
+            : range.toFixed(0)}
         </span>
         {/* <span onClick={() => state.setFlamegraphZoom(1)}>reset</span> */}
       </div>
