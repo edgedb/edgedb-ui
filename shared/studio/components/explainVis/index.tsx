@@ -234,11 +234,11 @@ const PlanDetails = observer(function PlanDetails() {
       <div></div>
       <div className={styles.grid}>
         {[
-          ["Startup Cost", "Startup Cost"],
-          ["Actual Startup Time", "Startup Time"],
-          ["Total Cost", "Total Cost"],
-          ["Actual Total Time", "Total Time"],
-        ].map(([key, name], i) => (
+          ["Startup Cost", 'startup_cost'],
+          ["Startup Time", 'actual_startup_time'],
+          ["Total Cost", 'total_cost'],
+          ["Total Time", 'actual_total_time'],
+        ].map(([name, key], i) => (
           <>
             <span className={styles.label}>{name}:</span>
             <span>
@@ -425,7 +425,7 @@ export function TestExplainVis({
     <div className={styles.explainVisTesting}>
       <button onClick={() => closeExplain()}>close</button>
 
-      <Visualisations state={state} buffers={data.Buffers} />
+      <Visualisations state={state} buffers={data.buffers} />
 
       <details>
         <summary>raw json</summary>
@@ -531,7 +531,7 @@ function PlanNode({plan}: {plan: Plan}) {
     <div className={styles.planNodeWrapper}>
       <div
         className={cn(styles.planNode, {
-          [styles.noContexts]: !plan.raw.Contexts,
+          [styles.noContexts]: !plan.raw.contexts,
         })}
       >
         <div
@@ -549,24 +549,24 @@ function PlanNode({plan}: {plan: Plan}) {
           <b>{plan.type}</b>
           <div className={styles.grid}>
             {[
-              "Startup Cost",
-              "Actual Startup Time",
-              "Total Cost",
-              "Actual Total Time",
-            ].map((key, i) => (
+              ["Startup Cost", 'startup_cost'],
+              ["Actual Startup Time", 'actual_startup_time'],
+              ["Total Cost", 'total_cost'],
+              ["Actual Total Time", 'actual_total_time'],
+            ].map(([key, prop], i) => (
               <>
                 <span>{key}:</span>
                 <span>
-                  {plan.raw[key]}
+                  {plan.raw[prop]}
                   {i % 2 != 0 ? "ms" : ""}
                 </span>
               </>
             ))}
           </div>
-          {plan.raw.Contexts ? (
+          {plan.raw.contexts ? (
             <>
               Contexts:{" "}
-              {JSON.stringify(plan.raw.Contexts?.map((ctx: any) => ctx.text))}
+              {JSON.stringify(plan.raw.contexts?.map((ctx: any) => ctx.text))}
             </>
           ) : null}
           <details>
@@ -575,7 +575,7 @@ function PlanNode({plan}: {plan: Plan}) {
               {JSON.stringify(
                 {
                   ...plan.raw,
-                  Plans: undefined,
+                  plans: undefined,
                 },
                 null,
                 2
