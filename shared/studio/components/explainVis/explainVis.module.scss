@@ -63,31 +63,37 @@
   flex-direction: column;
   height: 100%;
   background: #fff;
+
+  @include darkTheme {
+    background: #141414;
+  }
 }
 
 .graphScale {
-  margin: 0 8px;
-  margin-top: 6px;
+  margin: 12px 8px 6px 8px;
   font-family: "Inter", sans-serif;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 16px;
   display: flex;
+  font-weight: 500;
+  color: #666666;
   align-items: center;
 
   &:before,
   &:after {
     content: "";
     flex-grow: 1;
-    border-top: 1px solid #ccc;
+    border-top: 2px solid #d9d9d9;
     height: 4px;
     margin-top: 4px;
   }
   &:before {
     margin-right: 6px;
-    border-left: 1px solid #ccc;
+    border-left: 2px solid #d9d9d9;
   }
   &:after {
     margin-left: 6px;
-    border-right: 1px solid #ccc;
+    border-right: 2px solid #d9d9d9;
   }
 }
 
@@ -95,19 +101,20 @@
   position: relative;
   flex-grow: 1;
   overflow: hidden;
+  background: #f7f7f7;
+  margin-bottom: 2px;
+
+  @include darkTheme {
+    background: #242424;
+  }
 
   &Node {
     position: absolute;
-    border-radius: 3px;
-    background: #fff;
+    background: #d5d8ef;
     margin: 2px;
 
-    &.selected:before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.3);
+    @include darkTheme {
+      background: #292235;
     }
   }
 
@@ -121,18 +128,17 @@
 
     .flamegraphLabel {
       position: absolute;
-      margin: 0 6px;
+      margin: 0 4px;
 
       pre {
+        font-size: 11px;
+        line-height: 11px;
         font-family: inherit;
-        display: inline;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         margin: 0;
       }
-
-      // > span {
-      //   margin: 4px;
-      // }
     }
   }
 
@@ -184,10 +190,18 @@
     padding: 10px 16px 10px 8px;
     background: #e5e5e5;
 
+    @include darkTheme {
+      background: #1f1f1f;
+    }
+
     .nodeType {
       color: #595959;
       margin-right: 4px;
       font-weight: 700;
+
+      @include darkTheme {
+        color: #b3b3b3;
+      }
     }
 
     .stats {
@@ -195,6 +209,11 @@
 
       .statsResults {
         color: #595959;
+        margin-left: 4px;
+
+        @include darkTheme {
+          color: #b3b3b3;
+        }
       }
     }
   }
@@ -205,10 +224,18 @@
     column-gap: 32px;
     padding: 10px 16px 10px 8px;
 
+    @include darkTheme {
+      background: #383838;
+    }
+
     .result {
       display: flex;
       flex-direction: column;
       color: #595959;
+
+      @include darkTheme {
+        color: #b3b3b3;
+      }
 
       .label {
         color: #999999;
@@ -224,11 +251,19 @@
 }
 
 .explainHeader {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  padding: 6px 8px;
+  padding: 8px;
   background: #f7f7f7;
+  margin-bottom: 2px;
+
+  .queryDuration {
+    margin: 0 0 0 auto;
+    font-size: 12px;
+    line-height: 14px;
+    font-weight: 700;
+    color: #666;
+  }
 
   .switchers {
     display: flex;
@@ -236,27 +271,12 @@
 
   > :last-child {
     display: flex;
-    // justify-content: flex-end;
   }
-
-  // .copyRawDataButton {
-  //   display: flex;
-  //   height: 28px;
-  //   align-items: center;
-  //   background: #e8e8e8;
-  //   border-radius: 14px;
-  //   padding: 0 12px;
-  //   font-family: "Inter";
-  //   font-weight: 500;
-  //   font-size: 12px;
-  //   text-transform: uppercase;
-  //   color: #5b5b5b;
-  //   cursor: pointer;
-  // }
 
   .rerunWithAnalyze {
     font-family: "Inter";
     text-align: start;
+    margin-right: 32px;
 
     .message {
       font-size: 14px;
@@ -270,18 +290,26 @@
       cursor: pointer;
     }
   }
+
+  @include darkTheme {
+    background: #383838;
+    .queryDuration {
+      color: #c4c4c4;
+    }
+  }
 }
 
 .treemapContainer {
+  --outline-color: #468bff;
+
+  @include darkTheme {
+    --outline-color: #74a6fc;
+  }
+
   height: 100%;
   position: relative;
   background: #fff;
-  margin: 2px 0;
-
-  .outmostItem {
-    width: 100%;
-    height: 100%;
-  }
+  margin-bottom: 2px;
 
   .treemapItem {
     position: absolute;
@@ -289,23 +317,36 @@
     z-index: 1;
     box-sizing: border-box;
 
+    @include darkTheme {
+      background: #292235;
+    }
+
     &.transitionActive {
       transition: top 0.2s, left 0.2s, width 0.2s, height 0.2s;
     }
 
+    &.outmostItem {
+      width: 100%;
+      height: 100%;
+    }
+
     .treemapItemInner {
       position: relative;
-      margin: 2px;
+      margin-left: 4px;
+      margin-top: 4px;
       width: calc(100% - 4px);
       height: calc(100% - 4px);
     }
 
-    &.selected:before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.3);
+    &.selected {
+      outline: 2px solid var(--outline-color);
+      z-index: 1;
+      outline-offset: -2px;
+    }
+
+    &.hovered {
+      outline: 2px dotted var(--outline-color);
+      outline-offset: -2px;
     }
 
     .planName,
@@ -319,16 +360,19 @@
 
       > span {
         display: block;
-        margin: 4px 6px 0 6px;
+        margin: 0 4px;
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
       }
 
       pre {
+        font-size: 11px;
+        line-height: 11px;
         font-family: inherit;
-        display: inline;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         margin: 0;
       }
 
@@ -336,7 +380,7 @@
         > span {
           writing-mode: vertical-rl;
           text-align: left;
-          margin: 6px 4px 6px 0;
+          margin: 0 3px;
         }
       }
     }
@@ -352,7 +396,6 @@
 
 .treemapBreadcrumbs {
   display: flex;
-  height: 28px;
   color: #666666;
   font-weight: 500;
   font-size: 11px;
@@ -361,10 +404,14 @@
   overflow-x: auto;
   transition: height 0.2s;
   background: #f7f7f7;
-  margin-top: 2px;
+  margin-bottom: 2px;
+
+  @include darkTheme {
+    background: #383838;
+  }
 
   &.hidden {
-    height: 0px;
+    display: none;
   }
 
   @include hideScrollbar;
@@ -380,7 +427,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 4px 8px;
+    padding: 4px 8px 5px 8px;
     cursor: pointer;
     border-radius: 6px;
     flex-shrink: 0;
@@ -390,15 +437,24 @@
     }
 
     pre {
+      font-size: 11px;
+      line-height: 11px;
       font-family: inherit;
-      display: inline;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       margin: 0;
     }
   }
 }
 
 .explainContextsContainer {
+  --outline-color: #468bff;
+
+  @include darkTheme {
+    --outline-color: #74a6fc;
+  }
+
   z-index: -1;
 
   .explainContextRect {
@@ -406,7 +462,11 @@
     border-radius: 3px;
 
     &.highlighted {
-      outline: 2px solid #0074e8;
+      outline: 2px solid var(--outline-color);
+    }
+
+    &.highlightedOnHover {
+      outline: 2px dotted var(--outline-color);
     }
   }
 }

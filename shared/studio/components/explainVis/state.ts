@@ -8,7 +8,6 @@ import {
   modelAction,
   prop,
 } from "mobx-keystone";
-import {instanceCtx} from "../../state/instance";
 import {
   EditorKind,
   queryEditorCtx,
@@ -49,6 +48,8 @@ export class ExplainState extends Model({
   buffers: prop<Frozen<string[]>>(),
 
   ctxId: prop<number | null>(null).withSetter(),
+  parentCtxId: prop<number | null>(null).withSetter(),
+  hoveredCtxId: prop<number | null>(null).withSetter(),
 
   showFlamegraph: prop(false),
   graphType: prop<graphType>().withSetter(),
@@ -112,11 +113,19 @@ export class ExplainState extends Model({
   }
 
   @observable.ref
-  selectedPlan: Plan = this.planTree.data;
+  selectedPlan: Plan | null = null;
 
   @action
-  setSelectedPlan(plan: Plan) {
+  setSelectedPlan(plan: Plan | null) {
     this.selectedPlan = plan;
+  }
+
+  @observable.ref
+  hoveredPlan: Plan | null = null;
+
+  @action
+  setHoveredPlan(plan: Plan | null) {
+    this.hoveredPlan = plan;
   }
 
   @observable.ref

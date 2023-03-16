@@ -1,69 +1,101 @@
 @import "../../mixins.scss";
 
-.container {
-  display: flex;
-  align-items: center;
-  margin-right: 32px;
+.switch {
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  margin-left: 34px;
+  margin-right: 82px;
+  background: #d3d3d3;
+  position: relative;
+  cursor: pointer;
+  left: 0;
 
-  p {
-    font-size: 12px;
-    font-family: "Roboto";
-    line-height: 14px;
-    font-weight: 500;
-    color: #666666;
-    margin: 0;
-    padding: 4px 0;
+  .radio {
+    position: absolute;
 
-    &:first-of-type {
-      padding-right: 8px;
+    input[type="radio"] {
+      display: none;
+    }
+
+    .label {
+      display: inline-block;
+      position: relative;
+      font-size: 12px;
+      font-family: "Roboto";
+      line-height: 14px;
+      font-weight: 500;
+      color: #666666;
+      padding: 4px 0;
+      cursor: pointer;
+      bottom: 3px;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    .notChecked {
+      z-index: 1;
+    }
+
+    input[type="radio"]:checked + label:before {
+      border-radius: 11px;
+      background: #fff;
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: 6px;
+    }
+
+    &:nth-of-type(1) {
+      right: 0;
+
+      .label {
+        span {
+          margin-right: 36px;
+        }
+      }
+
+      input[type="radio"] + label:before {
+        content: " ";
+      }
+
+      input[type="radio"]:checked + label:before {
+        right: 15px;
+      }
     }
 
     &:nth-of-type(2) {
-      padding-left: 8px;
-    }
-  }
+      left: 0;
 
-  .active {
-    color: #999;
-  }
+      .label {
+        span {
+          margin-left: 36px;
+        }
+      }
 
-  .hoverable {
-    cursor: pointer;
+      input[type="radio"] + label:before {
+        content: " ";
+      }
 
-    &:hover {
-      color: #00bc85;
-    }
-  }
-
-  .trackContainer {
-    padding: 4px 0;
-    .track {
-      display: flex;
-      width: 28px;
-      height: 16px;
-      border-radius: 8px;
-      background: #d3d3d3;
-      cursor: pointer;
-
-      @include darkTheme {
-        background: #141414;
+      input[type="radio"]:checked + label:before {
+        left: 15px;
       }
     }
   }
 
-  .rightActive {
-    justify-content: right;
-  }
+  @include darkTheme {
+    background: #141414;
 
-  .switch {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--switchSize, 18px);
-    margin: 3px;
-    background: #fff;
+    .radio {
+      .label {
+        color: #b3b3b3;
+      }
 
-    @include darkTheme {
-      background: #333;
+      input[type="radio"]:checked + label:before {
+        background: #b3b3b3;
+      }
     }
   }
 }

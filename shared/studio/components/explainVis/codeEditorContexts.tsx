@@ -6,8 +6,9 @@ import {createPortal} from "react-dom";
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./explainVis.module.scss";
-import {Context, ExplainState} from "./state";
-import {palette} from "./treemapLayout";
+import {Context, ExplainState, Plan} from "./state";
+import {darkPalette, lightPalette} from "./treemapLayout";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 interface CtxRect {
   id: number;
@@ -28,6 +29,9 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
   const [containerEl] = useState(() => document.createElement("div"));
 
   const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
+
+  const [_, theme] = useTheme();
+  const palette = theme === Theme.light ? lightPalette : darkPalette;
 
   useEffect(() => {
     const scrollerEl = editorRef.view().scrollDOM;
@@ -112,22 +116,46 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     };
   }, [state]);
 
+  const getBgColor = (ctxRect: CtxRect) => {
+    if (state.hoveredPlan) {
+      const planDepth = getPlanDepth(state.hoveredPlan);
+      const ctx = state.hoveredCtxId === ctxRect.id;
+      if (ctx && planDepth) return palette[planDepth % palette.length];
+    }
+
+    if (state.selectedPlan) {
+      const planDepth = getPlanDepth(state.selectedPlan);
+      const ctx = state.ctxId === ctxRect.id;
+
+      if (ctx && planDepth) return palette[planDepth % palette.length];
+    }
+
+    if (state.selectedPlan?.parent) {
+      const parentPlanDepth = getPlanDepth(state.selectedPlan.parent);
+      const ctxParent = state.parentCtxId === ctxRect.id;
+
+      if (ctxParent && parentPlanDepth)
+        return palette[parentPlanDepth % palette.length];
+    }
+
+    return undefined;
+  };
+
   return createPortal(
     <>
       {ctxRects.map((ctxRect) => (
         <div
           className={cn(styles.explainContextRect, {
             [styles.highlighted]: state.ctxId === ctxRect.id,
+            [styles.highlightedOnHover]:
+              state.ctxId !== ctxRect.id && state.hoveredCtxId === ctxRect.id,
           })}
           style={{
             top: ctxRect.top,
             left: ctxRect.left,
             width: ctxRect.width,
             height: ctxRect.height,
-            backgroundColor:
-              state.ctxId === ctxRect.id
-                ? palette[ctxRect.depth % palette.length]
-                : undefined,
+            backgroundColor: getBgColor(ctxRect),
           }}
         />
       ))}
@@ -135,3 +163,14 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     containerEl
   );
 });
+
+function getPlanDepth(plan: Plan) {
+  let depth = 0;
+  let parent = plan.parent;
+  while (parent) {
+    depth++;
+    parent = parent.parent;
+  }
+
+  return depth;
+}

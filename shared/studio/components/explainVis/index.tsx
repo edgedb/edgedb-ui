@@ -2,7 +2,7 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import {Switch, SwitchState} from "@edgedb/common/ui/switch";
+import {Switch} from "@edgedb/common/ui/switch";
 
 import {createContext, useContext, useRef} from "react";
 import {ChevronDownIcon} from "../../icons";
@@ -21,7 +21,8 @@ import {
   reRunWithAnalyze,
 } from "./state";
 
-import {palette, Treemap} from "./treemapLayout";
+import {darkPalette, lightPalette, Treemap} from "./treemapLayout";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
@@ -68,7 +69,10 @@ const ExplainHeader = observer(function ExplainHeader({
   queryHistoryItem: QueryHistoryResultItem;
 }) {
   const state = useExplainState()[0];
-
+  const plan = state.focusedPlan ?? state.planTree.data;
+  const queryTimeCost = state.isTimeGraph
+    ? `${plan?.raw["Actual Total Time"]}ms`
+    : plan?.raw["Total Cost"];
   return (
     <div className={styles.explainHeader}>
       <div className={styles.switchers}>
@@ -86,35 +90,8 @@ const ExplainHeader = observer(function ExplainHeader({
               : state.setGraphType(graphType.time)
           }
         />
-        {/* <div className={styles.typeSwitcher}>
-          <div
-            className={cn(styles.switcherButton, {
-              [styles.selected]: state.graphType === "time",
-              [styles.disabled]: state.planTree.data.totalTime == null,
-            })}
-            onClick={() => state.setGraphType("time")}
-          >
-            Time
-          </div>
-          <div
-            className={cn(styles.switcherButton, {
-              [styles.selected]: state.graphType === "cost",
-            })}
-            onClick={() => state.setGraphType("cost")}
-          >
-            Cost
-          </div>
-        </div>
-      </div> */}
-        {/* <div> */}
-        {/* <div
-          className={styles.copyRawDataButton}
-          onClick={() => state.copyRawDataToClipboard()}
-        >
-          Copy Raw Data
-        </div> */}
       </div>
-      <div>
+      <>
         {state.planTree.data.totalTime == null ? (
           <div className={styles.rerunWithAnalyze}>
             <div className={styles.message}>Timing data not available</div>
@@ -126,7 +103,10 @@ const ExplainHeader = observer(function ExplainHeader({
             </div>
           </div>
         ) : null}
-      </div>
+      </>
+      {!state.showFlamegraph && (
+        <p className={styles.queryDuration}>{queryTimeCost}</p>
+      )}
     </div>
   );
 });
@@ -145,7 +125,26 @@ const Flamegraph = observer(function Flamegraph() {
     state.planTree.data[state.isTimeGraph ? "totalTime" : "totalCost"]! / zoom;
 
   return (
-    <>
+    <div
+      ref={containerRef}
+      className={styles.flamegraph}
+      onWheel={(e) => {
+        const [zoom, offset] = state.flamegraphZoomOffset;
+        if (e.ctrlKey) {
+          const mouseOffset =
+            e.clientX - containerRef.current!.getBoundingClientRect().left - 8;
+
+          const newZoom = Math.min(
+            Math.max(1, zoom * (1 + e.deltaY / -400)),
+            state.maxFlamegraphZoom
+          );
+
+          state.setFlamegraphZoom(newZoom, mouseOffset);
+        } else {
+          state.setFlamegraphOffset(offset + e.deltaY);
+        }
+      }}
+    >
       <div className={styles.graphScale}>
         <span>
           {state.isTimeGraph
@@ -155,71 +154,45 @@ const Flamegraph = observer(function Flamegraph() {
         {/* <span onClick={() => state.setFlamegraphZoom(1)}>reset</span> */}
       </div>
       <div
-        ref={containerRef}
-        className={styles.flamegraph}
-        onWheel={(e) => {
-          const [zoom, offset] = state.flamegraphZoomOffset;
-          if (e.ctrlKey) {
-            const mouseOffset =
-              e.clientX -
-              containerRef.current!.getBoundingClientRect().left -
-              8;
-
-            const newZoom = Math.min(
-              Math.max(1, zoom * (1 + e.deltaY / -400)),
-              state.maxFlamegraphZoom
-            );
-
-            state.setFlamegraphZoom(newZoom, mouseOffset);
-          } else {
-            state.setFlamegraphOffset(offset + e.deltaY);
-          }
+        style={{
+          position: "absolute",
+          left: -offset + 6,
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            left: -offset + 6,
-          }}
-        >
-          {width ? (
-            <FlamegraphNode
-              plan={state.planTree.data}
-              depth={0}
-              width={width * zoom}
-              left={0}
-              visibleRange={[offset - 16, offset + width + 16]}
-            />
-          ) : null}
-        </div>
+        {width ? (
+          <FlamegraphNode
+            plan={state.planTree.data}
+            depth={0}
+            width={width * zoom}
+            left={0}
+            visibleRange={[offset - 16, offset + width + 16]}
+          />
+        ) : null}
       </div>
-    </>
+    </div>
   );
 });
 
 const PlanDetails = observer(function PlanDetails() {
   const state = useExplainState()[0];
 
-  const selectedPlan = state.selectedPlan;
+  const plan = state.hoveredPlan || state.selectedPlan || state.planTree.data;
 
-  return selectedPlan ? (
+  return plan ? (
     <div className={styles.planDetails}>
       <div className={styles.header}>
-        <span className={styles.nodeType}>{selectedPlan.type}:</span>
+        <span className={styles.nodeType}>{plan.type}:</span>
         <span className={styles.stats}>
           Self {state.isTimeGraph ? "Time:" : "Cost:"}
           <span className={styles.statsResults}>
             {state.isTimeGraph
-              ? selectedPlan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") +
-                "ms"
-              : selectedPlan.selfCost
-                  .toPrecision(5)
-                  .replace(/\.?0+$/, "")}{" "}
+              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
+              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
             &nbsp; &nbsp;
             {(
               (state.isTimeGraph
-                ? selectedPlan.selfTimePercent!
-                : selectedPlan.selfCostPercent) * 100
+                ? plan.selfTimePercent!
+                : plan.selfCostPercent) * 100
             )
               .toPrecision(2)
               .replace(/\.?0+$/, "")}
@@ -235,7 +208,7 @@ const PlanDetails = observer(function PlanDetails() {
           ].map(([name, key], i) => (
             <div>
               <span className={styles.label}>{name}:</span>
-              <span>{selectedPlan.raw[key]}</span>
+              <span>{plan.raw[key]}</span>
             </div>
           ))}
         </div>
@@ -246,7 +219,7 @@ const PlanDetails = observer(function PlanDetails() {
           ].map(([name, key], i) => (
             <div>
               <span className={styles.label}>{name}:</span>
-              <span>{selectedPlan.raw[key]}ms</span>
+              <span>{plan.raw[key]}ms</span>
             </div>
           ))}
         </div>
@@ -254,7 +227,7 @@ const PlanDetails = observer(function PlanDetails() {
     </div>
   ) : (
     <div className={styles.noSelectedPlanDetails}>
-      Select plan node above for details
+      Select plan node above for details // todo
     </div>
   );
 });
@@ -273,6 +246,9 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   visibleRange: [number, number];
 }) {
   const [state, devMode] = useExplainState();
+
+  const [_, theme] = useTheme();
+  const palette = theme === Theme.light ? lightPalette : darkPalette;
 
   const expandedNode =
     devMode && plan.hasCollapsedPlans && state.expandedNodes.has(plan);
@@ -342,12 +318,10 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   return (
     <div
       className={cn(styles.flamegraphNode, {
-        [styles.selected]: state.selectedPlan === plan,
+        [styles.selected]: state.hoveredPlan?.id === plan.id, //TODO Add pattern
       })}
       style={{
-        backgroundColor: depth
-          ? palette[(depth - 1) % palette.length]
-          : undefined,
+        backgroundColor: depth ? palette[depth % palette.length] : undefined,
         width: width - 4,
         left: left,
         ...(state.ctxId != null && state.ctxId === ctxId
@@ -357,12 +331,28 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     >
       <div
         className={cn(styles.flamegraphBar)}
-        onClick={() => state.setSelectedPlan(plan)}
+        onClick={() => {
+          if (state.selectedPlan === plan) {
+            state.setSelectedPlan(null);
+            state.setCtxId(null);
+            state.setParentCtxId(null);
+          } else {
+            state.setSelectedPlan(plan);
+            state.setCtxId(ctxId);
+            const parentCtxId =
+              plan.parent?.nearestContextPlan?.contextId ??
+              plan.parent?.contextId;
+            if (parentCtxId) state.setParentCtxId(parentCtxId);
+          }
+        }}
         onMouseEnter={() => {
-          if (ctxId != null) state.setCtxId(ctxId);
+          state.setHoveredPlan(plan);
+          state.setHoveredCtxId(ctxId);
         }}
         onMouseLeave={() => {
-          if (ctxId != null) state.setCtxId(null);
+          if (ctxId != null) {
+            state.setHoveredCtxId(null);
+          }
         }}
       >
         <div
@@ -456,13 +446,13 @@ const Visualisations = observer(function Visualisations({
       </div>
       <div className={styles.main}>
         <div style={{width: "50%"}}>
-          {state.selectedPlan ? (
+          {state.hoveredPlan ? (
             <pre>
               {JSON.stringify(
                 {
-                  selfTime: state.selectedPlan.selfTime,
-                  selfPercent: state.selectedPlan.selfTimePercent,
-                  ...state.selectedPlan.raw,
+                  selfTime: state.hoveredPlan.selfTime,
+                  selfPercent: state.hoveredPlan.selfTimePercent,
+                  ...state.hoveredPlan.raw,
                   Plans: undefined,
                   CollapsedPlans: undefined,
                 },
@@ -472,7 +462,7 @@ const Visualisations = observer(function Visualisations({
             </pre>
           ) : null}
         </div>
-        <div className={styles.queryText}>
+        <div>
           {buffers.map((buf: any, idx: number) => (
             <>
               <b>{buf[1]}</b>

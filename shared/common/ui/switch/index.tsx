@@ -21,40 +21,55 @@ export const Switch = ({
   onClick,
   classes,
 }: SwitchProps) => {
-  const [rightActive, setRightActive] = useState(
-    defaultState === SwitchState.right
+  const [leftActive, setLeftActive] = useState(
+    defaultState === SwitchState.left
   );
 
-  const handleClick = () => {
+  const handleChange = () => {
     onClick();
-    setRightActive(!rightActive);
+    setLeftActive(!leftActive);
   };
 
   return (
-    <div className={cn(styles.container, classes)}>
-      <p
-        className={cn({
-          [styles.hoverable]: rightActive,
-          [styles.active]: !rightActive,
-        })}
-        onClick={handleClick}
-      >
-        {leftLabel}
-      </p>
-      <div className={styles.trackContainer} onClick={handleClick}>
-        <div className={cn(styles.track, {[styles.rightActive]: rightActive})}>
-          <div className={styles.switch} />
+    <div className={styles.container}>
+      <div className={styles.switch}>
+        <div className={styles.radio}>
+          <input
+            type="radio"
+            id={leftLabel}
+            name={`${leftLabel}-or-${rightLabel}`}
+            onChange={handleChange}
+            checked={leftActive}
+          />
+          <label
+            htmlFor={leftLabel}
+            className={cn(
+              styles.label,
+              leftActive ? styles.checked : styles.notChecked
+            )}
+          >
+            <span> {leftLabel}</span>
+          </label>
+        </div>
+        <div className={styles.radio}>
+          <input
+            type="radio"
+            id={rightLabel}
+            name={`${leftLabel}-or-${rightLabel}`}
+            onChange={handleChange}
+            checked={!leftActive}
+          />
+          <label
+            htmlFor={rightLabel}
+            className={cn(
+              styles.label,
+              !leftActive ? styles.checked : styles.notChecked
+            )}
+          >
+            <span> {rightLabel}</span>
+          </label>
         </div>
       </div>
-      <p
-        className={cn({
-          [styles.hoverable]: !rightActive,
-          [styles.active]: rightActive,
-        })}
-        onClick={handleClick}
-      >
-        {rightLabel}
-      </p>
     </div>
   );
 };

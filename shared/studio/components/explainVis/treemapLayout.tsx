@@ -15,8 +15,10 @@ import {ExplainState, Plan} from "./state";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
-export const palette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
+export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
+export const darkPalette = ["#292235", "#343025", "#182A30", "#20352F"];
 
 function getPlanDepth(plan: Plan) {
   let depth = 0;
@@ -150,7 +152,26 @@ export const Treemap = observer(function Treemap() {
       }}
     >
       <TreemapBreadcrumbs />
-      <div ref={ref} className={styles.treemapContainer}>
+      <div
+        ref={ref}
+        className={styles.treemapContainer}
+        onMouseLeave={() => {
+          state.setHoveredPlan(null);
+
+          const selectedPlanCtxId = state.selectedPlan
+            ? state.selectedPlan.nearestContextPlan?.contextId ??
+              state.selectedPlan.contextId
+            : null;
+
+          const selectedPlanParentCtxId = state.selectedPlan?.parent
+            ? state.selectedPlan.parent?.nearestContextPlan?.contextId ??
+              state.selectedPlan.parent?.contextId
+            : null;
+
+          state.setCtxId(selectedPlanCtxId);
+          state.setParentCtxId(selectedPlanParentCtxId);
+        }}
+      >
         {children}
       </div>
     </div>
@@ -259,6 +280,8 @@ export const TreemapNode = observer(
     forwardedRef
   ) {
     const [state] = useExplainState();
+    const [_, theme] = useTheme();
+    const palette = theme === Theme.light ? lightPalette : darkPalette;
 
     const ref = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => ref.current!);
@@ -323,23 +346,23 @@ export const TreemapNode = observer(
       return layout;
     }, [plan, parentArea, isTimeGraph]);
 
+    const isSelected = state.selectedPlan?.id === plan.id;
+
     return (
       <div
         ref={ref}
         className={cn(styles.treemapItem, {
-          [styles.selected]: state.selectedPlan === plan,
+          [styles.hovered]: !isSelected && state.hoveredPlan?.id === plan.id,
+          [styles.selected]: isSelected,
           [styles.transitionActive]: !!transitionActive,
         })}
         data-plan-id={plan.id}
         style={{
           backgroundColor: depth ? palette[depth % palette.length] : undefined,
-          top: pos.top * 100 + "%",
-          left: pos.left * 100 + "%",
+          top: state.focusedPlan === plan ? "2px" : pos.top * 100 + "%",
+          left: state.focusedPlan === plan ? "2px" : pos.left * 100 + "%",
           width: depth === 0 ? "100%" : `calc(${pos.width * 100}% - 4px)`,
           height: depth === 0 ? "100%" : `calc(${pos.height * 100}% - 4px)`,
-          ...(state.ctxId != null && state.ctxId === ctxId
-            ? {outline: `2px solid #0074e8`, zIndex: 1}
-            : undefined),
         }}
       >
         {layout ? (
@@ -380,12 +403,28 @@ export const TreemapNode = observer(
                     width: `calc(${pos.width * 100}%)`,
                     height: `calc(${pos.height * 100}%)`,
                   }}
-                  onClick={() => state.setSelectedPlan(plan)}
+                  onClick={() => {
+                    if (state.selectedPlan === plan) {
+                      state.setSelectedPlan(null);
+                      state.setCtxId(null);
+                      state.setParentCtxId(null);
+                    } else {
+                      state.setSelectedPlan(plan);
+                      state.setCtxId(ctxId);
+                      const parentCtxId =
+                        plan.parent?.nearestContextPlan?.contextId ??
+                        plan.parent?.contextId;
+                      if (parentCtxId) state.setParentCtxId(parentCtxId);
+                    }
+                  }}
                   onMouseEnter={() => {
-                    if (ctxId != null) state.setCtxId(ctxId);
+                    state.setHoveredPlan(plan);
+                    state.setHoveredCtxId(ctxId);
                   }}
                   onMouseLeave={() => {
-                    if (ctxId != null) state.setCtxId(null);
+                    if (ctxId != null) {
+                      state.setHoveredCtxId(null);
+                    }
                   }}
                   onDoubleClick={() => state.treemapZoomIn(plan, ref.current!)}
                 >
