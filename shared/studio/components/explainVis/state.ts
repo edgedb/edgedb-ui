@@ -21,9 +21,9 @@ export function createExplainState(rawExplainOutput: string) {
 
   const contexts: Contexts = [];
   const planTree = walkPlanNode(
-    rawData.Plan,
-    rawData.Plan["FullTotalTime"] ?? null,
-    rawData.Plan["Total Cost"],
+    rawData.plan,
+    rawData.plan.full_total_time ?? null,
+    rawData.plan.total_cost,
     contexts
   );
 
@@ -31,7 +31,7 @@ export function createExplainState(rawExplainOutput: string) {
     rawData: rawExplainOutput,
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
-    buffers: frozen(rawData.Buffers.map((buf: any) => buf[0]).slice(1)),
+    buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
     graphType: planTree.totalTime != null ? "time" : "cost",
   });
 }
@@ -290,13 +290,13 @@ export function walkPlanNode(
   _replacedPlanNodes?: any[]
 ): Plan {
   const _childContextNodes =
-    data.CollapsedPlans || data.NearestContextPlan
-      ? [data.NearestContextPlan, ...(data.CollapsedPlans ?? [])]
+    data.collapsed_plans || data.nearest_context_plan
+      ? [data.nearest_context_plan, ...(data.collapsed_plans ?? [])]
       : undefined;
 
   const replacedPlanNodes = _childContextNodes ?? _replacedPlanNodes!;
-  const fullSubPlans: Plan[] = Array.isArray(data.Plans)
-    ? data.Plans.map((subplan: any) => {
+  const fullSubPlans: Plan[] = Array.isArray(data.plans)
+    ? data.plans.map((subplan: any) => {
         const plan = walkPlanNode(
           typeof subplan === "number" ? replacedPlanNodes[subplan] : subplan,
           queryTotalTime,
@@ -311,16 +311,16 @@ export function walkPlanNode(
       })
     : [];
 
-  const selfTime = data.CollapsedSelfTime || data.SelfTime;
-  const selfCost = data.CollapsedSelfCost || data.SelfCost;
+  const selfTime = data.collapsed_self_time || data.self_time;
+  const selfCost = data.collapsed_self_cost || data.self_cost;
   const selfTimePercent = selfTime && selfTime / queryTotalTime!;
   const selfCostPercent = selfCost / queryTotalCost;
 
   let contextId = null;
 
-  if (data.Contexts) {
-    const rawCtxs = data.Contexts;
-    const rawCtx = rawCtxs[data.SuggestedDisplayCtxIdx ?? 0];
+  if (data.contexts) {
+    const rawCtxs = data.contexts;
+    const rawCtx = rawCtxs[data.suggested_display_ctx_idx ?? 0];
 
     const ctx = contexts.find(
       (ctx) =>
@@ -358,7 +358,7 @@ export function walkPlanNode(
     ..._subPlans,
   ] as Plan[];
 
-  if (data.FullTotalTime != null) {
+  if (data.full_total_time != null) {
     subPlans.sort((a, b) => b.totalTime! - a.totalTime!);
   }
 
@@ -368,9 +368,9 @@ export function walkPlanNode(
     childDepth: subPlans.length
       ? Math.max(...subPlans.map((subplan) => subplan.childDepth)) + 1
       : 0,
-    type: data["Node Type"],
-    totalTime: data.FullTotalTime,
-    totalCost: data["Total Cost"],
+    type: data.node_type,
+    totalTime: data.full_total_time,
+    totalCost: data.total_cost,
     selfTime,
     selfCost,
     selfTimePercent,
