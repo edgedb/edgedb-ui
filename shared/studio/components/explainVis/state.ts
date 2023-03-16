@@ -32,7 +32,7 @@ export function createExplainState(rawExplainOutput: string) {
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
-    graphType: planTree.total_time != null ? "time" : "cost",
+    graphType: planTree.totalTime != null ? "time" : "cost",
   });
 }
 
