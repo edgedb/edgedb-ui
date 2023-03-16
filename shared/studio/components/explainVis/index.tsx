@@ -71,8 +71,8 @@ const ExplainHeader = observer(function ExplainHeader({
   const state = useExplainState()[0];
   const plan = state.focusedPlan ?? state.planTree.data;
   const queryTimeCost = state.isTimeGraph
-    ? `${plan?.raw["Actual Total Time"]}ms`
-    : plan?.raw["Total Cost"];
+    ? `${plan.totalTime}ms`
+    : plan.totalCost;
   return (
     <div className={styles.explainHeader}>
       <div className={styles.switchers}>
