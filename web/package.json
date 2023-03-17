@@ -55,6 +55,7 @@
     ]
   },
   "devDependencies": {
+    "@axe-core/react": "^4.6.0",
     "@craco/craco": "^6.4.3",
     "@types/selenium-webdriver": "^4.1.10",
     "jest": "^29.4.0",

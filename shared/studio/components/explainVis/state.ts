@@ -8,7 +8,6 @@ import {
   modelAction,
   prop,
 } from "mobx-keystone";
-import {instanceCtx} from "../../state/instance";
 import {
   EditorKind,
   queryEditorCtx,
@@ -32,8 +31,13 @@ export function createExplainState(rawExplainOutput: string) {
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
-    graphType: planTree.totalTime != null ? "time" : "cost",
+    graphType: planTree.totalTime != null ? graphType.time : graphType.cost,
   });
+}
+
+export enum graphType {
+  time,
+  cost,
 }
 
 @model("ExplainState")
@@ -44,9 +48,11 @@ export class ExplainState extends Model({
   buffers: prop<Frozen<string[]>>(),
 
   ctxId: prop<number | null>(null).withSetter(),
+  parentCtxId: prop<number | null>(null).withSetter(),
+  hoveredCtxId: prop<number | null>(null).withSetter(),
 
   showFlamegraph: prop(false),
-  graphType: prop<"cost" | "time">().withSetter(),
+  graphType: prop<graphType>().withSetter(),
   flamegraphZoomOffset: prop<[number, number]>(() => [1, 0]),
 }) {
   @modelAction
@@ -59,7 +65,12 @@ export class ExplainState extends Model({
 
   @computed
   get maxFlamegraphZoom() {
-    return this.planTree.data[this.isTimeGraph ? "totalTime" : "totalCost"]!;
+    return Math.max(
+      1,
+      this.isTimeGraph
+        ? this.planTree.data.totalTime! * 10
+        : this.planTree.data.totalCost
+    );
   }
 
   @modelAction
@@ -102,11 +113,19 @@ export class ExplainState extends Model({
   }
 
   @observable.ref
-  selectedPlan: Plan = this.planTree.data;
+  selectedPlan: Plan | null = null;
 
   @action
-  setSelectedPlan(plan: Plan) {
+  setSelectedPlan(plan: Plan | null) {
     this.selectedPlan = plan;
+  }
+
+  @observable.ref
+  hoveredPlan: Plan | null = null;
+
+  @action
+  setHoveredPlan(plan: Plan | null) {
+    this.hoveredPlan = plan;
   }
 
   @observable.ref
@@ -192,7 +211,7 @@ export class ExplainState extends Model({
 
   @computed
   get isTimeGraph() {
-    return this.graphType === "time";
+    return this.graphType === graphType.time;
   }
 
   copyRawDataToClipboard() {

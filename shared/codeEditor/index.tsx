@@ -96,16 +96,12 @@ function getErrorExtension(range: [number, number], doc: Text) {
 const explainContextsComp = new Compartment();
 
 interface ExplainContextsData {
-  selectedCtxId: number | null;
   contexts: {
     id: number;
     bufIdx: number;
     start: number;
     end: number;
     text: string;
-    selfTimePercent?: number;
-    selfCostPercent: number;
-    color: string;
     linkedBufIdx: number | null;
   }[][];
   buffers: string[];
@@ -114,18 +110,13 @@ interface ExplainContextsData {
 class ExplainContextSnippetWidget extends WidgetType {
   constructor(
     readonly content: string,
-    readonly ctxs: ExplainContextsData["contexts"][number],
-    readonly selectedCtxId: number | null
+    readonly ctxs: ExplainContextsData["contexts"][number]
   ) {
     super();
   }
 
   eq(other: ExplainContextSnippetWidget) {
-    return (
-      other.content === this.content &&
-      other.selectedCtxId === this.selectedCtxId &&
-      other.ctxs === this.ctxs
-    );
+    return other.content === this.content && other.ctxs === this.ctxs;
   }
 
   toDOM() {
@@ -139,11 +130,7 @@ class ExplainContextSnippetWidget extends WidgetType {
       );
       const ctxEl = document.createElement("span");
       ctxEl.classList.add(styles.explainContextMark);
-      if (this.selectedCtxId === ctx.id) {
-        ctxEl.classList.add(styles.selected);
-      }
       ctxEl.dataset.ctxId = ctx.id.toString();
-      ctxEl.style.setProperty("--ctxColor", ctx.color);
       ctxEl.textContent = this.content.slice(ctx.start, ctx.end);
       el.appendChild(ctxEl);
       i = ctx.end;
@@ -154,18 +141,16 @@ class ExplainContextSnippetWidget extends WidgetType {
 }
 
 function getExplainContextsExtension({
-  selectedCtxId,
   contexts,
   buffers,
 }: ExplainContextsData) {
   const decos: Range<Decoration>[] = [];
 
-  for (const ctx of contexts[0]) {
+  for (const ctx of contexts[0] ?? []) {
     decos.push(
       Decoration.mark({
         class: styles.explainContextMark,
         attributes: {
-          // style: `--ctxColor: ${ctx.color}`,
           "data-ctx-id": ctx.id.toString(),
         },
       }).range(ctx.start, ctx.end)
@@ -175,8 +160,7 @@ function getExplainContextsExtension({
         Decoration.widget({
           widget: new ExplainContextSnippetWidget(
             buffers[ctx.linkedBufIdx - 1],
-            contexts[ctx.linkedBufIdx],
-            selectedCtxId
+            contexts[ctx.linkedBufIdx]
           ),
           side: 1,
         }).range(ctx.end)

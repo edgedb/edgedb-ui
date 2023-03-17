@@ -6,8 +6,9 @@ import {createPortal} from "react-dom";
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./explainVis.module.scss";
-import {Context, ExplainState} from "./state";
-import {palette} from "./treemapLayout";
+import {Context, ExplainState, Plan} from "./state";
+import {darkPalette, lightPalette} from "./treemapLayout";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 interface CtxRect {
   id: number;
@@ -29,6 +30,9 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
 
   const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
 
+  const [_, theme] = useTheme();
+  const palette = theme === Theme.light ? lightPalette : darkPalette;
+
   useEffect(() => {
     const scrollerEl = editorRef.view().scrollDOM;
 
@@ -43,7 +47,7 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
       const offsetTop = scrollRect.top - scrollerEl.scrollTop;
       const offsetLeft = scrollRect.left - scrollerEl.scrollLeft;
 
-      const ctxs = state.contextsByBufIdx[0];
+      const ctxs = state.contextsByBufIdx[0] ?? [];
       rects = [];
       let parentCtxs: Context[] = [];
       for (const ctx of ctxs) {
@@ -106,35 +110,36 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     };
     scrollerEl.addEventListener("scroll", scrollListener);
 
-    const hoverListener = (e: MouseEvent) => {
-      const scrollRect = scrollerEl.getBoundingClientRect();
-      const x = e.clientX - scrollRect.left,
-        y = e.clientY - scrollRect.top + scrollerEl.scrollTop;
-
-      let depth = 0;
-      let ctxId: number | null = null;
-      for (const rect of rects) {
-        if (
-          rect.depth >= depth &&
-          x >= rect.left &&
-          x <= rect.left + rect.width &&
-          y >= rect.top &&
-          y <= rect.top + rect.height
-        ) {
-          ctxId = rect.id;
-          depth = rect.depth;
-        }
-      }
-      state.setCtxId(ctxId);
-    };
-    scrollerEl.addEventListener("mousemove", hoverListener);
-
     return () => {
       scrollerEl.removeChild(containerEl);
       scrollerEl.removeEventListener("scroll", scrollListener);
-      scrollerEl.removeEventListener("mousemove", hoverListener);
     };
   }, [state]);
+
+  const getBgColor = (ctxRect: CtxRect) => {
+    if (state.hoveredPlan) {
+      const planDepth = getPlanDepth(state.hoveredPlan);
+      const ctx = state.hoveredCtxId === ctxRect.id;
+      if (ctx && planDepth) return palette[planDepth % palette.length];
+    }
+
+    if (state.selectedPlan) {
+      const planDepth = getPlanDepth(state.selectedPlan);
+      const ctx = state.ctxId === ctxRect.id;
+
+      if (ctx && planDepth) return palette[planDepth % palette.length];
+    }
+
+    if (state.selectedPlan?.parent) {
+      const parentPlanDepth = getPlanDepth(state.selectedPlan.parent);
+      const ctxParent = state.parentCtxId === ctxRect.id;
+
+      if (ctxParent && parentPlanDepth)
+        return palette[parentPlanDepth % palette.length];
+    }
+
+    return undefined;
+  };
 
   return createPortal(
     <>
@@ -142,16 +147,15 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
         <div
           className={cn(styles.explainContextRect, {
             [styles.highlighted]: state.ctxId === ctxRect.id,
+            [styles.highlightedOnHover]:
+              state.ctxId !== ctxRect.id && state.hoveredCtxId === ctxRect.id,
           })}
           style={{
             top: ctxRect.top,
             left: ctxRect.left,
             width: ctxRect.width,
             height: ctxRect.height,
-            backgroundColor:
-              state.ctxId === ctxRect.id
-                ? palette[ctxRect.depth % palette.length]
-                : undefined,
+            backgroundColor: getBgColor(ctxRect),
           }}
         />
       ))}
@@ -159,3 +163,14 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     containerEl
   );
 });
+
+function getPlanDepth(plan: Plan) {
+  let depth = 0;
+  let parent = plan.parent;
+  while (parent) {
+    depth++;
+    parent = parent.parent;
+  }
+
+  return depth;
+}
