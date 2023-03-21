@@ -1,5 +1,4 @@
 import {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
 import {useForm} from "react-hook-form";
 
 import {useModal} from "@edgedb/common/hooks/useModal";
@@ -12,14 +11,13 @@ import styles from "./modals.module.scss";
 
 interface CreateDatabaseModalProps {
   instanceState: InstanceState;
-  dbPagePathPrefix: string;
+  navigateToDB: (dbName: string) => void;
 }
 
 export default function CreateDatabaseModal({
   instanceState,
-  dbPagePathPrefix,
+  navigateToDB,
 }: CreateDatabaseModalProps) {
-  const navigate = useNavigate();
   const {openModal} = useModal();
 
   const [error, setError] = useState("");
@@ -42,7 +40,7 @@ export default function CreateDatabaseModal({
       return;
     }
     await instanceState.fetchInstanceInfo();
-    navigate(`${dbPagePathPrefix}/${dbName}`);
+    navigateToDB(dbName);
     openModal(null);
   });
 

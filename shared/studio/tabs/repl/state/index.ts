@@ -26,7 +26,6 @@ import {InspectorState, Item} from "@edgedb/inspector/state";
 import {ObservableLRU} from "../../../state/utils/lru";
 import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
-import {NavigateFunction} from "react-router";
 import {
   fetchReplHistory,
   fetchResultData,
@@ -44,6 +43,7 @@ import {
   ExplainState,
   ExplainStateType,
 } from "../../../components/explainVis/state";
+import {NavigateFunction} from "../../../hooks/dbRoute";
 
 export const defaultItemHeight = 85;
 

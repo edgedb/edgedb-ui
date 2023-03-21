@@ -173,7 +173,7 @@ export function Select({
         <>
           <div
             className={styles.tabDropdownButton}
-            onClick={() => setDropdownOpen(!dropdownOpen)}
+            onClick={(e) => {e.stopPropagation(); setDropdownOpen(!dropdownOpen)}}
           >
             <DropdownIcon />
           </div>

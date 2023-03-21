@@ -88,8 +88,8 @@ export default function CodeBlock({
         html.push(
           "renderer" in currentRange! ? (
             <Fragment key={html.length}>
-              {currentRange.renderer(
-                currentRange.range,
+              {currentRange!.renderer(
+                currentRange!.range,
                 <>{customRangeBuffer}</>
               )}
             </Fragment>
@@ -146,7 +146,10 @@ export default function CodeBlock({
     html.push(
       "renderer" in currentRange ? (
         <Fragment key={html.length}>
-          {currentRange.renderer(currentRange.range, <>{customRangeBuffer}</>)}
+          {currentRange!.renderer(
+            currentRange!.range,
+            <>{customRangeBuffer}</>
+          )}
         </Fragment>
       ) : (
         <span

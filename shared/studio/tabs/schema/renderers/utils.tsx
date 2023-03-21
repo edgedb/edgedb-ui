@@ -7,12 +7,6 @@ import {
   useState,
 } from "react";
 import {observer} from "mobx-react-lite";
-import {
-  useLocation,
-  useNavigate,
-  createSearchParams,
-  NavigateFunction,
-} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
@@ -36,6 +30,7 @@ import {
 import {useSchemaTextState} from "../textView";
 import {useDatabaseState, useTabState} from "../../../state";
 import {Schema, SchemaViewType} from "../state";
+import {DBRouter, useDBRouter} from "../../../hooks/dbRoute";
 
 export function Keyword({children}: PropsWithChildren<{}>) {
   return <span className={styles.kw}>{children}</span>;
@@ -76,14 +71,17 @@ export const highlightString = (str: string, indices: number[]) =>
   _highlightString(str, indices, styles.searchMatch);
 
 function goToItem(
-  navigate: NavigateFunction,
+  router: DBRouter,
   state: SchemaTextView,
   item: Exclude<SchemaItem, SchemaExtension>
 ) {
   const moduleGroup = getModuleGroup(item);
-  navigate({
-    pathname: moduleGroup === ModuleGroup.user ? "" : ModuleGroup[moduleGroup],
-    search: createSearchParams({focus: item.name}).toString(),
+  router.navigate({
+    path: [
+      ...router.currentPath.slice(0, 2),
+      moduleGroup === ModuleGroup.user ? "" : ModuleGroup[moduleGroup],
+    ].join("/"),
+    searchParams: new URLSearchParams({focus: item.name}),
   });
   state.goToItem(item);
 }
@@ -97,7 +95,7 @@ export function TypeLink({
 }) {
   const schemaData = useDatabaseState().schemaData!;
   const state = useSchemaTextState();
-  const navigate = useNavigate();
+  const router = useDBRouter();
 
   function wrapLink(type: SchemaItem | SchemaType): JSX.Element {
     if (type.schemaType === "Pseudo" || type.schemaType === "Extension") {
@@ -157,7 +155,7 @@ export function TypeLink({
           [styles.builtin]: type.schemaType === "Scalar" && type.builtin,
         })}
         onClick={() => {
-          goToItem(navigate, state, type);
+          goToItem(router, state, type);
         }}
       >
         {type.module === parentModule ||
@@ -243,12 +241,12 @@ export const ShowInGraphButton = observer(function ShowInGraphButton({
 }) {
   const tabState = useTabState(Schema);
   const state = useSchemaTextState();
-  const navigate = useNavigate();
+  const router = useDBRouter();
 
   return !type.builtin && tabState.viewType === SchemaViewType.TextGraph ? (
     <div
       className={cn(styles.showInGraphButton)}
-      onClick={() => goToItem(navigate, state, type)}
+      onClick={() => goToItem(router, state, type)}
     >
       Show in Graph <ArrowRight />
     </div>

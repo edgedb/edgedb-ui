@@ -1,13 +1,5 @@
 import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
-import {
-  Link,
-  Navigate,
-  useMatch,
-  useNavigate,
-  useResolvedPath,
-  useRoutes,
-} from "react-router-dom";
 import {AnyModel, getTypeInfo, ModelClass, ModelTypeInfo} from "mobx-keystone";
 import {ErrorBoundary, FallbackProps} from "react-error-boundary";
 
@@ -16,6 +8,7 @@ import Button from "@edgedb/common/ui/button";
 
 import {useInstanceState} from "../../state/instance";
 import {DatabaseStateContext, useDatabaseState} from "../../state/database";
+import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./databasePage.module.scss";
 
@@ -42,8 +35,8 @@ export default observer(function DatabasePageLoadingWrapper({
   databaseName,
   tabs,
 }: DatabasePageProps) {
-  const navigate = useNavigate();
   const instanceState = useInstanceState();
+  const {gotoInstancePage} = useDBRouter();
 
   if (!instanceState.databases) {
     return (
@@ -61,7 +54,7 @@ export default observer(function DatabasePageLoadingWrapper({
           <Button
             className={styles.greenButton}
             label="Go back to database list"
-            onClick={() => navigate("..")}
+            onClick={() => gotoInstancePage()}
             style="square"
             size="large"
           />
@@ -110,8 +103,16 @@ const DatabasePageContent = observer(function DatabasePageContent({
 
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
 
-  const currentTabId =
-    useMatch(`${useResolvedPath("").pathname}/:tabId/*`)?.params.tabId ?? "";
+  const {currentPath, navigate} = useDBRouter();
+
+  const currentTabId = currentPath[1] ?? "";
+  const activeTab = tabs.find((tab) => tab.path === currentTabId);
+
+  if (!activeTab) {
+    navigate(currentPath[0], true);
+  } else if (!activeTab.allowNested && currentPath.length > 2) {
+    navigate(currentPath.slice(0, 2).join("/"), true);
+  }
 
   return (
     <DatabaseStateContext.Provider value={dbState}>
@@ -124,17 +125,14 @@ const DatabasePageContent = observer(function DatabasePageContent({
         />
         <TabBar tabs={tabs} hide={dbState.sessionState.panelOpen} />
         <div className={styles.tabContent}>
-          {useRoutes([
-            ...tabs.map((t) => ({
-              path: t.path + (t.allowNested ? "/*" : ""),
-              element: (
-                <ErrorBoundary key={t.path} FallbackComponent={ErrorFallback}>
-                  {t.element}
-                </ErrorBoundary>
-              ),
-            })),
-            {path: "*", element: <Navigate to="" replace />},
-          ])}
+          {activeTab ? (
+            <ErrorBoundary
+              key={activeTab.path}
+              FallbackComponent={ErrorFallback}
+            >
+              {activeTab.element}
+            </ErrorBoundary>
+          ) : null}
         </div>
       </div>
     </DatabaseStateContext.Provider>
@@ -147,11 +145,11 @@ interface TabBarProps {
 }
 
 const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
-  const navigate = useNavigate();
   const dbState = useDatabaseState();
 
-  const currentTabId =
-    useMatch(`${useResolvedPath("").pathname}/:tabId/*`)?.params.tabId ?? "";
+  const {currentPath, navigate} = useDBRouter();
+
+  const currentTabId = currentPath[1] ?? "";
 
   const [showTabLabels, setShowTabLabels] = useState(false);
   const tabMouseEnterTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -166,10 +164,11 @@ const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
         );
         if (currentIndex !== -1) {
           navigate(
-            tabs[
-              (tabs.length + currentIndex + (e.shiftKey ? -1 : 1)) %
-                tabs.length
-            ].path
+            `${currentPath[0]}/` +
+              tabs[
+                (tabs.length + currentIndex + (e.shiftKey ? -1 : 1)) %
+                  tabs.length
+              ].path
           );
         }
       }
@@ -195,7 +194,7 @@ const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
           className={cn(styles.tab, {
             [styles.tabSelected]: path === currentTabId,
           })}
-          onClick={() => navigate(path)}
+          onClick={() => navigate(`${currentPath[0]}/${path}`)}
           onMouseEnter={() => {
             if (tabMouseLeaveTimeout.current) {
               clearTimeout(tabMouseLeaveTimeout.current);

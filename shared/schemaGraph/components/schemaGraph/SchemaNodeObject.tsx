@@ -1,7 +1,7 @@
 import React from "react";
 import {observer} from "mobx-react";
-import {useNavigate, createSearchParams} from "react-router-dom";
 
+import {useDBRouter} from "@edgedb/studio/hooks/dbRoute";
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";
 
@@ -19,12 +19,12 @@ export default observer(function SchemaNodeObject(props: ISchemaNodeProps) {
 
   const objectName = object.name.split("::");
 
-  const navigate = useNavigate();
+  const {navigate} = useDBRouter();
 
   const handleSelectObject = () => {
     schemaState.selectObject(props.node.id);
     navigate({
-      search: createSearchParams({focus: object.name}).toString(),
+      searchParams: new URLSearchParams({focus: object.name}),
     });
   };
 

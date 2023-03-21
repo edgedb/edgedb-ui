@@ -1,3 +1,5 @@
+"use client";
+
 import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
 import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";

@@ -134,8 +134,11 @@ export class SchemaTextView extends Model({
   scrollPos = 0;
   listRef: List | null = null;
 
-  lastLocation: {pathname: string; search: string; scrollPos: number} | null =
-    null;
+  lastLocation: {
+    path: string;
+    searchParams: URLSearchParams;
+    scrollPos: number;
+  } | null = null;
 
   renderHeights = new Map<string, number>();
 

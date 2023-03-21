@@ -1,6 +1,5 @@
 import {useEffect, useMemo} from "react";
 import {observer} from "mobx-react";
-import {useParams, useNavigate} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -17,6 +16,7 @@ import {
   DataInspector as DataInspectorState,
 } from "./state";
 import {DatabaseTabSpec} from "../../components/databasePage";
+import {useDBRouter} from "../../hooks/dbRoute";
 
 import {CodeEditor} from "@edgedb/code-editor";
 
@@ -37,22 +37,22 @@ import {
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
   const state = useTabState(DataViewState);
-  const params = useParams();
-  const navigate = useNavigate();
+  const {navigate, currentPath} = useDBRouter();
 
   const stack = state.inspectorStack;
 
-  const path = params["*"];
   useEffect(() => {
+    const basePath = currentPath.slice(0, 2).join("/");
+    const path = currentPath.slice(2).join("/");
     if (!path && state.lastSelectedPath) {
-      navigate(state.lastSelectedPath, {replace: true});
+      navigate(`${basePath}/${state.lastSelectedPath}`, true);
     } else if (dbState.schemaData) {
       const updatedPath = state.updateFromPath(path ?? "");
       if (updatedPath !== null) {
-        navigate(updatedPath, {replace: true});
+        navigate(`${basePath}/${updatedPath}`, true);
       }
     }
-  }, [path, dbState.schemaData]);
+  }, [currentPath, dbState.schemaData]);
 
   return (
     <div className={styles.dataview}>
@@ -89,8 +89,9 @@ const DataInspectorView = observer(function DataInspectorView({
 }: DataInspectorViewProps) {
   const dataviewState = useTabState(DataViewState);
   const {openModal} = useModal();
-  const navigate = useNavigate();
-  const path = useParams()["*"]!;
+  const {navigate, currentPath} = useDBRouter();
+
+  const basePath = currentPath.slice(0, 2).join("/");
 
   const stack = dataviewState.inspectorStack;
 
@@ -112,7 +113,7 @@ const DataInspectorView = observer(function DataInspectorView({
               objectTypes={dataviewState.objectTypes}
               selectedObjectType={stack[0].objectType!}
               action={(objectType) => {
-                navigate(objectType.name);
+                navigate(`${basePath}/${objectType.name}`);
                 dataviewState.selectObject(objectType.id);
               }}
             />
@@ -122,7 +123,7 @@ const DataInspectorView = observer(function DataInspectorView({
             <div
               className={styles.backButton}
               onClick={() => {
-                navigate(path.split("/").slice(0, -2).join("/"));
+                navigate(currentPath.slice(0, -2).join("/"));
                 dataviewState.closeLastNestedView();
               }}
             >

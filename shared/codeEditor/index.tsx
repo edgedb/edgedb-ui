@@ -173,13 +173,15 @@ function getExplainContextsExtension({
 
 const specialCharRender = (
   code: number,
-  desc: string,
+  desc: string | null,
   placeholder: string
 ) => {
   let span = document.createElement("span");
   span.textContent = placeholder === "\u2022" ? "\u00B7" : placeholder;
-  span.title = desc;
-  span.setAttribute("aria-label", desc);
+  if (desc) {
+    span.title = desc;
+    span.setAttribute("aria-label", desc);
+  }
   span.className = "cm-specialChar";
   return span;
 };
@@ -330,9 +332,9 @@ export function createCodeEditor({
       onChange,
       keybindings = [],
       noPadding,
-      readonly,
+      readonly = false,
       schemaObjects,
-      useDarkTheme,
+      useDarkTheme = false,
       renderWhitespace,
       errorUnderline,
       explainContexts,
@@ -345,8 +347,8 @@ export function createCodeEditor({
     useImperativeHandle<unknown, CodeEditorRef>(
       componentRef,
       () => ({
-        ref: ref.current,
-        view: () => view.current,
+        ref: ref.current!,
+        view: () => view.current!,
         focus: () => view.current?.focus(),
         dispatchEffect: (effects: StateEffect<any> | StateEffect<any>[]) =>
           view.current?.dispatch({effects}),
@@ -508,7 +510,7 @@ export function createCodeEditor({
     return (
       <div
         className={cn(styles.codeEditor, {
-          [styles.terminalCursor]: terminalCursor,
+          [styles.terminalCursor]: !!terminalCursor,
         })}
         ref={ref}
       />

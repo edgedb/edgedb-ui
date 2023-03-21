@@ -22,7 +22,7 @@ import {
 
 import {VariableSizeGrid as Grid} from "react-window";
 
-import {NavigateFunction} from "react-router";
+import {NavigateFunction} from "../../../hooks/dbRoute";
 
 import {Text} from "@codemirror/state";
 

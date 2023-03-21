@@ -9,15 +9,6 @@ import {
 } from "react";
 import {observer} from "mobx-react-lite";
 import {VariableSizeList as List, ListChildComponentProps} from "react-window";
-import {
-  useMatch,
-  useLocation,
-  useParams,
-  useNavigate,
-  useSearchParams,
-  createSearchParams,
-  Location,
-} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 import {useResize} from "@edgedb/common/hooks/useResize";
@@ -40,6 +31,7 @@ import {Schema} from "./state";
 import {renderers} from "./renderers";
 import {ModuleHeaders} from "./renderers/module";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {useDBRouter} from "../../hooks/dbRoute";
 
 const schemaModuleGroups = Object.values(ModuleGroup).filter(
   (v) => typeof v === "number"
@@ -56,12 +48,9 @@ const scrollOffsetCache = new Map<string, number>();
 
 export const SchemaTextView = observer(function SchemaTextView() {
   const state = useTabState(Schema).textViewState;
-  const location = useLocation();
-  const params = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const {navigate, currentPath, searchParams, locationKey} = useDBRouter();
 
-  const selectedModuleGroup = params["*"]?.toLowerCase() ?? "";
+  const selectedModuleGroup = currentPath[2] ?? "";
 
   useLayoutEffect(() => {
     if (
@@ -69,13 +58,13 @@ export const SchemaTextView = observer(function SchemaTextView() {
       (selectedModuleGroup === "user" ||
         !moduleGroupNames.has(selectedModuleGroup))
     ) {
-      navigate("", {replace: true});
+      navigate(currentPath.slice(0, 2).join("/"), true);
     } else {
       state.setSelectedModuleGroup(
         ModuleGroup[selectedModuleGroup || ("user" as any)] as any
       );
     }
-  }, [selectedModuleGroup, navigate]);
+  }, [selectedModuleGroup, navigate, currentPath]);
 
   useLayoutEffect(() => {
     const typeFilter = searchParams.get("type");
@@ -91,7 +80,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
   }, [searchParams]);
 
   useLayoutEffect(() => {
-    const scrollOffset = scrollOffsetCache.get(location.key);
+    const scrollOffset = scrollOffsetCache.get(locationKey);
     if (scrollOffset !== undefined) {
       state.listRef?.scrollTo(scrollOffset);
     }
@@ -100,19 +89,23 @@ export const SchemaTextView = observer(function SchemaTextView() {
     state.setHighlightedItem(focusedName ?? null);
 
     return () => {
-      scrollOffsetCache.set(location.key, state.scrollPos);
+      scrollOffsetCache.set(locationKey, state.scrollPos);
       state.lastLocation = {
-        pathname: location.pathname,
-        search: location.search,
+        path: currentPath.join("/"),
+        searchParams: searchParams,
         scrollPos: state.scrollPos,
       };
     };
-  }, [location]);
+  }, [locationKey]);
 
   useEffect(() => {
-    if (state.lastLocation && !scrollOffsetCache.has(location.key)) {
-      navigate(state.lastLocation, {replace: true});
-      state.listRef?.scrollTo(state.lastLocation.scrollPos);
+    const lastLocation = state.lastLocation;
+    if (lastLocation && !scrollOffsetCache.has(locationKey)) {
+      navigate(
+        {path: lastLocation.path, searchParams: lastLocation.searchParams},
+        true
+      );
+      state.listRef?.scrollTo(lastLocation.scrollPos);
     }
   }, []);
 
@@ -147,7 +140,9 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 ),
                 action: () => {
                   navigate(
-                    group === ModuleGroup.user ? "" : ModuleGroup[group]
+                    `${currentPath.slice(0, 2).join("/")}/${
+                      group === ModuleGroup.user ? "" : ModuleGroup[group]
+                    }`
                   );
                 },
               }))}
@@ -165,18 +160,18 @@ export const SchemaTextView = observer(function SchemaTextView() {
                     id: -1,
                     label: "Everything",
                     action: () => {
-                      const params = createSearchParams(searchParams);
+                      const params = new URLSearchParams(searchParams);
                       params.delete("type");
-                      setSearchParams(params);
+                      navigate({searchParams: params});
                     },
                   },
                   ...typeFilters.map((typeFilter) => ({
                     id: typeFilter,
                     label: TypeFilter[typeFilter],
                     action: () => {
-                      const params = createSearchParams(searchParams);
+                      const params = new URLSearchParams(searchParams);
                       params.set("type", TypeFilter[typeFilter]);
-                      setSearchParams(params);
+                      navigate({searchParams: params});
                     },
                   })),
                 ]}
@@ -192,15 +187,16 @@ export const SchemaTextView = observer(function SchemaTextView() {
               onChange={(e) => {
                 const searchVal = e.target.value;
                 state.setSearchText(searchVal);
-                const params = createSearchParams(searchParams);
+                const params = new URLSearchParams(searchParams);
                 if (searchVal) {
                   params.set("search", searchVal);
                 } else {
                   params.delete("search");
                 }
-                setSearchParams(params, {
-                  replace: !!searchParams.get("search") && !!searchVal,
-                });
+                navigate(
+                  {searchParams: params},
+                  !!searchParams.get("search") && !!searchVal
+                );
               }}
             />
             {searchParams.has("search") ? (
@@ -208,9 +204,9 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 className={styles.clearSearch}
                 onClick={() => {
                   state.setSearchText("");
-                  const params = createSearchParams(searchParams);
+                  const params = new URLSearchParams(searchParams);
                   params.delete("search");
-                  setSearchParams(params);
+                  navigate({searchParams: params});
                 }}
               >
                 <CloseIcon />
