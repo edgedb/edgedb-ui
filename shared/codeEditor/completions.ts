@@ -35,7 +35,7 @@ function getKeywordAndName(
   node: SyntaxNode,
   nested: boolean
 ): {keyword: "select" | "insert" | "update"; name: string} | null {
-  if (node.name === "Name" && node.prevSibling.name === "Keyword") {
+  if (node.name === "Name" && node.prevSibling?.name === "Keyword") {
     const keyword = sliceDoc(doc, node.prevSibling).toLowerCase();
     if (keyword === "select" || (!nested && keyword === "insert")) {
       return {keyword, name: sliceDoc(doc, node)};
@@ -46,7 +46,7 @@ function getKeywordAndName(
     let prevNode = node.prevSibling;
     while (prevNode) {
       if (isKeyword(doc, prevNode, ["update"])) {
-        if (prevNode.nextSibling.name === "Name") {
+        if (prevNode.nextSibling?.name === "Name") {
           return {
             keyword: "update",
             name: sliceDoc(doc, prevNode.nextSibling),
@@ -72,7 +72,10 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
     const doc = context.state.doc;
     const pos = context.pos;
 
-    let node = syntaxTree(context.state).resolveInner(pos, -1);
+    let node: SyntaxNode | null = syntaxTree(context.state).resolveInner(
+      pos,
+      -1
+    );
 
     if (node?.name === "Script") {
       node = node.childBefore(pos);
@@ -84,7 +87,7 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
 
     if (
       (isKeyword(doc, node, ["select", "insert", "update", "delete"]) &&
-        node.to < pos) ||
+        node!.to < pos) ||
       (node?.name === "Name" &&
         isKeyword(doc, node.prevSibling, [
           "select",
@@ -94,7 +97,7 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
         ]))
     ) {
       return {
-        from: node?.name === "Keyword" ? context.pos : node.from,
+        from: node?.name === "Keyword" ? context.pos : node!.from,
         options: userSchemaObjects.map((obj) => ({
           label: stripModuleName(obj.name),
         })),
@@ -130,8 +133,8 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
 
               const link = typeObj.links[pathPart];
 
-              const targetName = !link?.target.unionOf
-                ? link.target.name
+              const targetName = !link?.target?.unionOf
+                ? link.target!.name
                 : null;
               typeObj = targetName ? schemaObjects.get(targetName) : undefined;
             }
@@ -192,11 +195,11 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
             const parentNode = prevNode?.parent;
             if (
               parentNode?.name === "Braces" &&
-              sliceDoc(doc, prevNode) === ":" &&
-              parentNode.childBefore(prevNode.from)?.name === "Name"
+              sliceDoc(doc, prevNode!) === ":" &&
+              parentNode.childBefore(prevNode!.from)?.name === "Name"
             ) {
               path.unshift(
-                sliceDoc(doc, parentNode.childBefore(prevNode.from))
+                sliceDoc(doc, parentNode.childBefore(prevNode!.from)!)
               );
               prevNode = parentNode.prevSibling;
             } else {

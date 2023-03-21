@@ -77,7 +77,7 @@ export async function handleSlashCommand(
 
       if (instanceState.databases!.includes(dbName)) {
         item.setCommandResult({kind: CommandOutputKind.none});
-        repl.navigation?.(`/${dbName}/repl`);
+        repl.navigation?.(`${dbName}/repl`);
       } else {
         item.setCommandResult({
           kind: CommandOutputKind.error,

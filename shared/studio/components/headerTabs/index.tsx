@@ -1,3 +1,6 @@
+"use client";
+
+import {useState} from "react";
 import {createPortal} from "react-dom";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -21,6 +24,8 @@ export function HeaderTab({
 }: HeaderTabProps) {
   const targetEl = document.getElementById(`headerTabsPortalTarget${depth}`);
 
+  const [_, rerender] = useState(false);
+
   if (targetEl) {
     return createPortal(
       <>
@@ -38,6 +43,10 @@ export function HeaderTab({
       </>,
       targetEl
     );
+  } else {
+    // temporary hack to fix nextjs rendering header tab before
+    // header target is ready
+    setTimeout(() => rerender(!_), 0);
   }
   return null;
 }

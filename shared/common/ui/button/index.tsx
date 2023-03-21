@@ -1,3 +1,5 @@
+"use client";
+
 import {MouseEventHandler} from "react";
 
 import cn from "@edgedb/common/utils/classNames";

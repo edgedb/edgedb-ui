@@ -77,7 +77,7 @@ export class GraphQL extends Model({
 
     const dbState = dbCtx.get(this)!;
 
-    const graphqlEndpoint = `${dbState.serverUrl}/db/${dbState.name}/graphql`;
+    const graphqlEndpoint = ""; //`${dbState.serverUrl}/db/${dbState.name}/graphql`;
 
     const response = await fetch(graphqlEndpoint, {
       method: "POST",
@@ -102,7 +102,7 @@ export class GraphQL extends Model({
 
     const dbState = dbCtx.get(this)!;
 
-    const graphqlEndpoint = `${dbState.serverUrl}/db/${dbState.name}/graphql`;
+    const graphqlEndpoint = ""; //`${dbState.serverUrl}/db/${dbState.name}/graphql`;
 
     this.queryRunning = true;
 

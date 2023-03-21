@@ -54,8 +54,8 @@ export class Schema extends Model({
               annotations: o.annotations,
               properties: Object.values(o.properties).map((p) => ({
                 name: p.name,
-                targetName: p.target.name,
-                targetId: p.target.id,
+                targetName: p.target!.name,
+                targetId: p.target!.id,
                 required: p.required,
                 readonly: p.readonly,
                 cardinality: p.cardinality,
@@ -66,9 +66,9 @@ export class Schema extends Model({
               })),
               links: Object.values(o.links).map((l) => ({
                 name: l.name,
-                targetNames: l.target.unionOf
-                  ? l.target.unionOf.map((t) => t.name)
-                  : [l.target.name],
+                targetNames: l.target!.unionOf
+                  ? l.target!.unionOf.map((t) => t.name)
+                  : [l.target!.name],
                 required: l.required,
                 readonly: l.readonly,
                 cardinality: l.cardinality,
@@ -78,8 +78,8 @@ export class Schema extends Model({
                 annotations: l.annotations,
                 properties: Object.values(l.properties).map((p) => ({
                   name: p.name,
-                  targetName: p.target.name,
-                  targetId: p.target.id,
+                  targetName: p.target!.name,
+                  targetId: p.target!.id,
                   required: p.required,
                   readonly: p.readonly,
                   cardinality: p.cardinality,

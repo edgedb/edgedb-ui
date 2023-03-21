@@ -9,10 +9,7 @@ import styles from "./app.module.scss";
 import appState from "./state/store";
 import {appContext} from "./state/providers";
 
-import {
-  GlobalDragCursorProvider,
-  useGlobalDragCursor,
-} from "@edgedb/common/hooks/globalDragCursor";
+import {GlobalDragCursorProvider} from "@edgedb/common/hooks/globalDragCursor";
 import {ThemeProvider} from "@edgedb/common/hooks/useTheme";
 import {ModalProvider} from "@edgedb/common/hooks/useModal";
 
@@ -33,22 +30,11 @@ function App() {
 }
 
 const AppMain = observer(function _AppMain() {
-  const [globalDragCursor] = useGlobalDragCursor();
-
   return (
     <BrowserRouter basename="ui">
       <div className={styles.theme}>
         <ModalProvider>
-          <div
-            className={cn(styles.app, {
-              [styles.globalDragCursor]: !!globalDragCursor,
-            })}
-            style={
-              {"--drag-cursor": globalDragCursor || undefined} as {
-                [key: string]: string;
-              }
-            }
-          >
+          <div className={styles.app}>
             <Routes>
               <Route path="_login" element={<LoginPage />} />
               <Route

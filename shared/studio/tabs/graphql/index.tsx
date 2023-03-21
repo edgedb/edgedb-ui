@@ -48,6 +48,7 @@ export const graphqlTabSpec: DatabaseTabSpec = {
   icon: (active) => <TabGraphQlIcon active={active} />,
   state: GraphQL,
   element: <GraphQLView />,
+  usesSessionState: false,
 };
 
 const _GraphQLView = observer(function _GraphQLView() {
@@ -81,7 +82,7 @@ const _GraphQLView = observer(function _GraphQLView() {
               },
             ]}
             useDarkTheme={theme === Theme.dark}
-            language={GraphQLLanguage(gqlState.schema)}
+            // language={GraphQLLanguage(gqlState.schema)}
           />
           <div className={styles.editorOverlays}>
             <div className={styles.controls}>
@@ -146,7 +147,7 @@ const VariablesEditor = observer(function VariablesEditor() {
           code={gqlState.queryVariables}
           onChange={(value) => gqlState.setQueryVariables(value)}
           useDarkTheme={theme === Theme.dark}
-          language={JSONLang}
+          // language={JSONLang}
         />
       </div>
     </div>

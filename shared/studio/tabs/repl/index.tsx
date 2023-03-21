@@ -1,13 +1,3 @@
-import {observer} from "mobx-react-lite";
-import {DatabaseTabSpec} from "../../components/databasePage";
-import {ArrowDown, TabReplIcon} from "../../icons";
-import {
-  defaultItemHeight,
-  Repl,
-  ReplHistoryItem as ReplHistoryItemState,
-} from "./state";
-
-import styles from "./repl.module.scss";
 import {
   RefObject,
   useCallback,
@@ -17,41 +7,57 @@ import {
   useRef,
   useState,
 } from "react";
+
+import {reaction} from "mobx";
+import {observer} from "mobx-react-lite";
+
+import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import {useResize} from "@edgedb/common/hooks/useResize";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+
+import CodeBlock from "@edgedb/common/ui/codeBlock";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import Spinner from "@edgedb/common/ui/spinner";
+import Button from "@edgedb/common/ui/button";
+import cn from "@edgedb/common/utils/classNames";
+
 import {
   CodeEditorProps,
   CodeEditorRef,
   createCodeEditor,
 } from "@edgedb/code-editor";
-import {useDatabaseState, useTabState} from "../../state";
-import cn from "@edgedb/common/utils/classNames";
-import CodeBlock from "@edgedb/common/ui/codeBlock";
 import Inspector from "@edgedb/inspector";
-import {renderCommandResult} from "./commands";
-import {useNavigate} from "react-router-dom";
-import Spinner from "@edgedb/common/ui/spinner";
-import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
-import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
-import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
-import {reaction} from "mobx";
-import {
-  ExtendedViewerContext,
-  ExtendedViewerRenderer,
-} from "../../components/extendedViewers";
+
+import {DatabaseTabSpec} from "../../components/databasePage";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
-import Button from "@edgedb/common/ui/button";
-import {QueryEditor} from "../queryEditor/state";
+import {ExplainCodeBlock} from "../../components/explainVis/codeblock";
 import {
   ExplainHighlightsRef,
   ExplainHighlightsRenderer,
 } from "../../components/explainVis/codeEditorContexts";
-import {ExplainCodeBlock} from "../../components/explainVis/codeblock";
 import {ExplainStateType} from "../../components/explainVis/state";
+import {
+  ExtendedViewerContext,
+  ExtendedViewerRenderer,
+} from "../../components/extendedViewers";
+import {ArrowDown, TabReplIcon} from "../../icons";
+
+import {useDatabaseState, useTabState} from "../../state";
+import {
+  defaultItemHeight,
+  Repl,
+  ReplHistoryItem as ReplHistoryItemState,
+} from "./state";
+import {QueryEditor} from "../queryEditor/state";
+
+import {useDBRouter} from "../../hooks/dbRoute";
+
+import styles from "./repl.module.scss";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
 
-  replState.navigation = useNavigate();
+  replState.navigation = useDBRouter().navigate;
 
   const initialScrollPos = useInitialValue(() => replState.initialScrollPos);
 

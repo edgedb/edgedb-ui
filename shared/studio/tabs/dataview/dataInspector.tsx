@@ -10,7 +10,6 @@ import {
 } from "react";
 import {observer} from "mobx-react";
 import {VariableSizeGrid as Grid} from "react-window";
-import {useNavigate, useParams} from "react-router-dom";
 
 import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
@@ -39,6 +38,8 @@ import {
   RowKind,
 } from "./state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
+
+import {useDBRouter} from "../../hooks/dbRoute";
 
 import {SortIcon, SortedDescIcon} from "./icons";
 import {
@@ -316,8 +317,8 @@ const GridCell = observer(function GridCell({
   rowIndex: number;
 }) {
   const {state, edits} = useDataInspectorState();
-  const navigate = useNavigate();
-  const basePath = useParams()["*"]!;
+  const {navigate, currentPath} = useDBRouter();
+  const basePath = currentPath.join("/");
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
 
@@ -910,8 +911,8 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
   styleTop: any;
 }) {
   const {state} = useDataInspectorState();
-  const basePath = useParams()["*"]!;
-  const navigate = useNavigate();
+  const {navigate, currentPath} = useDBRouter();
+  const basePath = currentPath.join("/");
   const item = rowData.state.getItems()?.[rowData.index];
 
   return (

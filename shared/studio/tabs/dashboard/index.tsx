@@ -1,12 +1,12 @@
 import {useEffect} from "react";
 import {observer} from "mobx-react-lite";
-import {useNavigate} from "react-router-dom";
 
 import styles from "./databaseDashboard.module.scss";
 
 import {useInstanceState} from "../../state/instance";
 import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
+import {useDBRouter} from "../../hooks/dbRoute";
 
 import {
   DocsQuickstartIcon,
@@ -29,7 +29,10 @@ import {
 
 export const DatabaseDashboard = observer(function DatabaseDashboard() {
   const dbState = useDatabaseState();
-  const navigate = useNavigate();
+  const {navigate, currentPath} = useDBRouter();
+
+  const navigateToTab = (tabPath: string) =>
+    navigate(`${currentPath[0]}/${tabPath}`);
 
   useEffect(() => {
     if (dbState.migrationId != undefined) {
@@ -64,7 +67,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
               size="large"
               icon={<TabReplIcon />}
               leftIcon
-              onClick={() => navigate("repl")}
+              onClick={() => navigateToTab("repl")}
             ></Button>
 
             <Button
@@ -73,7 +76,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
               size="large"
               icon={<TabEditorIcon />}
               leftIcon
-              onClick={() => navigate("editor")}
+              onClick={() => navigateToTab("editor")}
             ></Button>
 
             <Button
@@ -82,7 +85,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
               size="large"
               icon={<TabSchemaIcon />}
               leftIcon
-              onClick={() => navigate("schema")}
+              onClick={() => navigateToTab("schema")}
             ></Button>
 
             <Button
@@ -91,7 +94,7 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
               size="large"
               icon={<TabDataExplorerIcon />}
               leftIcon
-              onClick={() => navigate("data")}
+              onClick={() => navigateToTab("data")}
             ></Button>
           </div>
 
@@ -160,7 +163,7 @@ export function fetchExampleSchema(): Promise<string> {
 const FirstRunDashboard = observer(function FirstRunDashboard() {
   const instanceState = useInstanceState();
   const dbState = useDatabaseState();
-  const navigate = useNavigate();
+  const {navigate} = useDBRouter();
 
   const exampleDBExists = instanceState.databases?.includes("_example");
 
@@ -199,12 +202,12 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
                 style="square"
                 onClick={
                   exampleDBExists
-                    ? () => navigate("/_example")
+                    ? () => navigate("_example")
                     : async () => {
                         await instanceState.createExampleDatabase(
                           fetchExampleSchema()
                         );
-                        navigate("/_example");
+                        navigate("_example");
                       }
                 }
               ></Button>

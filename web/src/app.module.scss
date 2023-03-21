@@ -13,17 +13,6 @@
   line-height: 16px;
   background-color: var(--app-bg);
   color: var(--app-text-colour);
-
-  &.globalDragCursor:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    cursor: var(--drag-cursor);
-    z-index: 999999;
-  }
 }
 
 .theme {
