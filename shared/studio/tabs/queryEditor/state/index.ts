@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, computed, observable, reaction} from "mobx";
 import {
   model,
   Model,
@@ -80,6 +80,12 @@ export abstract class QueryHistoryItem extends Model({
   showDateHeader = false;
 }
 
+@model("QueryEditor/HistoryDraftItem")
+export class QueryHistoryDraftItem extends ExtendedModel(
+  QueryHistoryItem,
+  {}
+) {}
+
 @model("QueryEditor/HistoryResultItem")
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   status: prop<string>(),
@@ -157,19 +163,40 @@ export class QueryEditor extends Model({
     [EditorKind.VisualBuilder]: new QueryBuilderState({}),
   };
 
+  @observable
+  queryIsEdited: {[key in EditorKind]: boolean} = {
+    [EditorKind.EdgeQL]: false,
+    [EditorKind.VisualBuilder]: false,
+  };
+
   @observable.ref
   currentResult: QueryHistoryItem | null = null;
 
-  @observable
-  showEditorResultDecorations = false;
+  @computed
+  get showEditorResultDecorations() {
+    return !this.queryIsEdited[EditorKind.EdgeQL];
+  }
 
   @action
-  setCurrentQueryData<T extends EditorKind>(kind: T, data: QueryData[T]) {
-    this.currentQueryData[kind] = data;
+  setEdgeQL(data: Text) {
+    this.currentQueryData[EditorKind.EdgeQL] = data;
+    this.queryIsEdited[EditorKind.EdgeQL] = true;
     this.historyCursor = -1;
-    if (kind === EditorKind.EdgeQL) {
-      this.showEditorResultDecorations = false;
-    }
+  }
+
+  onAttachedToRootStore() {
+    const disposer = reaction(
+      () => getSnapshot(this.currentQueryData[EditorKind.VisualBuilder]),
+      () => {
+        if (!this.showHistory) {
+          this.queryIsEdited[EditorKind.VisualBuilder] = true;
+        }
+      }
+    );
+
+    return () => {
+      disposer();
+    };
   }
 
   @computed
@@ -266,8 +293,12 @@ export class QueryEditor extends Model({
     this.showHistory = show;
     if (show) {
       this._saveDraftQueryData();
-    } else if (restoreDraft) {
-      this._restoreDraftQueryData();
+    } else {
+      this.historyCursor = -1;
+
+      if (restoreDraft) {
+        this._restoreDraftQueryData();
+      }
     }
   }
 
@@ -277,9 +308,12 @@ export class QueryEditor extends Model({
   draftQueryData: {
     selectedEditor: EditorKind;
     currentResult: QueryHistoryItem | null;
-    showErrorUnderline: boolean;
-    [EditorKind.EdgeQL]: {query: Text; params: ParamsData | null};
-    [EditorKind.VisualBuilder]: QueryBuilderState;
+    [EditorKind.EdgeQL]: {
+      query: Text;
+      params: ParamsData | null;
+      isEdited: boolean;
+    };
+    [EditorKind.VisualBuilder]: {state: QueryBuilderState; isEdited: boolean};
   } | null = null;
 
   @action
@@ -288,21 +322,26 @@ export class QueryEditor extends Model({
     this.draftQueryData = {
       selectedEditor: this.selectedEditor,
       currentResult: this.currentResult,
-      showErrorUnderline: this.showEditorResultDecorations,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
         params: this.queryParamsEditor.getParamsData(),
+        isEdited: this.queryIsEdited[EditorKind.EdgeQL],
       },
-      [EditorKind.VisualBuilder]: current[EditorKind.VisualBuilder],
+      [EditorKind.VisualBuilder]: {
+        state: current[EditorKind.VisualBuilder],
+        isEdited: this.queryIsEdited[EditorKind.VisualBuilder],
+      },
     };
   }
+
   @action
   _restoreDraftQueryData() {
+    this.historyCursor = -1;
     const draft = this.draftQueryData;
     if (draft) {
       this.currentQueryData = {
         [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].query,
-        [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder],
+        [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].state,
       };
 
       this.queryParamsEditor.restoreParamsData(
@@ -311,18 +350,20 @@ export class QueryEditor extends Model({
 
       this.setSelectedEditor(draft.selectedEditor);
       this.currentResult = draft.currentResult;
-      this.showEditorResultDecorations = draft.showErrorUnderline;
+      this.queryIsEdited = {
+        [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].isEdited,
+        [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].isEdited,
+      };
     }
   }
 
   @action
-  setHistoryCursor(cursor: number) {
+  previewHistoryItem(cursor: number) {
     if (cursor === this.historyCursor) {
       return;
     }
 
     if (cursor === -1) {
-      this.historyCursor = cursor;
       this._restoreDraftQueryData();
     } else {
       const historyItem = this.queryHistory[cursor];
@@ -332,6 +373,7 @@ export class QueryEditor extends Model({
 
       this.historyCursor = cursor;
       const queryData = historyItem.queryData;
+
       switch (queryData.data.kind) {
         case EditorKind.EdgeQL:
           this.currentQueryData[EditorKind.EdgeQL] = Text.of(
@@ -340,7 +382,6 @@ export class QueryEditor extends Model({
           this.queryParamsEditor.restoreParamsData(
             queryData.data.params?.data
           );
-          this.showEditorResultDecorations = true;
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
@@ -350,7 +391,22 @@ export class QueryEditor extends Model({
 
       this.currentResult = historyItem;
       this.setSelectedEditor(queryData.data.kind);
+      this.queryIsEdited = {
+        [EditorKind.EdgeQL]: false,
+        [EditorKind.VisualBuilder]: false,
+      };
     }
+  }
+
+  @action
+  loadHistoryItem(cursor: number = this.historyCursor) {
+    this.previewHistoryItem(cursor);
+
+    if (cursor !== -1) {
+      this.saveDraftQueryToHistory();
+    }
+
+    this.setShowHistory(false, false);
   }
 
   navigateQueryHistory(direction: 1 | -1) {
@@ -363,7 +419,7 @@ export class QueryEditor extends Model({
       Math.min(this.historyCursor + direction, this.queryHistory.length - 1)
     );
 
-    this.setHistoryCursor(cursor);
+    this.previewHistoryItem(cursor);
   }
 
   @modelAction
@@ -387,6 +443,7 @@ export class QueryEditor extends Model({
     | {
         error: ErrorDetails;
       }
+    | {}
   )) {
     const historyItemData: ModelCreationData<QueryHistoryItem> = {
       queryData: frozen(queryData),
@@ -402,7 +459,7 @@ export class QueryEditor extends Model({
         ...historyItemData,
         error: frozen(data.error),
       });
-    } else {
+    } else if ("status" in data) {
       historyItem = new QueryHistoryResultItem({
         ...historyItemData,
         hasResult: data.result !== null,
@@ -411,7 +468,6 @@ export class QueryEditor extends Model({
       });
       if (data.result) {
         if (data.status.toLowerCase() === "explain") {
-          console.log("BOZE", this.explainStateCache);
           this.explainStateCache.set(
             historyItem.$modelId,
             createExplainState(data.result[0])
@@ -429,6 +485,8 @@ export class QueryEditor extends Model({
           resultBuf: data.resultBuf,
         };
       }
+    } else {
+      historyItem = new QueryHistoryDraftItem(historyItemData);
     }
 
     storeQueryHistoryItem(
@@ -456,6 +514,55 @@ export class QueryEditor extends Model({
 
     this.queryHistory.unshift(historyItem);
     this.currentResult = historyItem;
+  }
+
+  @modelAction
+  saveDraftQueryToHistory() {
+    const draftQuery = this.draftQueryData;
+
+    if (!draftQuery || !draftQuery[draftQuery.selectedEditor].isEdited) {
+      return;
+    }
+
+    const kind = draftQuery.selectedEditor;
+    let queryData: HistoryItemQueryData;
+
+    const query =
+      kind === EditorKind.EdgeQL
+        ? draftQuery[EditorKind.EdgeQL].query.toString().trim()
+        : kind === EditorKind.VisualBuilder
+        ? draftQuery[EditorKind.VisualBuilder].state.query
+        : null;
+
+    switch (kind) {
+      case EditorKind.EdgeQL: {
+        const paramsData = draftQuery[EditorKind.EdgeQL].params;
+
+        if (!query && !paramsData) return;
+
+        queryData = {
+          kind: EditorKind.EdgeQL,
+          query: query!,
+          params: paramsData ? frozen(paramsData) : null,
+        };
+        break;
+      }
+      case EditorKind.VisualBuilder: {
+        queryData = {
+          kind: EditorKind.VisualBuilder,
+          state: getSnapshot(draftQuery[EditorKind.VisualBuilder].state),
+        };
+        break;
+      }
+      default:
+        return;
+    }
+
+    this.addHistoryCell({
+      queryData,
+      timestamp: Date.now(),
+      thumbnailData: getThumbnailData({query: query!}),
+    });
   }
 
   @modelFlow
@@ -550,9 +657,7 @@ export class QueryEditor extends Model({
     const {capabilities, status} = yield* _await(
       this._runStatement(query, paramsData)
     );
-    if (selectedEditor === EditorKind.EdgeQL) {
-      this.showEditorResultDecorations = true;
-    }
+    this.queryIsEdited[selectedEditor] = false;
 
     dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);
 

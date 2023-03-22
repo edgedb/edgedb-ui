@@ -209,28 +209,15 @@ $historyTransitionTime: 0.15s;
   }
 }
 
-.historyControls {
+.closeHistory {
   position: absolute;
-  bottom: 0;
-  display: flex;
-  padding: 4px;
-  width: 100%;
-  box-sizing: border-box;
-
-  --buttonBg: #acacac;
+  bottom: 16px;
+  left: 16px;
   --buttonTextColour: #fff;
-
-  .editButton {
-    margin-left: auto;
-    --buttonBg: #49d8ad;
-  }
+  --buttonBg: #acacac;
 
   @include darkTheme {
     --buttonTextColour: #141414;
-
-    .editButton {
-      --buttonBg: #0d805e;
-    }
   }
 }
 
@@ -260,9 +247,14 @@ $historyTransitionTime: 0.15s;
   height: 105px;
   width: calc(100% - 32px);
   margin: 16px;
+  transition: opacity 0.1s ease-in-out;
 
   &:hover {
     background: #fafafa;
+
+    .loadButton {
+      opacity: 1;
+    }
   }
 
   &.selected {
@@ -352,6 +344,18 @@ $historyTransitionTime: 0.15s;
         border-bottom-color: #404040;
       }
     }
+  }
+
+  .loadButton {
+    --buttonBg: #49d8ad;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    opacity: 0;
+  }
+
+  .visible {
+    opacity: 1;
   }
 
   @include darkTheme {

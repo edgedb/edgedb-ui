@@ -19,7 +19,9 @@ describe("queryEditor:", () => {
     test("enter invalid query: InvalidReferenceError", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015"
@@ -29,7 +31,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const errorElement = driver.wait(
+      const errorElement = await driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
@@ -53,7 +55,9 @@ describe("queryEditor:", () => {
     test("enter invalid query: EdgeQLSyntaxError", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .releaseyear = 2015)"
@@ -63,7 +67,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const errorElement = driver.wait(
+      const errorElement = await driver.wait(
         until.elementLocated(ByUIClass("repl_queryError"))
       );
 
@@ -77,7 +81,9 @@ describe("queryEditor:", () => {
     test("enter valid query, get results, copy and view them", async () => {
       driver.navigate().refresh();
 
-      const editor = await driver.findElement(By.className("cm-content"));
+      const editor = await driver.wait(
+        until.elementLocated(By.className("cm-content"))
+      );
 
       await editor.sendKeys(
         "select Movie { title } filter .release_year = 2015"
@@ -87,7 +93,7 @@ describe("queryEditor:", () => {
       const runButton = await driver.findElement(ByUIClass("repl_runButton"));
       await runButton.click();
 
-      const inspector = driver.wait(
+      const inspector = await driver.wait(
         until.elementLocated(ByUIClass("repl_inspector"))
       );
 
@@ -170,12 +176,14 @@ describe("queryEditor:", () => {
       await driver.wait(until.elementLocated(ByUIClass("repl_history")));
 
       // click on first history query (that is not draft query)
-      (await driver.findElements(ByUIClass("repl_historyItem")))[1].click();
-
+      const firstItem = await driver.findElements(
+        ByUIClass("repl_historyItem")
+      );
+      await firstItem[1].click();
       // click on edit button
       (
         await driver.wait(
-          until.elementLocated(ByUIClass("repl_editButton")),
+          until.elementLocated(ByUIClass("repl_loadButton")),
           2000
         )
       ).click();
