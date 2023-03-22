@@ -294,8 +294,12 @@ export class QueryEditor extends Model({
     this.showHistory = show;
     if (show) {
       this._saveDraftQueryData();
-    } else if (restoreDraft) {
-      this._restoreDraftQueryData();
+    } else {
+      this.historyCursor = -1;
+
+      if (restoreDraft) {
+        this._restoreDraftQueryData();
+      }
     }
   }
 
