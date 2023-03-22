@@ -190,7 +190,6 @@ export class QueryEditor extends Model({
       () => {
         if (!this.showHistory) {
           this.queryIsEdited[EditorKind.VisualBuilder] = true;
-          this.historyCursor = -1;
         }
       }
     );
@@ -334,6 +333,7 @@ export class QueryEditor extends Model({
       },
     };
   }
+
   @action
   _restoreDraftQueryData() {
     this.historyCursor = -1;
@@ -400,13 +400,12 @@ export class QueryEditor extends Model({
 
   @action
   loadHistoryItem(cursor: number = this.historyCursor) {
-    if (cursor !== -1) {
-      this.saveDraftQueryToHistory(
-        this.queryHistory[cursor].queryData.data.kind
-      );
-    }
-    this._restoreDraftQueryData();
     this.previewHistoryItem(cursor);
+
+    if (cursor !== -1) {
+      this.saveDraftQueryToHistory();
+    }
+
     this.setShowHistory(false, false);
   }
 
@@ -518,13 +517,14 @@ export class QueryEditor extends Model({
   }
 
   @modelAction
-  saveDraftQueryToHistory(kind: EditorKind) {
+  saveDraftQueryToHistory() {
     const draftQuery = this.draftQueryData;
 
-    if (!draftQuery || !draftQuery[kind].isEdited) {
+    if (!draftQuery || !draftQuery[draftQuery.selectedEditor].isEdited) {
       return;
     }
 
+    const kind = draftQuery.selectedEditor;
     let queryData: HistoryItemQueryData;
 
     const query =
