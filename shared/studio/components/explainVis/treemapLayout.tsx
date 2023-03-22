@@ -19,7 +19,7 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {graphSettings} from "../../state/graphSettings";
 
 export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
-export const darkPalette = ["#292235", "#343025", "#182A30", "#20352F"];
+export const darkPalette = ["#292235", "#2B3428", "#182A30", "#20352F"];
 
 function getPlanDepth(plan: Plan) {
   let depth = 0;

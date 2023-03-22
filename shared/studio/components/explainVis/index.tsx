@@ -86,6 +86,7 @@ const ExplainHeader = observer(function ExplainHeader({
         <Switch
           leftLabel="Time"
           rightLabel="Cost"
+          disabled={!state.planTree.data.totalTime}
           defaultState={
             graphSettings.isTimeGraph ? switchState.left : switchState.right
           }
