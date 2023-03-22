@@ -10,7 +10,7 @@ describe("clientSettings:", () => {
 
   test("change implicit limit to 10 and show up to 10 results", async () => {
     // wait until schema loaded and open panel button available
-    const openPanelButton = driver.wait(
+    const openPanelButton = await driver.wait(
       until.elementLocated(ByUIClass("sessionState_openPanel"))
     );
     await openPanelButton.click();
@@ -36,7 +36,7 @@ describe("clientSettings:", () => {
       Key.chord(cmdCtrl, Key.ENTER)
     );
 
-    const resultHiddenNote = driver.wait(
+    const resultHiddenNote = await driver.wait(
       until.elementLocated(
         ByUIClass("repl_queryResult", "inspector_resultsHidden")
       )
@@ -54,7 +54,7 @@ describe("clientSettings:", () => {
 
   test(`remove settings and show "no configured settings" in  the client settings' topbar`, async () => {
     // show Implicit Limit := 10 inside client settings' topbar
-    const sessionStateElement = driver.wait(
+    const sessionStateElement = await driver.wait(
       until.elementLocated(ByUIClass("sessionState_chip"))
     );
 

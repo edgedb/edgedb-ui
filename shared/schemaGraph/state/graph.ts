@@ -461,15 +461,8 @@ export const SchemaGraph = types
           )
         : objectNodes.flatMap((node) => node.links);
 
-      const {
-        routes,
-        errors,
-        linkNodePositions,
-      }: layoutAndRouteLinksReturn = yield layoutAndRouteLinks(
-        objectNodes,
-        links,
-        nodePositions
-      );
+      const {routes, errors, linkNodePositions}: layoutAndRouteLinksReturn =
+        yield layoutAndRouteLinks(objectNodes, links, nodePositions);
 
       if (errors.length) {
         debug.error("Link routing failed", errors);

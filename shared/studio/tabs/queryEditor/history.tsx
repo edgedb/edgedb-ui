@@ -67,11 +67,6 @@ const HistoryPanelInner = observer(
       (ref as RefObject<HTMLDivElement>).current?.focus();
     }, []);
 
-    const closeHistory = () => {
-      state.setHistoryCursor(-1);
-      state.setShowHistory(false);
-    };
-
     return (
       <div
         ref={ref}
@@ -85,20 +80,16 @@ const HistoryPanelInner = observer(
           } else if (e.key === "ArrowDown") {
             state.navigateQueryHistory(1);
           } else if (e.key === "Enter") {
-            state.setShowHistory(false, false);
+            state.loadHistoryItem();
           }
         }}
       >
         <HistoryList state={state} />
-        <div className={styles.historyControls}>
-          <Button label={"Cancel"} onClick={closeHistory} />
-          {state.historyCursor !== -1 ? (
-            <Button
-              className={styles.editButton}
-              label={"Load"}
-              onClick={() => state.setShowHistory(false, false)}
-            />
-          ) : null}
+        <div className={styles.closeHistory}>
+          <Button
+            label={"Cancel"}
+            onClick={() => state.setShowHistory(false)}
+          />
         </div>
       </div>
     );
@@ -190,8 +181,7 @@ const HistoryItem = observer(function HistoryItem({
         [styles.draft]: !item,
         [styles.hasDateHeader]: !!item?.showDateHeader,
       })}
-      onClick={() => state.setHistoryCursor(index)}
-      onDoubleClick={() => state.setShowHistory(false, false)}
+      onClick={() => state.previewHistoryItem(index)}
     >
       {item ? (
         <>
@@ -207,6 +197,18 @@ const HistoryItem = observer(function HistoryItem({
           >
             <RelativeTime timestamp={item.timestamp} />
           </div>
+          {
+            <Button
+              className={cn(styles.loadButton, {
+                [styles.visible]: state.historyCursor === index,
+              })}
+              label={"Load"}
+              onClick={(e) => {
+                e.stopPropagation();
+                state.loadHistoryItem(index);
+              }}
+            />
+          }
         </>
       ) : (
         "draft query"
