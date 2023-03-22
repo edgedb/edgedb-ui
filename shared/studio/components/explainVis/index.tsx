@@ -2,7 +2,7 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import {Switch} from "@edgedb/common/ui/switch";
+import {Switch, switchState} from "@edgedb/common/ui/switch";
 
 import {createContext, useContext, useRef} from "react";
 import {ChevronDownIcon} from "../../icons";
@@ -16,13 +16,13 @@ import styles from "./explainVis.module.scss";
 import {
   createExplainState,
   ExplainState,
-  graphType,
   Plan,
   reRunWithAnalyze,
 } from "./state";
 
 import {darkPalette, lightPalette, Treemap} from "./treemapLayout";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+import {graphSettings, graphType, graphUnit} from "../../state/graphSettings";
 
 const ExplainContext = createContext<[ExplainState, boolean]>(null!);
 
@@ -45,19 +45,12 @@ export const ExplainVis = observer(function ExplainVis({
     return <div>loading...</div>;
   }
 
-  // const devMode = useInstanceState().instanceName === "_localdev";
-
   return (
     <ExplainContext.Provider value={[state, /*devMode*/ false]}>
       <div className={styles.explainVis}>
         <ExplainHeader queryHistoryItem={queryHistoryItem} />
-        {state.showFlamegraph ? <Flamegraph /> : <Treemap />}
+        {graphSettings.isAreaGraph ? <Treemap /> : <Flamegraph />}
         <PlanDetails />
-        {/* {devMode ? (
-          <button onClick={() => editorState.setShowExplain(true)}>
-            big explain vis
-          </button>
-        ) : null} */}
       </div>
     </ExplainContext.Provider>
   );
@@ -70,28 +63,42 @@ const ExplainHeader = observer(function ExplainHeader({
 }) {
   const state = useExplainState()[0];
   const plan = state.focusedPlan ?? state.planTree.data;
-  const queryTimeCost = state.isTimeGraph
+  const queryTimeCost = graphSettings.isTimeGraph
     ? `${plan.totalTime}ms`
     : plan.totalCost;
+
   return (
     <div className={styles.explainHeader}>
       <div className={styles.switchers}>
         <Switch
           leftLabel="Area"
           rightLabel="Flame"
-          onClick={() => state.setShowFlamegraph(!state.showFlamegraph)}
+          defaultState={
+            graphSettings.isAreaGraph ? switchState.left : switchState.right
+          }
+          onClick={() => {
+            graphSettings.setGraphType(
+              graphSettings.isAreaGraph ? graphType.flame : graphType.area
+            );
+            if (graphSettings.isAreaGraph) state.finishTreemapTransition();
+          }}
         />
         <Switch
           leftLabel="Time"
           rightLabel="Cost"
-          onClick={() =>
-            state.isTimeGraph
-              ? state.setGraphType(graphType.cost)
-              : state.setGraphType(graphType.time)
+          defaultState={
+            graphSettings.isTimeGraph ? switchState.left : switchState.right
           }
+          onClick={() => {
+            graphSettings.isTimeGraph
+              ? graphSettings.setGraphUnit(graphUnit.cost)
+              : graphSettings.setGraphUnit(graphUnit.time);
+
+            graphSettings.setUserUnitChoice(graphSettings.graphUnit);
+          }}
         />
       </div>
-      <>
+      {/* <>
         {state.planTree.data.totalTime == null ? (
           <div className={styles.rerunWithAnalyze}>
             <div className={styles.message}>Timing data not available</div>
@@ -103,8 +110,8 @@ const ExplainHeader = observer(function ExplainHeader({
             </div>
           </div>
         ) : null}
-      </>
-      {!state.showFlamegraph && (
+      </> */}
+      {graphSettings.isAreaGraph && (
         <p className={styles.queryDuration}>{queryTimeCost}</p>
       )}
     </div>
@@ -114,25 +121,27 @@ const ExplainHeader = observer(function ExplainHeader({
 const Flamegraph = observer(function Flamegraph() {
   const state = useExplainState()[0];
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useResize(containerRef, ({width}) => state.setFlamegraphWidth(width - 12));
+  useResize(ref, ({width}) => state.setFlamegraphWidth(width - 12), [state]);
 
   const width = state.flamegraphWidth;
   const [zoom, offset] = state.flamegraphZoomOffset;
 
   const range =
-    state.planTree.data[state.isTimeGraph ? "totalTime" : "totalCost"]! / zoom;
+    state.planTree.data[
+      graphSettings.isTimeGraph ? "totalTime" : "totalCost"
+    ]! / zoom;
 
   return (
     <div
-      ref={containerRef}
+      ref={ref}
       className={styles.flamegraph}
       onWheel={(e) => {
         const [zoom, offset] = state.flamegraphZoomOffset;
         if (e.ctrlKey) {
           const mouseOffset =
-            e.clientX - containerRef.current!.getBoundingClientRect().left - 8;
+            e.clientX - ref.current!.getBoundingClientRect().left - 8;
 
           const newZoom = Math.min(
             Math.max(1, zoom * (1 + e.deltaY / -400)),
@@ -147,7 +156,7 @@ const Flamegraph = observer(function Flamegraph() {
     >
       <div className={styles.graphScale}>
         <span>
-          {state.isTimeGraph
+          {graphSettings.isTimeGraph
             ? range.toFixed(range < 1 ? 1 : 0) + "ms"
             : range.toFixed(0)}
         </span>
@@ -157,6 +166,22 @@ const Flamegraph = observer(function Flamegraph() {
         style={{
           position: "absolute",
           left: -offset + 6,
+        }}
+        onMouseLeave={() => {
+          state.setHoveredPlan(null);
+
+          const selectedPlanCtxId = state.selectedPlan
+            ? state.selectedPlan.nearestContextPlan?.contextId ??
+              state.selectedPlan.contextId
+            : null;
+
+          const selectedPlanParentCtxId = state.selectedPlan?.parent
+            ? state.selectedPlan.parent?.nearestContextPlan?.contextId ??
+              state.selectedPlan.parent?.contextId
+            : null;
+
+          state.setCtxId(selectedPlanCtxId);
+          state.setParentCtxId(selectedPlanParentCtxId);
         }}
       >
         {width ? (
@@ -183,14 +208,14 @@ const PlanDetails = observer(function PlanDetails() {
       <div className={styles.header}>
         <span className={styles.nodeType}>{plan.type}:</span>
         <span className={styles.stats}>
-          Self {state.isTimeGraph ? "Time:" : "Cost:"}
+          Self {graphSettings.isTimeGraph ? "Time:" : "Cost:"}
           <span className={styles.statsResults}>
-            {state.isTimeGraph
+            {graphSettings.isTimeGraph
               ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
               : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
             &nbsp; &nbsp;
             {(
-              (state.isTimeGraph
+              (graphSettings.isTimeGraph
                 ? plan.selfTimePercent!
                 : plan.selfCostPercent) * 100
             )
@@ -278,7 +303,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     }
 
     const childWidth =
-      (state.isTimeGraph
+      (graphSettings.isTimeGraph
         ? subplan.totalTime! / plan.totalTime!
         : subplan.totalCost / plan.totalCost) *
       (width - 8);
@@ -315,23 +340,23 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     childLeft += childWidth;
   }
 
+  const isSelected = state.selectedPlan?.id === plan.id;
+
   return (
     <div
       className={cn(styles.flamegraphNode, {
-        [styles.selected]: state.hoveredPlan?.id === plan.id, //TODO Add pattern
+        [styles.hovered]:
+          !isSelected && state.hoveredPlan?.id === plan.id && !!plan.parent,
+        [styles.selected]: isSelected,
       })}
       style={{
         backgroundColor: depth ? palette[depth % palette.length] : undefined,
         width: width - 4,
         left: left,
-        ...(state.ctxId != null && state.ctxId === ctxId
-          ? {outline: `2px solid #0074e8`, zIndex: 1}
-          : undefined),
       }}
-    >
-      <div
-        className={cn(styles.flamegraphBar)}
-        onClick={() => {
+      onClick={(e) => {
+        e.stopPropagation();
+        if (plan.parent) {
           if (state.selectedPlan === plan) {
             state.setSelectedPlan(null);
             state.setCtxId(null);
@@ -340,26 +365,29 @@ const FlamegraphNode = observer(function _FlamegraphNode({
             state.setSelectedPlan(plan);
             state.setCtxId(ctxId);
             const parentCtxId =
-              plan.parent?.nearestContextPlan?.contextId ??
-              plan.parent?.contextId;
+              plan.parent.nearestContextPlan?.contextId ??
+              plan.parent.contextId;
             if (parentCtxId) state.setParentCtxId(parentCtxId);
           }
-        }}
-        onMouseEnter={() => {
-          state.setHoveredPlan(plan);
-          state.setHoveredCtxId(ctxId);
-        }}
-        onMouseLeave={() => {
-          if (ctxId != null) {
-            state.setHoveredCtxId(null);
-          }
-        }}
-      >
+        }
+      }}
+      onMouseOver={(e) => {
+        e.stopPropagation();
+        state.setHoveredPlan(plan);
+        state.setHoveredCtxId(ctxId);
+      }}
+      onMouseOut={(e) => {
+        e.stopPropagation();
+        if (ctxId != null) {
+          state.setHoveredCtxId(null);
+        }
+      }}
+    >
+      <div className={cn(styles.flamegraphBar)}>
         <div
           className={styles.flamegraphLabel}
           style={{
             left: Math.max(0, visibleRange[0] + 8),
-            opacity: ctxId != null ? 1 : 0.5,
           }}
         >
           {devMode && plan.hasCollapsedPlans ? (
@@ -375,17 +403,14 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           {ctxId != null ? (
             <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
           ) : depth === 0 ? (
-            <i>Query</i>
+            <b className={styles.query}>Query</b>
           ) : (
             plan.type
           )}
         </div>
       </div>
       {sortedSubplans.length || hiddenCount ? (
-        <div
-          className={styles.flamegraphSubNodes}
-          style={{height: plan.childDepth * 38}}
-        >
+        <div style={{height: plan.childDepth * 38}}>
           {childNodes}
           {hiddenCount ? (
             <div

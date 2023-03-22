@@ -103,9 +103,11 @@
   overflow: hidden;
   background: #f7f7f7;
   margin-bottom: 2px;
+  --outline-color: #468bff;
 
   @include darkTheme {
     background: #242424;
+    --outline-color: #74a6fc;
   }
 
   &Node {
@@ -118,17 +120,33 @@
     }
   }
 
+  .selected {
+    outline: 2px solid var(--outline-color);
+    z-index: 1;
+    outline-offset: -2px;
+  }
+
+  .hovered {
+    outline: 2px dotted var(--outline-color);
+    outline-offset: -2px;
+  }
+
   &Bar {
     position: relative;
-    height: 20px;
-    padding: 6px 0;
+    height: 16px;
+    padding: 6px 0 4px 0;
     white-space: nowrap;
     overflow: hidden;
-    cursor: pointer;
 
     .flamegraphLabel {
-      position: absolute;
-      margin: 0 4px;
+      margin: 0 3px;
+      color: #666666;
+      font-size: 12px;
+      line-height: 14px;
+
+      .query {
+        margin-left: "5px";
+      }
 
       pre {
         font-size: 11px;
@@ -316,6 +334,7 @@
     background: #d5d8ef;
     z-index: 1;
     box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.03);
 
     @include darkTheme {
       background: #292235;
@@ -357,6 +376,12 @@
       overflow: hidden;
       display: flex;
       justify-content: flex-end;
+
+      .layoutLabel {
+        color: #666666;
+        font-size: 12px;
+        line-height: 14px;
+      }
 
       > span {
         display: block;

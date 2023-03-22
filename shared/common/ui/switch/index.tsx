@@ -1,8 +1,8 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import cn from "../../utils/classNames";
 import styles from "./switch.module.scss";
 
-export enum SwitchState {
+export enum switchState {
   left,
   right,
 }
@@ -11,18 +11,22 @@ export interface SwitchProps {
   rightLabel: string;
   onClick: () => void;
   classes?: string;
-  defaultState?: SwitchState;
+  defaultState?: switchState;
 }
 
 export const Switch = ({
-  defaultState = SwitchState.left,
+  defaultState = switchState.left,
   leftLabel,
   rightLabel,
   onClick,
-  classes,
 }: SwitchProps) => {
   const [leftActive, setLeftActive] = useState(
-    defaultState === SwitchState.left
+    defaultState === switchState.left
+  );
+
+  useEffect(
+    () => setLeftActive(defaultState === switchState.left),
+    [defaultState]
   );
 
   const handleChange = () => {

@@ -8,6 +8,7 @@ import {
   modelAction,
   prop,
 } from "mobx-keystone";
+import {graphSettings, graphUnit} from "../../state/graphSettings";
 import {
   EditorKind,
   queryEditorCtx,
@@ -17,7 +18,6 @@ import {getColor} from "./colormap";
 
 export function createExplainState(rawExplainOutput: string) {
   const rawData = JSON.parse(rawExplainOutput)[0];
-
   const contexts: Contexts = [];
   const planTree = walkPlanNode(
     rawData.plan,
@@ -26,18 +26,19 @@ export function createExplainState(rawExplainOutput: string) {
     contexts
   );
 
+  graphSettings.setGraphUnit(
+    planTree.totalTime == null ||
+      graphSettings.userUnitChoice === graphUnit.cost
+      ? graphUnit.cost
+      : graphUnit.time
+  );
+
   return new ExplainState({
     rawData: rawExplainOutput,
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
-    graphType: planTree.totalTime != null ? graphType.time : graphType.cost,
   });
-}
-
-export enum graphType {
-  time,
-  cost,
 }
 
 @model("ExplainState")
@@ -51,23 +52,13 @@ export class ExplainState extends Model({
   parentCtxId: prop<number | null>(null).withSetter(),
   hoveredCtxId: prop<number | null>(null).withSetter(),
 
-  showFlamegraph: prop(false),
-  graphType: prop<graphType>().withSetter(),
   flamegraphZoomOffset: prop<[number, number]>(() => [1, 0]),
 }) {
-  @modelAction
-  setShowFlamegraph(val: boolean) {
-    this.showFlamegraph = val;
-    if (val) {
-      this.treemapTransition = null;
-    }
-  }
-
   @computed
   get maxFlamegraphZoom() {
     return Math.max(
       1,
-      this.isTimeGraph
+      graphSettings.isTimeGraph
         ? this.planTree.data.totalTime! * 10
         : this.planTree.data.totalCost
     );
@@ -130,11 +121,6 @@ export class ExplainState extends Model({
 
   @observable.ref
   focusedPlan: Plan | null = null;
-
-  // @action
-  // setFocusedPlan(plan: Plan | null) {
-  //   this.focusedPlan = plan;
-  // }
 
   treemapContainerRef: HTMLDivElement | null = null;
 
@@ -207,11 +193,6 @@ export class ExplainState extends Model({
     } else {
       this.expandedNodes.add(node);
     }
-  }
-
-  @computed
-  get isTimeGraph() {
-    return this.graphType === graphType.time;
   }
 
   copyRawDataToClipboard() {
