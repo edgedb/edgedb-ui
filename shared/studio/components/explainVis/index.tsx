@@ -173,22 +173,7 @@ const Flamegraph = observer(function Flamegraph() {
           position: "absolute",
           left: -offset + 6,
         }}
-        onMouseLeave={() => {
-          state.setHoveredPlan(null);
-
-          const selectedPlanCtxId = state.selectedPlan
-            ? state.selectedPlan.nearestContextPlan?.contextId ??
-              state.selectedPlan.contextId
-            : null;
-
-          const selectedPlanParentCtxId = state.selectedPlan?.parent
-            ? state.selectedPlan.parent?.nearestContextPlan?.contextId ??
-              state.selectedPlan.parent?.contextId
-            : null;
-
-          state.setCtxId(selectedPlanCtxId);
-          state.setParentCtxId(selectedPlanParentCtxId);
-        }}
+        onMouseLeave={() => state.setHoveredPlan(null)}
       >
         {width ? (
           <FlamegraphNode
@@ -358,29 +343,18 @@ const FlamegraphNode = observer(function _FlamegraphNode({
         if (plan.parent) {
           if (state.selectedPlan === plan) {
             state.setSelectedPlan(null);
-            state.setCtxId(null);
-            state.setParentCtxId(null);
           } else {
             state.setSelectedPlan(plan);
-            state.setCtxId(ctxId);
-            const parentCtxId =
-              plan.parent.nearestContextPlan?.contextId ??
-              plan.parent.contextId;
-            if (parentCtxId) state.setParentCtxId(parentCtxId);
           }
         }
       }}
       onMouseOver={(e) => {
         e.stopPropagation();
         state.setHoveredPlan(plan);
-        state.setHoveredCtxId(ctxId);
       }}
       onMouseOut={(e) => {
         e.stopPropagation();
-        if (ctxId != null) {
-          state.setHoveredPlan(null);
-          state.setHoveredCtxId(null);
-        }
+        state.setHoveredPlan(null);
       }}
     >
       <div className={cn(styles.flamegraphBar)}>
@@ -491,12 +465,15 @@ const Visualisations = observer(function Visualisations({
                                   100 - range.selfTimePercent! / 2
                                 }%)`,
                                 outline:
-                                  state.ctxId === range.id
+                                  state.getCtxId(state.selectedPlan) ===
+                                  range.id
                                     ? `2px solid #0074e8`
                                     : undefined,
                               }}
-                              onMouseEnter={() => state.setCtxId(range.id)}
-                              onMouseLeave={() => state.setCtxId(null)}
+                              onMouseEnter={() => {
+                                // state.setHoveredPlan(range.id) // todo DP fix this
+                              }}
+                              onMouseLeave={() => state.setHoveredPlan(null)}
                             >
                               {content}
                             </span>

@@ -51,11 +51,6 @@ export class ExplainState extends Model({
   planTree: prop<Frozen<Plan>>(),
   contexts: prop<Frozen<Contexts>>(),
   buffers: prop<Frozen<string[]>>(),
-
-  ctxId: prop<number | null>(null).withSetter(),
-  parentCtxId: prop<number | null>(null).withSetter(),
-  hoveredCtxId: prop<number | null>(null).withSetter(),
-
   flamegraphZoomOffset: prop<[number, number]>(() => [1, 0]),
 }) {
   @computed
@@ -66,6 +61,25 @@ export class ExplainState extends Model({
         ? this.planTree.data.totalTime! * 10
         : this.planTree.data.totalCost
     );
+  }
+
+  @computed
+  get hoveredCtxId() {
+    return this.getCtxId(this.hoveredPlan);
+  }
+
+  @computed
+  get ctxId() {
+    return this.getCtxId(this.selectedPlan);
+  }
+
+  @computed
+  get parentCtxId() {
+    return this.getCtxId(this.selectedPlan?.parent);
+  }
+
+  getCtxId(plan: Plan | null | undefined) {
+    return plan?.nearestContextPlan?.contextId || plan?.contextId;
   }
 
   @modelAction
@@ -238,7 +252,7 @@ export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
 
   queryEditor
     ._runStatement(updatedQuery, params?.data ?? null)
-    .then(() => queryEditor.setHistoryCursor(0)); // todo
+    .then(() => queryEditor.setHistoryCursor(0)); // todo DP
 }
 
 function nodesEqual(l: Plan[], r: Plan[]) {

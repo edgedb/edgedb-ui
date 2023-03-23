@@ -156,22 +156,7 @@ export const Treemap = observer(function Treemap() {
       <div
         ref={ref}
         className={styles.treemapContainer}
-        onMouseLeave={() => {
-          state.setHoveredPlan(null);
-
-          const selectedPlanCtxId = state.selectedPlan
-            ? state.selectedPlan.nearestContextPlan?.contextId ??
-              state.selectedPlan.contextId
-            : null;
-
-          const selectedPlanParentCtxId = state.selectedPlan?.parent
-            ? state.selectedPlan.parent?.nearestContextPlan?.contextId ??
-              state.selectedPlan.parent?.contextId
-            : null;
-
-          state.setCtxId(selectedPlanCtxId);
-          state.setParentCtxId(selectedPlanParentCtxId);
-        }}
+        onMouseLeave={() => state.setHoveredPlan(null)}
       >
         {children}
       </div>
@@ -408,27 +393,13 @@ export const TreemapNode = observer(
                     if (plan.parent) {
                       if (state.selectedPlan === plan) {
                         state.setSelectedPlan(null);
-                        state.setCtxId(null);
-                        state.setParentCtxId(null);
                       } else {
                         state.setSelectedPlan(plan);
-                        state.setCtxId(ctxId);
-                        const parentCtxId =
-                          plan.parent.nearestContextPlan?.contextId ??
-                          plan.parent.contextId;
-                        if (parentCtxId) state.setParentCtxId(parentCtxId);
                       }
                     }
                   }}
-                  onMouseOver={() => {
-                    state.setHoveredPlan(plan);
-                    state.setHoveredCtxId(ctxId);
-                  }}
-                  onMouseOut={() => {
-                    if (ctxId != null) {
-                      state.setHoveredCtxId(null);
-                    }
-                  }}
+                  onMouseOver={() => state.setHoveredPlan(plan)}
+                  onMouseOut={() => state.setHoveredPlan(null)}
                   onDoubleClick={() => {
                     if (plan.parent) state.treemapZoomIn(plan, ref.current!);
                   }}
