@@ -118,7 +118,7 @@ export const Treemap = observer(function Treemap() {
           <TreemapNode
             key={`trans-out-${plan.id}`}
             {...props}
-            parentSize={!state.focusedPlan ? [size[0], size[1] + 28] : size}
+            parentSize={!state.focusedPlan ? [size[0], size[1] + 32] : size}
           />,
           trans.pos ? (
             <TransitionWrapper
@@ -348,10 +348,10 @@ export const TreemapNode = observer(
         data-plan-id={plan.id}
         style={{
           backgroundColor: depth ? palette[depth % palette.length] : undefined,
-          top: state.focusedPlan === plan ? "2px" : pos.top * 100 + "%",
-          left: state.focusedPlan === plan ? "2px" : pos.left * 100 + "%",
-          width: depth === 0 ? "100%" : `calc(${pos.width * 100}% - 4px)`,
-          height: depth === 0 ? "100%" : `calc(${pos.height * 100}% - 4px)`,
+          top: `calc(${pos.top * 100}% + 2px)`,
+          left: `calc(${pos.left * 100}% + 2px`,
+          width: `calc(${pos.width * 100}% - 4px)`,
+          height: `calc(${pos.height * 100}% - 4px)`,
         }}
       >
         {layout ? (
