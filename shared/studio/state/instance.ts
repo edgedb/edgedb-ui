@@ -9,6 +9,7 @@ import {
   ModelClass,
   AnyModel,
   createContext as createMobxContext,
+  ModelCreationData,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -24,6 +25,16 @@ import {DatabaseState} from "./database";
 import {Connection} from "./connection";
 
 export const instanceCtx = createMobxContext<InstanceState>();
+
+export async function createInstanceState(
+  props: ModelCreationData<InstanceState>
+) {
+  const instance = new InstanceState(props);
+
+  await instance.fetchInstanceInfo();
+
+  return instance;
+}
 
 @model("InstanceState")
 export class InstanceState extends Model({
@@ -89,7 +100,6 @@ export class InstanceState extends Model({
 
   onInit() {
     instanceCtx.set(this, this);
-    this.fetchInstanceInfo();
 
     when(
       () =>
@@ -156,8 +166,18 @@ export class InstanceState extends Model({
   }
 }
 
-export const InstanceStateContext = createContext<InstanceState>(null!);
+export const InstanceStateContext = createContext<
+  InstanceState | Error | null
+>(null);
 
-export function useInstanceState() {
+export function useInstanceState(): InstanceState {
+  const ctx = useContext(InstanceStateContext);
+  if (!ctx || ctx instanceof Error) {
+    throw new Error("No instance ctx");
+  }
+  return ctx;
+}
+
+export function useFullInstanceState() {
   return useContext(InstanceStateContext);
 }
