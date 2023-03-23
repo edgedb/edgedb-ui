@@ -68,14 +68,13 @@ const ExplainHeader = observer(function ExplainHeader({
     <div className={styles.explainHeader}>
       <div className={styles.switchers}>
         <Switch
-          leftLabel="Area"
-          rightLabel="Flame"
-          defaultState={
+          labels={["Area", "Flame"]}
+          value={
             explainGraphSettings.isAreaGraph
               ? switchState.left
               : switchState.right
           }
-          onClick={() => {
+          onChange={() => {
             explainGraphSettings.setGraphType(
               explainGraphSettings.isAreaGraph
                 ? graphType.flame
@@ -86,15 +85,14 @@ const ExplainHeader = observer(function ExplainHeader({
           }}
         />
         <Switch
-          leftLabel="Time"
-          rightLabel="Cost"
+          labels={["Time", "Cost"]}
           disabled={!state.planTree.data.totalTime}
-          defaultState={
+          value={
             explainGraphSettings.isTimeGraph
               ? switchState.left
               : switchState.right
           }
-          onClick={() => {
+          onChange={() => {
             explainGraphSettings.isTimeGraph
               ? explainGraphSettings.setGraphUnit(graphUnit.cost)
               : explainGraphSettings.setGraphUnit(graphUnit.time);
@@ -221,8 +219,8 @@ const PlanDetails = observer(function PlanDetails() {
           {[
             ["Startup Cost", "startup_cost"],
             ["Total Cost", "total_cost"],
-          ].map(([name, key], i) => (
-            <div>
+          ].map(([name, key]) => (
+            <div key={key}>
               <span className={styles.label}>{name}:</span>
               <span>{plan.raw[key]}</span>
             </div>
@@ -232,8 +230,8 @@ const PlanDetails = observer(function PlanDetails() {
           {[
             ["Startup Time", "actual_startup_time"],
             ["Total Time", "actual_total_time"],
-          ].map(([name, key], i) => (
-            <div>
+          ].map(([name, key]) => (
+            <div key={key}>
               <span className={styles.label}>{name}:</span>
               <span>{plan.raw[key]}ms</span>
             </div>
@@ -392,185 +390,185 @@ const FlamegraphNode = observer(function _FlamegraphNode({
 
 // ---- Test Stuff ----
 
-export function TestExplainVis({
-  explainOutput: rawOutput,
-  closeExplain,
-}: {
-  explainOutput: string;
-  closeExplain: () => void;
-}) {
-  const data = JSON.parse(rawOutput!)[0];
+// export function TestExplainVis({
+//   explainOutput: rawOutput,
+//   closeExplain,
+// }: {
+//   explainOutput: string;
+//   closeExplain: () => void;
+// }) {
+//   const data = JSON.parse(rawOutput!)[0];
 
-  const state = createExplainState(rawOutput!);
+//   const state = createExplainState(rawOutput!);
 
-  return (
-    <div className={styles.explainVisTesting}>
-      <button onClick={() => closeExplain()}>close</button>
+//   return (
+//     <div className={styles.explainVisTesting}>
+//       <button onClick={() => closeExplain()}>close</button>
 
-      <Visualisations state={state} buffers={data.buffers} />
+//       <Visualisations state={state} buffers={data.buffers} />
 
-      <details>
-        <summary>raw json</summary>
-        <pre>{JSON.stringify(data, null, 2)}</pre>
-      </details>
-    </div>
-  );
-}
+//       <details>
+//         <summary>raw json</summary>
+//         <pre>{JSON.stringify(data, null, 2)}</pre>
+//       </details>
+//     </div>
+//   );
+// }
 
-const Visualisations = observer(function Visualisations({
-  state,
-  buffers,
-}: {
-  state: ExplainState;
-  buffers: any;
-}) {
-  return (
-    <ExplainContext.Provider value={state}>
-      <div className={styles.flamegraph}></div>
-      <div className={styles.main}>
-        <div style={{width: "50%"}}>
-          {state.hoveredPlan ? (
-            <pre>
-              {JSON.stringify(
-                {
-                  selfTime: state.hoveredPlan.selfTime,
-                  selfPercent: state.hoveredPlan.selfTimePercent,
-                  ...state.hoveredPlan.raw,
-                  Plans: undefined,
-                  CollapsedPlans: undefined,
-                },
-                null,
-                2
-              )}
-            </pre>
-          ) : null}
-        </div>
-        <div>
-          {buffers.map((buf: any, idx: number) => (
-            <>
-              <b>{buf[1]}</b>
-              <CodeBlock
-                code={buf[0]}
-                customRanges={
-                  state.contextsByBufIdx[idx]
-                    ? state.contextsByBufIdx[idx].map((range) => ({
-                        range: [range.start, range.end],
-                        renderer: (_, content) => (
-                          <>
-                            <span
-                              style={{
-                                border: "1px solid #d7d7d7",
-                                borderRadius: 3,
-                                backgroundColor: `hsl(0, 100%, ${
-                                  100 - range.selfTimePercent! / 2
-                                }%)`,
-                                outline:
-                                  state.getCtxId(state.selectedPlan) ===
-                                  range.id
-                                    ? `2px solid #0074e8`
-                                    : undefined,
-                              }}
-                              onMouseEnter={() => {
-                                // state.setHoveredPlan(range.id) // todo DP fix this
-                              }}
-                              onMouseLeave={() => state.setHoveredPlan(null)}
-                            >
-                              {content}
-                            </span>
-                            {range.linkedBufIdx ? (
-                              <span
-                                style={{
-                                  fontStyle: "italic",
-                                  background: "#ddd",
-                                }}
-                              >
-                                {" "}
-                                := {state.buffers.data[range.linkedBufIdx - 1]}
-                              </span>
-                            ) : null}
-                          </>
-                        ),
-                      }))
-                    : undefined
-                }
-              />
-            </>
-          ))}
-        </div>
-      </div>
-      <div className={styles.planTree}>
-        <PlanNode plan={state.planTree.data} />
-      </div>
-    </ExplainContext.Provider>
-  );
-});
+// const Visualisations = observer(function Visualisations({
+//   state,
+//   buffers,
+// }: {
+//   state: ExplainState;
+//   buffers: any;
+// }) {
+//   return (
+//     <ExplainContext.Provider value={state}>
+//       <div className={styles.flamegraph}></div>
+//       <div className={styles.main}>
+//         <div style={{width: "50%"}}>
+//           {state.hoveredPlan ? (
+//             <pre>
+//               {JSON.stringify(
+//                 {
+//                   selfTime: state.hoveredPlan.selfTime,
+//                   selfPercent: state.hoveredPlan.selfTimePercent,
+//                   ...state.hoveredPlan.raw,
+//                   Plans: undefined,
+//                   CollapsedPlans: undefined,
+//                 },
+//                 null,
+//                 2
+//               )}
+//             </pre>
+//           ) : null}
+//         </div>
+//         <div>
+//           {buffers.map((buf: any, idx: number) => (
+//             <>
+//               <b>{buf[1]}</b>
+//               <CodeBlock
+//                 code={buf[0]}
+//                 customRanges={
+//                   state.contextsByBufIdx[idx]
+//                     ? state.contextsByBufIdx[idx].map((range) => ({
+//                         range: [range.start, range.end],
+//                         renderer: (_, content) => (
+//                           <>
+//                             <span
+//                               style={{
+//                                 border: "1px solid #d7d7d7",
+//                                 borderRadius: 3,
+//                                 backgroundColor: `hsl(0, 100%, ${
+//                                   100 - range.selfTimePercent! / 2
+//                                 }%)`,
+//                                 outline:
+//                                   state.getCtxId(state.selectedPlan) ===
+//                                   range.id
+//                                     ? `2px solid #0074e8`
+//                                     : undefined,
+//                               }}
+//                               onMouseEnter={() => {
+//                                 // state.setHoveredPlan(range.id) // todo DP fix this
+//                               }}
+//                               onMouseLeave={() => state.setHoveredPlan(null)}
+//                             >
+//                               {content}
+//                             </span>
+//                             {range.linkedBufIdx ? (
+//                               <span
+//                                 style={{
+//                                   fontStyle: "italic",
+//                                   background: "#ddd",
+//                                 }}
+//                               >
+//                                 {" "}
+//                                 := {state.buffers.data[range.linkedBufIdx - 1]}
+//                               </span>
+//                             ) : null}
+//                           </>
+//                         ),
+//                       }))
+//                     : undefined
+//                 }
+//               />
+//             </>
+//           ))}
+//         </div>
+//       </div>
+//       <div className={styles.planTree}>
+//         <PlanNode plan={state.planTree.data} />
+//       </div>
+//     </ExplainContext.Provider>
+//   );
+// });
 
-function PlanNode({plan}: {plan: Plan}) {
-  return (
-    <div className={styles.planNodeWrapper}>
-      <div
-        className={cn(styles.planNode, {
-          [styles.noContexts]: !plan.raw.contexts,
-        })}
-      >
-        <div
-          className={styles.heatBar}
-          style={{
-            backgroundColor: `hsl(0, 100%, ${
-              100 - (plan.selfTimePercent ?? plan.selfCostPercent) / 2
-            }%)`,
-          }}
-        />
-        <div className={styles.planContent}>
-          {Math.round(plan.selfTimePercent ?? plan.selfCostPercent)}% Self
-          Time: {plan.selfTime?.toPrecision(5).replace(/\.?0+$/, "")}ms
-          <br />
-          <b>{plan.type}</b>
-          <div className={styles.grid}>
-            {[
-              ["Startup Cost", "startup_cost"],
-              ["Actual Startup Time", "actual_startup_time"],
-              ["Total Cost", "total_cost"],
-              ["Actual Total Time", "actual_total_time"],
-            ].map(([key, prop], i) => (
-              <>
-                <span>{key}:</span>
-                <span>
-                  {plan.raw[prop]}
-                  {i % 2 != 0 ? "ms" : ""}
-                </span>
-              </>
-            ))}
-          </div>
-          {plan.raw.contexts ? (
-            <>
-              Contexts:{" "}
-              {JSON.stringify(plan.raw.contexts?.map((ctx: any) => ctx.text))}
-            </>
-          ) : null}
-          <details>
-            <summary>all data</summary>
-            <pre>
-              {JSON.stringify(
-                {
-                  ...plan.raw,
-                  plans: undefined,
-                },
-                null,
-                2
-              )}
-            </pre>
-          </details>
-        </div>
-      </div>
+// function PlanNode({plan}: {plan: Plan}) {
+//   return (
+//     <div className={styles.planNodeWrapper}>
+//       <div
+//         className={cn(styles.planNode, {
+//           [styles.noContexts]: !plan.raw.contexts,
+//         })}
+//       >
+//         <div
+//           className={styles.heatBar}
+//           style={{
+//             backgroundColor: `hsl(0, 100%, ${
+//               100 - (plan.selfTimePercent ?? plan.selfCostPercent) / 2
+//             }%)`,
+//           }}
+//         />
+//         <div className={styles.planContent}>
+//           {Math.round(plan.selfTimePercent ?? plan.selfCostPercent)}% Self
+//           Time: {plan.selfTime?.toPrecision(5).replace(/\.?0+$/, "")}ms
+//           <br />
+//           <b>{plan.type}</b>
+//           <div className={styles.grid}>
+//             {[
+//               ["Startup Cost", "startup_cost"],
+//               ["Actual Startup Time", "actual_startup_time"],
+//               ["Total Cost", "total_cost"],
+//               ["Actual Total Time", "actual_total_time"],
+//             ].map(([key, prop], i) => (
+//               <div key={prop}>
+//                 <span>{key}:</span>
+//                 <span>
+//                   {plan.raw[prop]}
+//                   {i % 2 != 0 ? "ms" : ""}
+//                 </span>
+//               </div>
+//             ))}
+//           </div>
+//           {plan.raw.contexts ? (
+//             <>
+//               Contexts:{" "}
+//               {JSON.stringify(plan.raw.contexts?.map((ctx: any) => ctx.text))}
+//             </>
+//           ) : null}
+//           <details>
+//             <summary>all data</summary>
+//             <pre>
+//               {JSON.stringify(
+//                 {
+//                   ...plan.raw,
+//                   plans: undefined,
+//                 },
+//                 null,
+//                 2
+//               )}
+//             </pre>
+//           </details>
+//         </div>
+//       </div>
 
-      {plan.fullSubPlans.length ? (
-        <div className={styles.planSubTree}>
-          {plan.fullSubPlans.map((subplan) => (
-            <PlanNode plan={subplan} />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
+//       {plan.fullSubPlans.length ? (
+//         <div className={styles.planSubTree}>
+//           {plan.fullSubPlans.map((subplan) => (
+//             <PlanNode plan={subplan} key={subplan.id} />
+//           ))}
+//         </div>
+//       ) : null}
+//     </div>
+//   );
+// }

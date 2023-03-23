@@ -5,7 +5,6 @@ import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
-import codeEditorStyles from "@edgedb/code-editor/codeEditor.module.scss";
 
 import styles from "./repl.module.scss";
 
@@ -38,7 +37,7 @@ import {
 import {InspectorState} from "@edgedb/inspector/state";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 import Spinner from "@edgedb/common/ui/spinner";
-import {ExplainVis, TestExplainVis} from "../../components/explainVis";
+import {ExplainVis} from "../../components/explainVis";
 import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
 
 export const QueryEditorView = observer(function QueryEditorView() {
@@ -162,7 +161,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
         </div>
       ) : null}
 
-      {editorState.showExplain &&
+      {/* {editorState.showExplain &&
       (editorState.currentResult as QueryHistoryResultItem).explainState ? (
         <TestExplainVis
           closeExplain={() => editorState.setShowExplain(false)}
@@ -171,7 +170,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
               .rawData
           }
         />
-      ) : null}
+      ) : null} */}
     </div>
   );
 });

@@ -16,8 +16,8 @@ const userGraphTypeStorageKey = "edgedbUserGraphTypeChoice";
 @model("ExplainGraphSettings")
 export class ExplainGraphSettings extends Model({
   graphType: prop<graphType>(),
-  graphUnit: prop<graphUnit>().withSetter(),
-  userUnitChoice: prop<graphUnit | null>().withSetter(),
+  graphUnit: prop(graphUnit.time).withSetter(),
+  userUnitChoice: prop<graphUnit | null>(null).withSetter(),
 }) {
   @computed
   get isTimeGraph() {
@@ -36,14 +36,22 @@ export class ExplainGraphSettings extends Model({
   }
 }
 
-const userStoredTypeChoice = localStorage.getItem(userGraphTypeStorageKey);
+let userStoredTypeChoice = graphType.area;
+
+try {
+  const storedVal = localStorage.getItem(userGraphTypeStorageKey);
+  if (storedVal) {
+    userStoredTypeChoice =
+      JSON.parse(storedVal) === graphType.flame
+        ? graphType.flame
+        : graphType.area;
+  }
+} catch {
+  // ignore errors
+}
 
 const explainGraphSettings = new ExplainGraphSettings({
-  graphType: userStoredTypeChoice
-    ? JSON.parse(userStoredTypeChoice)
-    : graphType.area,
-  graphUnit: graphUnit.time,
-  userUnitChoice: null,
+  graphType: userStoredTypeChoice,
 });
 
 export {explainGraphSettings};

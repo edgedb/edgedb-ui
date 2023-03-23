@@ -145,6 +145,7 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     <>
       {ctxRects.map((ctxRect) => (
         <div
+          key={ctxRect.id}
           className={cn(styles.explainContextRect, {
             [styles.highlighted]: state.ctxId === ctxRect.id,
             [styles.highlightedOnHover]:
