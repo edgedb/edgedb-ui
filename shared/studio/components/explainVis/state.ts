@@ -1,3 +1,4 @@
+import {createContext, useContext} from "react";
 import {action, computed, observable} from "mobx";
 import {
   frozen,
@@ -9,6 +10,10 @@ import {
   prop,
 } from "mobx-keystone";
 import {
+  explainGraphSettings,
+  graphUnit,
+} from "../../state/explainGraphSettings";
+import {
   EditorKind,
   queryEditorCtx,
   QueryHistoryResultItem,
@@ -17,7 +22,6 @@ import {getColor} from "./colormap";
 
 export function createExplainState(rawExplainOutput: string) {
   const rawData = JSON.parse(rawExplainOutput)[0];
-
   const contexts: Contexts = [];
   const planTree = walkPlanNode(
     rawData.plan,
@@ -26,18 +30,19 @@ export function createExplainState(rawExplainOutput: string) {
     contexts
   );
 
+  explainGraphSettings.setGraphUnit(
+    planTree.totalTime == null ||
+      explainGraphSettings.userUnitChoice === graphUnit.cost
+      ? graphUnit.cost
+      : graphUnit.time
+  );
+
   return new ExplainState({
     rawData: rawExplainOutput,
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
     buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
-    graphType: planTree.totalTime != null ? graphType.time : graphType.cost,
   });
-}
-
-export enum graphType {
-  time,
-  cost,
 }
 
 @model("ExplainState")
@@ -46,31 +51,35 @@ export class ExplainState extends Model({
   planTree: prop<Frozen<Plan>>(),
   contexts: prop<Frozen<Contexts>>(),
   buffers: prop<Frozen<string[]>>(),
-
-  ctxId: prop<number | null>(null).withSetter(),
-  parentCtxId: prop<number | null>(null).withSetter(),
-  hoveredCtxId: prop<number | null>(null).withSetter(),
-
-  showFlamegraph: prop(false),
-  graphType: prop<graphType>().withSetter(),
   flamegraphZoomOffset: prop<[number, number]>(() => [1, 0]),
 }) {
-  @modelAction
-  setShowFlamegraph(val: boolean) {
-    this.showFlamegraph = val;
-    if (val) {
-      this.treemapTransition = null;
-    }
-  }
-
   @computed
   get maxFlamegraphZoom() {
     return Math.max(
       1,
-      this.isTimeGraph
+      explainGraphSettings.isTimeGraph
         ? this.planTree.data.totalTime! * 10
         : this.planTree.data.totalCost
     );
+  }
+
+  @computed
+  get hoveredCtxId() {
+    return this.getCtxId(this.hoveredPlan);
+  }
+
+  @computed
+  get ctxId() {
+    return this.getCtxId(this.selectedPlan);
+  }
+
+  @computed
+  get parentCtxId() {
+    return this.getCtxId(this.selectedPlan?.parent);
+  }
+
+  getCtxId(plan: Plan | null | undefined) {
+    return plan?.nearestContextPlan?.contextId || plan?.contextId;
   }
 
   @modelAction
@@ -130,11 +139,6 @@ export class ExplainState extends Model({
 
   @observable.ref
   focusedPlan: Plan | null = null;
-
-  // @action
-  // setFocusedPlan(plan: Plan | null) {
-  //   this.focusedPlan = plan;
-  // }
 
   treemapContainerRef: HTMLDivElement | null = null;
 
@@ -209,11 +213,6 @@ export class ExplainState extends Model({
     }
   }
 
-  @computed
-  get isTimeGraph() {
-    return this.graphType === graphType.time;
-  }
-
   copyRawDataToClipboard() {
     navigator.clipboard?.writeText(
       JSON.stringify(JSON.parse(this.rawData), null, 2)
@@ -253,7 +252,7 @@ export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
 
   queryEditor
     ._runStatement(updatedQuery, params?.data ?? null)
-    .then(() => queryEditor.setHistoryCursor(0));
+    .then(() => queryEditor.setHistoryCursor(0)); // todo DP
 }
 
 function nodesEqual(l: Plan[], r: Plan[]) {
@@ -408,6 +407,12 @@ export function walkPlanNode(
   }
 
   return plan;
+}
+
+export const ExplainContext = createContext<ExplainState>(null!);
+
+export function useExplainState() {
+  return useContext(ExplainContext);
 }
 
 // Result of explain query is output as a json string containing a tree of plan

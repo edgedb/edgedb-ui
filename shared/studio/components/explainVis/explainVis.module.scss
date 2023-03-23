@@ -95,6 +95,14 @@
     margin-left: 6px;
     border-right: 2px solid #d9d9d9;
   }
+
+  @include darkTheme {
+    color: #b3b3b3;
+    &:before,
+    &:after {
+      border-color: #666666;
+    }
+  }
 }
 
 .flamegraph {
@@ -103,9 +111,11 @@
   overflow: hidden;
   background: #f7f7f7;
   margin-bottom: 2px;
+  --outline-color: #468bff;
 
   @include darkTheme {
     background: #242424;
+    --outline-color: #74a6fc;
   }
 
   &Node {
@@ -118,17 +128,33 @@
     }
   }
 
+  .selected {
+    outline: 2px solid var(--outline-color);
+    z-index: 1;
+    outline-offset: -2px;
+  }
+
+  .hovered {
+    outline: 2px dotted var(--outline-color);
+    outline-offset: -2px;
+  }
+
   &Bar {
     position: relative;
-    height: 20px;
-    padding: 6px 0;
+    height: 16px;
+    padding: 6px 0 4px 0;
     white-space: nowrap;
     overflow: hidden;
-    cursor: pointer;
 
     .flamegraphLabel {
-      position: absolute;
-      margin: 0 4px;
+      margin: 0 3px;
+      color: #666666;
+      font-size: 12px;
+      line-height: 14px;
+
+      .query {
+        margin-left: "5px";
+      }
 
       pre {
         font-size: 11px;
@@ -138,6 +164,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         margin: 0;
+        color: var(--app-code);
       }
     }
   }
@@ -187,11 +214,11 @@
   font-weight: 500;
 
   .header {
-    padding: 10px 16px 10px 8px;
+    padding: 4px 16px 4px 8px;
     background: #e5e5e5;
 
     @include darkTheme {
-      background: #1f1f1f;
+      background: #383838;
     }
 
     .nodeType {
@@ -200,7 +227,7 @@
       font-weight: 700;
 
       @include darkTheme {
-        color: #b3b3b3;
+        color: #999999;
       }
     }
 
@@ -210,9 +237,13 @@
       .statsResults {
         color: #595959;
         margin-left: 4px;
+      }
 
-        @include darkTheme {
-          color: #b3b3b3;
+      @include darkTheme {
+        color: #808080;
+
+        .statsResults {
+          color: #c4c4c4;
         }
       }
     }
@@ -225,7 +256,7 @@
     padding: 10px 16px 10px 8px;
 
     @include darkTheme {
-      background: #383838;
+      background: #242424;
     }
 
     .result {
@@ -233,13 +264,16 @@
       flex-direction: column;
       color: #595959;
 
-      @include darkTheme {
-        color: #b3b3b3;
-      }
-
       .label {
         color: #999999;
         margin-right: 4px;
+      }
+      @include darkTheme {
+        color: #c4c4c4;
+
+        .label {
+          color: #808080;
+        }
       }
     }
   }
@@ -292,7 +326,7 @@
   }
 
   @include darkTheme {
-    background: #383838;
+    background: #242424;
     .queryDuration {
       color: #c4c4c4;
     }
@@ -301,24 +335,26 @@
 
 .treemapContainer {
   --outline-color: #468bff;
-
-  @include darkTheme {
-    --outline-color: #74a6fc;
-  }
-
   height: 100%;
   position: relative;
   background: #fff;
   margin-bottom: 2px;
+
+  @include darkTheme {
+    --outline-color: #74a6fc;
+    background: #141414;
+  }
 
   .treemapItem {
     position: absolute;
     background: #d5d8ef;
     z-index: 1;
     box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.03);
 
     @include darkTheme {
       background: #292235;
+      border: 1px solid rgba(255, 255, 255, 0.04);
     }
 
     &.transitionActive {
@@ -358,6 +394,12 @@
       display: flex;
       justify-content: flex-end;
 
+      .layoutLabel {
+        color: #666666;
+        font-size: 12px;
+        line-height: 14px;
+      }
+
       > span {
         display: block;
         margin: 0 4px;
@@ -374,6 +416,8 @@
         overflow: hidden;
         text-overflow: ellipsis;
         margin: 0;
+        color: var(--app-code);
+        font-weight: 500;
       }
 
       &.vertLabel {
@@ -405,9 +449,11 @@
   transition: height 0.2s;
   background: #f7f7f7;
   margin-bottom: 2px;
+  padding: 5px 0;
 
   @include darkTheme {
-    background: #383838;
+    background: #242424;
+    color: #b3b3b3;
   }
 
   &.hidden {
@@ -427,23 +473,36 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 4px 8px 5px 8px;
+    padding: 3px 4px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 3px;
     flex-shrink: 0;
+    margin: 0 2px;
 
     &:hover {
       background: rgba(0, 0, 0, 0.05);
+
+      @include darkTheme {
+        background: #383838;
+      }
     }
 
     pre {
       font-size: 11px;
-      line-height: 11px;
+      line-height: 16px;
       font-family: inherit;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin: 0;
+    }
+  }
+
+  .breadcrumbArrow {
+    color: #b3b3b3;
+
+    @include darkTheme {
+      color: #666666;
     }
   }
 }

@@ -9,16 +9,17 @@ import {
   useRef,
   useState,
 } from "react";
-import {useExplainState} from ".";
+import {useExplainState} from "./state";
 import styles from "./explainVis.module.scss";
 import {ExplainState, Plan} from "./state";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+import {explainGraphSettings} from "../../state/explainGraphSettings";
 
 export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
-export const darkPalette = ["#292235", "#343025", "#182A30", "#20352F"];
+export const darkPalette = ["#292235", "#2B3428", "#182A30", "#20352F"];
 
 function getPlanDepth(plan: Plan) {
   let depth = 0;
@@ -31,7 +32,7 @@ function getPlanDepth(plan: Plan) {
 }
 
 export const Treemap = observer(function Treemap() {
-  const [state] = useExplainState();
+  const state = useExplainState();
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -155,22 +156,7 @@ export const Treemap = observer(function Treemap() {
       <div
         ref={ref}
         className={styles.treemapContainer}
-        onMouseLeave={() => {
-          state.setHoveredPlan(null);
-
-          const selectedPlanCtxId = state.selectedPlan
-            ? state.selectedPlan.nearestContextPlan?.contextId ??
-              state.selectedPlan.contextId
-            : null;
-
-          const selectedPlanParentCtxId = state.selectedPlan?.parent
-            ? state.selectedPlan.parent?.nearestContextPlan?.contextId ??
-              state.selectedPlan.parent?.contextId
-            : null;
-
-          state.setCtxId(selectedPlanCtxId);
-          state.setParentCtxId(selectedPlanParentCtxId);
-        }}
+        onMouseLeave={() => state.setHoveredPlan(null)}
       >
         {children}
       </div>
@@ -216,7 +202,7 @@ function TransitionWrapper({
 }
 
 const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
-  const [state] = useExplainState();
+  const state = useExplainState();
 
   const breadcrumbs: Plan[] = [];
 
@@ -245,7 +231,7 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                     i === breadcrumbs.length - 1 ? "none" : undefined,
                 }}
               >
-                <span style={{opacity: ctxId == null ? 0.5 : undefined}}>
+                <span>
                   {ctxId != null ? (
                     <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
                   ) : i === 0 ? (
@@ -255,7 +241,9 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                   )}
                 </span>
               </div>
-              {i !== breadcrumbs.length - 1 ? <span>{">"}</span> : null}
+              {i !== breadcrumbs.length - 1 ? (
+                <span className={styles.breadcrumbArrow}>{">"}</span>
+              ) : null}
             </Fragment>
           );
         })}
@@ -279,7 +267,7 @@ export const TreemapNode = observer(
     {plan, pos, parentSize, depth, transitionActive},
     forwardedRef
   ) {
-    const [state] = useExplainState();
+    const state = useExplainState();
     const [_, theme] = useTheme();
     const palette = theme === Theme.light ? lightPalette : darkPalette;
 
@@ -288,7 +276,7 @@ export const TreemapNode = observer(
 
     const parentArea = parentSize[0] * parentSize[1];
 
-    const isTimeGraph = state.isTimeGraph;
+    const isTimeGraph = explainGraphSettings.isTimeGraph;
 
     const ctxId = plan.nearestContextPlan?.contextId ?? plan.contextId;
 
@@ -352,7 +340,8 @@ export const TreemapNode = observer(
       <div
         ref={ref}
         className={cn(styles.treemapItem, {
-          [styles.hovered]: !isSelected && state.hoveredPlan?.id === plan.id,
+          [styles.hovered]:
+            !isSelected && state.hoveredPlan?.id === plan.id && !!plan.parent,
           [styles.selected]: isSelected,
           [styles.transitionActive]: !!transitionActive,
         })}
@@ -397,36 +386,25 @@ export const TreemapNode = observer(
                     [styles.vertLabel]: vertLabel,
                   })}
                   style={{
-                    opacity: ctxId != null ? 1 : 0.5,
                     top: pos.top * 100 + "%",
                     left: pos.left * 100 + "%",
                     width: `calc(${pos.width * 100}%)`,
                     height: `calc(${pos.height * 100}%)`,
                   }}
                   onClick={() => {
-                    if (state.selectedPlan === plan) {
-                      state.setSelectedPlan(null);
-                      state.setCtxId(null);
-                      state.setParentCtxId(null);
-                    } else {
-                      state.setSelectedPlan(plan);
-                      state.setCtxId(ctxId);
-                      const parentCtxId =
-                        plan.parent?.nearestContextPlan?.contextId ??
-                        plan.parent?.contextId;
-                      if (parentCtxId) state.setParentCtxId(parentCtxId);
+                    if (plan.parent) {
+                      if (state.selectedPlan === plan) {
+                        state.setSelectedPlan(null);
+                      } else {
+                        state.setSelectedPlan(plan);
+                      }
                     }
                   }}
-                  onMouseEnter={() => {
-                    state.setHoveredPlan(plan);
-                    state.setHoveredCtxId(ctxId);
+                  onMouseOver={() => state.setHoveredPlan(plan)}
+                  onMouseOut={() => state.setHoveredPlan(null)}
+                  onDoubleClick={() => {
+                    if (plan.parent) state.treemapZoomIn(plan, ref.current!);
                   }}
-                  onMouseLeave={() => {
-                    if (ctxId != null) {
-                      state.setHoveredCtxId(null);
-                    }
-                  }}
-                  onDoubleClick={() => state.treemapZoomIn(plan, ref.current!)}
                 >
                   {showLabel ? (
                     <span>
@@ -435,7 +413,7 @@ export const TreemapNode = observer(
                           code={state.contexts.data[ctxId].text ?? ""}
                         />
                       ) : depth === 0 ? (
-                        <i>Query</i>
+                        <b className={styles.layoutLabel}>Query</b>
                       ) : (
                         plan.type
                       )}
@@ -480,6 +458,9 @@ interface ChildItem<T> {
   area: number;
 }
 
+// Squarified treemap function finds best way to render children.
+// The goal of the algorithm is to maximize the aspect ratio of each child item,
+// while still respecting the relative sizes specified by the area property.
 function computeLayout<T>(parentRatio: number, childAreas: ChildItem<T>[]) {
   let vert = parentRatio < 1;
   let remainingRatio = vert ? 1 / parentRatio : parentRatio;
@@ -528,8 +509,6 @@ function computeLayout<T>(parentRatio: number, childAreas: ChildItem<T>[]) {
     );
     if (worstRatio > lastRatio) {
       groupTotal -= groupChildren.pop()!.area;
-
-      // console.log(vert, remainingRatio, groupTotal, groupChildren);
 
       addItemsToLayout();
 
