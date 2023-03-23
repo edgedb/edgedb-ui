@@ -231,7 +231,7 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                     i === breadcrumbs.length - 1 ? "none" : undefined,
                 }}
               >
-                <span style={{opacity: ctxId == null ? 0.5 : undefined}}>
+                <span>
                   {ctxId != null ? (
                     <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
                   ) : i === 0 ? (
@@ -241,7 +241,9 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                   )}
                 </span>
               </div>
-              {i !== breadcrumbs.length - 1 ? <span>{">"}</span> : null}
+              {i !== breadcrumbs.length - 1 ? (
+                <span className={styles.breadcrumbArrow}>{">"}</span>
+              ) : null}
             </Fragment>
           );
         })}

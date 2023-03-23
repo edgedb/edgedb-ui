@@ -335,15 +335,15 @@
 
 .treemapContainer {
   --outline-color: #468bff;
-
-  @include darkTheme {
-    --outline-color: #74a6fc;
-  }
-
   height: 100%;
   position: relative;
   background: #fff;
   margin-bottom: 2px;
+
+  @include darkTheme {
+    --outline-color: #74a6fc;
+    background: #141414;
+  }
 
   .treemapItem {
     position: absolute;
@@ -449,9 +449,11 @@
   transition: height 0.2s;
   background: #f7f7f7;
   margin-bottom: 2px;
+  padding: 5px 0;
 
   @include darkTheme {
-    background: #383838;
+    background: #242424;
+    color: #b3b3b3;
   }
 
   &.hidden {
@@ -471,23 +473,36 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding: 4px 8px 5px 8px;
+    padding: 3px 4px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 3px;
     flex-shrink: 0;
+    margin: 0 2px;
 
     &:hover {
       background: rgba(0, 0, 0, 0.05);
+
+      @include darkTheme {
+        background: #383838;
+      }
     }
 
     pre {
       font-size: 11px;
-      line-height: 11px;
+      line-height: 16px;
       font-family: inherit;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin: 0;
+    }
+  }
+
+  .breadcrumbArrow {
+    color: #b3b3b3;
+
+    @include darkTheme {
+      color: #666666;
     }
   }
 }
