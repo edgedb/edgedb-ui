@@ -338,7 +338,7 @@
   height: 100%;
   position: relative;
   background: #fff;
-  margin-bottom: 2px;
+  margin: -2px;
 
   @include darkTheme {
     --outline-color: #74a6fc;
@@ -368,8 +368,8 @@
 
     .treemapItemInner {
       position: relative;
-      margin-left: 4px;
-      margin-top: 4px;
+      margin-left: 2px;
+      margin-top: 2px;
       width: calc(100% - 4px);
       height: calc(100% - 4px);
     }
@@ -447,17 +447,10 @@
   flex-shrink: 0;
   overflow-x: auto;
   transition: height 0.2s;
-  background: #f7f7f7;
-  margin-bottom: 2px;
-  padding: 5px 0;
-
-  @include darkTheme {
-    background: #242424;
-    color: #b3b3b3;
-  }
+  height: 32px;
 
   &.hidden {
-    display: none;
+    height: 0;
   }
 
   @include hideScrollbar;
@@ -465,7 +458,16 @@
   .breadcrumbsWrapper {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    background: #f7f7f7;
+    margin-bottom: 2px;
+    padding: 0 4px;
+    width: 100%;
+    min-width: max-content;
+
+    @include darkTheme {
+      background: #242424;
+      color: #b3b3b3;
+    }
   }
 
   .breadcrumb {
