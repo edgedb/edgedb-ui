@@ -4,8 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
 import {Switch, switchState} from "@edgedb/common/ui/switch";
 
-import {createContext, useContext, useRef} from "react";
-import {ChevronDownIcon} from "../../icons";
+import {useRef} from "react";
 
 import {
   QueryEditor,
@@ -17,18 +16,17 @@ import {
   createExplainState,
   ExplainState,
   Plan,
-  reRunWithAnalyze,
+  ExplainContext,
+  useExplainState,
 } from "./state";
 
 import {darkPalette, lightPalette, Treemap} from "./treemapLayout";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
-import {graphSettings, graphType, graphUnit} from "../../state/graphSettings";
-
-const ExplainContext = createContext<[ExplainState, boolean]>(null!);
-
-export function useExplainState() {
-  return useContext(ExplainContext);
-}
+import {
+  explainGraphSettings,
+  graphType,
+  graphUnit,
+} from "../../state/explainGraphSettings";
 
 interface ExplainVisProps {
   editorState: QueryEditor;
@@ -37,7 +35,6 @@ interface ExplainVisProps {
 }
 
 export const ExplainVis = observer(function ExplainVis({
-  editorState,
   state,
   queryHistoryItem,
 }: ExplainVisProps) {
@@ -46,10 +43,10 @@ export const ExplainVis = observer(function ExplainVis({
   }
 
   return (
-    <ExplainContext.Provider value={[state, /*devMode*/ false]}>
+    <ExplainContext.Provider value={state}>
       <div className={styles.explainVis}>
         <ExplainHeader queryHistoryItem={queryHistoryItem} />
-        {graphSettings.isAreaGraph ? <Treemap /> : <Flamegraph />}
+        {explainGraphSettings.isAreaGraph ? <Treemap /> : <Flamegraph />}
         <PlanDetails />
       </div>
     </ExplainContext.Provider>
@@ -61,9 +58,9 @@ const ExplainHeader = observer(function ExplainHeader({
 }: {
   queryHistoryItem: QueryHistoryResultItem;
 }) {
-  const state = useExplainState()[0];
+  const state = useExplainState();
   const plan = state.focusedPlan ?? state.planTree.data;
-  const queryTimeCost = graphSettings.isTimeGraph
+  const queryTimeCost = explainGraphSettings.isTimeGraph
     ? `${plan.totalTime}ms`
     : plan.totalCost;
 
@@ -74,13 +71,18 @@ const ExplainHeader = observer(function ExplainHeader({
           leftLabel="Area"
           rightLabel="Flame"
           defaultState={
-            graphSettings.isAreaGraph ? switchState.left : switchState.right
+            explainGraphSettings.isAreaGraph
+              ? switchState.left
+              : switchState.right
           }
           onClick={() => {
-            graphSettings.setGraphType(
-              graphSettings.isAreaGraph ? graphType.flame : graphType.area
+            explainGraphSettings.setGraphType(
+              explainGraphSettings.isAreaGraph
+                ? graphType.flame
+                : graphType.area
             );
-            if (graphSettings.isAreaGraph) state.finishTreemapTransition();
+            if (explainGraphSettings.isAreaGraph)
+              state.finishTreemapTransition();
           }}
         />
         <Switch
@@ -88,19 +90,23 @@ const ExplainHeader = observer(function ExplainHeader({
           rightLabel="Cost"
           disabled={!state.planTree.data.totalTime}
           defaultState={
-            graphSettings.isTimeGraph ? switchState.left : switchState.right
+            explainGraphSettings.isTimeGraph
+              ? switchState.left
+              : switchState.right
           }
           onClick={() => {
-            graphSettings.isTimeGraph
-              ? graphSettings.setGraphUnit(graphUnit.cost)
-              : graphSettings.setGraphUnit(graphUnit.time);
+            explainGraphSettings.isTimeGraph
+              ? explainGraphSettings.setGraphUnit(graphUnit.cost)
+              : explainGraphSettings.setGraphUnit(graphUnit.time);
 
-            graphSettings.setUserUnitChoice(graphSettings.graphUnit);
+            explainGraphSettings.setUserUnitChoice(
+              explainGraphSettings.graphUnit
+            );
           }}
         />
       </div>
       {/* <>
-        {state.planTree.data.totalTime == null ? (
+        {state.planTree.data.totalTime == null ? ( // TODO DP: delete after updating tooltip
           <div className={styles.rerunWithAnalyze}>
             <div className={styles.message}>Timing data not available</div>
             <div
@@ -112,7 +118,7 @@ const ExplainHeader = observer(function ExplainHeader({
           </div>
         ) : null}
       </> */}
-      {graphSettings.isAreaGraph && (
+      {explainGraphSettings.isAreaGraph && (
         <p className={styles.queryDuration}>{queryTimeCost}</p>
       )}
     </div>
@@ -120,7 +126,7 @@ const ExplainHeader = observer(function ExplainHeader({
 });
 
 const Flamegraph = observer(function Flamegraph() {
-  const state = useExplainState()[0];
+  const state = useExplainState();
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -131,7 +137,7 @@ const Flamegraph = observer(function Flamegraph() {
 
   const range =
     state.planTree.data[
-      graphSettings.isTimeGraph ? "totalTime" : "totalCost"
+      explainGraphSettings.isTimeGraph ? "totalTime" : "totalCost"
     ]! / zoom;
 
   return (
@@ -157,11 +163,10 @@ const Flamegraph = observer(function Flamegraph() {
     >
       <div className={styles.graphScale}>
         <span>
-          {graphSettings.isTimeGraph
+          {explainGraphSettings.isTimeGraph
             ? range.toFixed(range < 1 ? 1 : 0) + "ms"
             : range.toFixed(0)}
         </span>
-        {/* <span onClick={() => state.setFlamegraphZoom(1)}>reset</span> */}
       </div>
       <div
         style={{
@@ -200,7 +205,7 @@ const Flamegraph = observer(function Flamegraph() {
 });
 
 const PlanDetails = observer(function PlanDetails() {
-  const state = useExplainState()[0];
+  const state = useExplainState();
 
   const plan = state.hoveredPlan || state.selectedPlan || state.planTree.data;
 
@@ -209,14 +214,14 @@ const PlanDetails = observer(function PlanDetails() {
       <div className={styles.header}>
         <span className={styles.nodeType}>{plan.type}:</span>
         <span className={styles.stats}>
-          Self {graphSettings.isTimeGraph ? "Time:" : "Cost:"}
+          Self {explainGraphSettings.isTimeGraph ? "Time:" : "Cost:"}
           <span className={styles.statsResults}>
-            {graphSettings.isTimeGraph
+            {explainGraphSettings.isTimeGraph
               ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
               : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
             &nbsp; &nbsp;
             {(
-              (graphSettings.isTimeGraph
+              (explainGraphSettings.isTimeGraph
                 ? plan.selfTimePercent!
                 : plan.selfCostPercent) * 100
             )
@@ -271,24 +276,17 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   depth: number;
   visibleRange: [number, number];
 }) {
-  const [state, devMode] = useExplainState();
+  const state = useExplainState();
 
   const [_, theme] = useTheme();
   const palette = theme === Theme.light ? lightPalette : darkPalette;
 
-  const expandedNode =
-    devMode && plan.hasCollapsedPlans && state.expandedNodes.has(plan);
+  const ctxId = plan.nearestContextPlan
+    ? plan.nearestContextPlan.contextId!
+    : plan.contextId;
 
-  const ctxId =
-    plan.nearestContextPlan && !expandedNode
-      ? plan.nearestContextPlan.contextId!
-      : plan.contextId;
-
-  const subPlans = expandedNode
-    ? plan.fullSubPlans
-    : ctxId != null || depth === 0
-    ? plan.subPlans!
-    : plan.fullSubPlans;
+  const subPlans =
+    ctxId != null || depth === 0 ? plan.subPlans! : plan.fullSubPlans;
 
   const sortedSubplans: {
     subplan: Plan;
@@ -304,7 +302,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     }
 
     const childWidth =
-      (graphSettings.isTimeGraph
+      (explainGraphSettings.isTimeGraph
         ? subplan.totalTime! / plan.totalTime!
         : subplan.totalCost / plan.totalCost) *
       (width - 8);
@@ -380,6 +378,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
       onMouseOut={(e) => {
         e.stopPropagation();
         if (ctxId != null) {
+          state.setHoveredPlan(null);
           state.setHoveredCtxId(null);
         }
       }}
@@ -391,16 +390,6 @@ const FlamegraphNode = observer(function _FlamegraphNode({
             left: Math.max(0, visibleRange[0] + 8),
           }}
         >
-          {devMode && plan.hasCollapsedPlans ? (
-            <span
-              className={cn(styles.collapseButton, {
-                [styles.collapsed]: !expandedNode,
-              })}
-              onClick={() => state.toggleCollapsed(plan)}
-            >
-              <ChevronDownIcon />
-            </span>
-          ) : null}
           {ctxId != null ? (
             <CodeBlock code={state.contexts.data[ctxId].text ?? ""} />
           ) : depth === 0 ? (
@@ -462,14 +451,8 @@ const Visualisations = observer(function Visualisations({
   buffers: any;
 }) {
   return (
-    <ExplainContext.Provider value={[state, true]}>
-      <div className={styles.flamegraph}>
-        {/* <FlamegraphNode
-          plan={state.planTree.data}
-          depth={0}
-          parentWidth={800}
-        /> */}
-      </div>
+    <ExplainContext.Provider value={state}>
+      <div className={styles.flamegraph}></div>
       <div className={styles.main}>
         <div style={{width: "50%"}}>
           {state.hoveredPlan ? (

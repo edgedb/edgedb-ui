@@ -20,7 +20,7 @@ export const Switch = ({
   leftLabel,
   rightLabel,
   onClick,
-  disabled = false
+  disabled = false,
 }: SwitchProps) => {
   const [leftActive, setLeftActive] = useState(
     defaultState === switchState.left
@@ -32,8 +32,8 @@ export const Switch = ({
   );
 
   const handleChange = () => {
-      onClick();
-      setLeftActive(!leftActive);
+    onClick();
+    setLeftActive(!leftActive);
   };
 
   return (
@@ -46,7 +46,7 @@ export const Switch = ({
             name={`${leftLabel}-or-${rightLabel}`}
             onChange={handleChange}
             checked={leftActive}
-            disabled = {disabled}
+            disabled={disabled}
           />
           <label
             htmlFor={leftLabel}
@@ -65,7 +65,7 @@ export const Switch = ({
             name={`${leftLabel}-or-${rightLabel}`}
             onChange={handleChange}
             checked={!leftActive}
-            disabled = {disabled}
+            disabled={disabled}
           />
           <label
             htmlFor={rightLabel}

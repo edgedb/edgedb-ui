@@ -1,3 +1,4 @@
+import {createContext, useContext} from "react";
 import {action, computed, observable} from "mobx";
 import {
   frozen,
@@ -8,7 +9,10 @@ import {
   modelAction,
   prop,
 } from "mobx-keystone";
-import {graphSettings, graphUnit} from "../../state/graphSettings";
+import {
+  explainGraphSettings,
+  graphUnit,
+} from "../../state/explainGraphSettings";
 import {
   EditorKind,
   queryEditorCtx,
@@ -26,9 +30,9 @@ export function createExplainState(rawExplainOutput: string) {
     contexts
   );
 
-  graphSettings.setGraphUnit(
+  explainGraphSettings.setGraphUnit(
     planTree.totalTime == null ||
-      graphSettings.userUnitChoice === graphUnit.cost
+      explainGraphSettings.userUnitChoice === graphUnit.cost
       ? graphUnit.cost
       : graphUnit.time
   );
@@ -58,7 +62,7 @@ export class ExplainState extends Model({
   get maxFlamegraphZoom() {
     return Math.max(
       1,
-      graphSettings.isTimeGraph
+      explainGraphSettings.isTimeGraph
         ? this.planTree.data.totalTime! * 10
         : this.planTree.data.totalCost
     );
@@ -234,7 +238,7 @@ export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
 
   queryEditor
     ._runStatement(updatedQuery, params?.data ?? null)
-    .then(() => queryEditor.setHistoryCursor(0));
+    .then(() => queryEditor.setHistoryCursor(0)); // todo
 }
 
 function nodesEqual(l: Plan[], r: Plan[]) {
@@ -389,6 +393,12 @@ export function walkPlanNode(
   }
 
   return plan;
+}
+
+export const ExplainContext = createContext<ExplainState>(null!);
+
+export function useExplainState() {
+  return useContext(ExplainContext);
 }
 
 // Result of explain query is output as a json string containing a tree of plan

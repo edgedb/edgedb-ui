@@ -9,14 +9,14 @@ import {
   useRef,
   useState,
 } from "react";
-import {useExplainState} from ".";
+import {useExplainState} from "./state";
 import styles from "./explainVis.module.scss";
 import {ExplainState, Plan} from "./state";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
-import {graphSettings} from "../../state/graphSettings";
+import {explainGraphSettings} from "../../state/explainGraphSettings";
 
 export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
 export const darkPalette = ["#292235", "#2B3428", "#182A30", "#20352F"];
@@ -32,7 +32,7 @@ function getPlanDepth(plan: Plan) {
 }
 
 export const Treemap = observer(function Treemap() {
-  const [state] = useExplainState();
+  const state = useExplainState();
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -217,7 +217,7 @@ function TransitionWrapper({
 }
 
 const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
-  const [state] = useExplainState();
+  const state = useExplainState();
 
   const breadcrumbs: Plan[] = [];
 
@@ -280,7 +280,7 @@ export const TreemapNode = observer(
     {plan, pos, parentSize, depth, transitionActive},
     forwardedRef
   ) {
-    const [state] = useExplainState();
+    const state = useExplainState();
     const [_, theme] = useTheme();
     const palette = theme === Theme.light ? lightPalette : darkPalette;
 
@@ -289,7 +289,7 @@ export const TreemapNode = observer(
 
     const parentArea = parentSize[0] * parentSize[1];
 
-    const isTimeGraph = graphSettings.isTimeGraph;
+    const isTimeGraph = explainGraphSettings.isTimeGraph;
 
     const ctxId = plan.nearestContextPlan?.contextId ?? plan.contextId;
 

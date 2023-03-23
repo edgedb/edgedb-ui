@@ -13,8 +13,8 @@ export enum graphUnit {
 
 const userGraphTypeStorageKey = "edgedbUserGraphTypeChoice";
 
-@model("GraphSettings")
-export class GraphSettings extends Model({
+@model("ExplainGraphSettings")
+export class ExplainGraphSettings extends Model({
   graphType: prop<graphType>(),
   graphUnit: prop<graphUnit>().withSetter(),
   userUnitChoice: prop<graphUnit | null>().withSetter(),
@@ -38,7 +38,7 @@ export class GraphSettings extends Model({
 
 const userStoredTypeChoice = localStorage.getItem(userGraphTypeStorageKey);
 
-const graphSettings = new GraphSettings({
+const explainGraphSettings = new ExplainGraphSettings({
   graphType: userStoredTypeChoice
     ? JSON.parse(userStoredTypeChoice)
     : graphType.area,
@@ -46,4 +46,4 @@ const graphSettings = new GraphSettings({
   userUnitChoice: null,
 });
 
-export {graphSettings};
+export {explainGraphSettings};
