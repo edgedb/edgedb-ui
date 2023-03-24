@@ -58,7 +58,9 @@ export default observer(function InstancePage() {
             openModal(
               <CreateDatabaseModal
                 instanceState={instanceState}
-                dbPagePathPrefix={`/`}
+                navigateToDB={(dbName) => {
+                  navigate(`/${dbName}`);
+                }}
               />
             );
           }}

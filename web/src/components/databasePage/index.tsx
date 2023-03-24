@@ -1,10 +1,11 @@
 import {observer} from "mobx-react";
-import {useNavigate, useParams} from "react-router-dom";
+import {useLocation, useNavigate, useParams} from "react-router-dom";
 
 import {InstanceStateContext} from "@edgedb/studio/state/instance";
 import {HeaderTab} from "@edgedb/studio/components/headerTabs";
 import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 
+import {DBRouterProvider} from "@edgedb/studio/hooks/dbRoute";
 import {useModal} from "@edgedb/common/hooks/useModal";
 import CreateDatabaseModal from "@edgedb/studio/components/modals/createDatabase";
 
@@ -19,6 +20,7 @@ import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 
 import {useAppState} from "src/state/providers";
+import {PropsWithChildren} from "react";
 
 const tabs: DatabaseTabSpec[] = [
   dashboardTabSpec,
@@ -37,7 +39,7 @@ export default observer(function DatabasePage() {
   return (
     <>
       <HeaderTab
-        depth={1}
+        headerKey="database"
         title={params.databaseName}
         icon={<HeaderDatabaseIcon />}
         selectedItemId={params.databaseName!}
@@ -63,7 +65,7 @@ export default observer(function DatabasePage() {
               openModal(
                 <CreateDatabaseModal
                   instanceState={appState.instanceState}
-                  dbPagePathPrefix={`/`}
+                  navigateToDB={(dbName) => navigate(`/${dbName}`)}
                 />
               );
             },
@@ -72,8 +74,44 @@ export default observer(function DatabasePage() {
       />
 
       <InstanceStateContext.Provider value={appState.instanceState}>
-        <DatabasePageContent databaseName={params.databaseName!} tabs={tabs} />
+        <RouterProvider>
+          <DatabasePageContent
+            databaseName={params.databaseName!}
+            tabs={tabs}
+          />
+        </RouterProvider>
       </InstanceStateContext.Provider>
     </>
   );
 });
+
+function RouterProvider({children}: PropsWithChildren<{}>) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <DBRouterProvider
+      value={{
+        currentPath: location.pathname.slice(1).split("/"),
+        searchParams: new URLSearchParams(location.search),
+        navigate: (path, replace) => {
+          navigate(
+            typeof path === "string"
+              ? `/${path}`
+              : {
+                  pathname: path.path && `/${path.path}`,
+                  search: path.searchParams?.toString(),
+                },
+            {
+              replace,
+            }
+          );
+        },
+        locationKey: location.key,
+        gotoInstancePage: () => navigate("/"),
+      }}
+    >
+      {children}
+    </DBRouterProvider>
+  );
+}
