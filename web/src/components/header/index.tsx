@@ -22,7 +22,7 @@ export default observer(function Header() {
   return (
     <div className={styles.header}>
       <Logo />
-      <HeaderTabs />
+      <HeaderTabs keys={["instance", "database"]} />
       <SessionStateControls />
       <ThemeSwitcher className={styles.themeSwitcher} />
     </div>

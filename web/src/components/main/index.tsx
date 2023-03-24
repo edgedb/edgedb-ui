@@ -30,7 +30,7 @@ export default observer(function Main() {
   return (
     <>
       <HeaderTab
-        depth={0}
+        headerKey="instance"
         title={
           instanceName ?? <span className={styles.loading}>loading...</span>
         }

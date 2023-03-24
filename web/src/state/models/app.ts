@@ -57,6 +57,7 @@ export class App extends Model({
   ),
 }) {
   onInit() {
+    this.instanceState.fetchInstanceInfo();
     this.instanceState._refreshAuthToken = clearAuthToken;
     appCtx.set(this, this);
   }
