@@ -39,6 +39,10 @@ import {extendedViewerIds} from "../../../components/extendedViewers";
 import "./itemHeights";
 import {ItemHeights} from "./itemHeights";
 import {sessionStateCtx} from "../../../state/sessionState";
+import {
+  createExplainState,
+  ExplainState,
+} from "../../../components/explainVis/state";
 
 export const defaultItemHeight = 85;
 
@@ -132,6 +136,34 @@ export class ReplHistoryItem extends Model({
     }
     return state ?? null;
   }
+
+  _explain: ExplainState | null = null;
+
+  get explainState() {
+    if (!this.hasResult) {
+      return null;
+    }
+
+    if (this._explain) {
+      return this._explain;
+    }
+
+    const explainCache = replExplainCacheCtx.get(this)!;
+    const state = explainCache.get(this.$modelId);
+
+    if (!state) {
+      fetchResultData(this.$modelId).then((resultData) => {
+        if (resultData) {
+          const explainState = createExplainState(
+            decode(resultData.outCodecBuf, resultData.resultBuf)![0]
+          );
+          explainCache.set(this.$modelId, explainState);
+        }
+      });
+    }
+
+    return state ?? null;
+  }
 }
 
 export interface ReplSettings {
@@ -141,12 +173,16 @@ export interface ReplSettings {
 const inspectorCacheCtx =
   createMobxContext<ObservableLRU<string, InspectorState>>();
 
+const replExplainCacheCtx =
+  createMobxContext<ObservableLRU<string, ExplainState>>();
+
 @model("Repl")
 export class Repl extends Model({
   queryHistory: prop<ReplHistoryItem[]>(() => []),
 }) {
   onInit() {
     inspectorCacheCtx.set(this, this.resultInspectorCache);
+    replExplainCacheCtx.set(this, this.resultExplainCache);
   }
 
   navigation: NavigateFunction | null = null;
@@ -200,6 +236,7 @@ export class Repl extends Model({
   }
 
   resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
+  resultExplainCache = new ObservableLRU<string, ExplainState>(20);
 
   @observable
   _hasUnfetchedHistory = true;
@@ -334,12 +371,19 @@ export class Repl extends Model({
 
         historyItem.setResult(status, !!result, Number(implicitLimit));
         if (result) {
-          this.resultInspectorCache.set(
-            historyItem.$modelId,
-            createInspector(result, Number(implicitLimit), (item) =>
-              this.setExtendedViewerItem(item)
-            )
-          );
+          if (status.toLowerCase() === "explain") {
+            this.resultExplainCache.set(
+              historyItem.$modelId,
+              createExplainState(result[0])
+            );
+          } else {
+            this.resultInspectorCache.set(
+              historyItem.$modelId,
+              createInspector(result, Number(implicitLimit), (item) =>
+                this.setExtendedViewerItem(item)
+              )
+            );
+          }
 
           resultData = {
             outCodecBuf,

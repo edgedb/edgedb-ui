@@ -60,8 +60,8 @@
 
 .explainVis {
   display: flex;
-  flex-direction: column;
   height: 100%;
+  flex-direction: column;
   background: #fff;
 
   @include darkTheme {
@@ -70,7 +70,7 @@
 }
 
 .graphScale {
-  margin: 12px 8px 6px 8px;
+  margin: 0px 8px 6px 8px;
   font-family: "Inter", sans-serif;
   font-size: 12px;
   line-height: 16px;
@@ -107,6 +107,7 @@
 
 .flamegraph {
   position: relative;
+  padding-top: 12px;
   flex-grow: 1;
   overflow: hidden;
   background: #f7f7f7;
@@ -337,12 +338,11 @@
   --outline-color: #468bff;
   height: 100%;
   position: relative;
-  background: #fff;
   margin: -2px;
 
   @include darkTheme {
     --outline-color: #74a6fc;
-    background: #141414;
+    background: #1c1c1c;
   }
 
   .treemapItem {
@@ -351,6 +351,11 @@
     z-index: 1;
     box-sizing: border-box;
     border: 1px solid rgba(0, 0, 0, 0.03);
+
+    .tooltip {
+      font-weight: 400;
+      line-height: 20px;
+    }
 
     @include darkTheme {
       background: #292235;
@@ -383,6 +388,10 @@
     &.hovered {
       outline: 2px dotted var(--outline-color);
       outline-offset: -2px;
+
+      > div:nth-child(2) {
+        opacity: 1;
+      }
     }
 
     .planName,

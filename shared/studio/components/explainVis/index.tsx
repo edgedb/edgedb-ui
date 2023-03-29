@@ -2,23 +2,14 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import {Switch, switchState} from "@edgedb/common/ui/switch";
+import Switch, {switchState} from "@edgedb/common/ui/switch";
 
 import {useRef} from "react";
 
-import {
-  QueryEditor,
-  QueryHistoryResultItem,
-} from "../../tabs/queryEditor/state";
+import {QueryHistoryResultItem} from "../../tabs/queryEditor/state";
 
 import styles from "./explainVis.module.scss";
-import {
-  createExplainState,
-  ExplainState,
-  Plan,
-  ExplainContext,
-  useExplainState,
-} from "./state";
+import {ExplainState, Plan, ExplainContext, useExplainState} from "./state";
 
 import {darkPalette, lightPalette, Treemap} from "./treemapLayout";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
@@ -28,15 +19,23 @@ import {
   graphUnit,
 } from "../../state/explainGraphSettings";
 
+export enum ExplainType {
+  light = "light",
+  full = "full",
+}
+
 interface ExplainVisProps {
-  editorState: QueryEditor;
   state: ExplainState | null;
-  queryHistoryItem: QueryHistoryResultItem;
+  classes?: string;
+  queryHistoryItem?: QueryHistoryResultItem;
+  type?: ExplainType;
 }
 
 export const ExplainVis = observer(function ExplainVis({
   state,
   queryHistoryItem,
+  type = ExplainType.full,
+  classes,
 }: ExplainVisProps) {
   if (!state) {
     return <div>loading...</div>;
@@ -44,10 +43,16 @@ export const ExplainVis = observer(function ExplainVis({
 
   return (
     <ExplainContext.Provider value={state}>
-      <div className={styles.explainVis}>
-        <ExplainHeader queryHistoryItem={queryHistoryItem} />
-        {explainGraphSettings.isAreaGraph ? <Treemap /> : <Flamegraph />}
-        <PlanDetails />
+      <div className={cn(styles.explainVis, classes)}>
+        {queryHistoryItem && (
+          <ExplainHeader queryHistoryItem={queryHistoryItem} />
+        )}
+        {explainGraphSettings.isAreaGraph ? (
+          <Treemap isFull={type === ExplainType.full} />
+        ) : (
+          <Flamegraph />
+        )}
+        {queryHistoryItem && <PlanDetails />}
       </div>
     </ExplainContext.Provider>
   );
@@ -137,9 +142,9 @@ const Flamegraph = observer(function Flamegraph() {
     state.planTree.data[
       explainGraphSettings.isTimeGraph ? "totalTime" : "totalCost"
     ]! / zoom;
-
   return (
     <div
+      style={{height: (state.planTree.data.childDepth + 1) * 38 + 12}}
       ref={ref}
       className={styles.flamegraph}
       onWheel={(e) => {

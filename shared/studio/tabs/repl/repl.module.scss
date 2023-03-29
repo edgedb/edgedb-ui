@@ -12,7 +12,7 @@
   flex-grow: 1;
   min-height: 0;
   min-width: 0;
-  background-color: #f5f5f5;
+  background-color: #f7f7f7;
   border-radius: 8px;
   font-family: "Roboto Mono", monospace;
 
@@ -67,11 +67,20 @@
 
   .headerMsg {
     margin-top: 32px;
-    opacity: 0.7;
+    color: #999;
 
     span {
       text-decoration: underline;
       cursor: pointer;
+      color: #4c4c4c;
+    }
+
+    @include darkTheme {
+      color: #666;
+
+      span {
+        color: #c4c4c4;
+      }
     }
   }
 }
@@ -122,14 +131,34 @@
 
 .replHistoryItem {
   position: absolute;
-  background: #ebebeb;
-  --inspectorBg: #ebebeb;
+  background: #ededed;
+  --inspectorBg: #ededed;
   box-sizing: border-box;
   margin: 12px 16px;
   width: calc(100% - 32px);
   padding: 12px 16px;
   padding-bottom: 0;
   border-radius: 8px;
+
+  &.explain {
+    display: flex;
+
+    .explainVis {
+      background: #ededed;
+
+      > div {
+        background: #ededed;
+      }
+
+      @include darkTheme {
+        background: #1c1c1c;
+
+        > div {
+          background: #1c1c1c;
+        }
+      }
+    }
+  }
 
   &.showDateHeader {
     margin-top: 36px;
@@ -138,11 +167,25 @@
   .scrollWrapper {
     overflow: auto;
     @include hideScrollbar;
+
+    &.explainTreemap {
+      height: 100%;
+      min-height: 380px;
+      max-height: 680px;
+      overflow-x: hidden;
+    }
+
+    &.sticky {
+      height: 100%;
+      max-height: 392px;
+      position: sticky;
+      top: 0;
+    }
   }
 
   @include darkTheme {
-    background: #303030;
-    --inspectorBg: #303030;
+    background: #1c1c1c;
+    --inspectorBg: #1c1c1c;
   }
 }
 
@@ -181,13 +224,18 @@
   display: flex;
   user-select: text;
   line-height: 19px;
+  flex-grow: 1;
 
   .historyPrompt {
     white-space: pre;
     user-select: none;
     pointer-events: none;
-    opacity: 0.5;
     padding-right: 1ch;
+    color: #808080;
+
+    @include darkTheme {
+      color: #7d7d7d;
+    }
   }
 
   .historyQueryCode {
@@ -203,6 +251,11 @@
 
     &.truncateQuery {
       max-height: 20 * 19px;
+      overflow: hidden;
+    }
+
+    &.explainTreemap {
+      max-height: 668px;
       overflow: hidden;
     }
   }
@@ -271,11 +324,78 @@
 
 .outputOuterWrapper {
   margin: 0 -16px;
+  flex-grow: 1;
+  max-width: 840px;
 }
 
 .historyOutput {
-  padding: 4px 8px 8px 8px;
+  padding: 4px 8px 12px 8px;
   min-width: max-content;
+  height: max-content;
+  height: fit-content;
+
+  .explain {
+    height: 100%;
+
+    .explainTip {
+      display: flex;
+      padding: 15px;
+      font-family: Roboto;
+
+      .explainLabel {
+        line-height: 20px;
+        color: #4c4c4c;
+        margin: 0 16px 0;
+        font-style: italic;
+
+        span {
+          font-style: normal;
+          background: rgba(0, 0, 0, 0.05);
+          padding: 4px 5px;
+          border-radius: 3px;
+          margin: 0 1px;
+        }
+
+        @include darkTheme {
+          color: #a6a6a6;
+
+          span {
+            background: #a6a6a6;
+            color: #141414;
+          }
+        }
+      }
+
+      .explainBtn {
+        color: #323232;
+        border-radius: 24px;
+        background: #49d8ad;
+        font-size: 11px;
+        line-height: 16px;
+        padding: 1px 0;
+
+        svg {
+          fill: #323232;
+          width: 8px;
+          height: 10px;
+          margin-right: 4px;
+        }
+
+        @include darkTheme {
+          background: #0d805e;
+          color: #141414;
+          svg {
+            fill: #323232;
+          }
+        }
+      }
+    }
+  }
+}
+
+.historyOutputTreemap {
+  height: calc(100% - 60px);
+  padding-right: 16px;
 }
 
 .queryError {
@@ -328,11 +448,10 @@
   .heading,
   .subheading {
     grid-column: 1 / span 2;
+    color: #808080;
   }
 
   .heading {
-    font-weight: 500;
-
     &:not(:first-child) {
       margin-top: 16px;
     }
@@ -340,22 +459,32 @@
 
   .subheading {
     padding-left: 2ch;
-    opacity: 0.5;
   }
 
   .command {
     padding: 0 3ch 0 2ch;
+    color: #4c4c4c;
 
     span {
-      opacity: 0.5;
+      color: #808080;
     }
   }
 
   .info {
-    opacity: 0.8;
+    color: #808080;
+  }
 
-    span {
-      opacity: 0.5;
+  @include darkTheme {
+    .command {
+      color: #c4c4c4;
+
+      span {
+        color: #666;
+      }
+    }
+
+    .info {
+      color: #666;
     }
   }
 }

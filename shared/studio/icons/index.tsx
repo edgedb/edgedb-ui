@@ -658,3 +658,21 @@ export function WhitespaceIcon() {
     </svg>
   );
 }
+
+export function RunIcon() {
+  return (
+    <svg
+      width="8"
+      height="10"
+      viewBox="0 0 8 10"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M1.09091 9.89071L7.63636 5.69867C8.12121 5.38815 8.12121 4.61185 7.63636 4.30133L1.09091 0.109289C0.606061 -0.201233 6.93581e-07 0.186918 6.93581e-07 0.807961L0 9.19204C0 9.81308 0.60606 10.2012 1.09091 9.89071Z"
+      />
+    </svg>
+  );
+}

@@ -6,6 +6,7 @@ import {useTheme, Theme} from "../../hooks/useTheme";
 import {LightThemeIcon, DarkThemeIcon, SystemThemeIcon} from "./icons";
 
 import styles from "./themeSwitcher.module.scss";
+import Tooltip, {tooltipLocation} from "../tooltip";
 
 export interface ThemeSwitcherProps {
   className?: string;
@@ -59,7 +60,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.light)}
         >
           <LightThemeIcon />
-          <div className={cn(styles.tooltip, styles.left)}>Light</div>
+          <Tooltip location={tooltipLocation.left}>Light</Tooltip>
         </div>
         <div
           className={cn(styles.button, {
@@ -68,7 +69,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.dark)}
         >
           <DarkThemeIcon />
-          <div className={styles.tooltip}>Dark</div>
+          <Tooltip>Dark </Tooltip>
         </div>
         <div
           className={cn(styles.button, {
@@ -77,7 +78,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.system)}
         >
           <SystemThemeIcon />
-          <div className={cn(styles.tooltip, styles.right)}>System</div>
+          <Tooltip location={tooltipLocation.right}>System</Tooltip>
         </div>
       </div>
     </div>

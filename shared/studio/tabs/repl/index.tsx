@@ -1,6 +1,6 @@
 import {observer} from "mobx-react-lite";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {TabReplIcon} from "../../icons";
+import {RunIcon, TabReplIcon} from "../../icons";
 import {
   defaultItemHeight,
   Repl,
@@ -8,7 +8,7 @@ import {
 } from "./state";
 
 import styles from "./repl.module.scss";
-import React, {
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -33,6 +33,10 @@ import {
   ExtendedViewerContext,
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
+import {ExplainType, ExplainVis} from "../../components/explainVis";
+import {explainGraphSettings} from "../../state/explainGraphSettings";
+import Button from "@edgedb/common/ui/button";
+import {QueryEditor} from "../queryEditor/state";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -300,8 +304,15 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   dbName: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const editorState = useTabState(QueryEditor);
 
   const updateScroll = useRef(false);
+
+  const runInEditor = () => {
+    editorState.loadFromRepl(item);
+    navigate("../editor");
+  };
 
   useEffect(() => {
     const disposer = reaction(
@@ -322,7 +333,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   useResize(
     ref,
     ({height}) => {
-      const paddedHeight = height + 24 + (item.showDateHeader ? 24 : 0);
+      const paddedHeight = height + 25 + (item.showDateHeader ? 24 : 0);
       if (item.renderHeight !== paddedHeight) {
         if (item.renderHeight && state.scrollRef && updateScroll.current) {
           state.scrollRef.scrollTop += item.renderHeight - paddedHeight;
@@ -338,6 +349,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   let output: JSX.Element | null;
 
+  const isExplain = item.status === "EXPLAIN";
+
   if (item.error) {
     output = (
       <div className={styles.queryError}>
@@ -350,21 +363,46 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     );
   } else if (item.status) {
     if (item.hasResult) {
-      const inspectorState = item.inspectorState;
-      output = inspectorState ? (
-        <Inspector
-          className={styles.inspector}
-          state={item.inspectorState}
-          disableVirtualisedRendering
-          maxHeight={item.showMore ? undefined : 16}
-          showMore={() => {
-            item.setShowMore(true);
-            updateScroll.current = true;
-          }}
-        />
-      ) : (
-        <>loading ...</>
-      );
+      if (isExplain) {
+        output = (
+          <div className={styles.explain}>
+            <ExplainVis
+              state={item.explainState}
+              type={ExplainType.light}
+              classes={styles.explainVis}
+            />
+            <div className={styles.explainTip}>
+              <p className={styles.explainLabel}>
+                To have a full <span>explain analyze</span> functionality
+                please run query in <b>Editor</b>
+              </p>
+              <Button
+                label="RUN IN EDITOR"
+                leftIcon
+                icon={<RunIcon />}
+                className={styles.explainBtn}
+                onClick={runInEditor}
+              />
+            </div>
+          </div>
+        );
+      } else {
+        const inspectorState = item.inspectorState;
+        output = inspectorState ? (
+          <Inspector
+            className={styles.inspector}
+            state={item.inspectorState}
+            disableVirtualisedRendering
+            maxHeight={item.showMore ? undefined : 16}
+            showMore={() => {
+              item.setShowMore(true);
+              updateScroll.current = true;
+            }}
+          />
+        ) : (
+          <>loading ...</>
+        );
+      }
     } else {
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
     }
@@ -380,12 +418,14 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
+  const isExplainTreemap = isExplain && explainGraphSettings.isAreaGraph;
 
   return (
     <div
       ref={ref}
       className={cn(styles.replHistoryItem, {
         [styles.showDateHeader]: item.showDateHeader,
+        [styles.explain]: isExplain,
       })}
       style={{top: styleTop}}
     >
@@ -412,6 +452,10 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
             <div
               className={cn(styles.codeBlockContainer, {
                 [styles.truncateQuery]: truncateQuery,
+                [styles.explainTreemap]:
+                  truncateQuery &&
+                  isExplain &&
+                  explainGraphSettings.isAreaGraph,
               })}
             >
               <CodeBlock
@@ -461,19 +505,29 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
             ) : null}
           </div>
         </CustomScrollbars>
-
-        <div className={styles.historyTime}>
-          {new Date(item.timestamp).toLocaleTimeString()}
-        </div>
+        {!isExplain && ( // TODO check with Roman about date
+          <div className={styles.historyTime}>
+            {new Date(item.timestamp).toLocaleTimeString()}
+          </div>
+        )}
       </div>
       {output ? (
         <CustomScrollbars
           className={styles.outputOuterWrapper}
           innerClass={styles.historyOutput}
         >
-          <div className={styles.scrollWrapper}>
+          <div
+            className={cn(styles.scrollWrapper, {
+              [styles.sticky]: isExplain,
+              [styles.explainTreemap]: isExplainTreemap,
+            })}
+          >
             <div
-              className={styles.historyOutput}
+              className={cn(styles.historyOutput, {
+                [styles.explain]: isExplain,
+
+                [styles.historyOutputTreemap]: isExplainTreemap,
+              })}
               style={{marginLeft: `${dbName.length + 2}ch`}}
             >
               {output}

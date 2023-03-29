@@ -1,3 +1,4 @@
+import {ReplHistoryItem} from "../../repl/state";
 import {action, computed, observable, reaction} from "mobx";
 import {
   model,
@@ -35,7 +36,7 @@ import {
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
 
-import {dbCtx} from "../../../state";
+import {dbCtx, useTabState} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
@@ -102,7 +103,8 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   }
 
   get explainState() {
-    const queryEditor = queryEditorCtx.get(this)!;
+    // const queryEditor = queryEditorCtx.get(this)!; // todo DP ask James
+    const queryEditor = useTabState(QueryEditor);
     const state = queryEditor.explainStateCache.get(this.$modelId);
     if (!state) {
       fetchResultData(this.$modelId).then((resultData) => {
@@ -355,6 +357,39 @@ export class QueryEditor extends Model({
         [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].isEdited,
       };
     }
+  }
+
+  @action
+  loadFromRepl(item: ReplHistoryItem) {
+    this.currentQueryData[EditorKind.EdgeQL] = Text.of(item.query.split("\n"));
+
+    const historyItemData: ModelCreationData<QueryHistoryItem> = {
+      $modelId: item.$modelId,
+      timestamp: item.timestamp,
+      thumbnailData: frozen(getThumbnailData({query: item.query})),
+      queryData: frozen({
+        query: item.query,
+        params: null,
+        kind: 0,
+      }),
+    };
+
+    if (item.explainState)
+      this.explainStateCache.set(item.$modelId, item.explainState);
+
+    const historyItem = new QueryHistoryResultItem({
+      ...historyItemData,
+      hasResult: true,
+      status: "EXPLAIN",
+      implicitLimit: item.implicitLimit!,
+    });
+
+    this.currentResult = historyItem;
+
+    this.queryIsEdited = {
+      ...this.queryIsEdited,
+      [EditorKind.EdgeQL]: false,
+    };
   }
 
   @action

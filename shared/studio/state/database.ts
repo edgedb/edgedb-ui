@@ -228,11 +228,9 @@ export class DatabaseState extends Model({
         const [sdl, rawTypes] = yield* _await(
           Promise.all([
             conn.query(`describe schema as sdl`).then(({result, duration}) => {
-              // console.log("describe", duration);
               return result![0] as string;
             }),
             conn.query(introspectionQuery).then(({result, duration}) => {
-              // console.log("types", duration);
               return result![0] as RawIntrospectionResult;
             }),
           ])
