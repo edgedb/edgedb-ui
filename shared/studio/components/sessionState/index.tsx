@@ -154,7 +154,7 @@ const SessionBarContent = observer(function SessionBarContent() {
       <div ref={ref} className={styles.chips}>
         {activeState.length ? (
           activeState.map(({kind, name, value, type}) => {
-            const [module, shortName] = name.split("::");
+            const nameParts = name.split("::");
             return (
               <div
                 key={name}
@@ -162,10 +162,10 @@ const SessionBarContent = observer(function SessionBarContent() {
                 onDoubleClick={() => state.openPanel({kind, name})}
               >
                 <div className={styles.chipKind}>{kind}</div>
-                {shortName && module !== "default" ? (
-                  <span>{module}::</span>
+                {nameParts.length > 1 && nameParts[0] !== "default" ? (
+                  <span>{nameParts.slice(0, -1).join("::")}::</span>
                 ) : null}
-                {shortName ?? module} :=
+                {nameParts[nameParts.length - 1]} :=
                 <div className={styles.chipVal}>
                   {renderValueWithType(value, type.data)}
                 </div>

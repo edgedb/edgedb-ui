@@ -59,7 +59,6 @@ const SCHEMA_DATA_VERSION = 3;
 export interface SchemaData {
   schemaDataVersion: number;
   migrationId: string | null;
-  sdl: string;
   objects: Map<string, SchemaObjectType>;
   objectsByName: Map<string, SchemaObjectType>;
   functions: Map<string, SchemaFunction>;
@@ -225,17 +224,11 @@ export class DatabaseState extends Model({
       this.fetchingSchemaData = true;
 
       try {
-        const [sdl, rawTypes] = yield* _await(
-          Promise.all([
-            conn.query(`describe schema as sdl`).then(({result, duration}) => {
-              // console.log("describe", duration);
-              return result![0] as string;
-            }),
-            conn.query(introspectionQuery).then(({result, duration}) => {
-              // console.log("types", duration);
-              return result![0] as RawIntrospectionResult;
-            }),
-          ])
+        const rawTypes = yield* _await(
+          conn.query(introspectionQuery).then(({result, duration}) => {
+            // console.log("types", duration);
+            return result![0] as RawIntrospectionResult;
+          })
         );
 
         const {
@@ -253,7 +246,6 @@ export class DatabaseState extends Model({
         const schemaData: SchemaData = {
           schemaDataVersion: SCHEMA_DATA_VERSION,
           migrationId,
-          sdl,
           objects: new Map(
             [...types.values()]
               .filter((t) => t.schemaType === "Object")

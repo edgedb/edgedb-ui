@@ -67,7 +67,11 @@ export type SchemaItem =
 export interface SchemaModule {
   schemaType: "Module";
   module: string;
+  depth: number;
   isEnd?: boolean;
+  startIndex?: number;
+  endIndex?: number;
+  submodules?: SchemaModule[];
 }
 
 export function getModuleGroup(item: Exclude<SchemaItem, SchemaExtension>) {
@@ -144,7 +148,7 @@ export class SchemaTextView extends Model({
   }
 
   getRenderHeight(index: number) {
-    const item = this.renderListItems[index].item;
+    const item = this.renderListItems.itemsList[index].item;
     return item.schemaType === "Module"
       ? 42
       : this.renderHeights.get(item.id) ?? 42;
@@ -226,7 +230,7 @@ export class SchemaTextView extends Model({
       await when(() => !!this.renderListItems);
     }
 
-    const listIndex = this.renderListItems.findIndex(
+    const listIndex = this.renderListItems.itemsList.findIndex(
       ({item: listItem}) =>
         listItem.schemaType !== "Module" && listItem === item
     );
@@ -390,48 +394,98 @@ export class SchemaTextView extends Model({
   }
 
   @computed
-  get renderListItems(): ListItem[] {
+  get renderListItems(): {itemsList: ListItem[]; modulesList: SchemaModule[]} {
     const items = this.filteredItems[this.selectedTypeFilter ?? "all"];
 
     if (this.searchText) {
-      return items;
+      return {itemsList: items, modulesList: []};
     }
 
     const exts: ListItem[] = [];
-    const modules: {[key: string]: ListItem[]} = {};
+    type NestedModule = {
+      items: ListItem[];
+      submodules: {[key: string]: NestedModule};
+    };
+    const modules: {[key: string]: NestedModule} = {};
+    const modulesMap = new Map<string, NestedModule>();
+
+    const getModule = (moduleName: string) => {
+      let module = modulesMap.get(moduleName);
+      if (!module) {
+        module = {
+          items: [],
+          submodules: {},
+        };
+        modulesMap.set(moduleName, module);
+        const moduleParts = moduleName.split("::");
+        if (moduleParts.length === 1) {
+          modules[moduleName] = module;
+        } else {
+          const parentModule = getModule(moduleParts.slice(0, -1).join("::"));
+          parentModule.submodules[moduleParts[moduleParts.length - 1]] =
+            module;
+        }
+      }
+      return module;
+    };
+
     for (const item of items) {
       if (item.item.schemaType === "Extension") {
         exts.push(item);
         continue;
       }
-      if (!modules[item.item.module]) {
-        modules[item.item.module] = [];
-      }
-      modules[item.item.module].push(item);
+
+      getModule(item.item.module).items.push(item);
     }
 
-    return [
-      ...exts,
-      ...Object.entries(modules)
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .flatMap(([name, items]) => {
-          return [
-            {
-              item: {
-                schemaType: "Module",
-                module: name,
-              } as SchemaModule,
-            },
-            ...items,
-            {
-              item: {
-                schemaType: "Module",
-                module: name,
-                isEnd: true,
-              } as SchemaModule,
-            },
-          ];
-        }),
-    ];
+    const sortAndFlattenModules = (
+      modules: {
+        [key: string]: NestedModule;
+      },
+      startIndex: number,
+      depth: number
+    ): [ListItem[], SchemaModule[]] => {
+      const sortedModules = Object.entries(modules).sort((a, b) =>
+        a[0].localeCompare(b[0])
+      );
+
+      let i = startIndex;
+      const itemsList: ListItem[] = [];
+      const headerItems: SchemaModule[] = [];
+      for (const [name, {items, submodules}] of sortedModules) {
+        const [submoduleItems, moduleHeaders] = sortAndFlattenModules(
+          submodules,
+          i + items.length + 1,
+          depth + 1
+        );
+        const endIndex = i + items.length + submoduleItems.length + 1;
+
+        const header = {
+          schemaType: "Module",
+          module: name,
+          depth,
+          startIndex: i,
+          endIndex: endIndex,
+          submodules: moduleHeaders,
+        } as SchemaModule;
+        headerItems.push(header);
+
+        itemsList.push({item: header}, ...items, ...submoduleItems, {
+          item: {
+            schemaType: "Module",
+            module: name,
+            depth,
+            isEnd: true,
+          } as SchemaModule,
+        });
+        i = endIndex + 1;
+      }
+
+      return [itemsList, headerItems];
+    };
+
+    const [itemsList, modulesList] = sortAndFlattenModules(modules, 0, 0);
+
+    return {itemsList: [...exts, ...itemsList], modulesList};
   }
 }

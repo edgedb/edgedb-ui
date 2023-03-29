@@ -3,7 +3,7 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {SchemaModule} from "../state/textView";
+import {SchemaModule, SchemaTextView} from "../state/textView";
 import {useSchemaTextState} from "../textView";
 
 import {Arrow, CollapseArrow, Keyword, Punc, Str} from "./utils";
@@ -47,8 +47,25 @@ export function ModuleRenderer({
         [styles.stickyHeader]: !!isSticky,
         [styles.isStuck]: isStuck,
       })}
+      style={{
+        paddingLeft: 18 + 17 * type.depth + "px",
+        ...(isSticky
+          ? {
+              zIndex: 100 - type.depth,
+              top: 31 * type.depth - 1 + "px",
+            }
+          : {}),
+      }}
     >
-      <div ref={ref} className={styles.stickySentinel} />
+      {isSticky ? (
+        <div
+          ref={ref}
+          className={styles.stickySentinel}
+          style={{
+            top: -31 * type.depth + "px",
+          }}
+        />
+      ) : null}
       {type.isEnd ? (
         <Punc>{"};"}</Punc>
       ) : (
@@ -56,6 +73,42 @@ export function ModuleRenderer({
           <Keyword>module</Keyword> {type.module} <Punc>{"{"}</Punc>
         </>
       )}
+    </div>
+  );
+}
+
+function ModuleHeader({
+  state,
+  module,
+  index,
+  parentOffset,
+}: {
+  state: SchemaTextView;
+  module: SchemaModule;
+  index: number;
+  parentOffset: number;
+}) {
+  const start = (state.listRef as any)._getItemStyle(module.startIndex);
+  const end = (state.listRef as any)._getItemStyle(module.endIndex);
+
+  return (
+    <div
+      className={cn(styles.listItem, styles.moduleWrapper)}
+      style={{
+        marginTop: index === 0 ? start.top - parentOffset : 42 + "px",
+        height: end.top - start.top + "px",
+      }}
+    >
+      <ModuleRenderer type={module} isSticky />
+      {module.submodules?.map((mod, i) => (
+        <ModuleHeader
+          key={i}
+          state={state}
+          module={mod}
+          index={i}
+          parentOffset={start.top + 42}
+        />
+      ))}
     </div>
   );
 }
@@ -71,36 +124,19 @@ export const ModuleHeaders = observer(function ModuleHeaders({}: {
     return null;
   }
 
-  const modules = state.renderListItems.reduce((mods, item, index) => {
-    if (item.item.schemaType === "Module") {
-      if (!item.item.isEnd) {
-        mods.push({module: item.item, index} as any);
-      } else {
-        mods[mods.length - 1].endIndex = index;
-      }
-    }
-    return mods;
-  }, [] as {module: SchemaModule; index: number; endIndex: number}[]);
+  const modules = state.renderListItems.modulesList;
 
   return (
     <>
-      {modules.map((mod, i) => {
-        const start = (state.listRef as any)._getItemStyle(mod.index);
-        const end = (state.listRef as any)._getItemStyle(mod.endIndex);
-
-        return (
-          <div
-            key={i}
-            className={cn(styles.listItem, styles.moduleWrapper)}
-            style={{
-              marginTop: (i === 0 ? start.top : 42) + "px",
-              height: end.top - start.top + "px",
-            }}
-          >
-            <ModuleRenderer type={mod.module} isSticky />
-          </div>
-        );
-      })}
+      {modules.map((mod, i) => (
+        <ModuleHeader
+          key={i}
+          state={state}
+          module={mod}
+          index={i}
+          parentOffset={0}
+        />
+      ))}
     </>
   );
 });
