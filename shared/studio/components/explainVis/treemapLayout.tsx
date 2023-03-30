@@ -335,13 +335,14 @@ export const TreemapNode = observer(
     }, [plan, parentArea, isTimeGraph]);
 
     const isSelected = state.selectedPlan?.id === plan.id;
+    const isHovered =
+      !isSelected && state.hoveredPlan?.id === plan.id && !!plan.parent;
 
     return (
       <div
         ref={ref}
         className={cn(styles.treemapItem, {
-          [styles.hovered]:
-            !isSelected && state.hoveredPlan?.id === plan.id && !!plan.parent,
+          [styles.hovered]: isHovered,
           [styles.selected]: isSelected,
           [styles.transitionActive]: !!transitionActive,
         })}

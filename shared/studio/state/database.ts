@@ -225,8 +225,7 @@ export class DatabaseState extends Model({
 
       try {
         const rawTypes = yield* _await(
-          conn.query(introspectionQuery).then(({result, duration}) => {
-            // console.log("types", duration);
+          conn.query(introspectionQuery).then(({result}) => {
             return result![0] as RawIntrospectionResult;
           })
         );

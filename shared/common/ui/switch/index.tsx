@@ -12,12 +12,7 @@ export interface SwitchProps {
   disabled?: boolean;
 }
 
-export const Switch = ({
-  labels,
-  value,
-  onChange,
-  disabled = false,
-}: SwitchProps) => (
+const Switch = ({labels, value, onChange, disabled = false}: SwitchProps) => (
   <div className={styles.container}>
     <div className={styles.switch}>
       <div className={styles.radio}>
@@ -61,3 +56,5 @@ export const Switch = ({
     </div>
   </div>
 );
+
+export default Switch;

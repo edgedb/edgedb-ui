@@ -1,6 +1,6 @@
 import {observer} from "mobx-react-lite";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {TabReplIcon} from "../../icons";
+import {ArrowDown, TabReplIcon} from "../../icons";
 import {
   defaultItemHeight,
   Repl,
@@ -8,7 +8,7 @@ import {
 } from "./state";
 
 import styles from "./repl.module.scss";
-import React, {
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -33,6 +33,10 @@ import {
   ExtendedViewerContext,
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
+import {ExplainType, ExplainVis} from "../../components/explainVis";
+import {explainGraphSettings} from "../../state/explainGraphSettings";
+import Button from "@edgedb/common/ui/button";
+import {QueryEditor} from "../queryEditor/state";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -300,8 +304,15 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   dbName: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const editorState = useTabState(QueryEditor);
 
   const updateScroll = useRef(false);
+
+  const runInEditor = () => {
+    editorState.loadFromRepl(item);
+    navigate("../editor");
+  };
 
   useEffect(() => {
     const disposer = reaction(
@@ -322,7 +333,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   useResize(
     ref,
     ({height}) => {
-      const paddedHeight = height + 24 + (item.showDateHeader ? 24 : 0);
+      const paddedHeight = height + 25 + (item.showDateHeader ? 24 : 0);
       if (item.renderHeight !== paddedHeight) {
         if (item.renderHeight && state.scrollRef && updateScroll.current) {
           state.scrollRef.scrollTop += item.renderHeight - paddedHeight;
@@ -338,6 +349,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   let output: JSX.Element | null;
 
+  const isExplain = item.status === "EXPLAIN";
+
   if (item.error) {
     output = (
       <div className={styles.queryError}>
@@ -350,21 +363,38 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     );
   } else if (item.status) {
     if (item.hasResult) {
-      const inspectorState = item.inspectorState;
-      output = inspectorState ? (
-        <Inspector
-          className={styles.inspector}
-          state={item.inspectorState}
-          disableVirtualisedRendering
-          maxHeight={item.showMore ? undefined : 16}
-          showMore={() => {
-            item.setShowMore(true);
-            updateScroll.current = true;
-          }}
-        />
-      ) : (
-        <>loading ...</>
-      );
+      if (isExplain) {
+        output = (
+          <div className={styles.explain}>
+            <Button
+              label="VIEW FULL UI IN EDITOR"
+              className={styles.runInEditorBtn}
+              onClick={runInEditor}
+            />
+            <ExplainVis
+              state={item.explainState}
+              type={ExplainType.light}
+              classes={styles.explainVis}
+            />
+          </div>
+        );
+      } else {
+        const inspectorState = item.inspectorState;
+        output = inspectorState ? (
+          <Inspector
+            className={styles.inspector}
+            state={item.inspectorState}
+            disableVirtualisedRendering
+            maxHeight={item.showMore ? undefined : 16}
+            showMore={() => {
+              item.setShowMore(true);
+              updateScroll.current = true;
+            }}
+          />
+        ) : (
+          <>loading ...</>
+        );
+      }
     } else {
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
     }
@@ -386,6 +416,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       ref={ref}
       className={cn(styles.replHistoryItem, {
         [styles.showDateHeader]: item.showDateHeader,
+        [styles.explain]: isExplain,
       })}
       style={{top: styleTop}}
     >
@@ -394,7 +425,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           {new Date(item.timestamp).toLocaleDateString()}
         </div>
       ) : null}
-      <div className={styles.historyQuery}>
+      <div
+        className={cn(styles.historyQuery, {
+          [styles.historyQueryExplain]: isExplain,
+        })}
+      >
         <div className={styles.historyPrompt}>
           {[
             `${dbName}>`,
@@ -449,19 +484,20 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
               ) : null}
             </div>
             {truncateQuery ? (
-              <div
-                className={styles.showFullQuery}
-                onClick={() => {
-                  item.setShowFullQuery(true);
-                  updateScroll.current = true;
-                }}
-              >
-                <span>show full query...</span>
+              <div className={styles.showFullQuery}>
+                <Button
+                  className={styles.showFullQueryBtn}
+                  label="Show more"
+                  icon={<ArrowDown />}
+                  onClick={() => {
+                    item.setShowFullQuery(true);
+                    updateScroll.current = true;
+                  }}
+                />
               </div>
             ) : null}
           </div>
         </CustomScrollbars>
-
         <div className={styles.historyTime}>
           {new Date(item.timestamp).toLocaleTimeString()}
         </div>
@@ -471,10 +507,18 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           className={styles.outputOuterWrapper}
           innerClass={styles.historyOutput}
         >
-          <div className={styles.scrollWrapper}>
+          <div
+            className={cn(styles.scrollWrapper, {
+              [styles.sticky]: isExplain,
+            })}
+          >
             <div
-              className={styles.historyOutput}
-              style={{marginLeft: `${dbName.length + 2}ch`}}
+              className={cn(styles.historyOutput, {
+                [styles.explain]: isExplain,
+              })}
+              style={{
+                marginLeft: isExplain ? "16px" : `${dbName.length + 2}ch`,
+              }}
             >
               {output}
             </div>

@@ -178,10 +178,9 @@ export const QueryEditorView = observer(function QueryEditorView() {
 const QueryCodeEditor = observer(function QueryCodeEditor() {
   const dbState = useDatabaseState();
   const editorState = useTabState(QueryEditor);
+  const [ref, setRef] = useState(null);
 
   const [_, theme] = useTheme();
-
-  const codeEditorRef = useRef<CodeEditorRef>();
 
   const keybindings = useMemo(
     () => [
@@ -202,8 +201,11 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     [editorState]
   );
 
-  useEffect(() => {
-    codeEditorRef.current?.focus();
+  const codeEditorRef = useCallback((node) => {
+    if (node) {
+      node.focus();
+      setRef(node);
+    }
   }, []);
 
   const explainState =
@@ -243,13 +245,8 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
           }
         />
       </CustomScrollbars>
-      {codeEditorRef.current &&
-      editorState.showEditorResultDecorations &&
-      explainState ? (
-        <CodeEditorExplainContexts
-          editorRef={codeEditorRef.current}
-          state={explainState}
-        />
+      {ref && editorState.showEditorResultDecorations && explainState ? (
+        <CodeEditorExplainContexts editorRef={ref} state={explainState} />
       ) : null}
     </>
   );
@@ -288,11 +285,7 @@ const QueryResult = observer(function QueryResult() {
     if (result.hasResult) {
       if (result.status === "EXPLAIN") {
         content = (
-          <ExplainVis
-            editorState={editorState}
-            state={result.explainState}
-            queryHistoryItem={result}
-          />
+          <ExplainVis state={result.explainState} queryHistoryItem={result} />
         );
       } else if (result.inspectorState) {
         content = (
