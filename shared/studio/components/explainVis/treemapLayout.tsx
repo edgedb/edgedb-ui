@@ -17,7 +17,6 @@ import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {explainGraphSettings} from "../../state/explainGraphSettings";
-import Tooltip from "@edgedb/common/ui/tooltip";
 
 export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
 export const darkPalette = ["#292235", "#2B3428", "#182A30", "#20352F"];
@@ -32,7 +31,7 @@ function getPlanDepth(plan: Plan) {
   return depth;
 }
 
-export const Treemap = observer(function Treemap({isFull}: {isFull: boolean}) {
+export const Treemap = observer(function Treemap() {
   const state = useExplainState();
 
   const ref = useRef<HTMLDivElement>(null);
@@ -96,7 +95,6 @@ export const Treemap = observer(function Treemap({isFull}: {isFull: boolean}) {
         height: 1,
       },
       parentSize: size,
-      isFull: isFull,
     };
     const trans = state.treemapTransition;
     if (trans) {
@@ -154,7 +152,7 @@ export const Treemap = observer(function Treemap({isFull}: {isFull: boolean}) {
         pointerEvents: state.treemapTransition ? "none" : undefined,
       }}
     >
-      {isFull && <TreemapBreadcrumbs />}
+      <TreemapBreadcrumbs />
       <div
         ref={ref}
         className={styles.treemapContainer}
@@ -262,12 +260,11 @@ interface TreemapNodeProps {
   parentSize: [number, number];
   depth: number;
   transitionActive?: boolean;
-  isFull: boolean;
 }
 
 export const TreemapNode = observer(
   forwardRef<HTMLDivElement, TreemapNodeProps>(function _TreemapNode(
-    {plan, pos, parentSize, depth, transitionActive, isFull},
+    {plan, pos, parentSize, depth, transitionActive},
     forwardedRef
   ) {
     const state = useExplainState();
@@ -375,7 +372,6 @@ export const TreemapNode = observer(
                       parentSize[1] * pos.height - MARGIN * 2,
                     ]}
                     depth={depth + 1}
-                    isFull={isFull}
                   />
                 );
               }
@@ -396,24 +392,20 @@ export const TreemapNode = observer(
                     width: `calc(${pos.width * 100}%)`,
                     height: `calc(${pos.height * 100}%)`,
                   }}
-                  {...(isFull && {
-                    onClick: () => {
-                      if (plan.parent) {
-                        if (state.selectedPlan === plan) {
-                          state.setSelectedPlan(null);
-                        } else {
-                          state.setSelectedPlan(plan);
-                        }
+                  onClick={() => {
+                    if (plan.parent) {
+                      if (state.selectedPlan === plan) {
+                        state.setSelectedPlan(null);
+                      } else {
+                        state.setSelectedPlan(plan);
                       }
-                    },
-                  })}
+                    }
+                  }}
                   onMouseOver={() => state.setHoveredPlan(plan)}
                   onMouseOut={() => state.setHoveredPlan(null)}
-                  {...(isFull && {
-                    onDoubleClick: () => {
-                      if (plan.parent) state.treemapZoomIn(plan, ref.current!);
-                    },
-                  })}
+                  onDoubleClick={() => {
+                    if (plan.parent) state.treemapZoomIn(plan, ref.current!);
+                  }}
                 >
                   {showLabel ? (
                     <span>
@@ -446,21 +438,6 @@ export const TreemapNode = observer(
             })}
           </div>
         ) : null}
-        {!isFull && (
-          <Tooltip classes={styles.tooltip}>
-            <p>
-              {explainGraphSettings.isTimeGraph
-                ? "Self time: "
-                : "Self cost: "}
-
-              <b>
-                {explainGraphSettings.isTimeGraph
-                  ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
-                  : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}
-              </b>
-            </p>
-          </Tooltip>
-        )}
       </div>
     );
   })

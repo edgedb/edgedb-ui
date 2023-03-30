@@ -124,6 +124,11 @@
     background: #d5d8ef;
     margin: 2px;
 
+    .tooltip {
+      font-weight: 400;
+      line-height: 20px;
+    }
+
     @include darkTheme {
       background: #292235;
     }
@@ -138,6 +143,10 @@
   .hovered {
     outline: 2px dotted var(--outline-color);
     outline-offset: -2px;
+
+    > div:nth-child(2) {
+      opacity: 1;
+    }
   }
 
   &Bar {
@@ -352,11 +361,6 @@
     box-sizing: border-box;
     border: 1px solid rgba(0, 0, 0, 0.03);
 
-    .tooltip {
-      font-weight: 400;
-      line-height: 20px;
-    }
-
     @include darkTheme {
       background: #292235;
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -388,10 +392,6 @@
     &.hovered {
       outline: 2px dotted var(--outline-color);
       outline-offset: -2px;
-
-      > div:nth-child(2) {
-        opacity: 1;
-      }
     }
 
     .planName,

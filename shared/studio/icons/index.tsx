@@ -659,20 +659,32 @@ export function WhitespaceIcon() {
   );
 }
 
-export function RunIcon() {
-  return (
-    <svg
-      width="8"
-      height="10"
-      viewBox="0 0 8 10"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M1.09091 9.89071L7.63636 5.69867C8.12121 5.38815 8.12121 4.61185 7.63636 4.30133L1.09091 0.109289C0.606061 -0.201233 6.93581e-07 0.186918 6.93581e-07 0.807961L0 9.19204C0 9.81308 0.60606 10.2012 1.09091 9.89071Z"
-      />
-    </svg>
-  );
-}
+// export function RunIcon() {
+//   return (
+//     <svg
+//       width="8"
+//       height="10"
+//       viewBox="0 0 8 10"
+//       fill="none"
+//       xmlns="http://www.w3.org/2000/svg"
+//     >
+//       <path
+//         fillRule="evenodd"
+//         clipRule="evenodd"
+//         d="M1.09091 9.89071L7.63636 5.69867C8.12121 5.38815 8.12121 4.61185 7.63636 4.30133L1.09091 0.109289C0.606061 -0.201233 6.93581e-07 0.186918 6.93581e-07 0.807961L0 9.19204C0 9.81308 0.60606 10.2012 1.09091 9.89071Z"
+//       />
+//     </svg>
+//   );
+// }
+
+export const ArrowDown = () => (
+  <svg
+    width="7"
+    height="6"
+    viewBox="0 0 7 6"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M6.91076 0.950216L4.07025 5.68326C3.81675 6.10558 3.18325 6.10558 2.92975 5.68326L0.0892386 0.950216C-0.164262 0.527898 0.152489 0 0.65949 0H6.34051C6.84751 0 7.16426 0.527898 6.91076 0.950216Z" />
+  </svg>
+);

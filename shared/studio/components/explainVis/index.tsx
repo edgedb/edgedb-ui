@@ -18,6 +18,7 @@ import {
   graphType,
   graphUnit,
 } from "../../state/explainGraphSettings";
+import Tooltip from "@edgedb/common/ui/tooltip";
 
 export enum ExplainType {
   light = "light",
@@ -41,16 +42,18 @@ export const ExplainVis = observer(function ExplainVis({
     return <div>loading...</div>;
   }
 
+  const isLight = type === ExplainType.light;
+
   return (
     <ExplainContext.Provider value={state}>
       <div className={cn(styles.explainVis, classes)}>
         {queryHistoryItem && (
           <ExplainHeader queryHistoryItem={queryHistoryItem} />
         )}
-        {explainGraphSettings.isAreaGraph ? (
-          <Treemap isFull={type === ExplainType.full} />
+        {!isLight && explainGraphSettings.isAreaGraph ? (
+          <Treemap />
         ) : (
-          <Flamegraph />
+          <Flamegraph isLight={isLight} />
         )}
         {queryHistoryItem && <PlanDetails />}
       </div>
@@ -128,7 +131,11 @@ const ExplainHeader = observer(function ExplainHeader({
   );
 });
 
-const Flamegraph = observer(function Flamegraph() {
+const Flamegraph = observer(function Flamegraph({
+  isLight = false,
+}: {
+  isLight?: boolean;
+}) {
   const state = useExplainState();
 
   const ref = useRef<HTMLDivElement>(null);
@@ -185,6 +192,7 @@ const Flamegraph = observer(function Flamegraph() {
             width={width * zoom}
             left={0}
             visibleRange={[offset - 16, offset + width + 16]}
+            isLight={isLight}
           />
         ) : null}
       </div>
@@ -257,12 +265,14 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   width,
   depth,
   visibleRange,
+  isLight,
 }: {
   plan: Plan;
   left: number;
   width: number;
   depth: number;
   visibleRange: [number, number];
+  isLight?: boolean;
 }) {
   const state = useExplainState();
 
@@ -317,6 +327,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           depth={depth + 1}
           width={childWidth}
           left={childLeft}
+          isLight={isLight}
           visibleRange={[
             visibleRange[0] - childLeft - 2,
             visibleRange[1] - childLeft,
@@ -341,16 +352,18 @@ const FlamegraphNode = observer(function _FlamegraphNode({
         width: width - 4,
         left: left,
       }}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (plan.parent) {
-          if (state.selectedPlan === plan) {
-            state.setSelectedPlan(null);
-          } else {
-            state.setSelectedPlan(plan);
+      {...(!isLight && {
+        onClick: (e) => {
+          e.stopPropagation();
+          if (plan.parent) {
+            if (state.selectedPlan === plan) {
+              state.setSelectedPlan(null);
+            } else {
+              state.setSelectedPlan(plan);
+            }
           }
-        }
-      }}
+        },
+      })}
       onMouseOver={(e) => {
         e.stopPropagation();
         state.setHoveredPlan(plan);
@@ -376,6 +389,17 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           )}
         </div>
       </div>
+      <Tooltip classes={styles.tooltip}>
+        <p>
+          {explainGraphSettings.isTimeGraph ? "Self time: " : "Self cost: "}
+
+          <b>
+            {explainGraphSettings.isTimeGraph
+              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
+              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}
+          </b>
+        </p>
+      </Tooltip>
       {sortedSubplans.length || hiddenCount ? (
         <div style={{height: plan.childDepth * 38}}>
           {childNodes}

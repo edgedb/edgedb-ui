@@ -1,6 +1,6 @@
 import {observer} from "mobx-react-lite";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {RunIcon, TabReplIcon} from "../../icons";
+import {ArrowDown, TabReplIcon} from "../../icons";
 import {
   defaultItemHeight,
   Repl,
@@ -366,24 +366,16 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       if (isExplain) {
         output = (
           <div className={styles.explain}>
+            <Button
+              label="VIEW FULL UI IN EDITOR"
+              className={styles.runInEditorBtn}
+              onClick={runInEditor}
+            />
             <ExplainVis
               state={item.explainState}
               type={ExplainType.light}
               classes={styles.explainVis}
             />
-            <div className={styles.explainTip}>
-              <p className={styles.explainLabel}>
-                To have a full <span>explain analyze</span> functionality
-                please run query in <b>Editor</b>
-              </p>
-              <Button
-                label="RUN IN EDITOR"
-                leftIcon
-                icon={<RunIcon />}
-                className={styles.explainBtn}
-                onClick={runInEditor}
-              />
-            </div>
           </div>
         );
       } else {
@@ -418,7 +410,6 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
-  const isExplainTreemap = isExplain && explainGraphSettings.isAreaGraph;
 
   return (
     <div
@@ -434,7 +425,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           {new Date(item.timestamp).toLocaleDateString()}
         </div>
       ) : null}
-      <div className={styles.historyQuery}>
+      <div
+        className={cn(styles.historyQuery, {
+          [styles.historyQueryExplain]: isExplain,
+        })}
+      >
         <div className={styles.historyPrompt}>
           {[
             `${dbName}>`,
@@ -452,10 +447,6 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
             <div
               className={cn(styles.codeBlockContainer, {
                 [styles.truncateQuery]: truncateQuery,
-                [styles.explainTreemap]:
-                  truncateQuery &&
-                  isExplain &&
-                  explainGraphSettings.isAreaGraph,
               })}
             >
               <CodeBlock
@@ -493,23 +484,23 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
               ) : null}
             </div>
             {truncateQuery ? (
-              <div
-                className={styles.showFullQuery}
-                onClick={() => {
-                  item.setShowFullQuery(true);
-                  updateScroll.current = true;
-                }}
-              >
-                <span>show full query...</span>
+              <div className={styles.showFullQuery}>
+                <Button
+                  className={styles.showFullQueryBtn}
+                  label="Show more"
+                  icon={<ArrowDown />}
+                  onClick={() => {
+                    item.setShowFullQuery(true);
+                    updateScroll.current = true;
+                  }}
+                />
               </div>
             ) : null}
           </div>
         </CustomScrollbars>
-        {!isExplain && ( // TODO check with Roman about date
-          <div className={styles.historyTime}>
-            {new Date(item.timestamp).toLocaleTimeString()}
-          </div>
-        )}
+        <div className={styles.historyTime}>
+          {new Date(item.timestamp).toLocaleTimeString()}
+        </div>
       </div>
       {output ? (
         <CustomScrollbars
@@ -519,16 +510,15 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           <div
             className={cn(styles.scrollWrapper, {
               [styles.sticky]: isExplain,
-              [styles.explainTreemap]: isExplainTreemap,
             })}
           >
             <div
               className={cn(styles.historyOutput, {
                 [styles.explain]: isExplain,
-
-                [styles.historyOutputTreemap]: isExplainTreemap,
               })}
-              style={{marginLeft: `${dbName.length + 2}ch`}}
+              style={{
+                marginLeft: isExplain ? "16px" : `${dbName.length + 2}ch`,
+              }}
             >
               {output}
             </div>
