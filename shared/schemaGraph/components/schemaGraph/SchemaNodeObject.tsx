@@ -75,9 +75,11 @@ export default observer(function SchemaNodeObject(props: ISchemaNodeProps) {
         onAuxClick={() => schemaState.graph.centerOnNode(props.node.id)}
       >
         {schemaState.graph.showModuleNames ? (
-          <span className={styles.moduleName}>{objectName[0]}::</span>
+          <span className={styles.moduleName}>
+            {objectName.slice(0, -1).join("::")}::
+          </span>
         ) : null}
-        {objectName[1]}
+        {objectName[objectName.length - 1]}
       </div>
       {properties}
       {object.links.length ? (

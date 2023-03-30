@@ -262,8 +262,11 @@ export interface SchemaExtension extends RawSchemaExtension {
 const knownTypes = new Set<string>(KnownScalarTypes);
 
 function splitName(typeName: string) {
-  const [module, shortName] = typeName.split("::");
-  return {module, shortName};
+  const parts = typeName.split("::");
+  return {
+    module: parts.slice(0, -1).join("::"),
+    shortName: parts[parts.length - 1],
+  };
 }
 
 const keywords = new Set(reserved_keywords);
@@ -276,8 +279,7 @@ function escape(name: string): string {
 
 export function escapeName(typeName: string, hasModule: boolean): string {
   if (hasModule) {
-    const {module, shortName} = splitName(typeName);
-    return `${escape(module)}::${escape(shortName)}`;
+    return typeName.split("::").map(escape).join("::");
   }
   return escape(typeName);
 }

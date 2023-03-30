@@ -267,7 +267,7 @@ const ListItemRenderer = observer(function ListItemRenderer({
 
   const resizeRef = useRef<HTMLDivElement>(null);
 
-  const {item, matches} = state.renderListItems[index];
+  const {item, matches} = state.renderListItems.itemsList[index];
   const TypeRenderer = renderers[item.schemaType] as any;
 
   useResize(
@@ -287,6 +287,11 @@ const ListItemRenderer = observer(function ListItemRenderer({
           [styles.highlightedItem]:
             state.highlightedItem === (item as any).name,
         })}
+        style={
+          !state.searchText && item.schemaType !== "Extension"
+            ? {marginLeft: (item.module.split("::").length - 1) * 17 + "px"}
+            : undefined
+        }
         ref={resizeRef}
       >
         <TypeRenderer type={item} matches={matches} />
@@ -312,7 +317,7 @@ const innerElementType = forwardRef<HTMLDivElement>(
 const SchemaTypesList = observer(function SchemaTypesList() {
   const state = useTabState(Schema).textViewState;
 
-  const listItems = state.renderListItems;
+  const listItems = state.renderListItems.itemsList;
 
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);

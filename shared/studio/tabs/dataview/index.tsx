@@ -107,21 +107,22 @@ const DataInspectorView = observer(function DataInspectorView({
           <>
             <Select
               className={cn(styles.headerSelect, styles.objectSelect)}
-              items={dataviewState.objectTypes.map(({id, name}) => {
-                const [modName, typeName] = name.split(/::/);
-                return {
-                  label: (
-                    <>
-                      <span className={styles.modName}>{modName}::</span>
-                      {typeName}
-                    </>
-                  ),
-                  action: () => {
-                    navigate(name);
-                    dataviewState.selectObject(id);
-                  },
-                };
-              })}
+              items={dataviewState.objectTypes.map(
+                ({id, name, module, shortName}) => {
+                  return {
+                    label: (
+                      <>
+                        <span className={styles.modName}>{module}::</span>
+                        {shortName}
+                      </>
+                    ),
+                    action: () => {
+                      navigate(name);
+                      dataviewState.selectObject(id);
+                    },
+                  };
+                }
+              )}
               selectedItemIndex={dataviewState.objectTypes.indexOf(
                 stack[0]?.objectType!
               )}
@@ -225,7 +226,7 @@ const DataInspectorView = observer(function DataInspectorView({
                   )
                 }
               >
-                Insert {inspectorState.insertTypeNames[0].split("::")[1]}
+                Insert {inspectorState.insertTypeNames[0].split("::").pop()}
               </div>
             )
           ) : null}
