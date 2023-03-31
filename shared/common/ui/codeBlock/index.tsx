@@ -13,7 +13,7 @@ if (highlightStyle.module) {
 }
 
 type CustomRange = {range: [number, number]} & (
-  | {style: string}
+  | {style: string; attrs?: {[key: string]: string}}
   | {
       renderer: (range: [number, number], content: JSX.Element) => JSX.Element;
     }
@@ -84,7 +84,11 @@ export default function CodeBlock({
         );
         html.push(
           "style" in currentRange ? (
-            <span key={html.length} className={currentRange.style}>
+            <span
+              key={html.length}
+              className={currentRange.style}
+              {...currentRange.attrs}
+            >
               {customRangeBuffer}
             </span>
           ) : (

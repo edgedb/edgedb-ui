@@ -9,6 +9,7 @@ import {
 
 import styles from "./repl.module.scss";
 import {
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -37,6 +38,10 @@ import {ExplainType, ExplainVis} from "../../components/explainVis";
 import {explainGraphSettings} from "../../state/explainGraphSettings";
 import Button from "@edgedb/common/ui/button";
 import {QueryEditor} from "../queryEditor/state";
+import {
+  ExplainHighlightsRef,
+  ExplainHighlightsRenderer,
+} from "../../components/explainVis/codeEditorContexts";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -307,6 +312,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   const navigate = useNavigate();
   const editorState = useTabState(QueryEditor);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const updateScroll = useRef(false);
 
   const runInEditor = () => {
@@ -445,24 +452,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         >
           <div className={styles.scrollWrapper}>
             <div
+              ref={containerRef}
               className={cn(styles.codeBlockContainer, {
                 [styles.truncateQuery]: truncateQuery,
               })}
             >
-              <CodeBlock
-                className={cn(styles.code)}
-                code={item.query}
-                customRanges={
-                  item.error?.data.range
-                    ? [
-                        {
-                          range: item.error.data.range,
-                          style: styles.errorUnderline,
-                        },
-                      ]
-                    : undefined
-                }
-              />
+              <QueryCodeBlock item={item} containerRef={containerRef} />
               {item.error?.data.range ? (
                 <div
                   className={styles.codeBlockErrorLines}
@@ -528,6 +523,53 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     </div>
   );
 });
+
+function QueryCodeBlock({
+  item,
+  containerRef,
+}: {
+  item: ReplHistoryItemState;
+  containerRef: RefObject<HTMLElement>;
+}) {
+  const explainHighlightsRef = useRef<ExplainHighlightsRef>();
+
+  useEffect(() => {
+    if (explainHighlightsRef.current && containerRef.current) {
+      explainHighlightsRef.current.updateContextRects(containerRef.current);
+    }
+  }, [explainHighlightsRef]);
+
+  return (
+    <>
+      <CodeBlock
+        className={cn(styles.code)}
+        code={item.query}
+        customRanges={
+          item.error?.data.range
+            ? [
+                {
+                  range: item.error.data.range,
+                  style: styles.errorUnderline,
+                },
+              ]
+            : item.explainState?.contextsByBufIdx[0]?.map((ctx) => ({
+                range: [ctx.start, ctx.end],
+                style: "",
+                attrs: {
+                  "data-ctx-id": ctx.id.toString(),
+                },
+              }))
+        }
+      />
+      {item.explainState ? (
+        <ExplainHighlightsRenderer
+          ref={explainHighlightsRef}
+          state={item.explainState}
+        />
+      ) : null}
+    </>
+  );
+}
 
 const headerASCII = `
                                           /$$
