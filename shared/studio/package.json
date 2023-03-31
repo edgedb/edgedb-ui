@@ -9,6 +9,7 @@
     "@edgedb/common": "workspace:*",
     "@edgedb/inspector": "workspace:*",
     "@edgedb/schema-graph": "workspace:*",
+    "@radix-ui/react-tooltip": "^1.0.5",
     "codemirror-graphql": "^1.3.0",
     "fuzzysort": "^2.0.1",
     "graphql": "^16.5.0",
