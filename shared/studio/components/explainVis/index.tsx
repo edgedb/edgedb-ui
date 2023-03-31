@@ -3,6 +3,7 @@ import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
 import Switch, {switchState} from "@edgedb/common/ui/switch";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 import {useRef} from "react";
 
@@ -18,7 +19,6 @@ import {
   graphType,
   graphUnit,
 } from "../../state/explainGraphSettings";
-import Tooltip from "@edgedb/common/ui/tooltip";
 
 export enum ExplainType {
   light = "light",
@@ -46,17 +46,19 @@ export const ExplainVis = observer(function ExplainVis({
 
   return (
     <ExplainContext.Provider value={state}>
-      <div className={cn(styles.explainVis, classes)}>
-        {queryHistoryItem && (
-          <ExplainHeader queryHistoryItem={queryHistoryItem} />
-        )}
-        {!isLight && explainGraphSettings.isAreaGraph ? (
-          <Treemap />
-        ) : (
-          <Flamegraph isLight={isLight} />
-        )}
-        {queryHistoryItem && <PlanDetails />}
-      </div>
+      <Tooltip.Provider delayDuration={0}>
+        <div className={cn(styles.explainVis, classes)}>
+          {queryHistoryItem && (
+            <ExplainHeader queryHistoryItem={queryHistoryItem} />
+          )}
+          {!isLight && explainGraphSettings.isAreaGraph ? (
+            <Treemap />
+          ) : (
+            <Flamegraph isLight={isLight} />
+          )}
+          {queryHistoryItem && <PlanDetails />}
+        </div>
+      </Tooltip.Provider>
     </ExplainContext.Provider>
   );
 });
@@ -111,19 +113,6 @@ const ExplainHeader = observer(function ExplainHeader({
           }}
         />
       </div>
-      {/* <>
-        {state.planTree.data.totalTime == null ? ( // TODO DP: delete after updating tooltip
-          <div className={styles.rerunWithAnalyze}>
-            <div className={styles.message}>Timing data not available</div>
-            <div
-              className={styles.button}
-              onClick={() => reRunWithAnalyze(queryHistoryItem)}
-            >
-              Re-run query using explain analyze
-            </div>
-          </div>
-        ) : null}
-      </> */}
       {explainGraphSettings.isAreaGraph && (
         <p className={styles.queryDuration}>{queryTimeCost}</p>
       )}
@@ -254,7 +243,7 @@ const PlanDetails = observer(function PlanDetails() {
     </div>
   ) : (
     <div className={styles.noSelectedPlanDetails}>
-      Select plan node above for details // todo
+      Select plan node above for details
     </div>
   );
 });
@@ -340,7 +329,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
 
   const isSelected = state.selectedPlan?.id === plan.id;
 
-  return (
+  const flamegraphNode = (
     <div
       className={cn(styles.flamegraphNode, {
         [styles.hovered]:
@@ -389,24 +378,16 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           )}
         </div>
       </div>
-      <Tooltip classes={styles.tooltip}>
-        <p>
-          {explainGraphSettings.isTimeGraph ? "Self time: " : "Self cost: "}
-
-          <b>
-            {explainGraphSettings.isTimeGraph
-              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
-              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}
-          </b>
-        </p>
-      </Tooltip>
       {sortedSubplans.length || hiddenCount ? (
         <div style={{height: plan.childDepth * 38}}>
           {childNodes}
           {hiddenCount ? (
             <div
               className={styles.flamegraphHiddenNodes}
-              style={{width: Math.max(0, hiddenWidth - 4), left: childLeft}}
+              style={{
+                width: Math.max(0, hiddenWidth - 4),
+                left: childLeft,
+              }}
             >
               <span>{hiddenCount} hidden</span>
             </div>
@@ -414,6 +395,25 @@ const FlamegraphNode = observer(function _FlamegraphNode({
         </div>
       ) : null}
     </div>
+  );
+
+  return isLight ? (
+    <Tooltip.Root open={state.hoveredPlan?.id === plan.id}>
+      <Tooltip.Trigger asChild>{flamegraphNode}</Tooltip.Trigger>
+      <Tooltip.Content sideOffset={2}>
+        <p className={styles.tooltipContent}>
+          {explainGraphSettings.isTimeGraph ? "Self time: " : "Self cost: "}
+          <b>
+            {explainGraphSettings.isTimeGraph
+              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
+              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}
+          </b>
+        </p>
+        <Tooltip.Arrow className={styles.tooltipArrow} />
+      </Tooltip.Content>
+    </Tooltip.Root>
+  ) : (
+    <> {flamegraphNode} </>
   );
 });
 
