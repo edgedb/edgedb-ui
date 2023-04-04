@@ -39,7 +39,6 @@ export const ExplainHighlightsRenderer = observer(
     const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
 
     const updateContextRects = useCallback((containerEl: HTMLElement) => {
-      console.log("rects update");
       const scrollRect = containerEl.getBoundingClientRect();
 
       const offsetTop = scrollRect.top - containerEl.scrollTop;

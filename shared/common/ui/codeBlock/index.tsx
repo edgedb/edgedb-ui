@@ -13,7 +13,8 @@ if (highlightStyle.module) {
 }
 
 type CustomRange = {range: [number, number]} & (
-  | {style: string; attrs?: {[key: string]: string}}
+  | {style: string} // error
+  | {attrs: {[key: string]: string}} // explain
   | {
       renderer: (range: [number, number], content: JSX.Element) => JSX.Element;
     }
@@ -28,16 +29,15 @@ interface CodeBlockProps {
 
 interface CustomRangeExplain {
   range: [number, number];
-  style: string;
   attrs: {[key: string]: string};
 }
 
 type FlattenedRanges = {
   range: [number, number];
-  attrs?:  {'data-ctx-id': string[]};
+  attrs: {"data-ctx-id": string};
 }[];
 
-function flattenRanges(ranges: CustomRangeExplain[]) {
+function getFlattenRanges(ranges: CustomRangeExplain[]) {
   const edges = ranges
     .flatMap((range) => [
       {
@@ -60,22 +60,32 @@ function flattenRanges(ranges: CustomRangeExplain[]) {
     if (edges[i].type === "end" && edges[i - 1].type === "start") {
       flattened.push({
         range: [edges[i - 1].index, edges[i].index],
-        attrs: {...edges[i].range.attrs, "data-ctx-id": [edges[i].range.attrs["data-ctx-id"]]}
+        attrs: {
+          ...edges[i].range.attrs,
+          "data-ctx-id": edges[i].range.attrs["data-ctx-id"],
+        },
       });
       if (prev.length && flattened.length) {
         for (const elem of prev) {
           flattened[flattened.length - 1].attrs = {
             ...flattened[flattened.length - 1].attrs,
-            "data-ctx-id": [...(flattened[flattened.length - 1].attrs!['data-ctx-id']),elem.attrs["data-ctx-id"]]
-          }
+            "data-ctx-id": [
+              flattened[flattened.length - 1].attrs!["data-ctx-id"],
+              elem.attrs["data-ctx-id"],
+            ].join(","),
+          };
         }
         prev.pop();
       }
     }
+
     if (edges[i].type === "start" && edges[i - 1].type === "start") {
       flattened.push({
         range: [edges[i - 1].index, edges[i].index],
-        attrs: {...edges[i-1].range.attrs, "data-ctx-id": [edges[i-1].range.attrs["data-ctx-id"]]}
+        attrs: {
+          ...edges[i - 1].range.attrs,
+          "data-ctx-id": edges[i - 1].range.attrs["data-ctx-id"],
+        },
       });
       prev.push(edges[i - 1].range);
     }
@@ -83,15 +93,17 @@ function flattenRanges(ranges: CustomRangeExplain[]) {
     if (edges[i].type === "end" && edges[i - 1].type === "end") {
       flattened.push({
         range: [edges[i - 1].index, edges[i].index],
-        attrs: {...edges[i].range.attrs, "data-ctx-id": [edges[i].range.attrs["data-ctx-id"]]}
+        attrs: {
+          ...edges[i].range.attrs,
+          "data-ctx-id": edges[i].range.attrs["data-ctx-id"],
+        },
       });
       prev.pop();
     }
   }
+
   return flattened;
 }
-
-
 
 export default function CodeBlock({
   code,
@@ -104,9 +116,12 @@ export default function CodeBlock({
 
   const html: (string | JSX.Element)[] = [];
 
-  const ranges = Array.isArray(customRanges)
-    ? customRanges[0].renderer || !customRanges[0].attrs ? customRanges: flattenRanges(customRanges)
+  let ranges = Array.isArray(customRanges)
+    ? customRanges
     : customRanges?.(tree);
+
+  if (ranges && "attrs" in ranges[0])
+    ranges = getFlattenRanges(ranges as CustomRangeExplain[]);
 
   let nextRangeIndex = 0;
   let currentRange = ranges?.[nextRangeIndex++];
@@ -150,24 +165,23 @@ export default function CodeBlock({
           )
         );
 
-        html.push(
-          "style" in currentRange || "attrs" in currentRange ? (
-            <span
-              key={html.length}
-              className={currentRange.style}
-              {...currentRange.attrs}
-            >
+        if (currentRange && "attrs" in currentRange)
+          html.push(
+            <span key={html.length} {...currentRange.attrs}>
               {customRangeBuffer}
             </span>
-          ) : (
+          );
+
+        if (currentRange && "renderer" in currentRange)
+          html.push(
             <Fragment key={html.length}>
               {currentRange.renderer(
                 currentRange.range,
                 <>{customRangeBuffer}</>
               )}
             </Fragment>
-          )
-        );
+          );
+
         customRangeBuffer = null;
         cursor = currentRange!.range[1];
         currentRange = ranges?.[nextRangeIndex++];
@@ -206,19 +220,19 @@ export default function CodeBlock({
   });
   addSpan(code.slice(cursor));
 
-  if (customRangeBuffer) {
+  if (currentRange && customRangeBuffer && "style" in currentRange)
     html.push(
-      "style" in currentRange || "attrs" in currentRange ? (
-        <span key={html.length} className={currentRange.style}>
-          {customRangeBuffer}
-        </span>
-      ) : (
-        <Fragment key={html.length}>
-          {currentRange.renderer(currentRange.range, <>{customRangeBuffer}</>)}
-        </Fragment>
-      )
+      <span key={html.length} className={currentRange.style}>
+        {customRangeBuffer}
+      </span>
     );
-  }
+
+  if (currentRange && customRangeBuffer && "renderer" in currentRange)
+    html.push(
+      <Fragment key={html.length}>
+        {currentRange.renderer(currentRange.range, <>{customRangeBuffer}</>)}
+      </Fragment>
+    );
 
   return inline ? (
     <span {...otherProps}>{html}</span>

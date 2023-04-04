@@ -530,13 +530,19 @@ function QueryCodeBlock({
   item: ReplHistoryItemState;
   containerRef: RefObject<HTMLElement>;
 }) {
-  const explainHighlightsRef = useRef<ExplainHighlightsRef>();
+  const [ref, setRef] = useState<ExplainHighlightsRef | null>(null);
+
+  const explainHighlightsRef = useCallback((node) => {
+    if (node) {
+      setRef(node);
+    }
+  }, []);
 
   useEffect(() => {
-    if (explainHighlightsRef.current && containerRef.current) {
-      explainHighlightsRef.current.updateContextRects(containerRef.current);
+    if (ref && containerRef.current) {
+      ref.updateContextRects(containerRef.current);
     }
-  }, [explainHighlightsRef]);
+  }, [ref]);
 
   return (
     <>
@@ -553,7 +559,6 @@ function QueryCodeBlock({
               ]
             : item.explainState?.contextsByBufIdx[0]?.map((ctx) => ({
                 range: [ctx.start, ctx.end],
-                style: "",
                 attrs: {
                   "data-ctx-id": ctx.id.toString(),
                 },
