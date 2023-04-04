@@ -35,7 +35,6 @@ import {
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
-import {explainGraphSettings} from "../../state/explainGraphSettings";
 import Button from "@edgedb/common/ui/button";
 import {QueryEditor} from "../queryEditor/state";
 import {

@@ -103,9 +103,9 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   }
 
   get explainState() {
-    // const queryEditor = queryEditorCtx.get(this)!; // todo DP ask James
     const queryEditor = useTabState(QueryEditor);
     const state = queryEditor.explainStateCache.get(this.$modelId);
+
     if (!state) {
       fetchResultData(this.$modelId).then((resultData) => {
         if (resultData) {

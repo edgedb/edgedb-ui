@@ -47,9 +47,10 @@ export const ExplainHighlightsRenderer = observer(
       const ctxs = state.contextsByBufIdx[0] ?? [];
       const rects = [];
       let parentCtxs: Context[] = [];
+
       for (const ctx of ctxs) {
         const els = [
-          ...containerEl.querySelectorAll(`[data-ctx-id="${ctx.id}"]`),
+          ...containerEl.querySelectorAll(`[data-ctx-id*="${ctx.id}"]`),
         ];
         if (!els.length) {
           continue;

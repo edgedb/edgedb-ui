@@ -26,6 +26,73 @@ interface CodeBlockProps {
   inline?: boolean;
 }
 
+interface CustomRangeExplain {
+  range: [number, number];
+  style: string;
+  attrs: {[key: string]: string};
+}
+
+type FlattenedRanges = {
+  range: [number, number];
+  attrs?:  {'data-ctx-id': string[]};
+}[];
+
+function flattenRanges(ranges: CustomRangeExplain[]) {
+  const edges = ranges
+    .flatMap((range) => [
+      {
+        type: "start",
+        index: range.range[0],
+        range: range,
+      },
+      {
+        type: "end",
+        index: range.range[1],
+        range: range,
+      },
+    ])
+    .sort((a, b) => a.index - b.index);
+
+  let prev: CustomRangeExplain[] = [];
+  const flattened: FlattenedRanges = [];
+
+  for (let i = 1; i < edges.length; i++) {
+    if (edges[i].type === "end" && edges[i - 1].type === "start") {
+      flattened.push({
+        range: [edges[i - 1].index, edges[i].index],
+        attrs: {...edges[i].range.attrs, "data-ctx-id": [edges[i].range.attrs["data-ctx-id"]]}
+      });
+      if (prev.length && flattened.length) {
+        for (const elem of prev) {
+          flattened[flattened.length - 1].attrs = {
+            ...flattened[flattened.length - 1].attrs,
+            "data-ctx-id": [...(flattened[flattened.length - 1].attrs!['data-ctx-id']),elem.attrs["data-ctx-id"]]
+          }
+        }
+        prev.pop();
+      }
+    }
+    if (edges[i].type === "start" && edges[i - 1].type === "start") {
+      flattened.push({
+        range: [edges[i - 1].index, edges[i].index],
+        attrs: {...edges[i-1].range.attrs, "data-ctx-id": [edges[i-1].range.attrs["data-ctx-id"]]}
+      });
+      prev.push(edges[i - 1].range);
+    }
+
+    if (edges[i].type === "end" && edges[i - 1].type === "end") {
+      flattened.push({
+        range: [edges[i - 1].index, edges[i].index],
+        attrs: {...edges[i].range.attrs, "data-ctx-id": [edges[i].range.attrs["data-ctx-id"]]}
+      });
+      prev.pop();
+    }
+  }
+  return flattened;
+}
+
+
+
 export default function CodeBlock({
   code,
   language,
@@ -38,7 +105,7 @@ export default function CodeBlock({
   const html: (string | JSX.Element)[] = [];
 
   const ranges = Array.isArray(customRanges)
-    ? customRanges
+    ? customRanges[0].renderer || !customRanges[0].attrs ? customRanges: flattenRanges(customRanges)
     : customRanges?.(tree);
 
   let nextRangeIndex = 0;
@@ -82,8 +149,9 @@ export default function CodeBlock({
             textSlice
           )
         );
+
         html.push(
-          "style" in currentRange ? (
+          "style" in currentRange || "attrs" in currentRange ? (
             <span
               key={html.length}
               className={currentRange.style}
@@ -140,7 +208,7 @@ export default function CodeBlock({
 
   if (customRangeBuffer) {
     html.push(
-      "style" in currentRange ? (
+      "style" in currentRange || "attrs" in currentRange ? (
         <span key={html.length} className={currentRange.style}>
           {customRangeBuffer}
         </span>

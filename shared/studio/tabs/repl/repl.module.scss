@@ -9,6 +9,11 @@
 }
 
 .repl {
+  --outline-color: #468bff;
+
+  @include darkTheme {
+    --outline-color: #74a6fc;
+  }
   flex-grow: 1;
   min-height: 0;
   min-width: 0;

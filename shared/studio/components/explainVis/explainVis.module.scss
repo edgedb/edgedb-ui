@@ -560,3 +560,7 @@
     outline: 2px dotted var(--outline-color);
   }
 }
+
+div[data-radix-popper-content-wrapper] {
+  z-index: 1001 !important;
+}

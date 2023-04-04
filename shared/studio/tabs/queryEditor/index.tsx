@@ -4,7 +4,7 @@ import {Text} from "@codemirror/state";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
+import {CodeEditor} from "@edgedb/code-editor";
 
 import styles from "./repl.module.scss";
 
