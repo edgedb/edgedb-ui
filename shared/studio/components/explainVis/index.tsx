@@ -327,7 +327,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     childLeft += childWidth;
   }
 
-  const isSelected = state.selectedPlan?.id === plan.id;
+  const isSelected = !isLight && state.selectedPlan?.id === plan.id;
 
   const flamegraphNode = (
     <div

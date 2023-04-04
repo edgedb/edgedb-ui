@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {createPortal} from "react-dom";
+import {useLocation} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -100,6 +101,8 @@ export const ExplainHighlightsRenderer = observer(
 
     const [_, theme] = useTheme();
     const palette = theme === Theme.light ? lightPalette : darkPalette;
+    const location = useLocation();
+    const isEditor = location.pathname.includes("editor");
 
     const getBgColor = (ctxRect: CtxRect) => {
       if (state.hoveredPlan) {
@@ -108,14 +111,14 @@ export const ExplainHighlightsRenderer = observer(
         if (ctx && planDepth) return palette[planDepth % palette.length];
       }
 
-      if (state.selectedPlan) {
+      if (isEditor && state.selectedPlan) {
         const planDepth = getPlanDepth(state.selectedPlan);
         const ctx = state.ctxId === ctxRect.id;
 
         if (ctx && planDepth) return palette[planDepth % palette.length];
       }
 
-      if (state.selectedPlan?.parent) {
+      if (isEditor && state.selectedPlan?.parent) {
         const parentPlanDepth = getPlanDepth(state.selectedPlan.parent);
         const ctxParent = state.parentCtxId === ctxRect.id;
 
@@ -132,7 +135,7 @@ export const ExplainHighlightsRenderer = observer(
           <div
             key={ctxRect.id}
             className={cn(styles.explainContextRect, {
-              [styles.highlighted]: state.ctxId === ctxRect.id,
+              [styles.highlighted]: isEditor && state.ctxId === ctxRect.id,
               [styles.highlightedOnHover]:
                 state.ctxId !== ctxRect.id &&
                 state.hoveredCtxId === ctxRect.id,
