@@ -531,6 +531,7 @@ function QueryCodeBlock({
   containerRef: RefObject<HTMLElement>;
 }) {
   const [ref, setRef] = useState<ExplainHighlightsRef | null>(null);
+  const isExplain = item.status === "EXPLAIN";
 
   const explainHighlightsRef = useCallback((node) => {
     if (node) {
@@ -557,15 +558,17 @@ function QueryCodeBlock({
                   style: styles.errorUnderline,
                 },
               ]
-            : item.explainState?.contextsByBufIdx[0]?.map((ctx) => ({
-                range: [ctx.start, ctx.end],
-                attrs: {
-                  "data-ctx-id": ctx.id.toString(),
-                },
-              }))
+            : (isExplain &&
+                item.explainState?.contextsByBufIdx[0]?.map((ctx) => ({
+                  range: [ctx.start, ctx.end],
+                  attrs: {
+                    "data-ctx-id": ctx.id.toString(),
+                  },
+                }))) ||
+              undefined
         }
       />
-      {item.explainState ? (
+      {isExplain && item.explainState ? (
         <ExplainHighlightsRenderer
           ref={explainHighlightsRef}
           state={item.explainState}
