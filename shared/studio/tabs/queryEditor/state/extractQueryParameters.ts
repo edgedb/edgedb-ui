@@ -1,24 +1,143 @@
 import {SyntaxNode} from "@lezer/common";
 
 import {parser} from "@edgedb/lang-edgeql";
-import {
-  SchemaScalarType,
-  KnownScalarTypes,
-  SchemaType,
-} from "@edgedb/common/schemaData";
+import {KnownScalarTypes, SchemaScalarType} from "@edgedb/common/schemaData";
 
 import {getAllChildren, getNodeText} from "../../../utils/syntaxTree";
+import {PrimitiveType} from "../../../components/dataEditor/utils";
 
-interface ExtractedParameter {
-  name: string;
-  type: string;
-  array: boolean;
-  optional: boolean;
-  error?: string;
-}
+export type ResolvedParameter =
+  | {
+      name: string;
+      type: PrimitiveType;
+      optional: boolean;
+      error: null;
+    }
+  | {
+      name: string;
+      error: string;
+    };
 
-export interface ResolvedParameter extends ExtractedParameter {
-  resolvedBaseType: SchemaScalarType | null;
+const validRangeScalars = new Set([
+  "std::int32",
+  "std::int64",
+  "std::float32",
+  "std::float64",
+  "std::decimal",
+  "std::datetime",
+  "cal::local_datetime",
+  "cal::local_date",
+]);
+
+function resolveCastType(
+  query: string,
+  schemaScalars: Map<string, SchemaScalarType>,
+  castNode: SyntaxNode | null
+): PrimitiveType {
+  if (!castNode) {
+    throw new Error("Invalid parameter cast");
+  }
+  if (castNode.type.is("Name")) {
+    const typeName = getNodeText(query, castNode);
+
+    const resolvedType =
+      schemaScalars.get(typeName) ??
+      schemaScalars.get(`default::${typeName}`) ??
+      schemaScalars.get(`std::${typeName}`);
+
+    if (
+      !resolvedType ||
+      (!resolvedType.enum_values &&
+        !KnownScalarTypes.includes(
+          (resolvedType.knownBaseType ?? resolvedType).name as any
+        ))
+    ) {
+      throw new Error(
+        "Parameter cast does not resolve to a supported scalar type"
+      );
+    }
+
+    return resolvedType;
+  }
+
+  switch (castNode.type.name) {
+    case "ArrayType": {
+      const elementType = resolveCastType(
+        query,
+        schemaScalars,
+        castNode.firstChild?.nextSibling ?? null
+      );
+      if (elementType.schemaType === "Array") {
+        throw new Error("Array type cannot contain array type");
+      }
+      return {
+        schemaType: "Array",
+        name: `array<${elementType.name}>`,
+        elementType,
+      };
+    }
+    case "RangeType": {
+      const elementType = resolveCastType(
+        query,
+        schemaScalars,
+        castNode.firstChild?.nextSibling ?? null
+      );
+      if (
+        elementType.schemaType !== "Scalar" ||
+        !validRangeScalars.has((elementType.knownBaseType ?? elementType).name)
+      ) {
+        throw new Error("Invalid type in range type");
+      }
+      return {
+        schemaType: "Range",
+        name: `range<${elementType.name}>`,
+        elementType,
+      };
+    }
+    case "TupleType": {
+      let elementNode = castNode.firstChild?.nextSibling ?? null;
+      if (!elementNode) {
+        throw new Error("Invalid parameter cast");
+      }
+      let named = false;
+      const elements: {
+        name: string | null;
+        type: PrimitiveType;
+      }[] = [];
+      while (elementNode) {
+        let name: string | null = null;
+        if (elementNode.type.is("TupleFieldName")) {
+          name = getNodeText(query, elementNode);
+          elementNode = elementNode.nextSibling;
+          named = true;
+        }
+        if (elementNode === null) {
+          throw new Error("Invalid parameter cast");
+        }
+        elements.push({
+          name,
+          type: resolveCastType(query, schemaScalars, elementNode),
+        });
+        elementNode = elementNode.nextSibling;
+      }
+      if (named && elements.some(({name}) => name === null)) {
+        throw new Error(
+          "Mixing named and unnamed tuple elements is not supported"
+        );
+      }
+      return {
+        schemaType: "Tuple",
+        name: `tuple<${elements
+          .map(
+            ({name, type}) => (name !== null ? `${name}: ` : "") + type.name
+          )
+          .join(", ")}>`,
+        named,
+        elements,
+      };
+    }
+  }
+  throw new Error("Invalid parameter cast");
 }
 
 export function extractQueryParameters(
@@ -28,112 +147,75 @@ export function extractQueryParameters(
   try {
     const syntaxTree = parser.parse(query);
 
-    const extractedParams = getAllChildren(
+    const extractedParams: ResolvedParameter[] = getAllChildren(
       syntaxTree.topNode,
       "QueryParameterName"
     ).map((paramNode) => {
-      const paramName = getNodeText(query, paramNode).slice(1);
-
-      const param: ExtractedParameter = {
-        name: paramName,
-        type: "",
-        array: false,
-        optional: false,
-      };
+      const name = getNodeText(query, paramNode).slice(1);
 
       const paramCast = paramNode.prevSibling;
       if (
         !paramNode.parent?.type.is("QueryParameter") ||
         !paramCast?.type.is("Cast")
       ) {
-        param.error = "Missing a type cast before the parameter";
-        return param;
+        return {name, error: "Missing a type cast before the parameter"};
       }
 
       let castType: SyntaxNode | null = paramCast.firstChild;
 
       if (!castType) {
-        param.error = "Invalid parameter cast";
-        return param;
+        return {name, error: "Invalid parameter cast"};
       }
+
+      let optional = false;
+
       if (castType.type.is("Keyword")) {
         const keyword = getNodeText(query, castType).toLowerCase();
         if (
           (keyword !== "optional" && keyword !== "required") ||
           castType.nextSibling === null
         ) {
-          param.error = "Invalid parameter cast";
-          return param;
+          return {name, error: "Invalid parameter cast"};
         }
 
-        param.optional = keyword === "optional";
+        optional = keyword === "optional";
 
         castType = castType.nextSibling;
       }
 
-      if (castType.type.is("BuiltinName")) {
-        const name = getNodeText(query, castType);
-        if (name === "array") {
-          param.array = true;
-          castType = castType.nextSibling;
-        }
+      try {
+        return {
+          name,
+          type: resolveCastType(query, schemaScalars, castType),
+          optional,
+          error: null,
+        };
+      } catch (err) {
+        return {name, error: (err as Error).message};
       }
-
-      if (
-        !castType ||
-        castType.nextSibling !== null ||
-        !castType.type.is("Name")
-      ) {
-        param.error = "Invalid parameter cast";
-        return param;
-      }
-
-      param.type = getNodeText(query, castType);
-
-      return param;
     });
 
     const resolvedParams = new Map<string, ResolvedParameter>();
 
     for (const param of extractedParams) {
-      if (param.error) {
-        resolvedParams.set(param.name, {...param, resolvedBaseType: null});
+      if (param.error !== null) {
+        resolvedParams.set(param.name, param);
         continue;
       }
 
-      const resolvedType =
-        schemaScalars.get(param.type) ??
-        schemaScalars.get(`default::${param.type}`) ??
-        schemaScalars.get(`std::${param.type}`);
-
-      const resolvedBaseType = resolvedType?.knownBaseType ?? resolvedType;
-
+      const resolvedParam = resolvedParams.get(param.name);
       if (
-        !resolvedBaseType ||
-        (!resolvedBaseType.enum_values &&
-          !KnownScalarTypes.includes(resolvedBaseType.name as any))
+        resolvedParam &&
+        resolvedParam.error == null &&
+        (resolvedParam.type.name !== param.name ||
+          resolvedParam.optional !== param.optional)
       ) {
         resolvedParams.set(param.name, {
-          ...param,
-          resolvedBaseType: null,
-          error: "Parameter cast does not resolve to a supported scalar type",
+          name: param.name,
+          error: "Parameter has multiple usages with incompatible casts",
         });
-      } else {
-        const resolvedParam = resolvedParams.get(param.name);
-        if (
-          resolvedParam &&
-          (resolvedParam.resolvedBaseType !== resolvedBaseType ||
-            resolvedParam.array !== param.array ||
-            resolvedParam.optional !== param.optional)
-        ) {
-          resolvedParam.error =
-            "Parameter has multiple usages with incompatible casts";
-        } else if (!resolvedParam) {
-          resolvedParams.set(param.name, {
-            ...param,
-            resolvedBaseType,
-          });
-        }
+      } else if (!resolvedParam) {
+        resolvedParams.set(param.name, param);
       }
     }
 

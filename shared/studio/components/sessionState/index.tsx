@@ -18,6 +18,7 @@ import fuzzysort from "fuzzysort";
 import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerTabs";
+import {PrimitiveType} from "../dataEditor/utils";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -385,7 +386,7 @@ function ListItem({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  const Input = getInputComponent(type);
+  const Input = getInputComponent(type as PrimitiveType, allowNull);
 
   useEffect(() => {
     if (highlighted) {
@@ -424,11 +425,9 @@ function ListItem({
         {active ? (
           <>
             <Input
-              type={type}
-              stringMode
+              type={type as PrimitiveType}
               value={value}
               onChange={onChange}
-              allowNull={allowNull}
               validator={validator}
             />
             {allowNull ? (

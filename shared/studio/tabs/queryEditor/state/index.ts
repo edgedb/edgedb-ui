@@ -41,11 +41,7 @@ import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
-import {
-  serialiseParamsData,
-  ParamsData,
-  QueryParamsEditor,
-} from "./parameters";
+import {QueryParamsEditor, SerializedParamsData} from "./parameters";
 import {getThumbnailData, ThumbnailData} from "./thumbnailGen";
 import {QueryBuilderState} from "../../../components/visualQuerybuilder/state";
 import {ObservableLRU} from "../../../state/utils/lru";
@@ -66,7 +62,7 @@ type HistoryItemQueryData =
   | {
       kind: EditorKind.EdgeQL;
       query: string;
-      params: Frozen<ParamsData> | null;
+      params: Frozen<SerializedParamsData> | null;
     }
   | {
       kind: EditorKind.VisualBuilder;
@@ -313,7 +309,7 @@ export class QueryEditor extends Model({
     currentResult: QueryHistoryItem | null;
     [EditorKind.EdgeQL]: {
       query: Text;
-      params: ParamsData | null;
+      params: Frozen<SerializedParamsData> | null;
       isEdited: boolean;
     };
     [EditorKind.VisualBuilder]: {state: QueryBuilderState; isEdited: boolean};
@@ -327,7 +323,7 @@ export class QueryEditor extends Model({
       currentResult: this.currentResult,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
-        params: this.queryParamsEditor.getParamsData(),
+        params: this.queryParamsEditor.serializeParamsData(),
         isEdited: this.queryIsEdited[EditorKind.EdgeQL],
       },
       [EditorKind.VisualBuilder]: {
@@ -415,9 +411,7 @@ export class QueryEditor extends Model({
           this.currentQueryData[EditorKind.EdgeQL] = Text.of(
             queryData.data.query.split("\n")
           );
-          this.queryParamsEditor.restoreParamsData(
-            queryData.data.params?.data
-          );
+          this.queryParamsEditor.restoreParamsData(queryData.data.params);
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
@@ -582,7 +576,7 @@ export class QueryEditor extends Model({
         queryData = {
           kind: EditorKind.EdgeQL,
           query: query!,
-          params: paramsData ? frozen(paramsData) : null,
+          params: paramsData,
         };
         break;
       }
@@ -605,11 +599,7 @@ export class QueryEditor extends Model({
   }
 
   @modelFlow
-  _runStatement = _async(function* (
-    this: QueryEditor,
-    query: string,
-    paramsData: ParamsData | null
-  ) {
+  _runStatement = _async(function* (this: QueryEditor, query: string) {
     const conn = connCtx.get(this)!;
 
     const queryData: HistoryItemQueryData =
@@ -617,7 +607,7 @@ export class QueryEditor extends Model({
         ? {
             kind: EditorKind.EdgeQL,
             query,
-            params: paramsData ? frozen(paramsData) : null,
+            params: this.queryParamsEditor.serializeParamsData(),
           }
         : {
             kind: EditorKind.VisualBuilder,
@@ -636,7 +626,9 @@ export class QueryEditor extends Model({
         yield* _await(
           conn.query(
             query,
-            paramsData ? serialiseParamsData(paramsData) : undefined,
+            this.selectedEditor === EditorKind.EdgeQL
+              ? this.queryParamsEditor.getQueryArgs()
+              : undefined,
             {
               implicitLimit:
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
@@ -685,17 +677,10 @@ export class QueryEditor extends Model({
 
     this.queryRunning = true;
 
-    const paramsData =
-      this.selectedEditor === EditorKind.EdgeQL
-        ? this.queryParamsEditor.getParamsData()
-        : null;
-
     const dbState = dbCtx.get(this)!;
     dbState.setLoadingTab(QueryEditor, true);
 
-    const {capabilities, status} = yield* _await(
-      this._runStatement(query, paramsData)
-    );
+    const {capabilities, status} = yield* _await(this._runStatement(query));
     this.queryIsEdited[selectedEditor] = false;
 
     dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);

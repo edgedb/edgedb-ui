@@ -120,11 +120,10 @@ export const QueryEditorView = observer(function QueryEditorView() {
         views={[
           <div className={styles.editorBlock}>
             {editorState.selectedEditor === EditorKind.EdgeQL ? (
-              <>
+              <div className={styles.editorBlockInner}>
                 <QueryCodeEditor />
                 <div className={styles.replEditorOverlays}>
                   <div className={styles.controls}>
-                    {/* <QueryOptions /> */}
                     <Button
                       className={styles.runButton}
                       label="Run"
@@ -135,14 +134,14 @@ export const QueryEditorView = observer(function QueryEditorView() {
                       onClick={() => editorState.runQuery()}
                     />
                   </div>
-                  <ParamEditorPanel />
                 </div>
-              </>
+              </div>
             ) : (
               <VisualQuerybuilder
                 state={editorState.currentQueryData[EditorKind.VisualBuilder]}
               />
             )}
+            <ParamEditorPanel />
           </div>,
           <QueryResult />,
         ]}

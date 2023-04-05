@@ -1,12 +1,5 @@
-import {
-  Model,
-  model,
-  prop,
-  findParent,
-  objectMap,
-  modelAction,
-} from "mobx-keystone";
-import {reaction, observable, computed} from "mobx";
+import {Model, model, modelAction, Frozen, frozen} from "mobx-keystone";
+import {reaction, observable, computed, action} from "mobx";
 
 import {
   extractQueryParameters,
@@ -15,51 +8,48 @@ import {
 
 import {EditorKind, queryEditorCtx} from ".";
 import {dbCtx} from "../../../state/database";
-import {parsers} from "../../../components/dataEditor";
+import {
+  EditorValue,
+  newPrimitiveValue,
+  parseEditorValue,
+} from "../../../components/dataEditor/utils";
 
 export type {ResolvedParameter};
 
-@model("Repl/QueryParam")
-class ReplQueryParamData extends Model({
-  values: prop<string[]>(() => [""]),
-  hasError: prop<boolean>(false).withSetter(),
-  disabled: prop(false).withSetter(),
-}) {
-  @modelAction
-  setSingleValue(value: string, err: boolean) {
-    this.values[0] = value;
-    this.hasError = err;
-  }
-
-  @modelAction
-  setArrayValues(values: string[], err: boolean) {
-    this.values = values;
-    this.hasError = err;
-  }
-}
-
-export type ParamsData = {
+export type SerializedParamsData = {
   [key: string]: {
-    type: string | null;
-    resolvedBaseTypeName: string | null;
-    value: string | string[];
+    typeName: string;
+    value: EditorValue;
     disabled: boolean;
-    isArray: boolean;
-    isOptional: boolean;
   };
 };
 
 @model("Repl/QueryParamsEditor")
-export class QueryParamsEditor extends Model({
-  paramData: prop(() => objectMap<ReplQueryParamData>()),
-}) {
+export class QueryParamsEditor extends Model({}) {
   @observable
-  currentParams = new Map<string, ResolvedParameter>();
+  panelHeight = 160;
+
+  @action
+  setPanelHeight(height: number) {
+    this.panelHeight = height;
+  }
+
+  @observable.shallow
+  paramDefs = new Map<string, ResolvedParameter>();
+
+  @observable
+  paramData = new Map<
+    string,
+    {
+      disabled: boolean;
+      data: Map<string, {value: Frozen<EditorValue>; hasError: boolean}>;
+    }
+  >();
 
   @computed
   get mixedParamsError() {
     let hasPositionalParam: boolean | null = null;
-    for (const [paramName] of this.currentParams) {
+    for (const [paramName] of this.paramDefs) {
       const isPositional = /^\d+$/.test(paramName);
       if (hasPositionalParam === null) {
         hasPositionalParam = isPositional;
@@ -72,13 +62,31 @@ export class QueryParamsEditor extends Model({
   }
 
   @computed
+  get currentParams() {
+    return [...this.paramDefs.values()].reduce((data, param) => {
+      if (param.error === null) {
+        const paramData = this.paramData.get(param.name)!;
+        const type =
+          param.type.schemaType === "Scalar" ? "__scalar__" : param.type.name;
+
+        data[param.name] = {
+          data: paramData.data.get(type)!,
+          disabled: paramData.disabled,
+        };
+      }
+      return data;
+    }, {} as {[key: string]: {data: {value: Frozen<EditorValue>; hasError: boolean}; disabled: boolean}});
+  }
+
+  @computed
   get hasErrors() {
-    return [...this.currentParams.values()].some((param) => {
-      const paramData = this.paramData.get(param.name);
-      return (
-        (param.error || paramData?.hasError) &&
-        (!paramData || !paramData.disabled)
-      );
+    return [...this.paramDefs.values()].some((param) => {
+      if (param.error !== null) {
+        return true;
+      }
+      const data = this.currentParams[param.name];
+
+      return !data.disabled && (!data.data || data.data.hasError);
     });
   }
 
@@ -112,90 +120,129 @@ export class QueryParamsEditor extends Model({
     }
   }
 
-  @modelAction
+  @action
   updateCurrentParams(params: Map<string, ResolvedParameter>) {
     for (const [key, param] of params) {
       if (!this.paramData.has(key)) {
-        this.paramData.set(key, new ReplQueryParamData({}));
-      } else {
-        const currentParam = this.currentParams.get(key);
-        if (
-          currentParam &&
-          (currentParam.resolvedBaseType !== param.resolvedBaseType ||
-            currentParam.array !== param.array)
-        ) {
-          this.paramData.get(key)?.setHasError(false);
+        this.paramData.set(key, {data: new Map(), disabled: false});
+      }
+      if (param.error === null) {
+        const type =
+          param.type.schemaType === "Scalar" ? "__scalar__" : param.type.name;
+        const data = this.paramData.get(key)!.data;
+        if (!data.has(type)) {
+          data.set(type, {
+            value: frozen(newPrimitiveValue(param.type)),
+            hasError: false,
+          });
         }
       }
     }
-    this.currentParams = params;
+    this.paramDefs = params;
   }
 
-  getParamsData(): ParamsData | null {
+  @action
+  setDisabled(name: string, disabled: boolean) {
+    this.paramData.get(name)!.disabled = disabled;
+  }
+
+  @action
+  setParamValue(name: string, value: EditorValue, hasError: boolean) {
+    const paramDef = this.paramDefs.get(name)!;
+    if (paramDef.error == null) {
+      const type =
+        paramDef.type.schemaType === "Scalar"
+          ? "__scalar__"
+          : paramDef.type.name;
+      const paramData = this.paramData.get(name)!.data.get(type)!;
+      paramData.value = frozen(value);
+      paramData.hasError = hasError;
+    }
+  }
+
+  //
+
+  getQueryArgs() {
+    const entries = [...this.paramDefs.entries()];
+    const isPositional = entries.every(([name]) => /^\d+$/.test(name));
+    return entries.length
+      ? entries.reduce(
+          (args, [name, paramDef]) => {
+            if (paramDef.error === null) {
+              const param = this.currentParams[name]!;
+              args[name] = param.disabled
+                ? null
+                : parseEditorValue(param.data.value.data, paramDef.type);
+            }
+            return args;
+          },
+          isPositional ? [] : ({} as {[key: string]: any})
+        )
+      : undefined;
+  }
+
+  serializeParamsData(): Frozen<SerializedParamsData> | null {
     this._extractQueryParameters();
 
-    const params = [...this.currentParams.values()];
+    const paramDefs = this.paramDefs;
 
-    if (!params.length) {
+    if (!paramDefs.size) {
       return null;
     }
 
-    return params.reduce((data, param) => {
-      const paramData = this.paramData.get(param.name)!;
+    const data: SerializedParamsData = {};
 
-      data[param.name] = {
-        type: param.type,
-        resolvedBaseTypeName: param.resolvedBaseType?.name ?? null,
-        value: param.array ? [...paramData.values] : paramData.values[0],
-        disabled: paramData.disabled,
-        isArray: param.array,
-        isOptional: param.optional,
-      };
+    for (const [name, param] of paramDefs.entries()) {
+      if (param.error === null) {
+        const paramData = this.currentParams[name];
 
-      return data;
-    }, {} as ParamsData);
-  }
-
-  @modelAction
-  restoreParamsData(paramsData?: ParamsData | null) {
-    this.clear();
-    if (paramsData) {
-      for (const [key, param] of Object.entries(paramsData)) {
-        this.paramData.set(
-          key,
-          new ReplQueryParamData({
-            ...param,
-            values: Array.isArray(param.value) ? param.value : [param.value],
-          })
-        );
+        data[name] = {
+          typeName: param.type.name,
+          disabled: paramData.disabled,
+          value: paramData.data.value.data,
+        };
       }
     }
+
+    return frozen(data);
+  }
+
+  @action
+  restoreParamsData(paramsData?: Frozen<SerializedParamsData> | null) {
+    this.clear();
     this._extractQueryParameters();
+
+    if (paramsData) {
+      for (const [name, paramDef] of this.paramDefs.entries()) {
+        if (paramDef.error === null) {
+          const data = paramsData.data[name];
+
+          if (data && data.typeName === paramDef.type.name) {
+            const paramData = this.paramData.get(name)!;
+            const type =
+              paramDef.type.schemaType === "Scalar"
+                ? "__scalar__"
+                : paramDef.type.name;
+
+            paramData.disabled = data.disabled;
+            let error = false;
+            try {
+              parseEditorValue(data.value, paramDef.type);
+              error = true;
+            } catch {}
+            paramData.data.set(type, {
+              value: frozen(data.value),
+              hasError: error,
+            });
+          }
+        }
+      }
+    }
   }
 
   @modelAction
   clear() {
-    this.currentParams.clear();
+    this.paramDefs.clear();
     this.paramData.clear();
   }
-}
-
-export function serialiseParamsData(paramsData: ParamsData) {
-  const entries = Object.entries(paramsData);
-  const isPositional = entries.every(([name]) => /^\d+$/.test(name));
-  return entries.reduce(
-    (params, [name, param]) => {
-      const parser = parsers[param.resolvedBaseTypeName!];
-      params[name] = param.disabled
-        ? null
-        : parser
-        ? Array.isArray(param.value)
-          ? param.value.map(parser)
-          : parser(param.value)
-        : param.value;
-
-      return params;
-    },
-    isPositional ? [] : ({} as {[key: string]: any})
-  );
 }
