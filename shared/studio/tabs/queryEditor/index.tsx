@@ -210,7 +210,8 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
 
   const explainState =
     editorState.currentResult instanceof QueryHistoryResultItem &&
-    editorState.currentResult.status === "EXPLAIN"
+    (editorState.currentResult.status === "EXPLAIN" ||
+      editorState.currentResult.status === "ANALYZE QUERY")
       ? editorState.currentResult.explainState
       : null;
 
@@ -283,7 +284,7 @@ const QueryResult = observer(function QueryResult() {
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
-      if (result.status === "EXPLAIN") {
+      if (result.status === "EXPLAIN" || result.status === "ANALYZE QUERY") {
         content = (
           <ExplainVis state={result.explainState} queryHistoryItem={result} />
         );

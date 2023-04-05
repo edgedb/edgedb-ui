@@ -208,7 +208,7 @@ export class Connection extends Model({
 
       const statements = splitQueryIntoStatements(queryString);
       const lastStatement = statements[statements.length - 1];
-      const isExplain = lastStatement && /^\s*explain/i.test(lastStatement);
+      const isExplain = lastStatement && /^\s*analyze/i.test(lastStatement);
 
       if (isExplain) {
         console.log(

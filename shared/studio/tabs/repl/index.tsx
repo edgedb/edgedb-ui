@@ -355,7 +355,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   let output: JSX.Element | null;
 
-  const isExplain = item.status === "EXPLAIN";
+  const isExplain =
+    item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
 
   if (item.error) {
     output = (
@@ -531,7 +532,8 @@ function QueryCodeBlock({
   containerRef: RefObject<HTMLElement>;
 }) {
   const [ref, setRef] = useState<ExplainHighlightsRef | null>(null);
-  const isExplain = item.status === "EXPLAIN";
+  const isExplain =
+    item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
 
   const explainHighlightsRef = useCallback((node) => {
     if (node) {
