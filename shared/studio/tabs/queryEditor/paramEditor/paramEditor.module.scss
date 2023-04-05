@@ -1,20 +1,21 @@
 @import "@edgedb/common/mixins.scss";
 
 .paramEditorPanel {
-  margin: 8px;
-  margin-top: 0;
-  background: #fff;
-  border-radius: 8px;
-  flex-shrink: 1;
-  min-height: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: #ededed;
   overflow: auto;
-  pointer-events: auto;
-  @include customScrollbar;
+  max-height: 100%;
+  min-height: 88px;
+
+  @include hideScrollbar;
 
   @include darkTheme {
     background: #363636;
   }
+}
+
+.scrollWrapper {
+  flex-shrink: 0;
+  max-height: 80%;
 }
 
 .header {
@@ -23,14 +24,36 @@
   line-height: 13px;
   text-transform: uppercase;
   color: #9b9b9b;
-  padding: 16px;
+  padding: 13px 16px;
   position: sticky;
   top: 0;
-  background: #fff;
+  left: 0;
+  background: #edededaa;
   z-index: 1;
+  backdrop-filter: blur(3px);
 
   @include darkTheme {
     background: #363636;
+  }
+
+  .dragHandle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 16px;
+    cursor: ns-resize;
+
+    &:after {
+      content: "";
+      position: absolute;
+      width: 32px;
+      height: 2px;
+      border-radius: 2px;
+      background: #c6c6c6;
+      top: 7px;
+      left: calc(50% - 16px);
+    }
   }
 }
 
@@ -86,7 +109,11 @@
 .paramType {
   color: rgb(51, 51, 51, 0.5);
   margin-right: 1rem;
-  font-weight: 300;
+  font-weight: 400;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   @include darkTheme {
     color: rgba(196, 196, 196, 0.5);

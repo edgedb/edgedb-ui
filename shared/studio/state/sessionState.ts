@@ -1,4 +1,11 @@
-import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
+import {
+  SchemaArrayType,
+  SchemaGlobal,
+  SchemaRangeType,
+  SchemaScalarType,
+  SchemaTupleType,
+  SchemaType,
+} from "@edgedb/common/schemaData";
 import fuzzysort from "fuzzysort";
 import {action, computed, observable, runInAction, when} from "mobx";
 import {
@@ -17,6 +24,13 @@ import {
   FrozenCheckMode,
 } from "mobx-keystone";
 import {parsers} from "../components/dataEditor";
+import {
+  EditorValue,
+  newPrimitiveValue,
+  parseEditorValue,
+  PrimitiveType,
+  valueToEditorValue,
+} from "../components/dataEditor/utils";
 import {fetchSessionState, storeSessionState} from "../idbStore";
 import {connCtx} from "./connection";
 import {dbCtx} from "./database";
@@ -26,7 +40,7 @@ type DraftStateItem = {
   active: boolean;
   type: Frozen<SchemaType>;
   description?: string;
-  value: any;
+  value: EditorValue | null;
   error: boolean;
 };
 
@@ -47,19 +61,19 @@ export type StoredSessionStateData = {
     [key: string]: {
       typeId: string;
       active: boolean;
-      value: any;
+      value: EditorValue | null;
     };
   };
   config: {
     [key: string]: {
       active: boolean;
-      value: any;
+      value: EditorValue;
     };
   };
   options: {
     [key: string]: {
       active: boolean;
-      value: any;
+      value: EditorValue;
     };
   };
 };
@@ -205,7 +219,10 @@ export class SessionState extends Model({
           type: frozen(schemaGlobal.target, FrozenCheckMode.Off),
           active: global.active,
           value: global.value,
-          error: !isValidValue(schemaGlobal.target, global.value),
+          error:
+            global.value == null
+              ? schemaGlobal.default == null
+              : !isValidValue(schemaGlobal.target, global.value),
         };
       }
     }
@@ -219,7 +236,7 @@ export class SessionState extends Model({
           (anno) => anno.name === "std::description"
         )?.["@value"],
         active: storedItem?.active ?? false,
-        value: storedItem?.value ?? null,
+        value: storedItem?.value ?? newPrimitiveValue(type as PrimitiveType),
         error: storedItem ? !isValidValue(type, storedItem.value) : true,
       };
     }
@@ -347,15 +364,20 @@ export class SessionState extends Model({
         .filter(([_, global]) => global.active && !global.error)
         .map(([name, global]) => ({
           name,
-          type: global.type,
-          value: parseValue(global.type.data, global.value),
+          type: global.type as Frozen<SchemaType>,
+          value: global.value
+            ? parseEditorValue(global.value, global.type.data as PrimitiveType)
+            : null,
         })),
       config: Object.entries(this.draftState!.config)
         .filter(([_, config]) => config.active && !config.error)
         .map(([name, config]) => ({
           name,
-          type: config.type,
-          value: parseValue(config.type.data, config.value),
+          type: config.type as Frozen<SchemaType>,
+          value: parseEditorValue(
+            config.value!,
+            config.type.data as PrimitiveType
+          ),
         })),
       options: queryOptions
         .filter(
@@ -367,8 +389,11 @@ export class SessionState extends Model({
           const opt = this.draftState!.options[name];
           return {
             name,
-            type: opt.type,
-            value: parseValue(opt.type.data, opt.value),
+            type: opt.type as Frozen<SchemaType>,
+            value: parseEditorValue(
+              opt.value!,
+              opt.type.data as PrimitiveType
+            ),
           };
         }),
     };
@@ -410,7 +435,7 @@ export class SessionState extends Model({
           (data, [name, opt]) => {
             data[name] = {
               active: opt.active,
-              value: opt.value,
+              value: opt.value!,
             };
             return data;
           },
@@ -421,21 +446,9 @@ export class SessionState extends Model({
   }
 }
 
-function parseValue(type: SchemaType, value: any): any {
-  switch (type.schemaType) {
-    case "Scalar":
-      const parser = parsers[type.name];
-      return parser ? parser(value) : value;
-      break;
-
-    default:
-      break;
-  }
-}
-
-function isValidValue(type: SchemaType, value: any): boolean {
+function isValidValue(type: SchemaType, value: EditorValue): boolean {
   try {
-    parseValue(type, value);
+    parseEditorValue(value, type as PrimitiveType);
     return true;
   } catch (e) {
     return false;

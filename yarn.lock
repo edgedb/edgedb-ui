@@ -1996,7 +1996,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: ^0.21.1
+    edgedb: ^1.1.0
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -2008,7 +2008,7 @@ __metadata:
   dependencies:
     "@types/react-window": ^1.8.3
     assert-never: ^1.2.1
-    edgedb: ^0.21.1
+    edgedb: ^1.1.0
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
@@ -2044,7 +2044,7 @@ __metadata:
     webcola: ^3.4.0
   peerDependencies:
     "@types/react": ^17.0.0
-    edgedb: ^0.21.1
+    edgedb: ^1.1.0
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -2068,7 +2068,7 @@ __metadata:
     react-error-boundary: ^3.1.4
     react-hook-form: ^7.32.2
   peerDependencies:
-    edgedb: ^0.21.1
+    edgedb: ^1.1.0
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
@@ -6478,12 +6478,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:^0.21.1":
-  version: 0.21.1
-  resolution: "edgedb@npm:0.21.1"
+"edgedb@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "edgedb@npm:1.1.0"
   bin:
-    edgeql-js: dist/reflection/cli.js
-  checksum: ad62060292ea0800823ad891f7525935590639bf44c431e201205311b9c1c0e47842958c665abdcc61ba59c316b7e994af4e8f17cf99bb6718d6a0e32f3ebec6
+    edgeql-js: dist/cli.js
+  checksum: ee760aaf1e94f19354a36e1a2360c34b805d501ebd644522b205c615fba01c877aa8a1010c456234802c201ee78e717ccbba40c41cd4ecc96d2236bf02a7905c
   languageName: node
   linkType: hard
 
@@ -14434,7 +14434,7 @@ __metadata:
     "@types/react-dom": ^17.0.9
     "@types/selenium-webdriver": ^4.1.10
     buffer: ^6.0.3
-    edgedb: ^0.21.1
+    edgedb: ^1.1.0
     hash.js: ^1.1.7
     jest: ^29.4.0
     mobx: ^6.5.0

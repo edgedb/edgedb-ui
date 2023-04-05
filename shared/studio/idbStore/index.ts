@@ -10,8 +10,8 @@ export interface QueryHistoryItem {
 }
 
 export interface QueryResultData {
-  outCodecBuf: Buffer;
-  resultBuf: Buffer;
+  outCodecBuf: Uint8Array;
+  resultBuf: Uint8Array;
 }
 
 export interface SessionStateData {

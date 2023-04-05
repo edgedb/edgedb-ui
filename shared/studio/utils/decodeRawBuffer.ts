@@ -9,7 +9,6 @@ export type {EdgeDBSet};
 function newCodecsRegistry() {
   const registry = new _CodecsRegistry();
   registry.setCustomCodecs({
-    decimal_string: true,
     int64_bigint: true,
     datetime_localDatetime: true,
     json_string: true,
@@ -26,8 +25,8 @@ export function decode(
 ): EdgeDBSet | null {
   return _decode(
     newCodec ? newCodecsRegistry() : codecsRegistry,
-    typedArrayToBuffer(outCodecBuf),
-    typedArrayToBuffer(resultBuf),
+    outCodecBuf,
+    resultBuf,
     [1, 0]
   );
 }
@@ -35,22 +34,11 @@ export function decode(
 export type QueryParams = QueryArgs;
 
 export function encodeArgs(inCodecBuf: Uint8Array, queryParams: QueryParams) {
-  const inCodec = codecsRegistry.buildCodec(
-    typedArrayToBuffer(inCodecBuf),
-    [1, 0]
-  );
+  const inCodec = codecsRegistry.buildCodec(inCodecBuf, [1, 0]);
 
   if (!(inCodec instanceof NamedTupleCodec || inCodec instanceof TupleCodec)) {
     throw new Error("Invalid input codec");
   }
 
   return inCodec.encodeArgs(queryParams);
-}
-
-function typedArrayToBuffer(arr: Uint8Array): Buffer {
-  let buf = Buffer.from(arr.buffer);
-  if (arr.byteLength !== arr.buffer.byteLength) {
-    buf = buf.slice(arr.byteOffset, arr.byteOffset + arr.byteLength);
-  }
-  return buf;
 }

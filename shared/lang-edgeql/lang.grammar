@@ -14,7 +14,7 @@ element {
   Bool |
   Punctuation |
   Cast |
-  CompoundTypeName |
+  compoundType |
   QueryParameter |
   Parens { "(" element* ")" } |
   Braces { "{" (element | ";")* "}" } |
@@ -25,26 +25,28 @@ commaSep<content> { content ("," content)* }
 
 castStart { @extend<operator, "<"> }
 
-arrayType {
-  BuiltinName { @specialize<shortName, "array"> } castStart (Name | tupleType) ">"
-}
-
-tupleType {
-  BuiltinName { @specialize<shortName, "tuple"> } castStart
-    commaSep<(shortName ":")? (Name | CompoundTypeName)>
+ArrayType {
+  BuiltinName { @specialize<shortName, "array"> } castStart
+    (Name | TupleType | RangeType)
   ">"
 }
 
-rangeType {
+TupleType {
+  BuiltinName { @specialize<shortName, "tuple"> } castStart
+    commaSep<(TupleFieldName { shortName } ":")? (Name | compoundType | RangeType)>
+  ">"
+}
+
+RangeType {
   BuiltinName { @specialize<shortName, "range"> } castStart Name ">"
 }
 
-CompoundTypeName { arrayType | tupleType }
+compoundType { ArrayType | TupleType }
 
-Cast { castStart ( Name | CompoundTypeName | rangeType ) ~cast ">" }
+Cast { castStart ( Name | compoundType | RangeType ) ~cast ">" }
 
 QueryParameter[@dynamicPrecedence=1] {
-  Cast { castStart Keyword? (Name | arrayType | rangeType) ~cast ">"}
+  Cast { castStart Keyword? (Name | compoundType | RangeType) ~cast ">"}
   QueryParameterName
 }
 
