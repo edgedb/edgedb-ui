@@ -120,7 +120,7 @@ export default function CodeBlock({
     ? customRanges
     : customRanges?.(tree);
 
-  if (ranges && "attrs" in ranges[0])
+  if (ranges && ranges[0] && "attrs" in ranges[0])
     ranges = getFlattenRanges(ranges as CustomRangeExplain[]);
 
   let nextRangeIndex = 0;
