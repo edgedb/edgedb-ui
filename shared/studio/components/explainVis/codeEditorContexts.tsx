@@ -51,9 +51,11 @@ export const ExplainHighlightsRenderer = observer(
         const els = [
           ...containerEl.querySelectorAll(`[data-ctx-id*="${ctx.id}"]`),
         ];
+
         if (!els.length) {
           continue;
         }
+
         let top = Infinity,
           left = Infinity,
           right = -Infinity,

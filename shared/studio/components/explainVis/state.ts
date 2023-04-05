@@ -84,7 +84,7 @@ export class ExplainState extends Model({
   }
 
   getCtxId(plan: Plan | null | undefined) {
-    return plan?.nearestContextPlan?.contextId || plan?.contextId;
+    return plan?.nearestContextPlan?.contextId ?? plan?.contextId;
   }
 
   @modelAction
