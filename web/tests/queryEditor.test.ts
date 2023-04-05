@@ -221,10 +221,10 @@ describe("queryEditor:", () => {
         By.css(`${uiClass("select_select")}${uiClass("select_fullButton")}`)
       );
       // id checkbox should exists
-      const idCheckbox = await driver.findElement(
+      const checkboxes = await driver.findElements(
         ByUIClass("queryBuilder_inactive")
       );
-      expect(await idCheckbox.getText()).toBe("id");
+      expect(await checkboxes.length).toBe(3);
       // 4 query modifiers should be visible
       const modButtons = await driver.findElements(
         ByUIClass("queryBuilder_modButton")
