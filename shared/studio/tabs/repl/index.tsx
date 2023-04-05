@@ -41,6 +41,7 @@ import {
   ExplainHighlightsRef,
   ExplainHighlightsRenderer,
 } from "../../components/explainVis/codeEditorContexts";
+import {ExplainCodeBlock} from "../../components/explainVis/codeblock";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -547,36 +548,35 @@ function QueryCodeBlock({
     }
   }, [ref]);
 
-  return (
+  return isExplain ? (
     <>
-      <CodeBlock
+      <ExplainCodeBlock
         className={cn(styles.code)}
         code={item.query}
-        customRanges={
-          item.error?.data.range
-            ? [
-                {
-                  range: item.error.data.range,
-                  style: styles.errorUnderline,
-                },
-              ]
-            : (isExplain &&
-                item.explainState?.contextsByBufIdx[0]?.map((ctx) => ({
-                  range: [ctx.start, ctx.end],
-                  attrs: {
-                    "data-ctx-id": ctx.id.toString(),
-                  },
-                }))) ||
-              undefined
-        }
+        explainContexts={item.explainState?.contextsByBufIdx[0] ?? []}
       />
-      {isExplain && item.explainState ? (
+      {item.explainState ? (
         <ExplainHighlightsRenderer
           ref={explainHighlightsRef}
           state={item.explainState}
         />
       ) : null}
     </>
+  ) : (
+    <CodeBlock
+      className={cn(styles.code)}
+      code={item.query}
+      customRanges={
+        item.error?.data.range
+          ? [
+              {
+                range: item.error.data.range,
+                style: styles.errorUnderline,
+              },
+            ]
+          : undefined
+      }
+    />
   );
 }
 
