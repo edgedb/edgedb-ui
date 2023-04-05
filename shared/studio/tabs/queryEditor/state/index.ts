@@ -471,8 +471,8 @@ export class QueryEditor extends Model({
   } & (
     | {
         result: EdgeDBSet | null;
-        outCodecBuf: Buffer;
-        resultBuf: Buffer;
+        outCodecBuf: Uint8Array;
+        resultBuf: Uint8Array;
         status: string;
         implicitLimit: number;
       }

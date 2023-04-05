@@ -194,7 +194,7 @@ export function renderValue(
     };
   }
 
-  if (value instanceof Buffer) {
+  if (value instanceof Uint8Array) {
     return {
       body: (
         <span className={styles.scalar_bytes}>
@@ -244,7 +244,7 @@ function formatDatetime(date: Date): string {
   return date.toString() + "+00:00";
 }
 
-function bufferToString(buf: Buffer): string {
+function bufferToString(buf: Uint8Array): string {
   const res: string[] = [];
   for (let i = 0; i < buf.length; i++) {
     const char = buf[i];

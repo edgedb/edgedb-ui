@@ -5,8 +5,8 @@ export type EdgeDBSet = Array<any> & {_codec: _ICodec};
 
 export function decode(
   registry: InstanceType<typeof _CodecsRegistry>,
-  outCodecBuf: Buffer,
-  resultBuf: Buffer,
+  outCodecBuf: Uint8Array,
+  resultBuf: Uint8Array,
   protocolVersion: ProtocolVersion = [0, 10]
 ): EdgeDBSet | null {
   let result: EdgeDBSet | null = null;

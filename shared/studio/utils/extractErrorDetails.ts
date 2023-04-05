@@ -1,4 +1,5 @@
 import {EdgeDBError} from "edgedb";
+import {utf8Decoder} from "edgedb/dist/primitives/buffer";
 
 enum ErrorField {
   hint = 0x0001,
@@ -22,8 +23,13 @@ export interface ErrorDetails {
   range?: [number, number];
 }
 
-function toNum(x: Uint8Array): number {
-  return parseInt(x.toString(), 10);
+function tryParseInt(val: any) {
+  if (val instanceof Uint8Array) {
+    try {
+      return parseInt(utf8Decoder.decode(val), 10);
+    } catch {}
+  }
+  return null;
 }
 
 export function extractErrorDetails(err: any, query: string): ErrorDetails {
@@ -32,35 +38,41 @@ export function extractErrorDetails(err: any, query: string): ErrorDetails {
   }
   const errDetails: ErrorDetails = {
     name: err.name,
-    msg: err.message,
+    msg: (err as any)._message ?? err.message,
   };
 
-  if (err instanceof EdgeDBError && (err as any).attrs) {
-    const attrs = (err as any).attrs as Map<number, Uint8Array>;
+  if (err instanceof EdgeDBError && (err as any)._attrs) {
+    const attrs = (err as any)._attrs as Map<number, Uint8Array>;
     const hint = attrs.get(ErrorField.hint);
     if (hint) {
-      errDetails.hint = hint.toString();
+      errDetails.hint = utf8Decoder.decode(hint);
     }
 
-    const lineStart = attrs.get(ErrorField.lineStart),
-      lineEnd = attrs.get(ErrorField.lineEnd),
-      colStart = attrs.get(ErrorField.utf16ColumnStart),
-      colEnd = attrs.get(ErrorField.utf16ColumnEnd);
-    if (lineStart && lineEnd && colStart && colEnd) {
+    const lineStart = tryParseInt(attrs.get(ErrorField.lineStart));
+    const lineEnd = tryParseInt(attrs.get(ErrorField.lineEnd));
+    const colStart = tryParseInt(attrs.get(ErrorField.utf16ColumnStart));
+    const colEnd = tryParseInt(attrs.get(ErrorField.utf16ColumnEnd));
+
+    if (
+      lineStart != null &&
+      lineEnd != null &&
+      colStart != null &&
+      colEnd != null
+    ) {
       const lines = query.split("\n");
 
-      const startLine = toNum(lineStart) - 1;
+      const startLine = lineStart - 1;
       const startLinesLength = lines
         .slice(0, startLine)
         .reduce((sum, line) => sum + line.length + 1, 0);
-      const startPos = startLinesLength + toNum(colStart);
+      const startPos = startLinesLength + colStart;
 
       const endLinesLength =
         startLinesLength +
         lines
-          .slice(startLine, toNum(lineEnd) - 1)
+          .slice(startLine, lineEnd - 1)
           .reduce((sum, line) => sum + line.length + 1, 0);
-      const endPos = endLinesLength + toNum(colEnd);
+      const endPos = endLinesLength + colEnd;
 
       errDetails.range = [startPos, endPos];
     }

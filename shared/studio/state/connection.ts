@@ -46,14 +46,14 @@ interface ConnectConfig {
 interface QueryResult {
   result: EdgeDBSet | null;
   duration: QueryDuration;
-  outCodecBuf: Buffer;
-  resultBuf: Buffer;
+  outCodecBuf: Uint8Array;
+  resultBuf: Uint8Array;
   capabilities: number;
   status: string;
 }
 
 interface ParseResult {
-  outCodecBuf: Buffer;
+  outCodecBuf: Uint8Array;
   duration: number;
 }
 
@@ -98,7 +98,7 @@ export class Connection extends Model({
 
   private _runningQuery = false;
 
-  private _codecCache = new LRU<string, [any, any, Buffer, number]>({
+  private _codecCache = new LRU<string, [any, any, Uint8Array, number]>({
     capacity: 200,
   });
   private _queryQueue: PendingQuery[] = [];
