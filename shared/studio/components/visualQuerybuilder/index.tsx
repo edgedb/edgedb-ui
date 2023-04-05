@@ -18,6 +18,7 @@ import {Select} from "@edgedb/common/ui/select";
 import {DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Button from "@edgedb/common/ui/button";
+import {ObjectTypeSelect} from "../objectTypeSelect";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({
   state,
@@ -73,17 +74,18 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
               <div className={styles.shapeBlock}>
                 <div className={styles.row}>
                   <span className={styles.keyword}>select</span>{" "}
-                  <Select
-                    items={schemaObjectTypes.map((type) => ({
-                      label: type.name,
-                      action: () =>
-                        state.setRoot(
-                          new QueryBuilderShape({typename: type.name})
-                        ),
-                    }))}
-                    selectedItemIndex={schemaObjectTypes.findIndex(
-                      (type) => type.name === state.root.typename
-                    )}
+                  <ObjectTypeSelect
+                    objectTypes={schemaObjectTypes}
+                    selectedObjectType={
+                      schemaObjectTypes.find(
+                        (type) => type.name === state.root.typename
+                      )!
+                    }
+                    action={(objectType) => {
+                      state.setRoot(
+                        new QueryBuilderShape({typename: objectType.name})
+                      );
+                    }}
                   />{" "}
                   {"{"}
                 </div>
@@ -419,19 +421,18 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
         className={styles.select}
         items={[
           ...Object.entries(props).map(([name, prop]) => ({
+            id: `prop--${name}`,
             label: name,
             action: () => expr.updateProp(name, prop.target!.name, true),
           })),
           ...prefixOperators.map(({op}) => ({
+            id: `op--${op}`,
             label: <span className={styles.keyword}>{op}</span>,
             action: () => expr.updateOp(op),
           })),
         ]}
-        selectedItemIndex={
-          expr.isInfixOp
-            ? propNames.indexOf(expr.prop)
-            : prefixOperators.findIndex((op) => expr.op === op.op) +
-              propNames.length
+        selectedItemId={
+          expr.isInfixOp ? `prop--${expr.prop}` : `op--${expr.op}`
         }
       />
       {expr.isInfixOp ? (
@@ -439,10 +440,11 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
           <Select
             className={styles.select}
             items={expr.infixOps.map((op) => ({
+              id: op,
               label: op,
               action: () => expr.updateOp(op),
             }))}
-            selectedItemIndex={expr.infixOps.indexOf(expr.op)}
+            selectedItemId={expr.op}
           />
           {expr.propType !== "std::str" ? (
             <span className={styles.propType}>{`<${expr.propType}>`}</span>
@@ -457,10 +459,11 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
         <Select
           className={styles.select}
           items={Object.entries(props).map(([name, prop]) => ({
+            id: name,
             label: name,
             action: () => expr.updateProp(name, prop.target!.name),
           }))}
-          selectedItemIndex={propNames.indexOf(expr.prop)}
+          selectedItemId={expr.prop}
         />
       )}
     </div>
@@ -480,44 +483,41 @@ const OrderBy = observer(function OrderBy({
     <>
       <Select
         items={propNames.map((name) => ({
+          id: name,
           label: name,
           action: () => shape.setOrderBy(expr, name),
         }))}
-        selectedItemIndex={propNames.indexOf(expr.expr)}
+        selectedItemId={expr.expr}
       />
       <Select
         items={[
           {
+            id: "asc",
             label: <span className={styles.keyword}>asc</span>,
             action: () => shape.updateOrderBy(expr, {dir: "asc"}),
           },
           {
+            id: "desc",
             label: <span className={styles.keyword}>desc</span>,
             action: () => shape.updateOrderBy(expr, {dir: "desc"}),
           },
         ]}
-        selectedItemIndex={expr.dir === "desc" ? 1 : 0}
+        selectedItemId={expr.dir ?? "asc"}
       />
       <Select
         items={[
           {
+            id: "first",
             label: <span className={styles.keyword}>empty first</span>,
             action: () => shape.updateOrderBy(expr, {empty: "first"}),
           },
           {
+            id: "last",
             label: <span className={styles.keyword}>empty last</span>,
             action: () => shape.updateOrderBy(expr, {empty: "last"}),
           },
         ]}
-        selectedItemIndex={
-          expr.empty
-            ? expr.empty === "first"
-              ? 0
-              : 1
-            : expr.dir === "desc"
-            ? 1
-            : 0
-        }
+        selectedItemId={expr.empty ?? (expr.dir === "desc" ? "last" : "first")}
       />
     </>
   );

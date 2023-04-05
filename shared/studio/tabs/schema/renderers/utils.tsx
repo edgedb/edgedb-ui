@@ -23,7 +23,7 @@ import {
 
 import styles from "../textView.module.scss";
 
-import {highlightString as _highlightString} from "../../../utils/fuzzysortHighlight";
+import {highlightString as _highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {ArrowRight, ChevronDownIcon, CopyIcon} from "../../../icons";
 
 import {

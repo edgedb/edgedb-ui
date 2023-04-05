@@ -8,6 +8,8 @@ import styles from "./dataview.module.scss";
 
 import {useModal} from "@edgedb/common/hooks/useModal";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+import {Select} from "@edgedb/common/ui/select";
+import Button from "@edgedb/common/ui/button";
 
 import {useTabState, useDatabaseState} from "../../state";
 import {
@@ -22,6 +24,8 @@ import DataInspectorTable from "./dataInspector";
 
 import {ReviewEditsModal} from "./reviewEditsModal";
 
+import {ObjectTypeSelect} from "../../components/objectTypeSelect";
+
 import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
 import {
   ChevronDownIcon,
@@ -29,8 +33,6 @@ import {
   TabDataExplorerIcon,
   WarningIcon,
 } from "../../icons";
-import {Select} from "@edgedb/common/ui/select";
-import Button from "@edgedb/common/ui/button";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
@@ -105,27 +107,14 @@ const DataInspectorView = observer(function DataInspectorView({
       <div className={styles.header}>
         {!nestedPath ? (
           <>
-            <Select
+            <ObjectTypeSelect
               className={cn(styles.headerSelect, styles.objectSelect)}
-              items={dataviewState.objectTypes.map(
-                ({id, name, module, shortName}) => {
-                  return {
-                    label: (
-                      <>
-                        <span className={styles.modName}>{module}::</span>
-                        {shortName}
-                      </>
-                    ),
-                    action: () => {
-                      navigate(name);
-                      dataviewState.selectObject(id);
-                    },
-                  };
-                }
-              )}
-              selectedItemIndex={dataviewState.objectTypes.indexOf(
-                stack[0]?.objectType!
-              )}
+              objectTypes={dataviewState.objectTypes}
+              selectedObjectType={stack[0].objectType!}
+              action={(objectType) => {
+                navigate(objectType.name);
+                dataviewState.selectObject(objectType.id);
+              }}
             />
           </>
         ) : (

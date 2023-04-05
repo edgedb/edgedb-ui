@@ -139,6 +139,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
             <Select
               className={styles.moduleSelect}
               items={schemaModuleGroups.map((group) => ({
+                id: group,
                 label: (
                   <span className={styles.selectItem}>
                     {ModuleGroup[group]}
@@ -150,9 +151,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                   );
                 },
               }))}
-              selectedItemIndex={schemaModuleGroups.indexOf(
-                state.selectedModuleGroup
-              )}
+              selectedItemId={state.selectedModuleGroup}
             />
           </div>
 
@@ -163,6 +162,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 className={styles.typeFilterSelect}
                 items={[
                   {
+                    id: -1,
                     label: "Everything",
                     action: () => {
                       const params = createSearchParams(searchParams);
@@ -171,6 +171,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                     },
                   },
                   ...typeFilters.map((typeFilter) => ({
+                    id: typeFilter,
                     label: TypeFilter[typeFilter],
                     action: () => {
                       const params = createSearchParams(searchParams);
@@ -179,11 +180,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                     },
                   })),
                 ]}
-                selectedItemIndex={
-                  state.selectedTypeFilter !== null
-                    ? typeFilters.indexOf(state.selectedTypeFilter) + 1
-                    : 0
-                }
+                selectedItemId={state.selectedTypeFilter ?? -1}
               />
             </div>
           ) : null}

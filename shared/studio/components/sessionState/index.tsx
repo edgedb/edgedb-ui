@@ -15,7 +15,7 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {ButtonTabArrow, SettingsIcon} from "./icons";
 import {ToggleSwitch} from "@edgedb/common/ui/toggleSwitch";
 import fuzzysort from "fuzzysort";
-import {highlightString} from "../../utils/fuzzysortHighlight";
+import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerTabs";
 
