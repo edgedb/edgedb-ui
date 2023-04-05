@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import {createPortal} from "react-dom";
-import {useLocation} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -33,7 +32,7 @@ export type ExplainHighlightsRef = {
 
 export const ExplainHighlightsRenderer = observer(
   forwardRef(function ExplainHighlightsRenderer(
-    {state}: {state: ExplainState},
+    {state, isEditor = true}: {state: ExplainState; isEditor?: boolean},
     ref
   ) {
     const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
@@ -100,8 +99,6 @@ export const ExplainHighlightsRenderer = observer(
 
     const [_, theme] = useTheme();
     const palette = theme === Theme.light ? lightPalette : darkPalette;
-    const location = useLocation();
-    const isEditor = location.pathname.includes("editor");
 
     const getBgColor = (ctxRect: CtxRect) => {
       if (state.hoveredPlan) {

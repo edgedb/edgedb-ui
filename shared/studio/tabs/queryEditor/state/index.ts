@@ -54,6 +54,7 @@ import {sessionStateCtx} from "../../../state/sessionState";
 import {
   createExplainState,
   ExplainState,
+  ExplainStateType,
 } from "../../../components/explainVis/state";
 
 export enum EditorKind {
@@ -87,6 +88,8 @@ export class QueryHistoryDraftItem extends ExtendedModel(
   {}
 ) {}
 
+const explainStateCache = new ObservableLRU<string, ExplainState>(10);
+
 @model("QueryEditor/HistoryResultItem")
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   status: prop<string>(),
@@ -103,8 +106,7 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   }
 
   get explainState() {
-    const queryEditor = useTabState(QueryEditor);
-    const state = queryEditor.explainStateCache.get(this.$modelId);
+    const state = explainStateCache.get(this.$modelId);
 
     if (!state) {
       fetchResultData(this.$modelId).then((resultData) => {
@@ -112,7 +114,7 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
           const explainState = createExplainState(
             decode(resultData.outCodecBuf, resultData.resultBuf)![0]
           );
-          queryEditor.explainStateCache.set(this.$modelId, explainState);
+          explainStateCache.set(this.$modelId, explainState);
         }
       });
     }
@@ -268,7 +270,6 @@ export class QueryEditor extends Model({
   });
 
   resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
-  explainStateCache = new ObservableLRU<string, ExplainState>(10);
 
   @observable.ref
   extendedViewerItem: Item | null = null;
@@ -375,12 +376,12 @@ export class QueryEditor extends Model({
     };
 
     if (item.explainState)
-      this.explainStateCache.set(item.$modelId, item.explainState);
+      explainStateCache.set(item.$modelId, item.explainState);
 
     const historyItem = new QueryHistoryResultItem({
       ...historyItemData,
       hasResult: true,
-      status: "EXPLAIN",
+      status: item.status!,
       implicitLimit: item.implicitLimit!,
     });
 
@@ -502,8 +503,11 @@ export class QueryEditor extends Model({
         implicitLimit: data.implicitLimit,
       });
       if (data.result) {
-        if (data.status.toLowerCase() === "explain") {
-          this.explainStateCache.set(
+        if (
+          data.status === ExplainStateType.explain ||
+          data.status === ExplainStateType.analyzeQuery
+        ) {
+          explainStateCache.set(
             historyItem.$modelId,
             createExplainState(data.result[0])
           );

@@ -42,6 +42,7 @@ import {
   ExplainHighlightsRenderer,
 } from "../../components/explainVis/codeEditorContexts";
 import {ExplainCodeBlock} from "../../components/explainVis/codeblock";
+import {ExplainStateType} from "../../components/explainVis/state";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -357,7 +358,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   let output: JSX.Element | null;
 
   const isExplain =
-    item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
+    item.status === ExplainStateType.explain ||
+    item.status === ExplainStateType.analyzeQuery;
 
   if (item.error) {
     output = (
@@ -559,6 +561,7 @@ function QueryCodeBlock({
         <ExplainHighlightsRenderer
           ref={explainHighlightsRef}
           state={item.explainState}
+          isEditor={false}
         />
       ) : null}
     </>

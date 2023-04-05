@@ -134,10 +134,15 @@ const Flamegraph = observer(function Flamegraph({
   const width = state.flamegraphWidth;
   const [zoom, offset] = state.flamegraphZoomOffset;
 
-  const range =
-    state.planTree.data[
-      explainGraphSettings.isTimeGraph ? "totalTime" : "totalCost"
-    ]! / zoom;
+  const range = isLight
+    ? (state.planTree.data.totalTime ?? state.planTree.data.totalCost) / zoom
+    : ((explainGraphSettings.isTimeGraph && state.planTree.data.totalTime) ||
+        state.planTree.data.totalCost) / zoom;
+
+  const isTimeGraph = isLight
+    ? !!state.planTree.data.totalTime
+    : explainGraphSettings.isTimeGraph;
+
   return (
     <div
       style={{height: (state.planTree.data.childDepth + 1) * 38 + 12}}
@@ -162,7 +167,7 @@ const Flamegraph = observer(function Flamegraph({
     >
       <div className={styles.graphScale}>
         <span>
-          {explainGraphSettings.isTimeGraph
+          {isTimeGraph
             ? range.toFixed(range < 1 ? 1 : 0) + "ms"
             : range.toFixed(0)}
         </span>
