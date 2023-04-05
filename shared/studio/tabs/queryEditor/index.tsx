@@ -4,7 +4,7 @@ import {Text} from "@codemirror/state";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
+import {CodeEditor} from "@edgedb/code-editor";
 
 import styles from "./repl.module.scss";
 
@@ -39,6 +39,7 @@ import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 import Spinner from "@edgedb/common/ui/spinner";
 import {ExplainVis} from "../../components/explainVis";
 import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
+import {ExplainStateType} from "../../components/explainVis/state";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
@@ -210,7 +211,8 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
 
   const explainState =
     editorState.currentResult instanceof QueryHistoryResultItem &&
-    editorState.currentResult.status === "EXPLAIN"
+    (editorState.currentResult.status === ExplainStateType.explain ||
+      editorState.currentResult.status === ExplainStateType.analyzeQuery)
       ? editorState.currentResult.explainState
       : null;
 
@@ -283,7 +285,7 @@ const QueryResult = observer(function QueryResult() {
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
-      if (result.status === "EXPLAIN") {
+      if (result.status === "EXPLAIN" || result.status === "ANALYZE QUERY") {
         content = (
           <ExplainVis state={result.explainState} queryHistoryItem={result} />
         );

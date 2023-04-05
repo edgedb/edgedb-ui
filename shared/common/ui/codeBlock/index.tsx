@@ -12,14 +12,16 @@ if (highlightStyle.module) {
   StyleModule.mount(document, highlightStyle.module);
 }
 
-type CustomRange = {range: [number, number]} & (
-  | {style: string}
+export type Range = [number, number];
+
+export type CustomRange = {range: Range} & (
+  | {style?: string; attrs?: {[key: string]: string}}
   | {
-      renderer: (range: [number, number], content: JSX.Element) => JSX.Element;
+      renderer: (range: Range, content: JSX.Element) => JSX.Element;
     }
 );
 
-interface CodeBlockProps {
+export interface CodeBlockProps {
   code: string;
   language?: Language;
   customRanges?: CustomRange[] | ((tree: Tree) => CustomRange[]);
@@ -37,7 +39,7 @@ export default function CodeBlock({
 
   const html: (string | JSX.Element)[] = [];
 
-  const ranges = Array.isArray(customRanges)
+  let ranges = Array.isArray(customRanges)
     ? customRanges
     : customRanges?.(tree);
 
@@ -82,20 +84,26 @@ export default function CodeBlock({
             textSlice
           )
         );
+
         html.push(
-          "style" in currentRange ? (
-            <span key={html.length} className={currentRange.style}>
-              {customRangeBuffer}
-            </span>
-          ) : (
+          "renderer" in currentRange! ? (
             <Fragment key={html.length}>
               {currentRange.renderer(
                 currentRange.range,
                 <>{customRangeBuffer}</>
               )}
             </Fragment>
+          ) : (
+            <span
+              key={html.length}
+              className={currentRange!.style}
+              {...currentRange!.attrs}
+            >
+              {customRangeBuffer}
+            </span>
           )
         );
+
         customRangeBuffer = null;
         cursor = currentRange!.range[1];
         currentRange = ranges?.[nextRangeIndex++];
@@ -134,16 +142,20 @@ export default function CodeBlock({
   });
   addSpan(code.slice(cursor));
 
-  if (customRangeBuffer) {
+  if (currentRange && customRangeBuffer) {
     html.push(
-      "style" in currentRange ? (
-        <span key={html.length} className={currentRange.style}>
-          {customRangeBuffer}
-        </span>
-      ) : (
+      "renderer" in currentRange ? (
         <Fragment key={html.length}>
           {currentRange.renderer(currentRange.range, <>{customRangeBuffer}</>)}
         </Fragment>
+      ) : (
+        <span
+          key={html.length}
+          className={currentRange.style}
+          {...currentRange.attrs}
+        >
+          {customRangeBuffer}
+        </span>
       )
     );
   }

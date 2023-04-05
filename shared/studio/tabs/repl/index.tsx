@@ -9,6 +9,7 @@ import {
 
 import styles from "./repl.module.scss";
 import {
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -34,9 +35,14 @@ import {
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
-import {explainGraphSettings} from "../../state/explainGraphSettings";
 import Button from "@edgedb/common/ui/button";
 import {QueryEditor} from "../queryEditor/state";
+import {
+  ExplainHighlightsRef,
+  ExplainHighlightsRenderer,
+} from "../../components/explainVis/codeEditorContexts";
+import {ExplainCodeBlock} from "../../components/explainVis/codeblock";
+import {ExplainStateType} from "../../components/explainVis/state";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -307,6 +313,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   const navigate = useNavigate();
   const editorState = useTabState(QueryEditor);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const updateScroll = useRef(false);
 
   const runInEditor = () => {
@@ -349,7 +357,9 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   let output: JSX.Element | null;
 
-  const isExplain = item.status === "EXPLAIN";
+  const isExplain =
+    item.status === ExplainStateType.explain ||
+    item.status === ExplainStateType.analyzeQuery;
 
   if (item.error) {
     output = (
@@ -445,24 +455,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         >
           <div className={styles.scrollWrapper}>
             <div
+              ref={containerRef}
               className={cn(styles.codeBlockContainer, {
                 [styles.truncateQuery]: truncateQuery,
               })}
             >
-              <CodeBlock
-                className={cn(styles.code)}
-                code={item.query}
-                customRanges={
-                  item.error?.data.range
-                    ? [
-                        {
-                          range: item.error.data.range,
-                          style: styles.errorUnderline,
-                        },
-                      ]
-                    : undefined
-                }
-              />
+              <QueryCodeBlock item={item} containerRef={containerRef} />
               {item.error?.data.range ? (
                 <div
                   className={styles.codeBlockErrorLines}
@@ -528,6 +526,62 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     </div>
   );
 });
+
+function QueryCodeBlock({
+  item,
+  containerRef,
+}: {
+  item: ReplHistoryItemState;
+  containerRef: RefObject<HTMLElement>;
+}) {
+  const [ref, setRef] = useState<ExplainHighlightsRef | null>(null);
+  const isExplain =
+    item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
+
+  const explainHighlightsRef = useCallback((node) => {
+    if (node) {
+      setRef(node);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ref && containerRef.current) {
+      ref.updateContextRects(containerRef.current);
+    }
+  }, [ref]);
+
+  return isExplain ? (
+    <>
+      <ExplainCodeBlock
+        className={cn(styles.code)}
+        code={item.query}
+        explainContexts={item.explainState?.contextsByBufIdx[0] ?? []}
+      />
+      {item.explainState ? (
+        <ExplainHighlightsRenderer
+          ref={explainHighlightsRef}
+          state={item.explainState}
+          isEditor={false}
+        />
+      ) : null}
+    </>
+  ) : (
+    <CodeBlock
+      className={cn(styles.code)}
+      code={item.query}
+      customRanges={
+        item.error?.data.range
+          ? [
+              {
+                range: item.error.data.range,
+                style: styles.errorUnderline,
+              },
+            ]
+          : undefined
+      }
+    />
+  );
+}
 
 const headerASCII = `
                                           /$$

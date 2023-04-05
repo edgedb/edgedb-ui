@@ -39,6 +39,7 @@ import {
   bracketMatching,
   LanguageSupport,
   syntaxHighlighting,
+  indentOnInput
 } from "@codemirror/language";
 import {
   closeBrackets,
@@ -47,7 +48,6 @@ import {
   completionKeymap,
 } from "@codemirror/autocomplete";
 import {indentationMarkers} from "@replit/codemirror-indentation-markers";
-import {indentOnInput} from "@codemirror/language";
 import {lintKeymap} from "@codemirror/lint";
 
 import {edgeql, edgeqlLanguage} from "@edgedb/lang-edgeql";
@@ -59,7 +59,6 @@ import cn from "@edgedb/common/utils/classNames";
 import {SchemaObjectType} from "@edgedb/common/schemaData";
 
 import styles from "./codeEditor.module.scss";
-// import {cursorPlugin} from "./terminalCursor";
 
 const readOnlyComp = new Compartment();
 const darkThemeComp = new Compartment();

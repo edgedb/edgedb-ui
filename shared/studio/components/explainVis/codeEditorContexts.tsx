@@ -1,6 +1,13 @@
 import {CodeEditorRef} from "@edgedb/code-editor";
 import {observer} from "mobx-react-lite";
-import {useEffect, useState} from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import {createPortal} from "react-dom";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -19,44 +26,36 @@ interface CtxRect {
   depth: number;
 }
 
-export const CodeEditorExplainContexts = observer(function ExplainContexts({
-  editorRef,
-  state,
-}: {
-  editorRef: CodeEditorRef;
-  state: ExplainState;
-}) {
-  const [containerEl] = useState(() => document.createElement("div"));
+export type ExplainHighlightsRef = {
+  updateContextRects: (containerEl: HTMLElement) => void;
+};
 
-  const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
+export const ExplainHighlightsRenderer = observer(
+  forwardRef(function ExplainHighlightsRenderer(
+    {state, isEditor = true}: {state: ExplainState; isEditor?: boolean},
+    ref
+  ) {
+    const [ctxRects, setCtxRects] = useState<CtxRect[]>([]);
 
-  const [_, theme] = useTheme();
-  const palette = theme === Theme.light ? lightPalette : darkPalette;
+    const updateContextRects = useCallback((containerEl: HTMLElement) => {
+      const scrollRect = containerEl.getBoundingClientRect();
 
-  useEffect(() => {
-    const scrollerEl = editorRef.view().scrollDOM;
-
-    containerEl.classList.add(styles.explainContextsContainer);
-    scrollerEl.appendChild(containerEl);
-
-    let rects: CtxRect[] = [];
-
-    const updateContextRects = () => {
-      const scrollRect = scrollerEl.getBoundingClientRect();
-
-      const offsetTop = scrollRect.top - scrollerEl.scrollTop;
-      const offsetLeft = scrollRect.left - scrollerEl.scrollLeft;
+      const offsetTop = scrollRect.top - containerEl.scrollTop;
+      const offsetLeft = scrollRect.left - containerEl.scrollLeft;
 
       const ctxs = state.contextsByBufIdx[0] ?? [];
-      rects = [];
+      const rects = [];
       let parentCtxs: Context[] = [];
+
       for (const ctx of ctxs) {
         const els = [
-          ...scrollerEl.querySelectorAll(`[data-ctx-id="${ctx.id}"]`),
+          ...containerEl.querySelectorAll(`[data-ctx-id*="${ctx.id}"]`),
         ];
+
         if (!els.length) {
           continue;
         }
+
         let top = Infinity,
           left = Infinity,
           right = -Infinity,
@@ -92,9 +91,85 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
       }
 
       setCtxRects(rects);
+    }, []);
+
+    useImperativeHandle<unknown, ExplainHighlightsRef>(
+      ref,
+      () => ({updateContextRects}),
+      [updateContextRects]
+    );
+
+    const [_, theme] = useTheme();
+    const palette = theme === Theme.light ? lightPalette : darkPalette;
+
+    const getBgColor = (ctxRect: CtxRect) => {
+      if (state.hoveredPlan) {
+        const planDepth = getPlanDepth(state.hoveredPlan);
+        const ctx = state.hoveredCtxId === ctxRect.id;
+        if (ctx && planDepth) return palette[planDepth % palette.length];
+      }
+
+      if (isEditor && state.selectedPlan) {
+        const planDepth = getPlanDepth(state.selectedPlan);
+        const ctx = state.ctxId === ctxRect.id;
+
+        if (ctx && planDepth) return palette[planDepth % palette.length];
+      }
+
+      if (isEditor && state.selectedPlan?.parent) {
+        const parentPlanDepth = getPlanDepth(state.selectedPlan.parent);
+        const ctxParent = state.parentCtxId === ctxRect.id;
+
+        if (ctxParent && parentPlanDepth)
+          return palette[parentPlanDepth % palette.length];
+      }
+
+      return undefined;
     };
 
-    updateContextRects();
+    return (
+      <>
+        {ctxRects.map((ctxRect) => (
+          <div
+            key={ctxRect.id}
+            className={cn(styles.explainContextRect, {
+              [styles.highlighted]: isEditor && state.ctxId === ctxRect.id,
+              [styles.highlightedOnHover]:
+                state.ctxId !== ctxRect.id &&
+                state.hoveredCtxId === ctxRect.id,
+            })}
+            style={{
+              top: ctxRect.top,
+              left: ctxRect.left,
+              width: ctxRect.width,
+              height: ctxRect.height,
+              backgroundColor: getBgColor(ctxRect),
+            }}
+          />
+        ))}
+      </>
+    );
+  })
+);
+
+export const CodeEditorExplainContexts = observer(function ExplainContexts({
+  editorRef,
+  state,
+}: {
+  editorRef: CodeEditorRef;
+  state: ExplainState;
+}) {
+  const [containerEl] = useState(() => document.createElement("div"));
+
+  const ref = useRef<ExplainHighlightsRef>();
+
+  useEffect(() => {
+    const scrollerEl = editorRef.view().scrollDOM;
+
+    containerEl.classList.add(styles.explainContextsContainer);
+    scrollerEl.appendChild(containerEl);
+
+    ref.current?.updateContextRects(scrollerEl);
 
     let lastViewport = {from: 0, to: 0};
 
@@ -105,7 +180,7 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
         viewport.to !== lastViewport.to
       ) {
         lastViewport = {...viewport};
-        updateContextRects();
+        ref.current?.updateContextRects(scrollerEl);
       }
     };
     scrollerEl.addEventListener("scroll", scrollListener);
@@ -116,51 +191,8 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
     };
   }, [state]);
 
-  const getBgColor = (ctxRect: CtxRect) => {
-    if (state.hoveredPlan) {
-      const planDepth = getPlanDepth(state.hoveredPlan);
-      const ctx = state.hoveredCtxId === ctxRect.id;
-      if (ctx && planDepth) return palette[planDepth % palette.length];
-    }
-
-    if (state.selectedPlan) {
-      const planDepth = getPlanDepth(state.selectedPlan);
-      const ctx = state.ctxId === ctxRect.id;
-
-      if (ctx && planDepth) return palette[planDepth % palette.length];
-    }
-
-    if (state.selectedPlan?.parent) {
-      const parentPlanDepth = getPlanDepth(state.selectedPlan.parent);
-      const ctxParent = state.parentCtxId === ctxRect.id;
-
-      if (ctxParent && parentPlanDepth)
-        return palette[parentPlanDepth % palette.length];
-    }
-
-    return undefined;
-  };
-
   return createPortal(
-    <>
-      {ctxRects.map((ctxRect) => (
-        <div
-          key={ctxRect.id}
-          className={cn(styles.explainContextRect, {
-            [styles.highlighted]: state.ctxId === ctxRect.id,
-            [styles.highlightedOnHover]:
-              state.ctxId !== ctxRect.id && state.hoveredCtxId === ctxRect.id,
-          })}
-          style={{
-            top: ctxRect.top,
-            left: ctxRect.left,
-            width: ctxRect.width,
-            height: ctxRect.height,
-            backgroundColor: getBgColor(ctxRect),
-          }}
-        />
-      ))}
-    </>,
+    <ExplainHighlightsRenderer ref={ref} state={state} />,
     containerEl
   );
 });

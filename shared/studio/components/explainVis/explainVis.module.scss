@@ -546,17 +546,21 @@
   }
 
   z-index: -1;
+}
 
-  .explainContextRect {
-    position: absolute;
-    border-radius: 3px;
+.explainContextRect {
+  position: absolute;
+  border-radius: 3px;
 
-    &.highlighted {
-      outline: 2px solid var(--outline-color);
-    }
-
-    &.highlightedOnHover {
-      outline: 2px dotted var(--outline-color);
-    }
+  &.highlighted {
+    outline: 2px solid var(--outline-color);
   }
+
+  &.highlightedOnHover {
+    outline: 2px dotted var(--outline-color);
+  }
+}
+
+div[data-radix-popper-content-wrapper] {
+  z-index: 1001 !important;
 }

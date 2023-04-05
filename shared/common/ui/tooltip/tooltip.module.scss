@@ -1,7 +1,7 @@
 @import "../../mixins.scss";
 
 .tooltip {
-  --tooltipBg: #1f8aed; //#468bfe; // TODO Ask Roman old colors are better
+  --tooltipBg: #1f8aed;
 
   position: absolute;
   font-size: 12px;

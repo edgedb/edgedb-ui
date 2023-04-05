@@ -42,6 +42,7 @@ import {sessionStateCtx} from "../../../state/sessionState";
 import {
   createExplainState,
   ExplainState,
+  ExplainStateType,
 } from "../../../components/explainVis/state";
 
 export const defaultItemHeight = 85;
@@ -371,7 +372,10 @@ export class Repl extends Model({
 
         historyItem.setResult(status, !!result, Number(implicitLimit));
         if (result) {
-          if (status.toLowerCase() === "explain") {
+          if (
+            status === ExplainStateType.explain ||
+            status === ExplainStateType.analyzeQuery
+          ) {
             this.resultExplainCache.set(
               historyItem.$modelId,
               createExplainState(result[0])

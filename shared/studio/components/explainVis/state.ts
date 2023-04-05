@@ -45,6 +45,11 @@ export function createExplainState(rawExplainOutput: string) {
   });
 }
 
+export enum ExplainStateType {
+  explain = "EXPLAIN",
+  analyzeQuery = "ANALYZE QUERY",
+}
+
 @model("ExplainState")
 export class ExplainState extends Model({
   rawData: prop<string>(),
@@ -79,7 +84,7 @@ export class ExplainState extends Model({
   }
 
   getCtxId(plan: Plan | null | undefined) {
-    return plan?.nearestContextPlan?.contextId || plan?.contextId;
+    return plan?.nearestContextPlan?.contextId ?? plan?.contextId;
   }
 
   @modelAction
@@ -235,24 +240,6 @@ export class ExplainState extends Model({
     }
     return ctxs;
   }
-}
-
-export function reRunWithAnalyze(queryHistoryItem: QueryHistoryResultItem) {
-  if (queryHistoryItem.queryData.data.kind !== EditorKind.EdgeQL) {
-    throw new Error("expected edgeql query kind");
-  }
-  const queryEditor = queryEditorCtx.get(queryHistoryItem);
-  if (!queryEditor) {
-    throw new Error("failed to find queryEditor ctx");
-  }
-
-  const {query, params} = queryHistoryItem.queryData.data;
-
-  const updatedQuery = query.replace(/\bexplain\b/i, "explain analyze");
-
-  queryEditor
-    ._runStatement(updatedQuery, params?.data ?? null)
-    .then(() => queryEditor.setHistoryCursor(0)); // todo DP
 }
 
 function nodesEqual(l: Plan[], r: Plan[]) {
