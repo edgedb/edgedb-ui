@@ -50,6 +50,40 @@
 .scrollInner {
   padding: 8px 16px;
   padding-bottom: 48px;
+  position: relative;
+
+  .copyButton {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    font-family: "Roboto";
+    font-style: normal;
+    font-weight: 500;
+    font-size: 11px;
+    line-height: 24px;
+    text-transform: uppercase;
+    color: var(--app-code);
+    cursor: pointer;
+
+    svg {
+      fill: var(--app-code);
+      margin-right: 6px;
+    }
+
+    &:hover {
+      color: #1f8aed;
+
+      svg {
+        fill: #1f8aed;
+      }
+    }
+  }
+
+  .select {
+    color: var(--app-code);
+  }
 }
 
 .controls {
