@@ -9,7 +9,7 @@ import {
 export const parsers: {[typename: string]: (val: string) => any} = {
   "std::str": (val: string) => val,
   "std::bool": (val: string) => {
-    return val !== "";
+    return val !== "" && val !== "false";
   },
   "std::int16": (val: string) => {
     if (!/^-?[0-9]+$/.test(val)) {

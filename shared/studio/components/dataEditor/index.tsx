@@ -491,7 +491,7 @@ function BoolEditor({
         <div
           key={i}
           className={cn({
-            [styles.boolSelected]: !!value == bool,
+            [styles.boolSelected]: (value !== "" && value !== "false") == bool,
           })}
           onClick={() => onChange(bool ? "true" : "false", false)}
         >
