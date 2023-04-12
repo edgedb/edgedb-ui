@@ -8,6 +8,7 @@ import {
 
 export const parsers: {[typename: string]: (val: string) => any} = {
   "std::str": (val: string) => val,
+  "std::json": (val: string) => val,
   "std::bool": (val: string) => {
     return val !== "" && val !== "false";
   },
