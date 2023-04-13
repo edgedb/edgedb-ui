@@ -289,11 +289,17 @@ export function prettyPrintJSON(
   json: string,
   indentSpaces: number = 2
 ): string {
+  const switchRegex = /["{}[\],]/g;
   let pretty = "";
   let i = 0;
   let lasti = 0;
   let indent = 0;
   while (i < json.length) {
+    switchRegex.lastIndex = i;
+    if (!switchRegex.exec(json)) {
+      break;
+    }
+    i = switchRegex.lastIndex - 1;
     switch (json[i]) {
       case "{":
       case "[":
@@ -303,7 +309,7 @@ export function prettyPrintJSON(
         lasti = i + 1;
 
         if (json[i + 1] === (json[i] === "{" ? "}" : "]")) {
-          pretty += "]";
+          pretty += json[i + 1];
           lasti++;
           i++;
         } else {
@@ -330,9 +336,17 @@ export function prettyPrintJSON(
         lasti = i + 1;
         break;
       case '"':
+        const strRegex = /\\*"/g;
+        strRegex.lastIndex = i + 1;
         while (true) {
-          i = json.indexOf('"', i + 1);
-          if (json[i - 1] !== "\\") break;
+          const match = strRegex.exec(json);
+          if (!match) {
+            throw new Error("Cannot pretty print json");
+          }
+          if (match[0].length % 2 === 1) {
+            i = strRegex.lastIndex - 1;
+            break;
+          }
         }
     }
     i++;
