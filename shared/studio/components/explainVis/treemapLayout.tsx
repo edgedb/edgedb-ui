@@ -220,7 +220,7 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
     >
       <div className={styles.breadcrumbsWrapper}>
         {breadcrumbs.map((plan, i) => {
-          const ctxId = plan.nearestContextPlan?.contextId ?? plan.contextId;
+          const ctxId = plan.contextId;
           return (
             <Fragment key={plan.id}>
               <div
@@ -237,7 +237,7 @@ const TreemapBreadcrumbs = observer(function TreemapBreadcrumbs() {
                   ) : i === 0 ? (
                     <span>Query</span>
                   ) : (
-                    plan.type
+                    plan.name
                   )}
                 </span>
               </div>
@@ -278,7 +278,7 @@ export const TreemapNode = observer(
 
     const isTimeGraph = explainGraphSettings.isTimeGraph;
 
-    const ctxId = plan.nearestContextPlan?.contextId ?? plan.contextId;
+    const ctxId = plan.contextId;
 
     const layout = useMemo(() => {
       let subplansTotal = 0;
@@ -289,9 +289,7 @@ export const TreemapNode = observer(
       let hiddenArea = 0;
       let hiddenCount = 0;
       for (const subplan of plan.subPlans ?? []) {
-        if (
-          (subplan.nearestContextPlan?.contextId ?? subplan.contextId) == ctxId
-        ) {
+        if (subplan.contextId == ctxId) {
           continue;
         }
 
@@ -416,7 +414,7 @@ export const TreemapNode = observer(
                       ) : depth === 0 ? (
                         <b className={styles.layoutLabel}>Query</b>
                       ) : (
-                        plan.type
+                        plan.name
                       )}
                     </span>
                   ) : null}
