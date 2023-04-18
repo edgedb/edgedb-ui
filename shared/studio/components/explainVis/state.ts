@@ -13,20 +13,17 @@ import {
   explainGraphSettings,
   graphUnit,
 } from "../../state/explainGraphSettings";
-import {
-  EditorKind,
-  queryEditorCtx,
-  QueryHistoryResultItem,
-} from "../../tabs/queryEditor/state";
-import {getColor} from "./colormap";
 
 export function createExplainState(rawExplainOutput: string) {
-  const rawData = JSON.parse(rawExplainOutput)[0];
+  const rawData = JSON.parse(rawExplainOutput);
   const contexts: Contexts = [];
+  const rootPlan = rawData.coarse_grained;
   const planTree = walkPlanNode(
-    rawData.plan,
-    rawData.plan.full_total_time ?? null,
-    rawData.plan.total_cost,
+    rootPlan,
+    rootPlan.actual_total_time !== undefined
+      ? rootPlan.actual_total_time * rootPlan.actual_loops
+      : null,
+    rootPlan.total_cost,
     contexts
   );
 
@@ -84,7 +81,7 @@ export class ExplainState extends Model({
   }
 
   getCtxId(plan: Plan | null | undefined) {
-    return plan?.nearestContextPlan?.contextId ?? plan?.contextId;
+    return plan?.contextId;
   }
 
   @modelAction
@@ -256,18 +253,15 @@ export interface Plan {
   id: number;
   parent: Plan | null;
   childDepth: number;
-  type: string;
+  name: string | null;
   totalTime: number | null;
   totalCost: number;
   selfTime: number | null;
   selfCost: number;
   selfTimePercent: number | null;
   selfCostPercent: number;
-  subPlans?: Plan[];
-  nearestContextPlan?: Plan;
+  subPlans: Plan[];
   contextId: number | null;
-  hasCollapsedPlans: boolean;
-  fullSubPlans: Plan[];
   raw: any;
 }
 
@@ -277,47 +271,40 @@ export interface Context {
   start: number;
   end: number;
   text: string;
-  selfTimePercent?: number;
-  selfCostPercent: number;
-  color: string;
   linkedBufIdx: number | null;
 }
 
 export type Contexts = Context[];
-
-let _planIdCounter = 0;
 
 export function walkPlanNode(
   data: any,
   queryTotalTime: number | null,
   queryTotalCost: number,
   contexts: Contexts,
-  _replacedPlanNodes?: any[]
+  planName: string | null = null
 ): Plan {
-  const _childContextNodes =
-    data.collapsed_plans || data.nearest_context_plan
-      ? [data.nearest_context_plan, ...(data.collapsed_plans ?? [])]
-      : undefined;
+  const subPlans: Plan[] = (data.children ?? []).map((child: any) =>
+    walkPlanNode(
+      child.node,
+      queryTotalTime,
+      queryTotalCost,
+      contexts,
+      child.name
+    )
+  );
 
-  const replacedPlanNodes = _childContextNodes ?? _replacedPlanNodes!;
-  const fullSubPlans: Plan[] = Array.isArray(data.plans)
-    ? data.plans.map((subplan: any) => {
-        const plan = walkPlanNode(
-          typeof subplan === "number" ? replacedPlanNodes[subplan] : subplan,
-          queryTotalTime,
-          queryTotalCost,
-          contexts,
-          replacedPlanNodes
-        );
-        if (typeof subplan === "number") {
-          replacedPlanNodes[subplan] = plan;
-        }
-        return plan;
-      })
-    : [];
+  const totalTime =
+    data.actual_total_time !== undefined
+      ? data.actual_total_time * data.actual_loops
+      : null;
+  const totalCost = data.total_cost;
 
-  const selfTime = data.collapsed_self_time || data.self_time;
-  const selfCost = data.collapsed_self_cost || data.self_cost;
+  const selfTime =
+    totalTime &&
+    totalTime - subPlans.reduce((sum, plan) => sum + plan.totalTime!, 0);
+  const selfCost =
+    totalCost - subPlans.reduce((sum, plan) => sum + plan.totalCost, 0);
+
   const selfTimePercent = selfTime && selfTime / queryTotalTime!;
   const selfCostPercent = selfCost / queryTotalCost;
 
@@ -325,7 +312,7 @@ export function walkPlanNode(
 
   if (data.contexts) {
     const rawCtxs = data.contexts;
-    const rawCtx = rawCtxs[data.suggested_display_ctx_idx ?? 0];
+    const rawCtx = rawCtxs[rawCtxs.length - 1];
 
     const ctx = contexts.find(
       (ctx) =>
@@ -346,9 +333,6 @@ export function walkPlanNode(
         start: rawCtx.start,
         end: rawCtx.end,
         text: rawCtx.text,
-        selfTimePercent,
-        selfCostPercent,
-        color: getColor(selfTimePercent ?? selfCostPercent),
         linkedBufIdx: linked?.buffer_idx ?? null,
       });
     } else {
@@ -356,36 +340,25 @@ export function walkPlanNode(
     }
   }
 
-  const [nearestContextPlan, ..._subPlans] = _childContextNodes ?? [];
-
-  const subPlans = [
-    ...(nearestContextPlan?.subPlans ?? []),
-    ..._subPlans,
-  ] as Plan[];
-
   if (data.full_total_time != null) {
     subPlans.sort((a, b) => b.totalTime! - a.totalTime!);
   }
 
   const plan: Plan = {
-    id: _planIdCounter++,
+    id: data.plan_id,
     parent: null,
     childDepth: subPlans.length
       ? Math.max(...subPlans.map((subplan) => subplan.childDepth)) + 1
       : 0,
-    type: data.node_type,
-    totalTime: data.full_total_time,
-    totalCost: data.total_cost,
+    name: planName,
+    totalTime,
+    totalCost,
     selfTime,
     selfCost,
     selfTimePercent,
     selfCostPercent,
     contextId,
     subPlans,
-    nearestContextPlan,
-    fullSubPlans,
-    hasCollapsedPlans:
-      !!_childContextNodes && !nodesEqual(fullSubPlans, subPlans),
     raw: data,
   };
 
@@ -401,32 +374,3 @@ export const ExplainContext = createContext<ExplainState>(null!);
 export function useExplainState() {
   return useContext(ExplainContext);
 }
-
-// Result of explain query is output as a json string containing a tree of plan
-// nodes. Where possible plans are annotated with `Contexts`, a list of
-// locations in the original query or schema that map to the plan node.
-// On Plans with `Contexts`, the `SuggestedDisplayCtxIdx` field is the index of
-// the widest context that the plan does not share with sibling or parent
-// plan nodes.
-//
-// interface ExplainOutput {
-//   Buffers: [
-//     string, // query string or schema snippet
-//     string // source
-//   ][],
-//   Plan: PlanNode
-// }
-//
-// interface PlanNode {
-//   "Node Type": string,
-//   CollapsedPlans: PlanNode[],
-//   Plans: (PlanNode | number)[],
-//   NearestContextPlan?: PlanNode,
-//   Contexts?: {
-//     start: number,
-//     end: number,
-//     buffer_idx: number,
-//     text: string
-//   }[]
-//   SuggestedDisplayCtxIdx?: number;
-// }

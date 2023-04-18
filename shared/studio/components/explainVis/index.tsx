@@ -202,7 +202,7 @@ const PlanDetails = observer(function PlanDetails() {
   return plan ? (
     <div className={styles.planDetails}>
       <div className={styles.header}>
-        <span className={styles.nodeType}>{plan.type}:</span>
+        <span className={styles.nodeType}>{plan.name ?? "Query"}:</span>
         <span className={styles.stats}>
           Self {explainGraphSettings.isTimeGraph ? "Time:" : "Cost:"}
           <span className={styles.statsResults}>
@@ -273,12 +273,9 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   const [_, theme] = useTheme();
   const palette = theme === Theme.light ? lightPalette : darkPalette;
 
-  const ctxId = plan.nearestContextPlan
-    ? plan.nearestContextPlan.contextId!
-    : plan.contextId;
+  const ctxId = plan.contextId;
 
-  const subPlans =
-    ctxId != null || depth === 0 ? plan.subPlans! : plan.fullSubPlans;
+  const subPlans = plan.subPlans;
 
   const sortedSubplans: {
     subplan: Plan;
@@ -287,9 +284,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
   let hiddenCount = 0;
   let hiddenWidth = 0;
   for (const subplan of subPlans) {
-    if (
-      (subplan.nearestContextPlan?.contextId ?? subplan.contextId) === ctxId
-    ) {
+    if (subplan.contextId === ctxId) {
       continue;
     }
 
@@ -379,7 +374,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
           ) : depth === 0 ? (
             <b className={styles.query}>Query</b>
           ) : (
-            plan.type
+            plan.name
           )}
         </div>
       </div>
