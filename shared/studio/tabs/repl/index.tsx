@@ -18,7 +18,11 @@ import {
   useState,
 } from "react";
 import {useResize} from "@edgedb/common/hooks/useResize";
-import {CodeEditorProps, createCodeEditor} from "@edgedb/code-editor";
+import {
+  CodeEditorProps,
+  CodeEditorRef,
+  createCodeEditor,
+} from "@edgedb/code-editor";
 import {useDatabaseState, useTabState} from "../../state";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
@@ -229,6 +233,12 @@ const ReplInput = observer(function ReplInput() {
     })
   );
 
+  const ref = useRef<CodeEditorRef>();
+
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+
   const keybindings = useMemo<CodeEditorProps["keybindings"]>(
     () => [
       {
@@ -278,6 +288,15 @@ const ReplInput = observer(function ReplInput() {
       className={cn(styles.replInput, {
         [styles.hidden]: replState.queryRunning,
       })}
+      onKeyDownCapture={
+        replState.queryRunning
+          ? (e) => {
+              // prevent keypresses while hidden
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          : undefined
+      }
     >
       <CustomScrollbars
         className={styles.scrollWrapper}
@@ -285,6 +304,7 @@ const ReplInput = observer(function ReplInput() {
         innerClass="cm-content"
       >
         <CodeEditor
+          ref={ref}
           code={replState.currentQuery}
           onChange={onChange}
           keybindings={keybindings}

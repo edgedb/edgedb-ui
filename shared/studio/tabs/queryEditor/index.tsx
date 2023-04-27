@@ -4,7 +4,7 @@ import {Text} from "@codemirror/state";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {CodeEditor} from "@edgedb/code-editor";
+import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
 
 import styles from "./repl.module.scss";
 
@@ -180,9 +180,15 @@ export const QueryEditorView = observer(function QueryEditorView() {
 const QueryCodeEditor = observer(function QueryCodeEditor() {
   const dbState = useDatabaseState();
   const editorState = useTabState(QueryEditor);
-  const [ref, setRef] = useState(null);
+  const [ref, setRef] = useState<CodeEditorRef | null>(null);
 
   const [_, theme] = useTheme();
+
+  useEffect(() => {
+    if (!editorState.showHistory) {
+      ref?.focus();
+    }
+  }, [ref, editorState.showHistory]);
 
   const keybindings = useMemo(
     () => [
@@ -203,11 +209,8 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     [editorState]
   );
 
-  const codeEditorRef = useCallback((node) => {
-    if (node) {
-      node.focus();
-      setRef(node);
-    }
+  const codeEditorRef = useCallback((ref) => {
+    setRef(ref);
   }, []);
 
   const explainState =

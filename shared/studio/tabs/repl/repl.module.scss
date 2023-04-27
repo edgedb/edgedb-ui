@@ -138,7 +138,10 @@
   }
 
   &.hidden {
-    display: none;
+    pointer-events: none;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
   }
 }
 
