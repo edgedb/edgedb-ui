@@ -6,8 +6,19 @@
   height: max-content;
   min-height: 100%;
   display: flex;
+  align-items: center;
+
   z-index: 1;
   filter: drop-shadow(0px 2px 12px rgba(0, 0, 0, 0.25));
+
+  &.showBackground {
+    background: #f5f5f5;
+    border-radius: 4px 0 0 4px;
+
+    @include darkTheme {
+      background: #262626;
+    }
+  }
 }
 
 .actions {
@@ -65,11 +76,69 @@
   }
 }
 
+@mixin inputLabel {
+  &:before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 15px;
+    border-radius: 0 0 0 4px;
+    padding: 0 2px 0 4px;
+    line-height: 15px;
+    font-family: "Roboto Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-size: 10px;
+    color: #666;
+    background: #d2d2d2;
+    pointer-events: none;
+
+    @include darkTheme {
+      background-color: #656565;
+      color: #e4e4e4;
+    }
+  }
+}
+
 .textbox {
   flex-grow: 1;
   display: flex;
   position: relative;
   min-width: 0;
+
+  @include inputLabel;
+
+  &:before {
+    content: attr(data-input-type);
+    border-radius: 0 3px 0 4px;
+    transition: opacity 0.2s linear;
+  }
+
+  &:focus-within,
+  &.active {
+    input,
+    textarea {
+      border-color: #468bff;
+    }
+
+    &:before {
+      background: #468bff;
+      color: #fff;
+      opacity: 0;
+    }
+  }
+
+  &.error {
+    input,
+    textarea {
+      border-color: #d78d87;
+    }
+
+    &:before {
+      background: #d78d87;
+      color: #fff;
+    }
+  }
 
   input,
   textarea {
@@ -78,7 +147,7 @@
     box-sizing: border-box;
     background: var(--inputBg, #fafafa);
     outline: none;
-    border: 2px solid transparent;
+    border: 2px solid #d2d2d2;
     border-radius: 4px;
     padding: 3px 6px;
     margin: 0;
@@ -88,27 +157,36 @@
     min-height: 32px;
     white-space: pre;
     @include hideScrollbar;
+  }
 
-    &:focus,
+  @include darkTheme {
+    input,
+    textarea {
+      background: var(--inputBg, #141414);
+      color: #adadad;
+      border-color: #656565;
+    }
+
+    &:focus-within,
     &.active {
-      border-color: #047cff;
+      input,
+      textarea {
+        border-color: #468bff;
+      }
+
+      &:before {
+        background: #468bff;
+      }
     }
 
     &.error {
-      border-color: #d78d87;
-    }
-
-    @include darkTheme {
-      background: var(--inputBg, #141414);
-      color: #adadad;
-
-      &:focus,
-      &.active {
-        border-color: #047cff;
+      input,
+      textarea {
+        border-color: #af6963;
       }
 
-      &.error {
-        border-color: #af6963;
+      &:before {
+        background: #af6963;
       }
     }
   }
@@ -197,33 +275,22 @@
 
 .panel {
   position: relative;
-  background: #eaeaea;
-  border-radius: 3px;
-  padding: 6px 22px;
-  min-height: 28px;
+  background: #e8e8e8;
+  border: 2px solid #d2d2d2;
+  border-radius: 4px;
+  padding: 10px;
+  padding-top: 24px;
+  min-width: max-content;
 
-  &:before,
-  &:after {
-    position: absolute;
-    font-family: Roboto Mono;
-    opacity: 0.7;
-    line-height: 30px;
-  }
-  &:before {
-    top: 5px;
-    left: 7px;
-  }
-  &:after {
-    bottom: 5px;
-    right: 7px;
-  }
+  @include inputLabel;
 
   &.panelNested {
-    background: #e0e0e0;
+    background: #f7f7f7;
   }
 
   @include darkTheme {
     background: #262626;
+    border-color: #656565;
 
     &.panelNested {
       background: #333;
@@ -236,22 +303,77 @@
   margin-right: 8px;
 }
 
-.button {
-  line-height: 22px;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 14px;
-  padding: 0 8px;
+.nullButton {
   cursor: pointer;
-  opacity: 0.9;
+  background: #fafafa;
+  padding: 0 6px;
+  margin-left: 8px;
+  line-height: 32px;
+  border-radius: 4px;
+  align-self: flex-start;
   width: max-content;
 
-  &:hover {
-    opacity: 1;
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
   }
 
   @include darkTheme {
-    border-color: rgba(255, 255, 255, 0.5);
+    background: #141414;
   }
+}
+
+.removeButton {
+  width: 32px;
+  height: 32px;
+  background: #d2d2d2;
+  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  svg {
+    fill: #666;
+  }
+
+  &:hover {
+    background: #468bff;
+
+    svg {
+      fill: #f7f7f7;
+    }
+  }
+
+  @include darkTheme {
+    background: #656565;
+
+    svg {
+      fill: #bfbfbf;
+    }
+
+    &:hover {
+      background: #468bff;
+
+      svg {
+        fill: #f7f7f7;
+      }
+    }
+  }
+}
+
+.addButton {
+  border: 2px dashed #a6a6a6;
+  color: #a6a6a6;
+  border-radius: 4px;
+  height: 28px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 3px;
+  flex-grow: 1;
+  cursor: pointer;
 }
 
 .tupleEditor {
@@ -260,10 +382,7 @@
   flex-grow: 1;
 
   &:before {
-    content: "(";
-  }
-  &:after {
-    content: ")";
+    content: "tuple";
   }
 
   .tupleElement {
@@ -282,33 +401,7 @@
     }
 
     &:not(:last-child) {
-      margin-bottom: 6px;
-
-      &:after {
-        align-self: flex-end;
-        content: ",";
-        padding-left: 3px;
-        width: 0;
-        margin-right: -3px;
-        opacity: 0.7;
-      }
-    }
-  }
-
-  &.emptyTuple {
-    padding: 1px 12px;
-
-    &:before {
-      content: "";
-    }
-    &:after {
-      content: "";
-    }
-
-    & > div {
-      display: flex;
-      height: 28px;
-      align-items: center;
+      margin-bottom: 8px;
     }
   }
 }
@@ -317,37 +410,35 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  width: 180px;
 
   &:before {
-    content: "[";
-  }
-  &:after {
-    content: "]";
+    content: "array";
   }
 
-  &.isSet {
+  &.isMulti {
     &:before {
-      content: "{";
-    }
-    &:after {
-      content: "}";
+      content: "multi";
     }
   }
 
   .arrayItem {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     line-height: 30px;
-    margin-right: -12px;
 
-    & > span {
-      opacity: 0.7;
-      margin: 0 3px;
-      align-self: flex-end;
+    & > .textbox > textarea,
+    & > .textbox > input {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    & > .panel {
+      border-top-right-radius: 0;
     }
 
     &:not(:last-child) {
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
   }
 }
@@ -358,25 +449,13 @@
   flex-grow: 1;
 
   &:before {
-    content: "range(";
-    position: relative;
-    display: block;
-    top: -2px;
-    left: -10px;
+    content: "range";
   }
 
   .rangeBound {
     display: flex;
     align-items: center;
     line-height: 30px;
-    margin-right: -12px;
-
-    & > span {
-      opacity: 0.7;
-      margin: 0 3px;
-      align-self: flex-end;
-      width: 4px;
-    }
 
     &:not(:last-child) {
       margin-bottom: 6px;
@@ -430,6 +509,7 @@
   display: flex;
   justify-content: space-between;
   font-weight: 500;
+  line-height: 20px;
 
   &:hover {
     background: var(--inputBg, #fafafa) !important;

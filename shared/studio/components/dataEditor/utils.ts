@@ -44,23 +44,37 @@ export interface EditorRangeValue {
 
 export type EditorValue = string | EditorRangeValue | EditorValue[];
 
-export function newPrimitiveValue(type: PrimitiveType): EditorValue {
+export function newPrimitiveValue(
+  type: PrimitiveType
+): [EditorValue, boolean] {
   const schemaType = type.schemaType;
   switch (schemaType) {
     case "Scalar":
-      return type.enum_values ? type.enum_values[0] : "";
+      return [
+        type.enum_values ? type.enum_values[0] : "",
+        (type.knownBaseType ?? type).name !== "std::str",
+      ];
     case "Array":
-      return [];
+      return [[], false];
     case "Range":
-      return {
-        lower: "",
-        upper: "",
-        incLower: true,
-        incUpper: false,
-        empty: false,
-      };
+      return [
+        {
+          lower: "",
+          upper: "",
+          incLower: true,
+          incUpper: false,
+          empty: false,
+        },
+        false,
+      ];
     case "Tuple":
-      return type.elements.map((element) => newPrimitiveValue(element.type));
+      let error = false;
+      const value = type.elements.map((element) => {
+        const [val, err] = newPrimitiveValue(element.type);
+        error ||= err;
+        return val;
+      });
+      return [value, error];
     default:
       assertNever(schemaType);
   }
@@ -83,7 +97,7 @@ export function valueToEditorValue(
       }
       return value.map((val) => valueToEditorValue(val, type.elementType));
     case "Tuple":
-      if (type.named ? typeof value !== "object" : Array.isArray(value)) {
+      if (type.named ? typeof value !== "object" : !Array.isArray(value)) {
         throw new Error(
           `Expected ${type.named ? "object" : "array"} value for ${
             type.named ? "named " : ""
@@ -185,5 +199,17 @@ export function parseEditorValue(
     }
     default:
       assertNever(schemaType);
+  }
+}
+
+export function isEditorValueValid(
+  value: EditorValue,
+  type: PrimitiveType
+): boolean {
+  try {
+    parseEditorValue(value, type);
+    return true;
+  } catch {
+    return false;
   }
 }

@@ -131,9 +131,10 @@ export class QueryParamsEditor extends Model({}) {
           param.type.schemaType === "Scalar" ? "__scalar__" : param.type.name;
         const data = this.paramData.get(key)!.data;
         if (!data.has(type)) {
+          const [value, hasError] = newPrimitiveValue(param.type);
           data.set(type, {
-            value: frozen(newPrimitiveValue(param.type)),
-            hasError: false,
+            value: frozen(value),
+            hasError,
           });
         }
       }
@@ -228,8 +229,9 @@ export class QueryParamsEditor extends Model({}) {
             let error = false;
             try {
               parseEditorValue(data.value, paramDef.type);
+            } catch {
               error = true;
-            } catch {}
+            }
             paramData.data.set(type, {
               value: frozen(data.value),
               hasError: error,
