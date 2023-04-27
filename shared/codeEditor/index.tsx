@@ -39,7 +39,7 @@ import {
   bracketMatching,
   LanguageSupport,
   syntaxHighlighting,
-  indentOnInput
+  indentOnInput,
 } from "@codemirror/language";
 import {
   closeBrackets,
@@ -59,6 +59,7 @@ import cn from "@edgedb/common/utils/classNames";
 import {SchemaObjectType} from "@edgedb/common/schemaData";
 
 import styles from "./codeEditor.module.scss";
+import {cursorPlugin} from "./terminalCursor";
 
 const readOnlyComp = new Compartment();
 const darkThemeComp = new Compartment();
@@ -311,6 +312,7 @@ export function createCodeEditor({
               ]
             : []
         ),
+        terminalCursor ? cursorPlugin() : [],
         errorUnderlineComp.of(
           errorUnderline ? getErrorExtension(errorUnderline, doc) : []
         ),

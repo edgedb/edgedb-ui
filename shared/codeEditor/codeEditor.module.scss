@@ -19,6 +19,13 @@
     }
   }
 
+  .terminalCursorMark {
+    &,
+    & * {
+      color: var(--cursor-text-color) !important;
+    }
+  }
+
   .errorUnderline {
     background-repeat: repeat-x;
     background-position: bottom;

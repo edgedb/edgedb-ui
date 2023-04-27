@@ -115,6 +115,14 @@
   display: flex;
   padding: 0 16px;
 
+  --cursor-color: #808080;
+  --cursor-text-color: #fff;
+
+  @include darkTheme {
+    --cursor-color: #595959;
+    --cursor-text-color: #111;
+  }
+
   .scrollWrapper {
     flex-grow: 1;
     display: flex;
