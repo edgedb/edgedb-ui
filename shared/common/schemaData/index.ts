@@ -674,7 +674,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
             `cannot find element type id: ${type.element_type_id} for array type ${type.name}`
           );
         }
-        (types.get(type.id) as SchemaArrayType).elementType = elementType;
+        const t = types.get(type.id) as SchemaArrayType;
+        t.elementType = elementType;
         break;
       }
       case "schema::Tuple":
@@ -785,6 +786,9 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           );
         }
       }
+    }
+    if (type.schemaType === "Array" || type.schemaType === "Tuple") {
+      type.name = getNameOfSchemaType(type);
     }
     if (type.schemaType === "Object") {
       const ancestors = new Set<SchemaObjectType>();
