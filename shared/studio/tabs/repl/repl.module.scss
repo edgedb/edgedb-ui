@@ -18,6 +18,7 @@
   min-height: 0;
   min-width: 0;
   background-color: #f7f7f7;
+  --code-editor-bg: #f7f7f7;
   border-radius: 8px;
   font-family: "Roboto Mono", monospace;
 
@@ -40,6 +41,7 @@
 
   @include darkTheme {
     background-color: #242424;
+    --code-editor-bg: #242424;
   }
 }
 
@@ -130,7 +132,7 @@
   }
 
   :global(.cm-editor) {
-    margin-bottom: 12px;
+    padding-bottom: 12px;
   }
 
   :global(.cm-scroller) {
@@ -368,12 +370,12 @@
 }
 
 .outputOuterWrapper {
-  margin: 0 -16px;
+  margin: 0 0 0 -16px;
   flex-grow: 1;
 }
 
 .historyOutput {
-  padding: 4px 8px 12px 8px;
+  padding: 4px 8px 12px 18px;
   min-width: max-content;
   height: max-content;
   height: fit-content;
@@ -445,7 +447,6 @@
 
 .inspector {
   min-width: max-content;
-  margin-right: 16px;
 
   --inspectorRowHoverBg: #f5f5f5;
   --inspectorRowSelectedBg: #d6e2e9;

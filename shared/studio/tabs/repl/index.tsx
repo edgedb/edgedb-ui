@@ -59,6 +59,20 @@ const ReplView = observer(function ReplView() {
   const [height, setHeight] = useState(0);
   useResize(containerRef, ({height}) => setHeight(height));
 
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && replState.extendedViewerItem) {
+        replState.setExtendedViewerItem(null);
+      }
+    };
+
+    window.addEventListener("keydown", listener);
+
+    return () => {
+      window.removeEventListener("keydown", listener);
+    };
+  }, []);
+
   return (
     <div className={styles.replWrapper}>
       <div
@@ -361,7 +375,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   useResize(
     ref,
     ({height}) => {
-      const paddedHeight = height + 25 + (item.showDateHeader ? 24 : 0);
+      const paddedHeight = height + 16 + (item.showDateHeader ? 24 : 0);
       if (item.renderHeight !== paddedHeight) {
         if (item.renderHeight && state.scrollRef && updateScroll.current) {
           state.scrollRef.scrollTop += item.renderHeight - paddedHeight;

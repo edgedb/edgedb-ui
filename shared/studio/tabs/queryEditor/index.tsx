@@ -310,7 +310,7 @@ const QueryResult = observer(function QueryResult() {
     } else {
       content = (
         <div className={styles.queryStatus}>
-          {result.status && "OK:"}
+          {result.status && "OK: "}
           {result.status}
         </div>
       );

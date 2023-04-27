@@ -28,9 +28,8 @@
   position: sticky;
   top: 0;
   left: 0;
-  background: #edededaa;
+  background: #ededed;
   z-index: 1;
-  backdrop-filter: blur(3px);
 
   @include darkTheme {
     background: #363636;
@@ -53,6 +52,10 @@
       background: #c6c6c6;
       top: 7px;
       left: calc(50% - 16px);
+
+      @include darkTheme {
+        background: #656565;
+      }
     }
   }
 }
@@ -134,17 +137,7 @@
 .paramData {
   display: flex;
   justify-self: flex-start;
-
-  & > div {
-    & > input,
-    & > textarea {
-      border-color: #d0d0d0;
-
-      @include darkTheme {
-        border-color: #616161;
-      }
-    }
-  }
+  padding-right: 24px;
 }
 
 .paramError {
