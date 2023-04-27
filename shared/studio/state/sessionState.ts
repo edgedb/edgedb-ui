@@ -40,7 +40,7 @@ type DraftStateItem = {
   active: boolean;
   type: Frozen<SchemaType>;
   description?: string;
-  value: EditorValue | null;
+  value: Frozen<EditorValue | null>;
   error: boolean;
 };
 
@@ -218,7 +218,7 @@ export class SessionState extends Model({
         draftState.globals[key] = {
           type: frozen(schemaGlobal.target, FrozenCheckMode.Off),
           active: global.active,
-          value: global.value,
+          value: frozen(global.value),
           error:
             global.value == null
               ? schemaGlobal.default == null
@@ -230,14 +230,18 @@ export class SessionState extends Model({
     for (const configName of this.configNames) {
       const type = configType.properties[configName].target!;
       const storedItem = sessionStateData?.config[configName];
+      const newVal =
+        storedItem?.value == null
+          ? newPrimitiveValue(type as PrimitiveType)
+          : null;
       draftState.config[configName] = {
         type: frozen(type, FrozenCheckMode.Off),
         description: configType.properties[configName].annotations.find(
           (anno) => anno.name === "std::description"
         )?.["@value"],
         active: storedItem?.active ?? false,
-        value: storedItem?.value ?? newPrimitiveValue(type as PrimitiveType),
-        error: storedItem ? !isValidValue(type, storedItem.value) : true,
+        value: frozen(storedItem?.value ?? newVal![0]),
+        error: storedItem ? !isValidValue(type, storedItem.value) : newVal![1],
       };
     }
     for (const option of queryOptions) {
@@ -248,7 +252,7 @@ export class SessionState extends Model({
       draftState.options[option.name] = {
         type: frozen(type, FrozenCheckMode.Off),
         active: storedItem?.active ?? option.active,
-        value: storedItem?.value ?? option.default,
+        value: frozen(storedItem?.value ?? option.default),
         error: storedItem ? !isValidValue(type, storedItem.value) : false,
       };
     }
@@ -265,11 +269,15 @@ export class SessionState extends Model({
   toggleGlobalActive(type: SchemaGlobal) {
     const global = this.draftState!.globals[type.name];
     if (!global) {
+      const value =
+        type.default != null
+          ? null
+          : newPrimitiveValue(type.target as PrimitiveType);
       this.draftState!.globals[type.name] = {
         active: true,
         type: frozen(type.target, FrozenCheckMode.Off),
-        value: null,
-        error: type.target.name === "std::str",
+        value: frozen(value === null ? null : value[0]),
+        error: value === null ? false : value[1],
       };
     } else {
       global.active = !global.active;
@@ -277,8 +285,12 @@ export class SessionState extends Model({
   }
 
   @modelAction
-  updateItemValue(item: {value: any; error: boolean}, val: any, err: boolean) {
-    item.value = val;
+  updateItemValue(
+    item: {value: Frozen<any>; error: boolean},
+    val: any,
+    err: boolean
+  ) {
+    item.value = frozen(val);
     item.error = err;
   }
 
@@ -365,9 +377,13 @@ export class SessionState extends Model({
         .map(([name, global]) => ({
           name,
           type: global.type as Frozen<SchemaType>,
-          value: global.value
-            ? parseEditorValue(global.value, global.type.data as PrimitiveType)
-            : null,
+          value:
+            global.value.data != null
+              ? parseEditorValue(
+                  global.value.data,
+                  global.type.data as PrimitiveType
+                )
+              : null,
         })),
       config: Object.entries(this.draftState!.config)
         .filter(([_, config]) => config.active && !config.error)
@@ -375,7 +391,7 @@ export class SessionState extends Model({
           name,
           type: config.type as Frozen<SchemaType>,
           value: parseEditorValue(
-            config.value!,
+            config.value.data!,
             config.type.data as PrimitiveType
           ),
         })),
@@ -391,7 +407,7 @@ export class SessionState extends Model({
             name,
             type: opt.type as Frozen<SchemaType>,
             value: parseEditorValue(
-              opt.value!,
+              opt.value.data!,
               opt.type.data as PrimitiveType
             ),
           };
@@ -413,7 +429,7 @@ export class SessionState extends Model({
             data[name] = {
               typeId: global.type.data.id,
               active: global.active,
-              value: global.value,
+              value: global.value.data,
             };
             return data;
           },
@@ -424,7 +440,7 @@ export class SessionState extends Model({
             if (config.value != null) {
               data[name] = {
                 active: config.active,
-                value: config.value,
+                value: config.value.data!,
               };
             }
             return data;
@@ -435,7 +451,7 @@ export class SessionState extends Model({
           (data, [name, opt]) => {
             data[name] = {
               active: opt.active,
-              value: opt.value!,
+              value: opt.value.data!,
             };
             return data;
           },

@@ -14,10 +14,14 @@ import {
   EditorRangeValue,
   EditorTupleType,
   EditorValue,
+  isEditorValueValid,
   newPrimitiveValue,
+  parseEditorValue,
   PrimitiveType,
+  valueToEditorValue,
 } from "./utils";
 import {parsers} from "./parsers";
+import {DeleteIcon} from "./icons";
 
 export {newPrimitiveValue, parseEditorValue} from "./utils";
 export {parsers} from "./parsers";
@@ -43,8 +47,31 @@ export function DataEditor({
 }: DataEditorProps) {
   const inputRef = useRef<HTMLElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const [val, setVal] = useState(value);
-  const [hasError, setError] = useState(false);
+  const [val, setVal] = useState(() =>
+    value != null
+      ? isMulti
+        ? value.map((val: any) => valueToEditorValue(val, type))
+        : valueToEditorValue(value, type)
+      : isRequired
+      ? isMulti
+        ? []
+        : newPrimitiveValue(type)[0]
+      : null
+  );
+  const [hasError, setError] = useState(() => {
+    return val === null
+      ? true
+      : isMulti
+      ? val.every((v: any) => isEditorValueValid(v, type))
+      : isEditorValueValid(val, type);
+  });
+
+  const getParsedVal = () =>
+    val !== null
+      ? isMulti
+        ? val.map((v: any) => parseEditorValue(v, type))
+        : parseEditorValue(val, type)
+      : null;
 
   useEffect(() => {
     if (inputRef.current) {
@@ -69,7 +96,7 @@ export function DataEditor({
         return;
       }
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !hasError) {
-        onChange(val);
+        onChange(getParsedVal());
         onClose();
         return;
       }
@@ -83,21 +110,31 @@ export function DataEditor({
     };
   }, [val, hasError]);
 
-  const Input = isMulti ? ArrayEditor : getInputComponent(type);
+  const Input = isMulti
+    ? !isRequired
+      ? nullableInputs.get(ArrayEditor)!
+      : ArrayEditor
+    : getInputComponent(type, !isRequired);
 
   return (
-    <div ref={editorRef} className={cn(styles.dataEditor)} style={style}>
+    <div
+      ref={editorRef}
+      className={cn(styles.dataEditor, {
+        [styles.showBackground]:
+          val === null && !isMulti && type.schemaType !== "Scalar",
+      })}
+      style={style}
+    >
       <Input
         ref={inputRef}
         type={type as any}
-        isSetType={isMulti}
+        isMulti={isMulti}
         depth={0}
         value={val}
-        onChange={(val, err) => {
+        onChange={(val: any, err: boolean) => {
           setVal(val);
           setError(err);
         }}
-        // allowNull={!isRequired}
       />
 
       <div className={styles.actions}>
@@ -119,14 +156,13 @@ export function DataEditor({
             [styles.actionDisabled]: hasError,
           })}
           onClick={() => {
-            onChange(val);
+            onChange(getParsedVal());
             onClose();
           }}
         >
           <SubmitChangesIcon />
         </div>
       </div>
-      {/* {err ? <div className={styles.errMessage}>{err}</div> : null} */}
     </div>
   );
 }
@@ -146,62 +182,40 @@ export interface InputComponentProps<AllowNull extends boolean> {
   depth?: number;
 }
 
-const nullableInputs = new Map<any, any>();
-
 export function getInputComponent<AllowNull extends boolean = false>(
   type: PrimitiveType,
   allowNull?: AllowNull
 ): (props: InputComponentProps<AllowNull>) => JSX.Element {
+  let Input: any;
   if (type.schemaType === "Scalar") {
     const typeName = (type.knownBaseType ?? type).name;
     if (typeName === "std::bool") {
       return BoolEditor as any;
     }
 
-    let Input: any;
     if (type.enum_values) {
-      Input = EnumEditor as any;
+      Input = EnumEditor;
     } else if (typeName === "std::str" || typeName === "std::json") {
-      Input = ExpandingTextbox as any;
+      Input = ExpandingTextbox;
     } else if (parsers[typeName]) {
-      Input = Textbox as any;
+      Input = Textbox;
     } else {
       Input = () => <></>;
     }
-    if (allowNull) {
-      if (!nullableInputs.has(Input)) {
-        nullableInputs.set(Input, (({
-          value,
-          onChange,
-          ...props
-        }: InputComponentProps<true>) => (
-          <Input
-            {...props}
-            value={value ?? ""}
-            onChange={(val: EditorValue | null, error: boolean) => {
-              if (val !== "" || value !== null) {
-                onChange(val, error);
-              }
-            }}
-            _placeholder={value === null ? "{}" : ""}
-          />
-        )) as any);
-      }
-      return nullableInputs.get(Input)!;
-    } else {
-      return Input;
-    }
+  } else if (type.schemaType === "Array") {
+    Input = ArrayEditor;
+  } else if (type.schemaType === "Tuple") {
+    Input = TupleEditor;
+  } else if (type.schemaType === "Range") {
+    Input = RangeEditor;
+  } else {
+    Input = () => <></>;
   }
-  if (type.schemaType === "Array") {
-    return ArrayEditor as any;
+  if (allowNull) {
+    return nullableInputs.get(Input)!;
+  } else {
+    return Input;
   }
-  if (type.schemaType === "Tuple") {
-    return TupleEditor as any;
-  }
-  if (type.schemaType === "Range") {
-    return RangeEditor as any;
-  }
-  return () => <></>;
 }
 
 export const ArrayEditor = forwardRef(function ArrayEditor(
@@ -210,13 +224,13 @@ export const ArrayEditor = forwardRef(function ArrayEditor(
     value,
     onChange,
     depth,
-    isSetType,
+    isMulti,
   }: {
     type: EditorArrayType;
     value: EditorValue[];
     onChange: (val: EditorValue[], error: boolean) => void;
     depth: number;
-    isSetType?: boolean;
+    isMulti?: boolean;
   },
   ref
 ) {
@@ -224,13 +238,13 @@ export const ArrayEditor = forwardRef(function ArrayEditor(
     Array(value?.length ?? 0).fill(false)
   );
 
-  const elementType = isSetType ? type : type.elementType;
+  const elementType = isMulti ? type : type.elementType;
   const Input = getInputComponent(elementType);
 
   return (
     <div
       className={cn(styles.arrayEditor, styles.panel, {
-        [styles.isSet]: !!isSetType,
+        [styles.isMulti]: !!isMulti,
         [styles.panelNested]: depth % 2 !== 0,
       })}
     >
@@ -251,9 +265,8 @@ export const ArrayEditor = forwardRef(function ArrayEditor(
                 onChange(newVal, newErrs.includes(true));
               }}
             />
-            <span>,</span>
             <div
-              className={styles.button}
+              className={styles.removeButton}
               onClick={() => {
                 const newVal = [...value];
                 const newErrs = [...errs];
@@ -263,19 +276,17 @@ export const ArrayEditor = forwardRef(function ArrayEditor(
                 onChange(newVal, newErrs.includes(true));
               }}
             >
-              X
+              <DeleteIcon />
             </div>
           </div>
         );
       })}
       <div
-        className={styles.button}
+        className={styles.addButton}
         onClick={() => {
-          setErrs([...errs, false]);
-          onChange(
-            [...value, newPrimitiveValue(elementType)],
-            errs.includes(true)
-          );
+          const [val, err] = newPrimitiveValue(elementType);
+          setErrs([...errs, err]);
+          onChange([...value, val], errs.includes(true));
         }}
       >
         +
@@ -306,25 +317,8 @@ const TupleEditor = forwardRef(function TupleEditor(
     <div
       className={cn(styles.tupleEditor, styles.panel, {
         [styles.panelNested]: depth % 2 !== 0,
-        // [styles.emptyTuple]: value === null,
       })}
     >
-      {/* {value === null ? (
-        <div>
-          <div className={styles.emptyValue}>{"{ }"}</div>
-          {allowNull ? (
-            <div
-              className={styles.button}
-              onClick={() => {
-                setErrs(Array(type.elements.length).fill(true));
-                onChange(type.elements[0].name ? {} : [], true);
-              }}
-            >
-              +
-            </div>
-          ) : null}
-        </div>
-      ) : ( */}
       {type.elements.map((element, i) => {
         const Input = getInputComponent(element.type);
         return (
@@ -396,9 +390,10 @@ export const RangeEditor = forwardRef(function RangeEditor(
                 onChange(newVal, newErrs.includes(true));
               }}
             />
-            <span>,</span>
             <div
-              className={styles.button}
+              className={cn(styles.nullButton, {
+                [styles.disabled]: value[i === 0 ? "lower" : "upper"] === null,
+              })}
               onClick={() => {
                 const newVal = {...value};
                 const newErrs = [...errs];
@@ -428,7 +423,6 @@ export const RangeEditor = forwardRef(function RangeEditor(
           />
           <span />
         </label>
-        <span>,</span>
         <br />
         <span>inc_upper</span> <span>:=</span>{" "}
         <label>
@@ -444,7 +438,6 @@ export const RangeEditor = forwardRef(function RangeEditor(
           />
           <span />
         </label>
-        <span>)</span>
       </div>
     </div>
   );
@@ -491,7 +484,7 @@ function BoolEditor({
         <div
           key={i}
           className={cn({
-            [styles.boolSelected]: !!value == bool,
+            [styles.boolSelected]: (value !== "" && value !== "false") == bool,
           })}
           onClick={() => onChange(bool ? "true" : "false", false)}
         >
@@ -556,10 +549,12 @@ const Textbox = forwardRef(function Textbox(
     <div
       className={cn(styles.textbox, {
         [styles.errorMessageAbove]: !!errorMessageAbove,
+        [styles.active]: depth === 0,
+        [styles.error]: !!err,
       })}
+      data-input-type={baseTypeName.replace(/^std::/, "")}
     >
       <input
-        className={cn({[styles.active]: depth === 0, [styles.error]: !!err})}
         placeholder={_placeholder}
         ref={ref as RefObject<HTMLInputElement>}
         value={value}
@@ -623,10 +618,12 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
     <div
       className={cn(styles.textbox, {
         [styles.errorMessageAbove]: !!errorMessageAbove,
+        [styles.error]: !!err,
+        [styles.active]: depth === 0,
       })}
+      data-input-type={baseTypeName.replace(/^std::/, "")}
     >
       <textarea
-        className={cn({[styles.active]: depth === 0, [styles.error]: !!err})}
         ref={ref as RefObject<HTMLTextAreaElement>}
         placeholder={_placeholder}
         value={value}
@@ -648,3 +645,45 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
     </div>
   );
 });
+
+const nullableInputs = new Map<any, any>([
+  ...[EnumEditor, ExpandingTextbox, Textbox].map(
+    (Input: any) =>
+      [
+        Input,
+        forwardRef(
+          ({value, onChange, ...props}: InputComponentProps<true>, ref) => (
+            <Input
+              ref={ref}
+              {...props}
+              value={value ?? ""}
+              onChange={(val: EditorValue, error: boolean) => {
+                if (val !== "" || value !== null) {
+                  onChange(val, error);
+                }
+              }}
+              _placeholder={value === null ? "{}" : ""}
+            />
+          )
+        ),
+      ] as [any, any]
+  ),
+  ...[ArrayEditor, TupleEditor, RangeEditor].map(
+    (Input: any) =>
+      [
+        Input,
+        forwardRef((props: InputComponentProps<true>, ref) =>
+          props.value == null ? (
+            <div
+              className={styles.addButton}
+              onClick={() => props.onChange(...newPrimitiveValue(props.type))}
+            >
+              +
+            </div>
+          ) : (
+            <Input ref={ref} {...props} />
+          )
+        ),
+      ] as [any, any]
+  ),
+]);

@@ -18,7 +18,11 @@ import {
   useState,
 } from "react";
 import {useResize} from "@edgedb/common/hooks/useResize";
-import {CodeEditorProps, createCodeEditor} from "@edgedb/code-editor";
+import {
+  CodeEditorProps,
+  CodeEditorRef,
+  createCodeEditor,
+} from "@edgedb/code-editor";
 import {useDatabaseState, useTabState} from "../../state";
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
@@ -54,6 +58,20 @@ const ReplView = observer(function ReplView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   useResize(containerRef, ({height}) => setHeight(height));
+
+  useEffect(() => {
+    const listener = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && replState.extendedViewerItem) {
+        replState.setExtendedViewerItem(null);
+      }
+    };
+
+    window.addEventListener("keydown", listener);
+
+    return () => {
+      window.removeEventListener("keydown", listener);
+    };
+  }, []);
 
   return (
     <div className={styles.replWrapper}>
@@ -229,6 +247,12 @@ const ReplInput = observer(function ReplInput() {
     })
   );
 
+  const ref = useRef<CodeEditorRef>();
+
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+
   const keybindings = useMemo<CodeEditorProps["keybindings"]>(
     () => [
       {
@@ -278,6 +302,15 @@ const ReplInput = observer(function ReplInput() {
       className={cn(styles.replInput, {
         [styles.hidden]: replState.queryRunning,
       })}
+      onKeyDownCapture={
+        replState.queryRunning
+          ? (e) => {
+              // prevent keypresses while hidden
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          : undefined
+      }
     >
       <CustomScrollbars
         className={styles.scrollWrapper}
@@ -285,6 +318,7 @@ const ReplInput = observer(function ReplInput() {
         innerClass="cm-content"
       >
         <CodeEditor
+          ref={ref}
           code={replState.currentQuery}
           onChange={onChange}
           keybindings={keybindings}
@@ -341,7 +375,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   useResize(
     ref,
     ({height}) => {
-      const paddedHeight = height + 25 + (item.showDateHeader ? 24 : 0);
+      const paddedHeight = height + 16 + (item.showDateHeader ? 24 : 0);
       if (item.renderHeight !== paddedHeight) {
         if (item.renderHeight && state.scrollRef && updateScroll.current) {
           state.scrollRef.scrollTop += item.renderHeight - paddedHeight;

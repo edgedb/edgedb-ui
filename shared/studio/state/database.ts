@@ -106,8 +106,8 @@ export class DatabaseState extends Model({
   refreshCaches(capabilities: number, statuses: string[]) {
     if (capabilities & Capabilities.DDL) {
       if (
-        statuses.includes("create database") ||
-        statuses.includes("drop database")
+        statuses.includes("CREATE DATABASE") ||
+        statuses.includes("DROP DATABASE")
       ) {
         instanceCtx.get(this)!.fetchInstanceInfo();
       } else {
@@ -196,6 +196,10 @@ export class DatabaseState extends Model({
   fetchSchemaData = _async(function* (this: DatabaseState) {
     const conn = this.connection;
 
+    if (this.fetchingSchemaData) {
+      return;
+    }
+
     const [migrationId, schemaData] = yield* _await(
       Promise.all([
         conn
@@ -222,6 +226,9 @@ export class DatabaseState extends Model({
       this.schemaData = schemaData;
     } else {
       this.fetchingSchemaData = true;
+      // Directly set loading tab by model name to avoid cyclic dependency
+      // on Schema state class
+      this.loadingTabs.set("Schema", true);
 
       try {
         const rawTypes = yield* _await(
@@ -295,6 +302,7 @@ export class DatabaseState extends Model({
         this.schemaData = schemaData;
       } finally {
         this.fetchingSchemaData = false;
+        this.loadingTabs.set("Schema", false);
         console.log("fetched schema");
       }
     }

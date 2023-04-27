@@ -67,7 +67,6 @@
   --btn-text-color: #333333;
   --btn-green: #0ccb93;
   --btn-text-hover: #fafafa;
-  --cursor-color: #808080;
 
   @include darkTheme {
     --app-bg: #141414;
@@ -108,7 +107,5 @@
     --btn-green: #29b189;
     --btn-text-color: #adadad;
     --btn-text-hover: #141414;
-
-    --cursor-color: #595959;
   }
 }
