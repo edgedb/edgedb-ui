@@ -120,28 +120,30 @@ export const QueryEditorView = observer(function QueryEditorView() {
         views={[
           <div className={styles.editorBlock}>
             {editorState.selectedEditor === EditorKind.EdgeQL ? (
-              <div className={styles.editorBlockInner}>
-                <QueryCodeEditor />
-                <div className={styles.replEditorOverlays}>
-                  <div className={styles.controls}>
-                    <Button
-                      className={styles.runButton}
-                      label="Run"
-                      shortcut="Ctrl+Enter"
-                      macShortcut="⌘+Enter"
-                      disabled={!editorState.canRunQuery}
-                      loading={editorState.queryRunning}
-                      onClick={() => editorState.runQuery()}
-                    />
+              <>
+                <div className={styles.editorBlockInner}>
+                  <QueryCodeEditor />
+                  <div className={styles.replEditorOverlays}>
+                    <div className={styles.controls}>
+                      <Button
+                        className={styles.runButton}
+                        label="Run"
+                        shortcut="Ctrl+Enter"
+                        macShortcut="⌘+Enter"
+                        disabled={!editorState.canRunQuery}
+                        loading={editorState.queryRunning}
+                        onClick={() => editorState.runQuery()}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+                <ParamEditorPanel />
+              </>
             ) : (
               <VisualQuerybuilder
                 state={editorState.currentQueryData[EditorKind.VisualBuilder]}
               />
             )}
-            <ParamEditorPanel />
           </div>,
           <QueryResult />,
         ]}
