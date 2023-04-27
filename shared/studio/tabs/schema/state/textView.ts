@@ -484,7 +484,11 @@ export class SchemaTextView extends Model({
       return [itemsList, headerItems];
     };
 
-    const [itemsList, modulesList] = sortAndFlattenModules(modules, 0, 0);
+    const [itemsList, modulesList] = sortAndFlattenModules(
+      modules,
+      exts.length,
+      0
+    );
 
     return {itemsList: [...exts, ...itemsList], modulesList};
   }
