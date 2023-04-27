@@ -106,8 +106,8 @@ export class DatabaseState extends Model({
   refreshCaches(capabilities: number, statuses: string[]) {
     if (capabilities & Capabilities.DDL) {
       if (
-        statuses.includes("create database") ||
-        statuses.includes("drop database")
+        statuses.includes("CREATE DATABASE") ||
+        statuses.includes("DROP DATABASE")
       ) {
         instanceCtx.get(this)!.fetchInstanceInfo();
       } else {
