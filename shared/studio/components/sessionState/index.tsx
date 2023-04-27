@@ -2,7 +2,7 @@ import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
 import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import {observer} from "mobx-react-lite";
-import {PropsWithChildren, useEffect, useRef, useState} from "react";
+import {Fragment, PropsWithChildren, useEffect, useRef, useState} from "react";
 import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
 import {useDatabaseState} from "../../state";
 import {queryOptions, SessionState} from "../../state/sessionState";
@@ -58,14 +58,53 @@ export const SessionStateButton = observer(function SessionStateButton() {
   return null;
 });
 
-const renderValueWithType = (value: any, type: SchemaType) =>
-  renderValue(
-    value,
-    type.name,
-    type.schemaType === "Scalar" && type.enum_values !== null,
-    type.schemaType === "Range" ? type.elementType.name : undefined,
-    false
-  ).body;
+const renderValueWithType = (value: any, type: SchemaType) => {
+  if (value === null) {
+    return <span className={inspectorStyles.scalar_empty}>{"{}"}</span>;
+  }
+  switch (type.schemaType) {
+    case "Scalar":
+    case "Range":
+      return renderValue(
+        value,
+        type.name,
+        type.schemaType === "Scalar" && type.enum_values !== null,
+        type.schemaType === "Range" ? type.elementType.name : undefined,
+        false,
+        undefined,
+        undefined,
+        true
+      ).body;
+    case "Array":
+      return (
+        <>
+          [
+          {(value as any[]).map((item, i) => (
+            <Fragment key={i}>
+              {i !== 0 ? ", " : null}
+              {renderValueWithType(item, type.elementType)}
+            </Fragment>
+          ))}
+          ]
+        </>
+      );
+    case "Tuple":
+      return (
+        <>
+          (
+          {type.elements.map(({name, type: subType}, i) => (
+            <Fragment key={i}>
+              {i !== 0 ? ", " : null}
+              {name ? `${name} := ` : ""}
+              {renderValueWithType(name ? value[name] : value[i], subType)}
+            </Fragment>
+          ))}
+          )
+        </>
+      );
+  }
+  return null;
+};
 
 export interface SessionStateBarProps {
   className?: string;
@@ -476,7 +515,7 @@ const ListGlobalItem = observer(function ListGlobalItem({
       active={state?.active ?? false}
       onActiveToggle={() => sessionState.toggleGlobalActive(schemaGlobal)}
       type={schemaGlobal.target}
-      value={state?.value}
+      value={state?.value.data}
       onChange={(val, err) => sessionState.updateItemValue(state!, val, err)}
       defaultValue={schemaGlobal.default ?? `{}`}
       allowNull={schemaGlobal.default != null}
@@ -513,14 +552,14 @@ const ListConfigItem = observer(function ListConfigItem({
       active={state.active}
       onActiveToggle={() => sessionState.toggleConfigActive(name)}
       type={state.type.data}
-      value={state.value}
+      value={state.value.data}
       onChange={(val, err) => sessionState.updateItemValue(state, val, err)}
       defaultValue={
         sessionState.configValues
           ? renderValueWithType(
               sessionState.configValues[name],
               state.type.data
-            )
+            )!
           : "fetching..."
       }
       highlighted={
@@ -554,7 +593,7 @@ const ListQueryOptionItem = observer(function ListQueryOptionItem({
           : opt.name
       }
       type={state.type.data}
-      value={state.value}
+      value={state.value.data}
       onChange={(val, err) => sessionState.updateItemValue(state, val, err)}
       highlighted={
         sessionState.highlight?.kind === "o" &&
