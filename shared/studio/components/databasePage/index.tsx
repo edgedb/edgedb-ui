@@ -12,6 +12,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./databasePage.module.scss";
 
+import {VerticalTabBar} from "@edgedb/common/ui/verticalTabBar";
 import {SessionStateBar, SessionStateButton} from "../sessionState";
 import {ErrorPage} from "../errorPage";
 import {WarningIcon} from "../../icons";
@@ -151,87 +152,21 @@ const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
 
   const currentTabId = currentPath[1] ?? "";
 
-  const [showTabLabels, setShowTabLabels] = useState(false);
-  const tabMouseEnterTimeout = useRef<NodeJS.Timeout | null>(null);
-  const tabMouseLeaveTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        const currentIndex = tabs.findIndex(
-          (tab) => tab.path === currentTabId
-        );
-        if (currentIndex !== -1) {
-          navigate(
-            `${currentPath[0]}/` +
-              tabs[
-                (tabs.length + currentIndex + (e.shiftKey ? -1 : 1)) %
-                  tabs.length
-              ].path
-          );
-        }
-      }
-    };
-
-    window.addEventListener("keydown", listener);
-
-    return () => {
-      window.removeEventListener("keydown", listener);
-    };
-  }, [currentTabId]);
-
   return (
-    <div
-      className={cn(styles.tabs, {
-        [styles.showLabels]: showTabLabels,
-        [styles.hide]: !!hide,
-      })}
-    >
-      {tabs.map(({path, label, icon, state}) => (
-        <div
-          key={path}
-          className={cn(styles.tab, {
-            [styles.tabSelected]: path === currentTabId,
-          })}
-          onClick={() => navigate(`${currentPath[0]}/${path}`)}
-          onMouseEnter={() => {
-            if (tabMouseLeaveTimeout.current) {
-              clearTimeout(tabMouseLeaveTimeout.current);
-              tabMouseLeaveTimeout.current = null;
-            }
-            if (!tabMouseEnterTimeout.current) {
-              tabMouseEnterTimeout.current = setTimeout(() => {
-                setShowTabLabels(true);
-              }, 500);
-            }
-          }}
-          onMouseLeave={() => {
-            if (!tabMouseLeaveTimeout.current) {
-              tabMouseLeaveTimeout.current = setTimeout(() => {
-                if (tabMouseEnterTimeout.current) {
-                  clearTimeout(tabMouseEnterTimeout.current);
-                  tabMouseEnterTimeout.current = null;
-                }
-                setShowTabLabels(false);
-              }, 200);
-            }
-          }}
-        >
-          {icon(currentTabId === path)}
-          <div className={styles.tabLabel}>{label}</div>
-          {state ? (
-            <div
-              className={cn(styles.loadingDot, {
-                [styles.active]:
-                  dbState.loadingTabs.get(
-                    (getTypeInfo(state) as ModelTypeInfo).modelType
-                  ) === true,
-              })}
-            />
-          ) : null}
-        </div>
-      ))}
-    </div>
+    <VerticalTabBar
+      noExpand
+      className={cn({[styles.hide]: !!hide})}
+      tabs={tabs.map((tab) => ({
+        id: tab.path,
+        icon: tab.icon,
+        label: tab.label,
+        loading:
+          dbState.loadingTabs.get(
+            (getTypeInfo(tab.state) as ModelTypeInfo).modelType
+          ) === true,
+      }))}
+      selectedTabId={currentTabId}
+      onTabChange={(tab) => navigate(`${currentPath[0]}/${tab.id}`)}
+    />
   );
 });

@@ -1,0 +1,184 @@
+@import "@edgedb/common/mixins.scss";
+
+.tabs {
+  grid-area: tabs;
+  flex-shrink: 0;
+  width: 40px;
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: 100;
+  transition: opacity 0s, width 0.2s;
+
+  &.expanded {
+    // TODO: find a workaround to animating to auto
+    width: 125px;
+  }
+}
+
+.tab {
+  position: relative;
+  height: 40px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+
+  cursor: pointer;
+
+  .tabInner {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+
+    & > svg {
+      fill: #999;
+    }
+  }
+
+  &.tabSelected {
+    background: var(--app-panel-bg);
+  }
+
+  &:hover {
+    background: var(--app-panel-bg);
+
+    .showTooltips & .tabTooltip {
+      opacity: 1;
+    }
+  }
+}
+
+.tabLabel {
+  flex-shrink: 0;
+  font-weight: 500;
+  font-size: 14px;
+  color: #4d4d4d;
+  padding-right: 8px;
+  opacity: 0;
+  transition: opacity 0.1s;
+
+  .expanded & {
+    opacity: 1;
+    transition-delay: 0.05s;
+  }
+}
+
+.tabTooltip {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: calc(50% - 16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+  background: #4c4c4c;
+  color: #f5f5f5;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  line-height: 24px;
+
+  &:before {
+    position: absolute;
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 1px;
+    transform: rotate(45deg);
+    background: inherit;
+    left: -2px;
+    top: calc(50% - 5px);
+  }
+
+  @include darkTheme {
+    background: #adadad;
+    color: #141414;
+  }
+}
+
+.loadingDot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--app-bg);
+  bottom: -3px;
+  right: -3px;
+  transform: scale(0);
+  transition: transform 0.3s;
+
+  &:after {
+    display: block;
+    content: "";
+    width: 10px;
+    height: 10px;
+    margin: 2px;
+    border-radius: 5px;
+    animation: blink 1s infinite alternate-reverse;
+
+    --blinkFromColour: #0ccb93;
+    --blinkToColour: #d0f9ed;
+
+    @include darkTheme {
+      --blinkToColour: #1f1f1f;
+    }
+  }
+
+  &.active {
+    transform: scale(1);
+    transition-delay: 0.1s;
+  }
+}
+
+@keyframes blink {
+  from {
+    background: var(--blinkFromColour);
+  }
+
+  to {
+    background: var(--blinkToColour);
+  }
+}
+
+.actions {
+  margin-top: auto;
+  margin-bottom: 16px;
+
+  .action {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--app-panel-bg);
+    }
+  }
+}
+
+.expandIcon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: #999;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  .expanded & {
+    transform: scaleX(-1);
+  }
+}
