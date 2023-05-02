@@ -38,3 +38,31 @@ export function ThemeSwitcherIcon() {
     </svg>
   );
 }
+
+export function ChevronIcon(props: IconProps) {
+  return (
+    <svg {...props} viewBox="0 0 12 12">
+      <path d="M 4 2 L 9 6 L 4 10" />
+    </svg>
+  );
+}
+
+export function ArrowRight(props: IconProps) {
+  return (
+    <svg
+      {...props}
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M1 6H11M6 1L11 6L6 11"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
