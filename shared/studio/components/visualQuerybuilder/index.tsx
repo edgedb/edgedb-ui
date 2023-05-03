@@ -2,7 +2,7 @@ import {observer} from "mobx-react";
 import cn from "@edgedb/common/utils/classNames";
 import {useDatabaseState, useTabState} from "../../state";
 import {SchemaData} from "../../state/database";
-import {QueryEditor} from "../../tabs/queryEditor/state";
+import {EditorKind, QueryEditor} from "../../tabs/queryEditor/state";
 import {
   QueryBuilderShape,
   FilterExpr,
@@ -15,10 +15,11 @@ import {SchemaObjectType, SchemaProperty} from "@edgedb/common/schemaData";
 
 import styles from "./queryBuilder.module.scss";
 import {Select} from "@edgedb/common/ui/select";
-import {DeleteIcon} from "../../icons";
+import {CopyIcon, DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Button from "@edgedb/common/ui/button";
 import {ObjectTypeSelect} from "../objectTypeSelect";
+import {useEffect, useState} from "react";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({
   state,
@@ -57,6 +58,23 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
     (type) => !type.builtin
   );
 
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timeout = setTimeout(() => setCopied(false), 1000);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [copied]);
+
+  const copyQuery = () => {
+    const query = editorState.currentQueryData[EditorKind.VisualBuilder].query;
+    navigator.clipboard?.writeText(query);
+    setCopied(true);
+  };
+
   return (
     <>
       <CustomScrollbars
@@ -75,6 +93,7 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
                 <div className={styles.row}>
                   <span className={styles.keyword}>select</span>{" "}
                   <ObjectTypeSelect
+                    className={styles.select}
                     objectTypes={schemaObjectTypes}
                     selectedObjectType={
                       schemaObjectTypes.find(
@@ -95,6 +114,9 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
                     schemaData.objectsByName.get(state.root.typename!)!
                   }
                 />
+              </div>
+              <div className={styles.copyButton} onClick={copyQuery}>
+                <CopyIcon /> {copied ? "Copied" : "Copy"}
               </div>
             </div>
           ) : (
