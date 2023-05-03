@@ -13,6 +13,7 @@
   z-index: 300;
   background: var(--app-modal-overlay);
   user-select: none;
+  backdrop-filter: blur(4px);
 }
 
 .modalCard {
