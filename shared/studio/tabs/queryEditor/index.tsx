@@ -209,7 +209,7 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     [editorState]
   );
 
-  const codeEditorRef = useCallback((ref) => {
+  const codeEditorRef = useCallback((ref: any) => {
     setRef(ref);
   }, []);
 

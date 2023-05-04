@@ -49,8 +49,7 @@ import {
   UndoChangesIcon,
   WarningIcon,
 } from "../../icons";
-import {DataEditor} from "../../components/dataEditor";
-import {PrimitiveType} from "../../components/dataEditor/utils";
+import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 const DataInspectorContext = createContext<{

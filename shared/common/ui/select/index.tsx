@@ -7,21 +7,20 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./select.module.scss";
 
-export interface SelectItem {
-  id: any;
+export interface SelectItem<T = any> {
+  id: T;
   label: string | JSX.Element;
   fullLabel?: string;
-  action: () => void;
 }
 
-export type SelectItems = {
-  items: SelectItem[];
+export type SelectItems<T = any> = {
+  items: SelectItem<T>[];
   groups?: ({
     label: string | JSX.Element;
-  } & SelectItems)[];
+  } & SelectItems<T>)[];
 };
 
-export type SelectProps = {
+export type SelectProps<T = any> = {
   className?: string;
   title?: string | JSX.Element;
   rightAlign?: boolean;
@@ -33,8 +32,9 @@ export type SelectProps = {
       items: null;
     }
   | {
-      items: SelectItems | SelectItem[];
-      selectedItemId: any;
+      items: SelectItems<T> | SelectItem<T>[];
+      selectedItemId: T;
+      onChange: (item: SelectItem<T>) => void;
     }
 );
 
@@ -48,7 +48,7 @@ type FlattenedItems = (
     }
 )[];
 
-export function Select({
+export function Select<T extends any>({
   className,
   title,
   rightAlign,
@@ -56,7 +56,7 @@ export function Select({
   actions,
   searchable,
   ...dropdown
-}: SelectProps) {
+}: SelectProps<T>) {
   const selectRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -168,12 +168,15 @@ export function Select({
       })}
       onClick={mainAction ?? (() => setDropdownOpen(true))}
     >
-      {title ?? selectedItem?.label}
+      {title ?? selectedItem?.fullLabel ?? selectedItem?.label}
       {hasDropdown ? (
         <>
           <div
             className={styles.tabDropdownButton}
-            onClick={(e) => {e.stopPropagation(); setDropdownOpen(!dropdownOpen)}}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDropdownOpen(!dropdownOpen);
+            }}
           >
             <DropdownIcon />
           </div>
@@ -207,7 +210,7 @@ export function Select({
                       })}
                       onClick={() => {
                         setDropdownOpen(false);
-                        result.obj.item.item.action();
+                        dropdown.onChange(result.obj.item.item);
                       }}
                     >
                       {highlightString(
@@ -233,7 +236,7 @@ export function Select({
                         item.type === "item"
                           ? () => {
                               setDropdownOpen(false);
-                              item.item.action();
+                              dropdown.onChange(item.item);
                             }
                           : undefined
                       }

@@ -32,10 +32,9 @@ export function ObjectTypeSelect({
         current = current.groups.get(mod)!;
       }
       current.items.push({
-        id: objectType.name,
+        id: objectType,
         label: objectType.shortName,
         fullLabel: objectType.name,
-        action: () => action(objectType),
       });
     }
     const flattenMap = (groups: groupMap): SelectItems["groups"] => {
@@ -54,7 +53,7 @@ export function ObjectTypeSelect({
   }, [objectTypes]);
 
   return (
-    <Select
+    <Select<SchemaObjectType>
       className={className}
       title={
         !Array.isArray(objectSelectItems) ? (
@@ -65,7 +64,8 @@ export function ObjectTypeSelect({
         ) : undefined
       }
       items={objectSelectItems}
-      selectedItemId={selectedObjectType.name}
+      selectedItemId={selectedObjectType}
+      onChange={(item) => action(item.id)}
       searchable
     />
   );
