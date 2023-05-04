@@ -49,6 +49,7 @@ import {
   ReplHistoryItem as ReplHistoryItemState,
 } from "./state";
 import {QueryEditor} from "../queryEditor/state";
+import {renderCommandResult} from "./commands";
 
 import {useDBRouter} from "../../hooks/dbRoute";
 
@@ -350,8 +351,9 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   dbName: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const editorState = useTabState(QueryEditor);
+
+  const {navigate, currentPath} = useDBRouter();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -359,7 +361,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const runInEditor = () => {
     editorState.loadFromRepl(item);
-    navigate("../editor");
+    navigate(`${currentPath[0]}/editor`);
   };
 
   useEffect(() => {
@@ -578,7 +580,7 @@ function QueryCodeBlock({
   const isExplain =
     item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
 
-  const explainHighlightsRef = useCallback((node) => {
+  const explainHighlightsRef = useCallback((node: any) => {
     if (node) {
       setRef(node);
     }

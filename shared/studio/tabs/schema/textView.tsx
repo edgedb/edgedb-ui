@@ -138,15 +138,15 @@ export const SchemaTextView = observer(function SchemaTextView() {
                     {ModuleGroup[group]}
                   </span>
                 ),
-                action: () => {
-                  navigate(
-                    `${currentPath.slice(0, 2).join("/")}/${
-                      group === ModuleGroup.user ? "" : ModuleGroup[group]
-                    }`
-                  );
-                },
               }))}
               selectedItemId={state.selectedModuleGroup}
+              onChange={({id: group}) =>
+                navigate(
+                  `${currentPath.slice(0, 2).join("/")}/${
+                    group === ModuleGroup.user ? "" : ModuleGroup[group]
+                  }`
+                )
+              }
             />
           </div>
 
@@ -159,23 +159,22 @@ export const SchemaTextView = observer(function SchemaTextView() {
                   {
                     id: -1,
                     label: "Everything",
-                    action: () => {
-                      const params = new URLSearchParams(searchParams);
-                      params.delete("type");
-                      navigate({searchParams: params});
-                    },
                   },
                   ...typeFilters.map((typeFilter) => ({
                     id: typeFilter,
                     label: TypeFilter[typeFilter],
-                    action: () => {
-                      const params = new URLSearchParams(searchParams);
-                      params.set("type", TypeFilter[typeFilter]);
-                      navigate({searchParams: params});
-                    },
                   })),
                 ]}
                 selectedItemId={state.selectedTypeFilter ?? -1}
+                onChange={({id: typeFilter}) => {
+                  const params = new URLSearchParams(searchParams);
+                  if (typeFilter === -1) {
+                    params.delete("type");
+                  } else {
+                    params.set("type", TypeFilter[typeFilter]);
+                  }
+                  navigate({searchParams: params});
+                }}
               />
             </div>
           ) : null}

@@ -24,6 +24,7 @@ import {parsers} from "./parsers";
 import {DeleteIcon} from "./icons";
 
 export {newPrimitiveValue, parseEditorValue} from "./utils";
+export type {PrimitiveType, EditorValue} from "./utils";
 export {parsers} from "./parsers";
 
 export interface DataEditorProps<T = any> {
@@ -462,9 +463,9 @@ const EnumEditor = forwardRef(function EnumEditor(
       items={type.enum_values!.map((enumOpt) => ({
         id: enumOpt,
         label: enumOpt,
-        action: () => onChange(enumOpt, false),
       }))}
       selectedItemId={value}
+      onChange={({id}) => onChange(id, false)}
     />
   );
 });

@@ -445,16 +445,23 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
           ...Object.entries(props).map(([name, prop]) => ({
             id: `prop--${name}`,
             label: name,
-            action: () => expr.updateProp(name, prop.target!.name, true),
           })),
           ...prefixOperators.map(({op}) => ({
             id: `op--${op}`,
             label: <span className={styles.keyword}>{op}</span>,
-            action: () => expr.updateOp(op),
           })),
         ]}
         selectedItemId={
           expr.isInfixOp ? `prop--${expr.prop}` : `op--${expr.op}`
+        }
+        onChange={(item) =>
+          item.id.startsWith("op--")
+            ? expr.updateOp(item.id.slice(4))
+            : expr.updateProp(
+                item.id.slice(6),
+                props[item.id.slice(6)].target!.name,
+                true
+              )
         }
       />
       {expr.isInfixOp ? (
@@ -464,9 +471,9 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
             items={expr.infixOps.map((op) => ({
               id: op,
               label: op,
-              action: () => expr.updateOp(op),
             }))}
             selectedItemId={expr.op}
+            onChange={(item) => expr.updateOp(item.id)}
           />
           {expr.propType !== "std::str" ? (
             <span className={styles.propType}>{`<${expr.propType}>`}</span>
@@ -483,9 +490,11 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
           items={Object.entries(props).map(([name, prop]) => ({
             id: name,
             label: name,
-            action: () => expr.updateProp(name, prop.target!.name),
           }))}
           selectedItemId={expr.prop}
+          onChange={(item) =>
+            expr.updateProp(item.id, props[item.id].target!.name)
+          }
         />
       )}
     </div>
@@ -507,39 +516,37 @@ const OrderBy = observer(function OrderBy({
         items={propNames.map((name) => ({
           id: name,
           label: name,
-          action: () => shape.setOrderBy(expr, name),
         }))}
         selectedItemId={expr.expr}
+        onChange={(item) => shape.setOrderBy(expr, item.id)}
       />
-      <Select
+      <Select<"asc" | "desc">
         items={[
           {
             id: "asc",
             label: <span className={styles.keyword}>asc</span>,
-            action: () => shape.updateOrderBy(expr, {dir: "asc"}),
           },
           {
             id: "desc",
             label: <span className={styles.keyword}>desc</span>,
-            action: () => shape.updateOrderBy(expr, {dir: "desc"}),
           },
         ]}
         selectedItemId={expr.dir ?? "asc"}
+        onChange={(item) => shape.updateOrderBy(expr, {dir: item.id})}
       />
-      <Select
+      <Select<"first" | "last">
         items={[
           {
             id: "first",
             label: <span className={styles.keyword}>empty first</span>,
-            action: () => shape.updateOrderBy(expr, {empty: "first"}),
           },
           {
             id: "last",
             label: <span className={styles.keyword}>empty last</span>,
-            action: () => shape.updateOrderBy(expr, {empty: "last"}),
           },
         ]}
         selectedItemId={expr.empty ?? (expr.dir === "desc" ? "last" : "first")}
+        onChange={(item) => shape.updateOrderBy(expr, {empty: item.id})}
       />
     </>
   );
