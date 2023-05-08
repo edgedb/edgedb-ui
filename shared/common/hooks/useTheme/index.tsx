@@ -23,8 +23,12 @@ const prefersDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
 export function ThemeProvider({
   children,
   localStorageKey,
-}: PropsWithChildren<{localStorageKey?: string}>) {
+  forceTheme,
+}: PropsWithChildren<{localStorageKey?: string; forceTheme?: Theme}>) {
   const [theme, setTheme] = useState<Theme>(() => {
+    if (forceTheme) {
+      return forceTheme;
+    }
     const theme = localStorage.getItem(localStorageKey ?? "appTheme");
     return theme === "light" || theme === "dark" || theme === "system"
       ? (theme as Theme)
