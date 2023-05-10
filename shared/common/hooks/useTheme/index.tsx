@@ -18,13 +18,26 @@ const themeContext = createContext<
   [Theme, Theme.light | Theme.dark, (val: Theme) => void]
 >(null!);
 
-const prefersDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
-
 export function ThemeProvider({
   children,
   localStorageKey,
   forceTheme,
 }: PropsWithChildren<{localStorageKey?: string; forceTheme?: Theme}>) {
+  if (typeof window === "undefined") {
+    return (
+      <div
+        className="light-theme"
+        style={{
+          display: "contents",
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  const prefersDarkTheme = window.matchMedia("(prefers-color-scheme: dark)");
+
   const [theme, setTheme] = useState<Theme>(() => {
     if (forceTheme) {
       return forceTheme;

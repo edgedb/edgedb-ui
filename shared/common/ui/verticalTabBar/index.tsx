@@ -6,6 +6,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./verticalTabBar.module.scss";
 import {ChevronIcon} from "../icons";
+import {ThemeSwitcher} from "../themeSwitcher";
 
 export interface Tab {
   id: string;
@@ -129,6 +130,7 @@ export function VerticalTabBar({
         </div>
       ))}
       <div className={styles.actions}>
+        <ThemeSwitcher />
         {!noExpand ? (
           <div
             className={styles.action}
