@@ -18,7 +18,7 @@
     "react-hook-form": "^7.32.2"
   },
   "peerDependencies": {
-    "edgedb": "^1.1.0",
+    "edgedb": "^1.2.0",
     "mobx": "^6.5.0",
     "mobx-keystone": "^0.67.2",
     "mobx-react-lite": "^3.3.0",

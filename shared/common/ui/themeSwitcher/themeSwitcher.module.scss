@@ -15,7 +15,7 @@ $iconSpacing: 6px;
   background-color: #fff;
   height: $iconSize;
   width: $iconSize;
-  border-radius: ($iconSize / 2);
+  border-radius: calc($iconSize / 2);
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   opacity: 0;
