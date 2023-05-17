@@ -84,7 +84,7 @@ export const HeaderTabs = observer(function HeaderTabs({
 
   const tabs: JSX.Element[] = [];
   for (const key of keys) {
-    const el = headerTabs.get(key);
+    const el = headerTabs.get(key) ?? headerTabs.get(`${key}-fallback`);
     if (el) {
       if (tabs.length) {
         tabs.push(<TabSep key={tabs.length} />);

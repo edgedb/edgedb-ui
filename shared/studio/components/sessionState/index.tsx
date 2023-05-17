@@ -122,8 +122,13 @@ export const SessionStateBar = observer(function SessionStateBar({
 
   const ref = useRef<HTMLDivElement>(null);
 
-  const [height, setHeight] = useState(0);
-  useResize(ref, ({height}) => setHeight(height));
+  const [size, setSize] = useState({height: 0, left: 56});
+  useResize(ref, (rect) =>
+    setSize({
+      height: rect.height,
+      left: ref.current!.getBoundingClientRect().left,
+    })
+  );
 
   return (
     <div
@@ -137,17 +142,17 @@ export const SessionStateBar = observer(function SessionStateBar({
           [styles.panelOpen]: state.panelOpen,
         }
       )}
-      style={{height: state.barOpen ? height + 4 : undefined}}
+      style={{height: state.barOpen ? size.height + 4 : undefined}}
     >
       <div
         className={styles.panelBg}
         style={{
-          left: !state.panelOpen ? 56 : undefined,
-          height: state.barOpen && !state.panelOpen ? height : undefined,
+          left: !state.panelOpen ? size.left : undefined,
+          height: state.barOpen && !state.panelOpen ? size.height : undefined,
         }}
       />
       <SessionEditorPanel show={state.panelOpen} />
-      <div ref={ref}>
+      <div ref={ref} className={styles.panelInner}>
         <SessionBarContent />
       </div>
     </div>
@@ -578,7 +583,7 @@ const ListQueryOptionItem = observer(function ListQueryOptionItem({
   sessionState,
   highlight,
 }: {
-  opt: typeof queryOptions[number];
+  opt: (typeof queryOptions)[number];
   sessionState: SessionState;
   highlight?: number[];
 }) {

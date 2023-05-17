@@ -154,8 +154,7 @@ const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
 
   return (
     <VerticalTabBar
-      noExpand
-      className={cn({[styles.hide]: !!hide})}
+      className={cn(styles.tabbar, {[styles.hide]: !!hide})}
       tabs={tabs.map((tab) => ({
         id: tab.path,
         icon: tab.icon,
