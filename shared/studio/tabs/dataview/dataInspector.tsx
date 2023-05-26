@@ -135,7 +135,7 @@ export default observer(function DataInspectorTable({
     }
   }, [gridRef]);
 
-  const rowIndexCharWidth = state.rowCount.toString().length;
+  const rowIndexCharWidth = (state.rowCount ?? 0).toString().length;
 
   return (
     <DataInspectorContext.Provider value={{state, edits}}>
@@ -712,7 +712,7 @@ const DataRowIndex = observer(function DataRowIndex({
 }) {
   const {state, edits} = useDataInspectorState();
 
-  if (dataIndex !== null && dataIndex >= state.rowCount) return null;
+  if (dataIndex !== null && dataIndex >= (state.rowCount ?? 0)) return null;
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
 
