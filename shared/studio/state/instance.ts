@@ -1,5 +1,5 @@
 import {createContext, useContext} from "react";
-import {action, observable, runInAction, when} from "mobx";
+import {action, computed, observable, runInAction, when} from "mobx";
 import {
   Model,
   model,
@@ -27,6 +27,7 @@ export const instanceCtx = createMobxContext<InstanceState>();
 
 @model("InstanceState")
 export class InstanceState extends Model({
+  _instanceId: prop<string | null>(null),
   serverUrl: prop<string>(),
   authUsername: prop<string | null>(null),
   authToken: prop<string | null>(),
@@ -36,6 +37,11 @@ export class InstanceState extends Model({
   @observable instanceName: string | null = null;
   @observable databases: string[] | null = null;
   @observable roles: string[] | null = null;
+
+  @computed
+  get instanceId() {
+    return this._instanceId ?? this.instanceName;
+  }
 
   defaultConnection: Connection | null = null;
 
