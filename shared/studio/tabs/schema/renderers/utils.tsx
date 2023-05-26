@@ -153,7 +153,9 @@ export function TypeLink({
 
     return (
       <span
-        className={styles.typeLink}
+        className={cn(styles.typeLink, {
+          [styles.builtin]: type.schemaType === "Scalar" && type.builtin,
+        })}
         onClick={() => {
           goToItem(navigate, state, type);
         }}

@@ -3,7 +3,6 @@ import {observer} from "mobx-react-lite";
 import {SchemaGlobal} from "@edgedb/common/schemaData";
 
 import {
-  Arrow,
   CollapseArrow,
   Copyable,
   CopyButton,
@@ -11,7 +10,6 @@ import {
   ItemHeader,
   Keyword,
   Punc,
-  Str,
   TypeLink,
   TypeName,
 } from "./utils";
@@ -53,8 +51,7 @@ export const GlobalRenderer = observer(function GlobalRenderer({
             <TypeName type={type} matches={matches} />
             {!type.expr ? (
               <>
-                {" "}
-                <Arrow />{" "}
+                <Punc>:</Punc>{" "}
                 <TypeLink type={type.target} parentModule={type.module} />
               </>
             ) : !hasBody ? (
@@ -111,11 +108,7 @@ export function globalToSDL(type: SchemaGlobal) {
   return `${type.required ? "required " : ""}${
     type.cardinality === "Many" ? "multi " : ""
   }global ${type.name}${
-    !type.expr
-      ? ` -> ${type.target.name}`
-      : !hasBody
-      ? ` := (${type.expr})`
-      : ""
+    !type.expr ? `: ${type.target.name}` : !hasBody ? ` := (${type.expr})` : ""
   }${
     hasBody
       ? `{\n${type.default ? `  default := (${type.default});\n` : ""}${
