@@ -1,5 +1,5 @@
 import {openDB, DBSchema} from "idb";
-import {SchemaData} from "../state/database";
+import {StoredSchemaData} from "../state/database";
 import {StoredSessionStateData} from "../state/sessionState";
 
 export interface QueryHistoryItem {
@@ -45,7 +45,7 @@ interface IDBStore extends DBSchema {
   };
   schemaData: {
     key: string;
-    value: {instanceId: string; data: SchemaData};
+    value: {instanceId: string; data: StoredSchemaData};
     indexes: {
       byInstanceId: string;
     };
@@ -199,7 +199,7 @@ export async function fetchResultData(itemId: string) {
 export async function storeSchemaData(
   dbName: string,
   instanceId: string,
-  data: SchemaData
+  data: StoredSchemaData
 ) {
   await (
     await db

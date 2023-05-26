@@ -54,11 +54,15 @@ import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 3;
+const SCHEMA_DATA_VERSION = 4;
+
+export interface StoredSchemaData {
+  version: number;
+  migrationId: string | null;
+  data: RawIntrospectionResult;
+}
 
 export interface SchemaData {
-  schemaDataVersion: number;
-  migrationId: string | null;
   objects: Map<string, SchemaObjectType>;
   objectsByName: Map<string, SchemaObjectType>;
   functions: Map<string, SchemaFunction>;
@@ -83,12 +87,6 @@ export class DatabaseState extends Model({
   sessionState: prop(() => new SessionState({})),
   tabStates: prop<ObjectMap<AnyModel>>(),
 }) {
-  @observable.ref
-  schemaData: SchemaData | null = null;
-
-  @observable
-  fetchingSchemaData = false;
-
   @observable
   currentRole: string | null = null;
 
@@ -119,6 +117,10 @@ export class DatabaseState extends Model({
 
   @observable
   migrationId: string | null | undefined = undefined;
+  @observable.ref
+  schemaData: SchemaData | null = null;
+  @observable
+  fetchingSchemaData = false;
 
   @observable
   objectCount: number | null = null;
@@ -179,132 +181,123 @@ export class DatabaseState extends Model({
     }
   }
 
-  private async _fetchSchemaDataFromStore() {
-    if (!this.schemaData) {
-      const instanceState = instanceCtx.get(this)!;
-
-      const schemaData = await fetchSchemaData(
-        this.name,
-        instanceState.instanceName!
-      );
-      return schemaData;
-    }
-    return this.schemaData;
-  }
-
   @modelFlow
   fetchSchemaData = _async(function* (this: DatabaseState) {
-    const conn = this.connection;
-
     if (this.fetchingSchemaData) {
       return;
     }
 
-    const [migrationId, schemaData] = yield* _await(
-      Promise.all([
-        conn
-          .query(
-            `SELECT (
+    this.fetchingSchemaData = true;
+
+    const conn = this.connection;
+    const instanceState = instanceCtx.get(this)!;
+
+    try {
+      const [migrationId, storedSchemaData] = yield* _await(
+        Promise.all([
+          conn
+            .query(
+              `SELECT (
               SELECT schema::Migration {
                 children := .<parents[IS schema::Migration]
               } FILTER NOT EXISTS .children
             ).id;`
-          )
-          .then(({result}) => (result?.[0] ?? null) as string | null),
-        this._fetchSchemaDataFromStore(),
-      ])
-    );
+            )
+            .then(({result}) => (result?.[0] ?? null) as string | null),
+          fetchSchemaData(this.name, instanceState.instanceId!),
+        ])
+      );
 
-    this.migrationId = migrationId;
-
-    if (
-      schemaData &&
-      schemaData.migrationId === migrationId &&
-      schemaData.schemaDataVersion === SCHEMA_DATA_VERSION
-    ) {
-      console.log("fetched schema from cache");
-      this.schemaData = schemaData;
-    } else {
-      this.fetchingSchemaData = true;
-      // Directly set loading tab by model name to avoid cyclic dependency
-      // on Schema state class
-      this.loadingTabs.set("Schema", true);
-
-      try {
-        const rawTypes = yield* _await(
-          conn.query(introspectionQuery).then(({result}) => {
-            return result![0] as RawIntrospectionResult;
-          })
-        );
-
-        const {
-          types,
-          pointers,
-          functions,
-          operators,
-          constraints,
-          annotations,
-          aliases,
-          globals,
-          extensions,
-        } = buildTypesGraph(rawTypes);
-
-        const schemaData: SchemaData = {
-          schemaDataVersion: SCHEMA_DATA_VERSION,
-          migrationId,
-          objects: new Map(
-            [...types.values()]
-              .filter((t) => t.schemaType === "Object")
-              .map((t) => [t.id, t as SchemaObjectType])
-          ),
-          objectsByName: new Map(
-            [...types.values()]
-              .filter((t) => t.schemaType === "Object")
-              .map((t) => [t.name, t as SchemaObjectType])
-          ),
-          functions,
-          operators,
-          constraints,
-          scalars: new Map(
-            [...types.values()]
-              .filter((t) => t.schemaType === "Scalar")
-              .map((t) => [t.name, t as SchemaScalarType])
-          ),
-          types,
-          pointers,
-          annotations,
-          aliases,
-          globals,
-          extensions,
-          shortNamesByModule: [
-            ...([...types.values()].filter(
-              (t) => t.schemaType === "Object" || t.schemaType === "Scalar"
-            ) as (SchemaObjectType | SchemaScalarType)[]),
-            ...[...pointers.values()].filter((p) => p.abstract),
-            ...functions.values(),
-            ...constraints.values(),
-            ...annotations.values(),
-            ...aliases.values(),
-            ...globals.values(),
-          ].reduce((modules, item) => {
-            if (!modules.has(item.module)) {
-              modules.set(item.module, new Set());
-            }
-            modules.get(item.module)!.add(item.shortName);
-            return modules;
-          }, new Map<string, Set<string>>()),
-        };
-
-        const instanceState = instanceCtx.get(this)!;
-
-        storeSchemaData(this.name, instanceState.instanceName!, schemaData);
-
-        this.schemaData = schemaData;
-      } finally {
-        this.fetchingSchemaData = false;
-        this.loadingTabs.set("Schema", false);
-        console.log("fetched schema");
+      if (this.migrationId === migrationId) {
+        return;
       }
+
+      let rawData: RawIntrospectionResult;
+      if (
+        storedSchemaData?.migrationId !== migrationId ||
+        storedSchemaData.version !== SCHEMA_DATA_VERSION
+      ) {
+        // Directly set loading tab by model name to avoid cyclic dependency
+        // on Schema state class
+        this.loadingTabs.set("Schema", true);
+        try {
+          rawData = yield* _await(
+            conn.query(introspectionQuery).then(({result}) => {
+              return result![0] as RawIntrospectionResult;
+            })
+          );
+        } finally {
+          this.loadingTabs.set("Schema", false);
+        }
+        storeSchemaData(this.name, instanceState.instanceId!, {
+          version: SCHEMA_DATA_VERSION,
+          migrationId,
+          data: rawData,
+        });
+      } else {
+        rawData = storedSchemaData.data;
+      }
+
+      const {
+        types,
+        pointers,
+        functions,
+        operators,
+        constraints,
+        annotations,
+        aliases,
+        globals,
+        extensions,
+      } = buildTypesGraph(rawData);
+
+      const schemaData: SchemaData = {
+        objects: new Map(
+          [...types.values()]
+            .filter((t) => t.schemaType === "Object")
+            .map((t) => [t.id, t as SchemaObjectType])
+        ),
+        objectsByName: new Map(
+          [...types.values()]
+            .filter((t) => t.schemaType === "Object")
+            .map((t) => [t.name, t as SchemaObjectType])
+        ),
+        functions,
+        operators,
+        constraints,
+        scalars: new Map(
+          [...types.values()]
+            .filter((t) => t.schemaType === "Scalar")
+            .map((t) => [t.name, t as SchemaScalarType])
+        ),
+        types,
+        pointers,
+        annotations,
+        aliases,
+        globals,
+        extensions,
+        shortNamesByModule: [
+          ...([...types.values()].filter(
+            (t) => t.schemaType === "Object" || t.schemaType === "Scalar"
+          ) as (SchemaObjectType | SchemaScalarType)[]),
+          ...[...pointers.values()].filter((p) => p.abstract),
+          ...functions.values(),
+          ...constraints.values(),
+          ...annotations.values(),
+          ...aliases.values(),
+          ...globals.values(),
+        ].reduce((modules, item) => {
+          if (!modules.has(item.module)) {
+            modules.set(item.module, new Set());
+          }
+          modules.get(item.module)!.add(item.shortName);
+          return modules;
+        }, new Map<string, Set<string>>()),
+      };
+
+      this.migrationId = migrationId;
+      this.schemaData = schemaData;
+    } finally {
+      this.fetchingSchemaData = false;
     }
   });
 }
