@@ -46,6 +46,7 @@ interface UpdateLinkEdit {
   escapedFieldName: string;
   linkTypeName: string;
   escapedLinkTypeName: string;
+  setNull: boolean;
   changes: Map<string, UpdateLinkChange>;
   inserts: Set<InsertObjectEdit>;
 }
@@ -194,6 +195,29 @@ export class DataEditingManager extends Model({}) {
   }
 
   @action
+  setLinkNull(
+    objectId: string | number,
+    objectTypeName: string,
+    fieldName: string,
+    linkType: SchemaObjectType
+  ) {
+    const linkId = `${objectId}__${fieldName}`;
+
+    this.linkEdits.set(linkId, {
+      kind: EditKind.UpdateLink,
+      objectId,
+      objectTypeName,
+      escapedObjectTypeName: escapeName(objectTypeName, true),
+      fieldName,
+      escapedFieldName: escapeName(fieldName, false),
+      ...getLinkTypeName(linkType),
+      setNull: true,
+      changes: new Map(),
+      inserts: new Set(),
+    });
+  }
+
+  @action
   addLinkUpdate(
     objectId: string | number,
     objectTypeName: string,
@@ -214,16 +238,19 @@ export class DataEditingManager extends Model({}) {
         fieldName,
         escapedFieldName: escapeName(fieldName, false),
         ...getLinkTypeName(linkType),
+        setNull: false,
         changes: new Map(),
         inserts: new Set(),
       });
     }
 
-    const linkChanges = this.linkEdits.get(linkId)!.changes;
+    const edits = this.linkEdits.get(linkId)!;
+    const linkChanges = edits.changes;
 
     if (kind === UpdateLinkChangeKind.Set) {
       linkChanges.clear();
-      this.linkEdits.get(linkId)!.inserts.clear();
+      edits.inserts.clear();
+      edits.setNull = false;
     }
 
     linkChanges.set(linkObjectId, {
@@ -273,6 +300,7 @@ export class DataEditingManager extends Model({}) {
         fieldName,
         escapedFieldName: escapeName(fieldName, false),
         ...getLinkTypeName(linkType),
+        setNull: false,
         changes: new Map(),
         inserts: new Set(),
       });
@@ -283,6 +311,7 @@ export class DataEditingManager extends Model({}) {
     if (setLink) {
       linkEdit.inserts.clear();
       linkEdit.changes.clear();
+      linkEdit.setNull = false;
     }
 
     if (linkEdit.inserts.has(insertedRow)) {
@@ -575,6 +604,12 @@ function generateLinkUpdate(
   deps?: number[],
   forceLinkSet?: boolean
 ): string | null {
+  if (linkEdits.setNull) {
+    return `${escapeName(linkEdits.fieldName, false)} := <${
+      linkEdits.escapedLinkTypeName
+    }>{}`;
+  }
+
   const links: string[] = [];
   let op = ":=";
   const changes = [...linkEdits.changes.values()].filter(

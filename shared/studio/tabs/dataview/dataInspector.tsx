@@ -735,6 +735,127 @@ const DataRowIndex = observer(function DataRowIndex({
     ? !!editedLinkChange
     : !!editedLink;
 
+  let rowAction: JSX.Element | null = null;
+  if (dataIndex === null || data) {
+    if (state.parentObject?.editMode) {
+      let input: JSX.Element;
+      if (state.parentObject.isMultiLink) {
+        input = (
+          <input
+            type="checkbox"
+            checked={
+              dataIndex !== null
+                ? editedLinkChange
+                  ? editedLinkChange.kind === UpdateLinkChangeKind.Add
+                  : data.__isLinked
+                : editedLink?.inserts.has(state.insertedRows[rowIndex]) ??
+                  false
+            }
+            onChange={() => {
+              if (dataIndex !== null) {
+                if (editedLinkChange) {
+                  edits.removeLinkUpdate(
+                    state.parentObject!.id,
+                    state.parentObject!.fieldName,
+                    data.id
+                  );
+                } else {
+                  edits.addLinkUpdate(
+                    state.parentObject!.id!,
+                    state.parentObject!.subtypeName ??
+                      state.parentObject!.objectTypeName,
+                    state.parentObject!.fieldName,
+                    state.objectType!,
+                    data.__isLinked
+                      ? UpdateLinkChangeKind.Remove
+                      : UpdateLinkChangeKind.Add,
+                    data.id,
+                    data.__tname__
+                  );
+                }
+              } else {
+                edits.toggleLinkInsert(
+                  state.parentObject!.id!,
+                  state.parentObject!.subtypeName ??
+                    state.parentObject!.objectTypeName,
+                  state.parentObject!.fieldName,
+                  state.objectType!,
+                  state.insertedRows[rowIndex]
+                );
+              }
+            }}
+          />
+        );
+      } else {
+        const checked = editedLink?.setNull
+          ? false
+          : dataIndex !== null
+          ? editedLink
+            ? editedLink.changes.has(data.id)
+            : data.__isLinked
+          : editedLink?.inserts.has(state.insertedRows[rowIndex]) ?? false;
+        const sharedArgs = [
+          state.parentObject!.id!,
+          state.parentObject!.subtypeName ??
+            state.parentObject!.objectTypeName,
+          state.parentObject!.fieldName,
+          state.objectType!,
+        ] as const;
+        input = (
+          <input
+            className={styles.isRadio}
+            type="checkbox"
+            checked={checked}
+            onChange={() => {
+              if (checked) {
+                edits.setLinkNull(...sharedArgs);
+              } else {
+                if (dataIndex !== null) {
+                  if (data.__isLinked) {
+                    edits.clearLinkEdits(state.parentObject!.linkId);
+                  } else {
+                    edits.addLinkUpdate(
+                      ...sharedArgs,
+                      UpdateLinkChangeKind.Set,
+                      data.id,
+                      data.__tname__
+                    );
+                  }
+                } else {
+                  edits.toggleLinkInsert(
+                    ...sharedArgs,
+                    state.insertedRows[rowIndex],
+                    true
+                  );
+                }
+              }
+            }}
+          />
+        );
+      }
+
+      rowAction = <label className={styles.selectLinkAction}>{input}</label>;
+    } else {
+      rowAction = (
+        <div
+          className={styles.deleteRowAction}
+          onClick={() => {
+            if (dataIndex !== null) {
+              edits.toggleRowDelete(data.id, data.__tname__);
+              if (state.expandedInspectors.has(data.id)) {
+                state.toggleRowExpanded(rowDataIndex);
+              }
+            } else {
+              edits.removeInsertedRow(state.insertedRows[rowIndex]);
+            }
+          }}
+        >
+          {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
+        </div>
+      );
+    }
+  }
+
   return (
     <>
       <div
@@ -745,122 +866,7 @@ const DataRowIndex = observer(function DataRowIndex({
         style={{top: styleTop}}
         onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
       >
-        <div className={styles.rowActions}>
-          {dataIndex === null || data ? (
-            <>
-              {state.parentObject?.editMode ? (
-                <label className={styles.selectLinkAction}>
-                  {state.parentObject.isMultiLink ? (
-                    <input
-                      type="checkbox"
-                      checked={
-                        dataIndex !== null
-                          ? editedLinkChange
-                            ? editedLinkChange.kind ===
-                              UpdateLinkChangeKind.Add
-                            : data.__isLinked
-                          : editedLink?.inserts.has(
-                              state.insertedRows[rowIndex]
-                            ) ?? false
-                      }
-                      onChange={() => {
-                        if (dataIndex !== null) {
-                          if (editedLinkChange) {
-                            edits.removeLinkUpdate(
-                              state.parentObject!.id,
-                              state.parentObject!.fieldName,
-                              data.id
-                            );
-                          } else {
-                            edits.addLinkUpdate(
-                              state.parentObject!.id!,
-                              state.parentObject!.subtypeName ??
-                                state.parentObject!.objectTypeName,
-                              state.parentObject!.fieldName,
-                              state.objectType!,
-                              data.__isLinked
-                                ? UpdateLinkChangeKind.Remove
-                                : UpdateLinkChangeKind.Add,
-                              data.id,
-                              data.__tname__
-                            );
-                          }
-                        } else {
-                          edits.toggleLinkInsert(
-                            state.parentObject!.id!,
-                            state.parentObject!.subtypeName ??
-                              state.parentObject!.objectTypeName,
-                            state.parentObject!.fieldName,
-                            state.objectType!,
-                            state.insertedRows[rowIndex]
-                          );
-                        }
-                      }}
-                    />
-                  ) : (
-                    <input
-                      className={styles.isRadio}
-                      type="checkbox"
-                      checked={
-                        dataIndex !== null
-                          ? editedLink
-                            ? editedLink.changes.has(data.id)
-                            : data.__isLinked
-                          : editedLink?.inserts.has(
-                              state.insertedRows[rowIndex]
-                            ) ?? false
-                      }
-                      onChange={() => {
-                        if (dataIndex !== null) {
-                          if (data.__isLinked) {
-                            edits.clearLinkEdits(state.parentObject!.linkId);
-                          } else {
-                            edits.addLinkUpdate(
-                              state.parentObject!.id!,
-                              state.parentObject!.subtypeName ??
-                                state.parentObject!.objectTypeName,
-                              state.parentObject!.fieldName,
-                              state.objectType!,
-                              UpdateLinkChangeKind.Set,
-                              data.id,
-                              data.__tname__
-                            );
-                          }
-                        } else {
-                          edits.toggleLinkInsert(
-                            state.parentObject!.id!,
-                            state.parentObject!.subtypeName ??
-                              state.parentObject!.objectTypeName,
-                            state.parentObject!.fieldName,
-                            state.objectType!,
-                            state.insertedRows[rowIndex],
-                            true
-                          );
-                        }
-                      }}
-                    />
-                  )}
-                </label>
-              ) : (
-                <div
-                  className={styles.deleteRowAction}
-                  onClick={() => {
-                    if (dataIndex !== null) {
-                      edits.toggleRowDelete(data.id, data.__tname__);
-                      if (state.expandedInspectors.has(data.id)) {
-                        state.toggleRowExpanded(rowDataIndex);
-                      }
-                    } else {
-                      edits.removeInsertedRow(state.insertedRows[rowIndex]);
-                    }
-                  }}
-                >
-                  {isDeletedRow ? <UndeleteIcon /> : <DeleteIcon />}
-                </div>
-              )}
-            </>
-          ) : null}
-        </div>
+        <div className={styles.rowActions}>{rowAction}</div>
         <div className={styles.cell}>
           {dataIndex !== null ? dataIndex + 1 : null}
         </div>
