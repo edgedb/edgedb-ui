@@ -3,20 +3,15 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
-  SchemaAbstractAnnotation,
   SchemaAccessPolicy,
-  SchemaAnnotation,
-  SchemaConstraint,
   SchemaObjectType,
-  SchemaParam,
-  SchemaPointer,
+  SchemaTrigger,
 } from "@edgedb/common/schemaData";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import {SchemaModule, SearchMatches} from "../state/textView";
 
 import {
-  Arrow,
   CollapseArrow,
   Copyable,
   CopyButton,
@@ -173,6 +168,9 @@ export const ObjectTypeRenderer = observer(function ObjectTypeRenderer({
               {type.accessPolicies.map((policy) => (
                 <AccessPolicyRenderer key={policy.name} type={policy} />
               ))}
+              {type.triggers.map((trigger) => (
+                <TriggerRenderer key={trigger.name} type={trigger} />
+              ))}
             </div>
             <div>
               <CopyHighlight>
@@ -208,7 +206,7 @@ function getAccessKindsList(type: SchemaAccessPolicy): string[] {
 }
 
 function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
-  const hasBody = !!type.annotations.length;
+  const hasBody = !!type.annotations.length || type.errmessage !== null;
 
   return (
     <Copyable>
@@ -264,6 +262,15 @@ function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
           {hasBody ? (
             <>
               <div className={styles.indentedBlock}>
+                {type.errmessage ? (
+                  <div>
+                    <CopyHighlight>
+                      <Keyword>errmessage</Keyword> <Punc>:=</Punc>{" "}
+                      <Str>{type.errmessage}</Str>
+                      <Punc>;</Punc>
+                    </CopyHighlight>
+                  </div>
+                ) : null}
                 {type.annotations?.map((anno, i) => (
                   <AnnotationRenderer key={i} annotation={anno} />
                 ))}
@@ -275,6 +282,45 @@ function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
               </div>
             </>
           ) : null}
+        </div>
+      </div>
+    </Copyable>
+  );
+}
+
+function TriggerRenderer({type}: {type: SchemaTrigger}) {
+  return (
+    <Copyable>
+      <div>
+        <ItemHeader actions={<CopyButton getSDL={() => triggerToSDL(type)} />}>
+          <CopyHighlight>
+            <Keyword>trigger</Keyword> {type.name}
+          </CopyHighlight>
+        </ItemHeader>
+        <div className={styles.indentedBlock}>
+          <div>
+            <CopyHighlight>
+              <Keyword>after</Keyword>{" "}
+              {type.kinds.map((kind, i) => (
+                <Fragment key={i}>
+                  {i !== 0 ? ", " : ""}
+                  <Keyword>{kind.toLowerCase()}</Keyword>
+                </Fragment>
+              ))}
+            </CopyHighlight>
+          </div>
+          <div>
+            <CopyHighlight>
+              <Keyword>for {type.scope.toLowerCase()}</Keyword>
+            </CopyHighlight>
+          </div>
+          <div>
+            <CopyHighlight>
+              <Keyword>do</Keyword> <Punc>{"("}</Punc>
+              <CodeBlock code={type.expr} inline />
+              <Punc>{");"}</Punc>
+            </CopyHighlight>
+          </div>
         </div>
       </div>
     </Copyable>
@@ -312,23 +358,35 @@ export function objectToSDL(type: SchemaObjectType) {
           .join("")}${indexes
           .map((index) => indent(indexToSDL(index)) + "\n")
           .join("")}${type.accessPolicies
-          .map((policy) => indent(accessPolicyToSDL(policy) + "\n"))
+          .map((policy) => indent(accessPolicyToSDL(policy)) + "\n")
+          .join("")}${type.triggers
+          .map((trigger) => indent(triggerToSDL(trigger)) + "\n")
           .join("")}}`
       : ""
   };`;
 }
 
 export function accessPolicyToSDL(type: SchemaAccessPolicy) {
-  const hasBody = !!type.annotations.length;
+  const hasBody = !!type.annotations.length || type.errmessage !== null;
   return `access policy ${type.name}\n  ${
     type.condition ? `when (${type.condition})\n  ` : ""
   }${type.action.toLowerCase()} ${getAccessKindsList(type).join(
     ", "
   )} using (\n    ${type.expr}\n  )${
     hasBody
-      ? ` {\n${type.annotations
+      ? ` {\n${
+          type.errmessage !== null
+            ? `    errmessage := '${type.errmessage}'\n`
+            : ""
+        }${type.annotations
           .map((anno) => "    " + annotationToSDL(anno) + "\n")
           .join("")}  };`
       : ";"
   }`;
+}
+
+export function triggerToSDL(type: SchemaTrigger) {
+  return `trigger ${type.name}\n  after ${type.kinds
+    .map((k) => k.toLowerCase())
+    .join(", ")}\n  for ${type.scope.toLowerCase()}\n  do (${type.expr});`;
 }

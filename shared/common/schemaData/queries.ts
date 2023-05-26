@@ -18,7 +18,17 @@ export interface SchemaAccessPolicy {
   condition: string | null;
   action: SchemaAccessPolicyAction;
   expr: string | null;
+  errmessage: string | null;
   annotations: SchemaAnnotation[];
+}
+
+export type SchemaTriggerKind = "Update" | "Delete" | "Insert";
+export type SchemaTriggerScope = "All" | "Each";
+export interface SchemaTrigger {
+  name: string;
+  kinds: SchemaTriggerKind[];
+  scope: SchemaTriggerScope;
+  expr: string;
 }
 
 export interface RawSchemaType {
@@ -50,6 +60,7 @@ export interface RawSchemaType {
       }[]
     | null;
   access_policies: SchemaAccessPolicy[] | null;
+  triggers: SchemaTrigger[] | null;
 }
 
 export const typesQuery = `
@@ -101,10 +112,17 @@ select Type {
     condition,
     action,
     expr,
+    errmessage,
     annotations: {
       name,
       @value,
     }
+  },
+  [is ObjectType].triggers: {
+    name,
+    kinds,
+    scope,
+    expr,
   },
 }
 `;
@@ -115,6 +133,12 @@ export type TargetDeleteAction =
   | "Allow"
   | "DeferredRestrict";
 export type SourceDeleteAction = "DeleteTarget" | "Allow";
+
+export type SchemaRewriteKind = "Update" | "Insert";
+export interface RawSchemaRewrite {
+  kind: SchemaRewriteKind;
+  expr: string;
+}
 
 export interface RawPointerType {
   id: string;
@@ -131,6 +155,7 @@ export interface RawPointerType {
   expr: string | null;
   constraintIds: string[];
   annotations: SchemaAnnotation[];
+  rewrites: RawSchemaRewrite[];
   properties: {id: string; "@owned": boolean}[] | null;
   on_target_delete: TargetDeleteAction | null;
   on_source_delete: SourceDeleteAction | null;
@@ -161,6 +186,10 @@ select Pointer {
   annotations: {
     name,
     @value,
+  },
+  rewrites: {
+    kind,
+    expr,
   },
   [is Link].properties: {
     id,
