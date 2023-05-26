@@ -549,7 +549,7 @@ export class DataInspector extends Model({
   visibleIndexes: [number, number] = [0, 0];
 
   @observable
-  rowCount = 0;
+  rowCount: number | null = null;
 
   _pendingOffsets: number[] = [];
 
@@ -567,7 +567,7 @@ export class DataInspector extends Model({
   @computed
   get gridRowCount() {
     return (
-      this.rowCount +
+      (this.rowCount ?? 0) +
       this.expandedRows.reduce(
         (sum, row) => sum + row.inspector.rowsCount,
         0
@@ -657,6 +657,7 @@ export class DataInspector extends Model({
 
     const {query, params} = this.getBaseObjectsQuery();
     dbState.setLoadingTab(DataView, true);
+    this.rowCount = null;
     try {
       const data = yield* _await(
         conn.query(
