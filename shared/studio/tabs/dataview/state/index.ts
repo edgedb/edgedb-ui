@@ -904,7 +904,7 @@ export class DataInspector extends Model({
             this.parentObject.escapedFieldName
           }`
         : `(select ${this._getObjectTypeQuery} ` +
-            `filter .<${this.parentObject.escapedFieldName}.id = <uuid>'${this.parentObject.id}')`;
+            `filter .<${this.parentObject.escapedFieldName}[is ${this.parentObject.objectTypeName}].id = <uuid>'${this.parentObject.id}')`;
     }
 
     const typeUnionNames = resolveObjectTypeUnion(this.objectType!).map(
