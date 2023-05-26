@@ -15,7 +15,6 @@ import {
 import {SchemaModule, SearchMatches} from "../state/textView";
 
 import {
-  Arrow,
   CollapseArrow,
   Copyable,
   CopyButton,
@@ -159,8 +158,7 @@ export const PointerRenderer = observer(function _PointerRenderer({
               </>
             ) : (
               <>
-                {" "}
-                <Arrow />{" "}
+                <Punc>:</Punc>{" "}
                 <TypeLink type={pointer.target!} parentModule={parentModule} />
               </>
             )}
@@ -325,7 +323,7 @@ export function pointerToSDL(pointer: SchemaPointer): string {
       ? ""
       : pointer.expr && !hasBody
       ? ` := (${pointer.expr})`
-      : ` -> ${pointer.target!.name}`
+      : `: ${pointer.target!.name}`
   }${
     hasBody
       ? ` {\n${pointer.default ? `  default := (${pointer.default});\n` : ""}${

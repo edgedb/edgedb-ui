@@ -6,7 +6,7 @@ import cn from "@edgedb/common/utils/classNames";
 import {SchemaModule, SchemaTextView} from "../state/textView";
 import {useSchemaTextState} from "../textView";
 
-import {Arrow, CollapseArrow, Keyword, Punc, Str} from "./utils";
+import {Keyword, Punc} from "./utils";
 
 import styles from "../textView.module.scss";
 
