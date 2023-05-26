@@ -16,12 +16,15 @@ import {
   SourceDeleteAction,
   SchemaAccessPolicy,
   SchemaOperatorKind,
+  RawSchemaRewrite,
+  SchemaTrigger,
+  SchemaRewriteKind,
 } from "./queries";
 import {KnownScalarTypes} from "./knownTypes";
 import {paramToSDL} from "./utils";
 
 export {KnownScalarTypes};
-export type {SchemaAnnotation, SchemaAccessPolicy};
+export type {SchemaAnnotation, SchemaAccessPolicy, SchemaTrigger};
 
 export interface SchemaPseudoType {
   schemaType: "Pseudo";
@@ -95,6 +98,7 @@ interface _SchemaPointer {
   expr: string | null;
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
+  rewrites: SchemaRewrite[];
   isDeprecated: boolean;
 }
 
@@ -140,6 +144,7 @@ export interface SchemaObjectType {
   pointers: SchemaPointer[];
   indexes: SchemaIndex[];
   accessPolicies: SchemaAccessPolicy[];
+  triggers: SchemaTrigger[];
 }
 
 export type SchemaType =
@@ -257,6 +262,11 @@ export interface SchemaGlobal {
 
 export interface SchemaExtension extends RawSchemaExtension {
   schemaType: "Extension";
+}
+
+export interface SchemaRewrite {
+  kinds: SchemaRewriteKind[];
+  expr: string;
 }
 
 const knownTypes = new Set<string>(KnownScalarTypes);
@@ -388,6 +398,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
             isDeprecated: isDeprecated(i.annotations),
           })),
           accessPolicies: type.access_policies,
+          triggers: type.triggers,
         } as any);
         for (const baseId of type.baseIds) {
           if (!extendedBy.has(baseId)) {
@@ -559,6 +570,19 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         return constraint;
       }),
       annotations: pointer.annotations,
+      rewrites: Object.values(
+        pointer.rewrites.reduce((rewrites, rewrite) => {
+          if (!rewrites[rewrite.expr]) {
+            rewrites[rewrite.expr] = {
+              kinds: [rewrite.kind],
+              expr: rewrite.expr,
+            };
+          } else {
+            rewrites[rewrite.expr].kinds.push(rewrite.kind);
+          }
+          return rewrites;
+        }, {} as {[expr: string]: SchemaRewrite})
+      ),
       isDeprecated: isDeprecated(pointer.annotations),
       onTargetDelete: pointer.on_target_delete,
       onSourceDelete: pointer.on_source_delete,

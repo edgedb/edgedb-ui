@@ -1,3 +1,4 @@
+import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -8,6 +9,7 @@ import {
   SchemaParam,
   SchemaPointer,
   SchemaProperty,
+  SchemaRewrite,
 } from "@edgedb/common/schemaData";
 
 import {SchemaModule, SearchMatches} from "../state/textView";
@@ -19,6 +21,7 @@ import {
   CopyButton,
   CopyHighlight,
   highlightString,
+  indent,
   ItemHeader,
   Keyword,
   mapTypeLinkList,
@@ -90,6 +93,7 @@ export const PointerRenderer = observer(function _PointerRenderer({
     pointer.readonly ||
     pointer.annotations.length ||
     pointer.constraints.length ||
+    pointer.rewrites.length ||
     (pointer.type === "Link" &&
       (Object.keys(pointer.properties).length ||
         pointer.indexes.length ||
@@ -228,6 +232,9 @@ export const PointerRenderer = observer(function _PointerRenderer({
                   constraint={constraint}
                 />
               ))}
+              {pointer.rewrites.map((rewrite, i) => (
+                <RewriteRenderer key={i} rewrite={rewrite} />
+              ))}
               {pointer.type === "Link" && pointer.properties
                 ? Object.values(pointer.properties).map((prop) => (
                     <PointerRenderer
@@ -258,12 +265,44 @@ export const PointerRenderer = observer(function _PointerRenderer({
   );
 });
 
+function RewriteRenderer({rewrite}: {rewrite: SchemaRewrite}) {
+  return (
+    <Copyable>
+      <div>
+        <ItemHeader
+          actions={<CopyButton getSDL={() => rewriteToSDL(rewrite)} />}
+        >
+          <CopyHighlight>
+            <Keyword>rewrite</Keyword>{" "}
+            {rewrite.kinds.map((kind, i) => (
+              <Fragment key={i}>
+                {i !== 0 ? ", " : ""}
+                <Keyword>{kind.toLowerCase()}</Keyword>
+              </Fragment>
+            ))}
+          </CopyHighlight>
+        </ItemHeader>
+        <div className={styles.indentedBlock}>
+          <div>
+            <CopyHighlight>
+              <Keyword>using</Keyword> <Punc>{"("}</Punc>
+              <CodeBlock code={rewrite.expr} inline />
+              <Punc>{");"}</Punc>
+            </CopyHighlight>
+          </div>
+        </div>
+      </div>
+    </Copyable>
+  );
+}
+
 export function pointerToSDL(pointer: SchemaPointer): string {
   const hasBody =
     pointer.default ||
     pointer.readonly ||
     pointer.annotations.length ||
     pointer.constraints.length ||
+    pointer.rewrites.length ||
     (pointer.type === "Link" &&
       (Object.keys(pointer.properties).length ||
         pointer.indexes.length ||
@@ -324,7 +363,9 @@ export function pointerToSDL(pointer: SchemaPointer): string {
                 )
                 .join("")
             : ""
-        }${
+        }${pointer.rewrites
+          .map((rewrite) => indent(rewriteToSDL(rewrite)) + "\n")
+          .join("")}${
           pointer.type === "Link" && pointer.properties
             ? Object.values(pointer.properties)
                 .map(
@@ -340,4 +381,8 @@ export function pointerToSDL(pointer: SchemaPointer): string {
         }}`
       : ""
   };`;
+}
+
+function rewriteToSDL(rewrite: SchemaRewrite) {
+  return `rewrite ${rewrite.kinds.join(", ")}\n  using (${rewrite.expr});`;
 }
