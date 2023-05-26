@@ -49,6 +49,7 @@ import {
   WarningIcon,
 } from "../../icons";
 import {DataEditor} from "../../components/dataEditor";
+import {PrimitiveType} from "../../components/dataEditor/utils";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 const DataInspectorContext = createContext<{
@@ -365,7 +366,7 @@ const GridCell = observer(function GridCell({
       <FetchingDataPlaceholder state={state} data={data} field={field} />
     ) : (
       <DataEditor
-        type={field.schemaType}
+        type={field.schemaType as PrimitiveType}
         isRequired={field.required}
         isMulti={field.multi}
         value={
