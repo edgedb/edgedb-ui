@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import {useEffect, useMemo} from "react";
 import {observer} from "mobx-react";
 import {useParams, useNavigate} from "react-router-dom";
 
@@ -273,12 +273,27 @@ interface FilterPanelProps {
 const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
   const [_, theme] = useTheme();
 
+  const keybindings = useMemo(
+    () => [
+      {
+        key: "Mod-Enter",
+        run: () => {
+          state.applyFilter();
+          return true;
+        },
+        preventDefault: true,
+      },
+    ],
+    [state]
+  );
+
   return (
     <div className={styles.filterPanel}>
       <CodeEditor
         code={state.filterEditStr}
         onChange={(value) => state.setFilterEditStr(value)}
         useDarkTheme={theme === Theme.dark}
+        keybindings={keybindings}
       />
 
       <div className={styles.filterActions}>
