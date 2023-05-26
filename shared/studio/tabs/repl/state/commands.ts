@@ -379,7 +379,7 @@ async function handleListCommand(
             kind: CommandOutputKind.text,
             content: pattern
               ? `No indexes found matching '${args[0]}'`
-              : `No explicit aliases found`,
+              : `No explicit indexes found`,
           });
         } else {
           item.setCommandResult({
