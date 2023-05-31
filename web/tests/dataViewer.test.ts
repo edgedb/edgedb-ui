@@ -123,7 +123,7 @@ describe("dataViewer:", () => {
       // wait for rerender to finish
       await waitUntilElementsContentHasChanged(
         itemsCountEl,
-        initialItemsCount,
+        [initialItemsCount, "loading..."],
         2000
       );
 
@@ -140,7 +140,7 @@ describe("dataViewer:", () => {
       // wait for rerender to finish
       await waitUntilElementsContentHasChanged(
         itemsCountEl,
-        filteredElementsCount,
+        [filteredElementsCount, "loading..."],
         2000
       );
 
