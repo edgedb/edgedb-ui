@@ -29,12 +29,14 @@ export async function waitUntilElementNotLocated(locator: Locator) {
 
 export async function waitUntilElementsContentHasChanged(
   element: WebElement,
-  initialContent: string,
+  initialContent: string | string[],
   waitDuration: number
 ) {
+  const initial =
+    typeof initialContent === "string" ? [initialContent] : initialContent;
   return driver.wait(async () => {
     const content = await element.getText();
-    return content !== initialContent;
+    return !initial.includes(content);
   }, waitDuration);
 }
 
