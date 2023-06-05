@@ -398,7 +398,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
             isDeprecated: isDeprecated(i.annotations),
           })),
           accessPolicies: type.access_policies,
-          triggers: type.triggers,
+          triggers: type.triggers ?? [],
         } as any);
         for (const baseId of type.baseIds) {
           if (!extendedBy.has(baseId)) {
@@ -571,7 +571,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       }),
       annotations: pointer.annotations,
       rewrites: Object.values(
-        pointer.rewrites.reduce((rewrites, rewrite) => {
+        (pointer.rewrites ?? []).reduce((rewrites, rewrite) => {
           if (!rewrites[rewrite.expr]) {
             rewrites[rewrite.expr] = {
               kinds: [rewrite.kind],

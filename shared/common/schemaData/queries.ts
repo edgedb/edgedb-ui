@@ -1,3 +1,5 @@
+import {EdgeDBVersion, versionGTE} from "./utils";
+
 export interface SchemaAnnotation {
   name: string;
   "@value": string;
@@ -18,7 +20,7 @@ export interface SchemaAccessPolicy {
   condition: string | null;
   action: SchemaAccessPolicyAction;
   expr: string | null;
-  errmessage: string | null;
+  errmessage?: string | null;
   annotations: SchemaAnnotation[];
 }
 
@@ -60,10 +62,11 @@ export interface RawSchemaType {
       }[]
     | null;
   access_policies: SchemaAccessPolicy[] | null;
-  triggers: SchemaTrigger[] | null;
+  triggers?: SchemaTrigger[] | null;
 }
 
-export const typesQuery = `
+export function getTypesQuery(version: EdgeDBVersion) {
+  return `
 with module schema
 select Type {
   type := .__type__.name,
@@ -112,20 +115,25 @@ select Type {
     condition,
     action,
     expr,
-    errmessage,
+    ${versionGTE(version, [3, 0]) ? "errmessage," : ""}
     annotations: {
       name,
       @value,
     }
   },
-  [is ObjectType].triggers: {
+  ${
+    versionGTE(version, [3, 0])
+      ? `[is ObjectType].triggers: {
     name,
     kinds,
     scope,
     expr,
-  },
+  },`
+      : ""
+  }
 }
 `;
+}
 
 export type TargetDeleteAction =
   | "Restrict"
@@ -155,7 +163,7 @@ export interface RawPointerType {
   expr: string | null;
   constraintIds: string[];
   annotations: SchemaAnnotation[];
-  rewrites: RawSchemaRewrite[];
+  rewrites?: RawSchemaRewrite[];
   properties: {id: string; "@owned": boolean}[] | null;
   on_target_delete: TargetDeleteAction | null;
   on_source_delete: SourceDeleteAction | null;
@@ -164,7 +172,8 @@ export interface RawPointerType {
     | null;
 }
 
-export const pointersQuery = `
+export function getPointersQuery(version: EdgeDBVersion) {
+  return `
 with module schema
 select Pointer {
   id,
@@ -187,10 +196,14 @@ select Pointer {
     name,
     @value,
   },
-  rewrites: {
+  ${
+    versionGTE(version, [3, 0])
+      ? `rewrites: {
     kind,
     expr,
-  },
+  },`
+      : ""
+  }
   [is Link].properties: {
     id,
     @owned,
@@ -207,6 +220,7 @@ select Pointer {
   },
 }
 `;
+}
 
 export type SchemaTypemod = "SetOfType" | "OptionalType" | "SingletonType";
 
@@ -431,9 +445,10 @@ select schema::Extension {
 }
 `;
 
-export const introspectionQuery = `select {
-  types := (${typesQuery}),
-  pointers := (${pointersQuery}),
+export function getIntrospectionQuery(version: EdgeDBVersion) {
+  return `select {
+  types := (${getTypesQuery(version)}),
+  pointers := (${getPointersQuery(version)}),
   functions := (${functionsQuery}),
   operators := (${operatorsQuery}),
   constraints := (${constraintsQuery}),
@@ -442,6 +457,7 @@ export const introspectionQuery = `select {
   globals := (${globalsQuery}),
   extensions := (${extensionsQuery}),
 }`;
+}
 
 export interface RawIntrospectionResult {
   types: RawSchemaType[];

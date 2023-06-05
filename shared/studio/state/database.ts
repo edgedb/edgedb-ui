@@ -29,7 +29,7 @@ import {
 
 import {
   RawIntrospectionResult,
-  introspectionQuery,
+  getIntrospectionQuery,
 } from "@edgedb/common/schemaData/queries";
 import {
   buildTypesGraph,
@@ -193,28 +193,42 @@ export class DatabaseState extends Model({
     const instanceState = instanceCtx.get(this)!;
 
     try {
-      const [migrationId, storedSchemaData] = yield* _await(
+      const [schemaInfo, storedSchemaData] = yield* _await(
         Promise.all([
           conn
             .query(
-              `SELECT (
-              SELECT schema::Migration {
-                children := .<parents[IS schema::Migration]
-              } FILTER NOT EXISTS .children
-            ).id;`
+              `SELECT {
+                migrationId := (
+                  (SELECT schema::Migration {
+                    children := .<parents[IS schema::Migration]
+                  } FILTER NOT EXISTS .children).id
+                ),
+                version := sys::get_version(),
+              }`
             )
-            .then(({result}) => (result?.[0] ?? null) as string | null),
+            .then(({result}) => ({
+              migrationId: (result![0].migrationId[0] ?? null) as
+                | string
+                | null,
+              version: result![0].version as {
+                major: number;
+                minor: number;
+                stage: string;
+                stage_no: number;
+                local: string[];
+              },
+            })),
           fetchSchemaData(this.name, instanceState.instanceId!),
         ])
       );
 
-      if (this.migrationId === migrationId) {
+      if (this.migrationId === schemaInfo.migrationId) {
         return;
       }
 
       let rawData: RawIntrospectionResult;
       if (
-        storedSchemaData?.migrationId !== migrationId ||
+        storedSchemaData?.migrationId !== schemaInfo.migrationId ||
         storedSchemaData.version !== SCHEMA_DATA_VERSION
       ) {
         // Directly set loading tab by model name to avoid cyclic dependency
@@ -222,16 +236,23 @@ export class DatabaseState extends Model({
         this.loadingTabs.set("Schema", true);
         try {
           rawData = yield* _await(
-            conn.query(introspectionQuery).then(({result}) => {
-              return result![0] as RawIntrospectionResult;
-            })
+            conn
+              .query(
+                getIntrospectionQuery([
+                  schemaInfo.version.major,
+                  schemaInfo.version.minor,
+                ])
+              )
+              .then(({result}) => {
+                return result![0] as RawIntrospectionResult;
+              })
           );
         } finally {
           this.loadingTabs.set("Schema", false);
         }
         storeSchemaData(this.name, instanceState.instanceId!, {
           version: SCHEMA_DATA_VERSION,
-          migrationId,
+          migrationId: schemaInfo.migrationId,
           data: rawData,
         });
       } else {
@@ -294,7 +315,7 @@ export class DatabaseState extends Model({
         }, new Map<string, Set<string>>()),
       };
 
-      this.migrationId = migrationId;
+      this.migrationId = schemaInfo.migrationId;
       this.schemaData = schemaData;
     } finally {
       this.fetchingSchemaData = false;

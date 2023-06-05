@@ -206,7 +206,7 @@ function getAccessKindsList(type: SchemaAccessPolicy): string[] {
 }
 
 function AccessPolicyRenderer({type}: {type: SchemaAccessPolicy}) {
-  const hasBody = !!type.annotations.length || type.errmessage !== null;
+  const hasBody = !!type.annotations.length || type.errmessage != null;
 
   return (
     <Copyable>
@@ -367,7 +367,7 @@ export function objectToSDL(type: SchemaObjectType) {
 }
 
 export function accessPolicyToSDL(type: SchemaAccessPolicy) {
-  const hasBody = !!type.annotations.length || type.errmessage !== null;
+  const hasBody = !!type.annotations.length || type.errmessage != null;
   return `access policy ${type.name}\n  ${
     type.condition ? `when (${type.condition})\n  ` : ""
   }${type.action.toLowerCase()} ${getAccessKindsList(type).join(
@@ -375,7 +375,7 @@ export function accessPolicyToSDL(type: SchemaAccessPolicy) {
   )} using (\n    ${type.expr}\n  )${
     hasBody
       ? ` {\n${
-          type.errmessage !== null
+          type.errmessage != null
             ? `    errmessage := '${type.errmessage}'\n`
             : ""
         }${type.annotations
