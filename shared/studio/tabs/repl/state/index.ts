@@ -253,7 +253,7 @@ export class Repl extends Model({
     this._fetchingHistory = true;
     const history = yield* _await(
       fetchReplHistory(
-        instanceCtx.get(this)!.instanceName!,
+        instanceCtx.get(this)!.instanceId!,
         dbCtx.get(this)!.name,
         this.queryHistory[0]?.timestamp ?? Date.now(),
         50
@@ -402,7 +402,7 @@ export class Repl extends Model({
     storeReplHistoryItem(
       historyItem.$modelId,
       {
-        instanceId: instanceCtx.get(this)!.instanceName!,
+        instanceId: instanceCtx.get(this)!.instanceId!,
         dbName: dbCtx.get(this)!.name,
         timestamp: historyItem.timestamp,
         data: getSnapshot(historyItem),

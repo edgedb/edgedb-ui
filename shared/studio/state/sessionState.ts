@@ -144,7 +144,7 @@ export class SessionState extends Model({
   }
 
   @modelAction
-  openPanel(highlight: typeof this["highlight"] = null) {
+  openPanel(highlight: (typeof this)["highlight"] = null) {
     this.fetchConfigValues();
     this.panelOpen = true;
     this.highlight = highlight;
@@ -178,7 +178,7 @@ export class SessionState extends Model({
     const dbState = dbCtx.get(this)!;
 
     const [sessionStateData] = await Promise.all([
-      fetchSessionState(instanceState.instanceName!, dbState.name),
+      fetchSessionState(instanceState.instanceId!, dbState.name),
       when(() => dbState.schemaData !== null),
     ]);
 
@@ -421,7 +421,7 @@ export class SessionState extends Model({
     const dbState = dbCtx.get(this)!;
 
     storeSessionState({
-      instanceId: instanceState.instanceName!,
+      instanceId: instanceState.instanceId!,
       dbName: dbState.name,
       data: {
         globals: Object.entries(this.draftState!.globals).reduce(

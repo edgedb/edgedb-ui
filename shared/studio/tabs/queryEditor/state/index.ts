@@ -224,7 +224,7 @@ export class QueryEditor extends Model({
     this._fetchingHistory = true;
     const history = yield* _await(
       fetchQueryHistory(
-        instanceCtx.get(this)!.instanceName!,
+        instanceCtx.get(this)!.instanceId!,
         dbCtx.get(this)!.name,
         this.queryHistory[this.queryHistory.length - 2]?.timestamp ??
           Date.now(),
@@ -525,7 +525,7 @@ export class QueryEditor extends Model({
     storeQueryHistoryItem(
       historyItem.$modelId,
       {
-        instanceId: instanceCtx.get(this)!.instanceName!,
+        instanceId: instanceCtx.get(this)!.instanceId!,
         dbName: dbCtx.get(this)!.name,
         timestamp: timestamp,
         data: getSnapshot(historyItem),

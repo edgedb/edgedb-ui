@@ -88,7 +88,7 @@ export class InstanceState extends Model({
         this.roles = data.roles;
       });
 
-      cleanupOldSchemaDataForInstance(this.instanceName!, this.databases!);
+      cleanupOldSchemaDataForInstance(this.instanceId!, this.databases!);
     } catch (err) {
       if (err instanceof AuthenticationError) {
         this._refreshAuthToken?.();
