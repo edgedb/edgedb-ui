@@ -7,21 +7,18 @@
   align-items: center;
   border-radius: 4px;
   color: var(--select-option-color, #6b6b6b);
+  cursor: pointer;
 
   svg {
     color: var(--svg-color, --select-option-color, #6b6b6b);
   }
 
-  &.fullButton {
-    cursor: pointer;
+  &:hover {
+    background: var(--hoverBg);
 
-    &:hover {
-      background: var(--hoverBg);
-
-      .tabDropdownButton {
-        background: none;
-        opacity: 1;
-      }
+    .tabDropdownButton {
+      background: none;
+      opacity: 1;
     }
   }
 
@@ -31,14 +28,7 @@
 }
 
 .tabDropdownButton {
-  display: flex;
   margin-left: 8px;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--hoverBg);
-  }
 }
 
 .tabDropdown {

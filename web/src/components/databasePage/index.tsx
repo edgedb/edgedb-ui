@@ -1,5 +1,5 @@
 import {observer} from "mobx-react";
-import {useLocation, useNavigate, useParams} from "react-router-dom";
+import {useLocation, useNavigate, useParams, Link} from "react-router-dom";
 
 import {InstanceStateContext} from "@edgedb/studio/state/instance";
 import {HeaderTab} from "@edgedb/studio/components/headerTabs";
@@ -39,26 +39,19 @@ export default observer(function DatabasePage() {
   return (
     <>
       <HeaderTab
+        link={Link}
         headerKey="database"
-        title={params.databaseName}
+        title={params.databaseName ?? ""}
+        mainLink={null}
         icon={<HeaderDatabaseIcon />}
         selectedItemId={params.databaseName!}
         items={
           appState.instanceState.databases?.map((db) => ({
-            id: db,
             label: db,
-            action: () => navigate(`/${db}`),
+            link: `/${db}`,
           }))!
         }
         actions={[
-          // {
-          //   label: "Database settings",
-          //   action: () => {
-          //     appState.currentPage!.setCurrentTabId(
-          //       DatabaseTab.Settings
-          //     );
-          //   },
-          // },
           {
             label: "Create new database",
             action: () => {

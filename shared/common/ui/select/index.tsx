@@ -24,7 +24,6 @@ export type SelectProps<T = any> = {
   className?: string;
   title?: string | JSX.Element;
   rightAlign?: boolean;
-  mainAction?: () => void;
   actions?: {label: string | JSX.Element; action: () => void}[];
   searchable?: boolean;
 } & (
@@ -52,7 +51,6 @@ export function Select<T extends any>({
   className,
   title,
   rightAlign,
-  mainAction,
   actions,
   searchable,
   ...dropdown
@@ -162,22 +160,13 @@ export function Select<T extends any>({
   return (
     <div
       ref={selectRef}
-      className={cn(styles.select, className, {
-        [styles.fullButton]: !mainAction && hasDropdown,
-        [styles.hasAction]: mainAction != null,
-      })}
-      onClick={mainAction ?? (() => setDropdownOpen(true))}
+      className={cn(styles.select, className)}
+      onClick={() => setDropdownOpen(true)}
     >
       {title ?? selectedItem?.fullLabel ?? selectedItem?.label}
       {hasDropdown ? (
         <>
-          <div
-            className={styles.tabDropdownButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              setDropdownOpen(!dropdownOpen);
-            }}
-          >
+          <div className={styles.tabDropdownButton}>
             <DropdownIcon />
           </div>
 
