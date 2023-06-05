@@ -1,5 +1,5 @@
 import {useEffect} from "react";
-import {useMatch, useNavigate, useRoutes} from "react-router-dom";
+import {useMatch, useRoutes, Link} from "react-router-dom";
 import {observer} from "mobx-react-lite";
 
 import {HeaderTab} from "@edgedb/studio/components/headerTabs";
@@ -14,7 +14,6 @@ import DatabasePage from "../databasePage";
 
 export default observer(function Main() {
   const appState = useAppState();
-  const navigate = useNavigate();
   const match = useMatch(":databaseName/*");
 
   const instanceName = appState.instanceState.instanceName;
@@ -30,13 +29,13 @@ export default observer(function Main() {
   return (
     <>
       <HeaderTab
+        link={Link}
         headerKey="instance"
         title={
           instanceName ?? <span className={styles.loading}>loading...</span>
         }
         icon={<HeaderInstanceIcon />}
-        mainAction={() => navigate("/")}
-        items={null}
+        mainLink={"/"}
       />
 
       {useRoutes([
