@@ -25,3 +25,12 @@ export function paramToSDL(param: SchemaParam) {
       : ""
   }${param.type.name}${param.default ? ` = ${param.default}` : ""}`;
 }
+
+export type EdgeDBVersion = [number, number];
+
+export function versionGTE(a: EdgeDBVersion, b: EdgeDBVersion) {
+  if (a[0] === b[0]) {
+    return a[1] >= b[1];
+  }
+  return a[0] > b[0];
+}
