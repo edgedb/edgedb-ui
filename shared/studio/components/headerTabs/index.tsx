@@ -92,6 +92,8 @@ function SplitButton({
       </a>
     ));
 
+  const hasDropdown = items.length + actions.length > 0;
+
   useEffect(() => {
     if (dropdownOpen) {
       const listener = (e: MouseEvent) => {
@@ -116,49 +118,53 @@ function SplitButton({
       ) : (
         <div className={cn(styles.mainLink, styles.disabled)}>{title}</div>
       )}
-      <div
-        className={styles.dropdownArrow}
-        onClick={() => setDropdownOpen(true)}
-      >
-        <DropdownIcon />
-      </div>
-
-      <div
-        ref={dropdownRef}
-        className={cn(styles.dropdown, {
-          [styles.dropdownOpen]: dropdownOpen,
-        })}
-        onClick={(e) => setDropdownOpen(false)}
-      >
-        {items.map(({label, link}) => (
-          <Link
-            key={link}
-            className={cn(styles.dropdownItem, {
-              [styles.dropdownItemSelected]: selectedItemId === link,
-            })}
-            to={link}
+      {hasDropdown ? (
+        <>
+          <div
+            className={styles.dropdownArrow}
+            onClick={() => setDropdownOpen(true)}
           >
-            {label}
-          </Link>
-        ))}
-        <div className={styles.dropdownActionsGroup}>
-          {actions?.map(({label, action}, i) =>
-            typeof action === "string" ? (
-              <Link key={i} className={styles.dropdownItem} to={action}>
-                {label}
-              </Link>
-            ) : (
-              <div
-                key={i}
-                className={styles.dropdownItem}
-                onClick={() => action()}
+            <DropdownIcon />
+          </div>
+
+          <div
+            ref={dropdownRef}
+            className={cn(styles.dropdown, {
+              [styles.dropdownOpen]: dropdownOpen,
+            })}
+            onClick={(e) => setDropdownOpen(false)}
+          >
+            {items.map(({label, link}) => (
+              <Link
+                key={link}
+                className={cn(styles.dropdownItem, {
+                  [styles.dropdownItemSelected]: selectedItemId === link,
+                })}
+                to={link}
               >
                 {label}
-              </div>
-            )
-          )}
-        </div>
-      </div>
+              </Link>
+            ))}
+            <div className={styles.dropdownActionsGroup}>
+              {actions?.map(({label, action}, i) =>
+                typeof action === "string" ? (
+                  <Link key={i} className={styles.dropdownItem} to={action}>
+                    {label}
+                  </Link>
+                ) : (
+                  <div
+                    key={i}
+                    className={styles.dropdownItem}
+                    onClick={() => action()}
+                  >
+                    {label}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
