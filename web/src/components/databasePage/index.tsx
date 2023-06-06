@@ -44,7 +44,7 @@ export default observer(function DatabasePage() {
         title={params.databaseName ?? ""}
         mainLink={null}
         icon={<HeaderDatabaseIcon />}
-        selectedItemId={params.databaseName!}
+        selectedItemId={`/${params.databaseName}`}
         items={
           appState.instanceState.databases?.map((db) => ({
             label: db,
@@ -88,17 +88,30 @@ function RouterProvider({children}: PropsWithChildren<{}>) {
         currentPath: location.pathname.slice(1).split("/"),
         searchParams: new URLSearchParams(location.search),
         navigate: (path, replace) => {
-          navigate(
-            typeof path === "string"
-              ? `/${path}`
-              : {
-                  pathname: path.path && `/${path.path}`,
-                  search: path.searchParams?.toString(),
-                },
-            {
-              replace,
-            }
-          );
+          const normalisedPath = (
+            typeof path === "string" ? path : path.path
+          )?.replace(/\/$/, "");
+          const search =
+            typeof path !== "string" && path.searchParams
+              ? "?" + path.searchParams.toString()
+              : undefined;
+          if (
+            (normalisedPath != null &&
+              normalisedPath !== location.pathname.replace(/^\/|\/$/g, "")) ||
+            (search != null && search !== location.search)
+          ) {
+            navigate(
+              typeof path === "string"
+                ? `/${path}`
+                : {
+                    pathname: path.path && `/${path.path}`,
+                    search,
+                  },
+              {
+                replace,
+              }
+            );
+          }
         },
         locationKey: location.key,
         gotoInstancePage: () => navigate("/"),
