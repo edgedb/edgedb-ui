@@ -211,22 +211,24 @@ describe("queryEditor:", () => {
     });
 
     test("queryBuilder renders correctly", async () => {
+      const container = await driver.findElement(
+        ByUIClass("queryBuilder_queryBuilder")
+      );
+
       // select keyword should be shown
-      const selectKeyword = await driver.findElement(
+      const selectKeyword = await container.findElement(
         ByUIClass("queryBuilder_keyword")
       );
       expect(await selectKeyword.getText()).toBe("select");
       // select dropdown with all existing db objects should be shown
-      await driver.findElement(
-        By.css(`${uiClass("select_select")}${uiClass("select_fullButton")}`)
-      );
+      await container.findElement(ByUIClass("queryBuilder_select"));
       // id checkbox should exists
-      const checkboxes = await driver.findElements(
+      const checkboxes = await container.findElements(
         ByUIClass("queryBuilder_inactive")
       );
-      expect(await checkboxes.length).toBe(3);
+      expect(checkboxes.length).toBe(3);
       // 4 query modifiers should be visible
-      const modButtons = await driver.findElements(
+      const modButtons = await container.findElements(
         ByUIClass("queryBuilder_modButton")
       );
       expect(modButtons.length).toBe(4);
