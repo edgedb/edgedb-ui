@@ -204,10 +204,9 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     [editorState]
   );
 
-  const onChange = useCallback(
-    (value: Text) => editorState.setEdgeQL(value),
-    [editorState]
-  );
+  const onChange = useCallback((value: Text) => editorState.setEdgeQL(value), [
+    editorState,
+  ]);
 
   const codeEditorRef = useCallback((ref: any) => {
     setRef(ref);
@@ -290,9 +289,7 @@ const QueryResult = observer(function QueryResult() {
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
       if (result.status === "EXPLAIN" || result.status === "ANALYZE QUERY") {
-        content = (
-          <ExplainVis state={result.explainState} queryHistoryItem={result} />
-        );
+        content = <ExplainVis state={result.explainState} />;
       } else if (result.inspectorState) {
         content = (
           <ResultInspector

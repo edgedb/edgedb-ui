@@ -192,7 +192,7 @@ export const CodeEditorExplainContexts = observer(function ExplainContexts({
   }, [state]);
 
   return createPortal(
-    <ExplainHighlightsRenderer ref={ref} state={state} />,
+    <ExplainHighlightsRenderer ref={ref as any} state={state} />,
     containerEl
   );
 });

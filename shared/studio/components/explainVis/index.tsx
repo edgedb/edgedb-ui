@@ -7,8 +7,6 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 
 import {useRef} from "react";
 
-import {QueryHistoryResultItem} from "../../tabs/queryEditor/state";
-
 import styles from "./explainVis.module.scss";
 import {ExplainState, Plan, ExplainContext, useExplainState} from "./state";
 
@@ -28,13 +26,11 @@ export enum ExplainType {
 interface ExplainVisProps {
   state: ExplainState | null;
   classes?: string;
-  queryHistoryItem?: QueryHistoryResultItem;
   type?: ExplainType;
 }
 
 export const ExplainVis = observer(function ExplainVis({
   state,
-  queryHistoryItem,
   type = ExplainType.full,
   classes,
 }: ExplainVisProps) {
@@ -48,26 +44,20 @@ export const ExplainVis = observer(function ExplainVis({
     <ExplainContext.Provider value={state}>
       <Tooltip.Provider delayDuration={0}>
         <div className={cn(styles.explainVis, classes)}>
-          {queryHistoryItem && (
-            <ExplainHeader queryHistoryItem={queryHistoryItem} />
-          )}
+          {!isLight && <ExplainHeader />}
           {!isLight && explainGraphSettings.isAreaGraph ? (
             <Treemap />
           ) : (
             <Flamegraph isLight={isLight} />
           )}
-          {queryHistoryItem && <PlanDetails />}
+          {!isLight && <PlanDetails />}
         </div>
       </Tooltip.Provider>
     </ExplainContext.Provider>
   );
 });
 
-const ExplainHeader = observer(function ExplainHeader({
-  queryHistoryItem,
-}: {
-  queryHistoryItem: QueryHistoryResultItem;
-}) {
+const ExplainHeader = observer(function ExplainHeader() {
   const state = useExplainState();
   const plan = state.focusedPlan ?? state.planTree.data;
   const queryTimeCost = explainGraphSettings.isTimeGraph
