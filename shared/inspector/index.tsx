@@ -145,7 +145,7 @@ const RowList = observer(function RowList({
     return (
       <div
         className={cn(styles.inspector, className, {
-          [styles.jsonMode]: state._jsonMode,
+          [styles.jsonMode]: state._jsonModeData != null,
         })}
         style={{
           ...inspectorStyle,
@@ -203,7 +203,7 @@ const RowList = observer(function RowList({
       <List<Item[]>
         ref={ref}
         className={cn(styles.inspector, className, {
-          [styles.jsonMode]: state._jsonMode,
+          [styles.jsonMode]: state._jsonModeData != null,
         })}
         style={inspectorStyle}
         height={height}
@@ -260,10 +260,12 @@ const Row = observer(function Row({
 function CopyButton({
   item,
   implicitLimit,
+  rawCopy,
   ...props
 }: {
   item: Item;
   implicitLimit: number | null;
+  rawCopy?: string | null;
 } & HTMLAttributes<HTMLDivElement>) {
   if (item.type === ItemType.Other) {
     return null;
@@ -286,7 +288,7 @@ function CopyButton({
       {...props}
       onClick={() => {
         const jsonString =
-          item.parent == null
+          rawCopy ?? (item.parent == null
             ? renderResultAsJson((item as any).data, item.codec, implicitLimit)
             : _renderToJson(
                 item.type === ItemType.Scalar
@@ -295,7 +297,7 @@ function CopyButton({
                 item.codec,
                 "",
                 implicitLimit
-              );
+              ));
 
         navigator.clipboard?.writeText(jsonString);
         setCopied(true);
@@ -400,6 +402,7 @@ export const InspectorRow = observer(function InspectorRow({
               state.setHoverId(null);
             }}
             implicitLimit={state.implicitLimit}
+            rawCopy={state._jsonModeData}
           />
         </div>
       ) : null}

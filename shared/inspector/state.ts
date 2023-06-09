@@ -14,6 +14,7 @@ import {
 import {action, observable} from "mobx";
 import {_ICodec} from "edgedb";
 import {Item, buildItem, expandItem, ItemType} from "./buildItem";
+import { prettyPrintJSON } from "./buildScalar";
 
 export type {Item};
 
@@ -47,7 +48,7 @@ export class InspectorState extends Model({
 }) {
   @observable.shallow
   _items: Item[] = [];
-  _jsonMode = false;
+  _jsonModeData: string | null = null;
 
   loadingData = false;
 
@@ -134,15 +135,16 @@ export class InspectorState extends Model({
 
     if (result) {
       if (jsonMode) {
+        const rawJson = `[${result.data.join(", ")}]`;
         this._items = [
           buildItem(
             {id: ".", parent: null, level: -1, codec: result.codec},
-            `[${result.data.join(", ")}]`,
+            rawJson,
             0,
             false
           ),
         ];
-        this._jsonMode = true;
+        this._jsonModeData = prettyPrintJSON(rawJson);
       } else {
         this._items = [
           buildItem(

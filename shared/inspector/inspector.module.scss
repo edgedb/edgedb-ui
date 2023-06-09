@@ -124,22 +124,22 @@
 
   &.highlightBody {
     .itemBody {
-      background: Highlight;
+      background: var(--inspectorCopyHighlightBg, Highlight);
 
       &,
       & * {
-        color: HighlightText !important;
+        color: var(--inspectorCopyHighlight, HighlightText) !important;
       }
     }
   }
 
   &.highlightAll {
     .itemContent {
-      background: Highlight;
+      background: var(--inspectorCopyHighlightBg, Highlight);
 
       &,
       & * {
-        color: HighlightText !important;
+        color: var(--inspectorCopyHighlight, HighlightText) !important;
       }
     }
   }
