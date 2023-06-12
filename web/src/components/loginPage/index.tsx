@@ -18,9 +18,13 @@ export default function LoginPage() {
     password: string;
   }>({mode: "onChange"});
 
-  useEffect(() => {
-    setFocus("username");
-  }, []);
+  useEffect(
+    () => {
+      setFocus("username");
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const onSubmit = handleSubmit(async ({username, password}) => {
     setError(null);

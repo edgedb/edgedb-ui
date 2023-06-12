@@ -1,8 +1,6 @@
 import {observer} from "mobx-react";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 
-import cn from "@edgedb/common/utils/classNames";
-
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
 
