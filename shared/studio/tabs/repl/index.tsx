@@ -54,6 +54,7 @@ import {renderCommandResult} from "./commands";
 import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
+import {isEndOfStatement} from "./state/utils";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -137,7 +138,7 @@ const ReplList = observer(function ReplList({
     [0, 0, 0]
   );
 
-  const headerHeight = 300 + (replState._hasUnfetchedHistory ? 34 : 0);
+  const headerHeight = 330 + (replState._hasUnfetchedHistory ? 34 : 0);
 
   useEffect(() => {
     replState.scrollRef = ref.current;
@@ -274,7 +275,13 @@ const ReplInput = observer(function ReplInput() {
         key: "Enter",
         run: (editor) => {
           const doc = editor.state.doc;
-          if (doc.lines === 1 && doc.line(1).text.trim().startsWith("\\")) {
+          if (
+            (doc.lines === 1 && doc.line(1).text.trim().startsWith("\\")) ||
+            isEndOfStatement(
+              editor.state.doc.toString(),
+              editor.state.selection
+            )
+          ) {
             replState.runQuery();
             return true;
           }
@@ -651,6 +658,10 @@ const ReplHeader = observer(function ReplHeader() {
     }
   }, [replState._hasUnfetchedHistory, replState._fetchingHistory]);
 
+  const ctrlKey = navigator.platform.toLowerCase().includes("mac")
+    ? "Cmd"
+    : "Ctrl";
+
   return (
     <div className={styles.replHeader}>
       <div
@@ -661,6 +672,9 @@ const ReplHeader = observer(function ReplHeader() {
         Welcome to EdgeDB repl, type{" "}
         <span onClick={() => replState.runQuery("\\help")}>\help</span> for
         commands list
+        <br />
+        Shortcuts: <i>{ctrlKey}+Enter</i> to run query,{" "}
+        <i>{ctrlKey}+ArrowUp/Down</i> to navigate history
       </div>
       {replState._hasUnfetchedHistory ? (
         <div className={styles.historyLoading}>

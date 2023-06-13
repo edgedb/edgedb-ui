@@ -3,10 +3,20 @@ import {CommandOutputKind, CommandResult} from "./state/commands";
 import styles from "./repl.module.scss";
 
 export function renderCommandResult(result: CommandResult) {
+  const ctrlKey = navigator.platform.toLowerCase().includes("mac")
+    ? "Cmd"
+    : "Ctrl";
+
   switch (result.kind) {
     case CommandOutputKind.help:
       return (
         <div className={styles.commandHelp}>
+          <div className={styles.heading}>Shortcuts</div>
+          <div className={styles.command}>{ctrlKey}+Enter</div>
+          <div className={styles.info}>Run query</div>
+          <div className={styles.command}>{ctrlKey}+ArrowUp/ArrowDown</div>
+          <div className={styles.info}>Navigate query history</div>
+
           <div className={styles.heading}>Introspection</div>
           <div className={styles.subheading}>
             (options: -s = show system objects, -I = case-insensitive match, -v
