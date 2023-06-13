@@ -1,4 +1,4 @@
-import {PropsWithChildren} from "react";
+import {PropsWithChildren, useState} from "react";
 import {_ICodec, Range} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -9,6 +9,7 @@ import {RangeCodec} from "edgedb/dist/codecs/range";
 import {Item, ItemType} from "./buildItem";
 
 import styles from "./inspector.module.scss";
+import {EllipsisIcon} from ".";
 
 export function buildScalarItem(
   base: {
@@ -209,7 +210,9 @@ export function renderValue(
     return {
       body: (
         <span>
-          <Tag name={knownTypeName}>{float32ArrayToString(value)}</Tag>
+          <Tag name={knownTypeName}>
+            <VectorRenderer vec={value} />
+          </Tag>
         </span>
       ),
     };
@@ -257,6 +260,26 @@ export function float32ArrayToString(vec: Float32Array): string {
   return `[${[...vec]
     .map((float) => float.toPrecision(8).replace(/\.?0+$/, ""))
     .join(", ")}]`;
+}
+
+function VectorRenderer({vec}: {vec: Float32Array}) {
+  const [expanded, setExpanded] = useState(false);
+  if (vec.length > 20 && !expanded) {
+    return (
+      <>
+        {float32ArrayToString(vec.slice(0, 20)).slice(0, -1)},
+        <span
+          className={cn(styles.ellipsis, styles.inline)}
+          onClick={() => setExpanded(true)}
+        >
+          <EllipsisIcon />
+        </span>
+        {"]"}
+      </>
+    );
+  } else {
+    return <>{float32ArrayToString(vec)}</>;
+  }
 }
 
 function formatDatetime(date: Date): string {
