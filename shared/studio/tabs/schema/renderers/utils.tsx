@@ -79,7 +79,7 @@ function goToItem(
   router.navigate({
     path: [
       ...router.currentPath.slice(0, 2),
-      moduleGroup === ModuleGroup.user ? "" : ModuleGroup[moduleGroup],
+      moduleGroup === "user" ? "" : moduleGroup,
     ].join("/"),
     searchParams: new URLSearchParams({focus: item.name}),
   });

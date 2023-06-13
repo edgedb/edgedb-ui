@@ -35,11 +35,8 @@ import {
 import {dbCtx} from "../../../state";
 import {Schema} from ".";
 
-export enum ModuleGroup {
-  user,
-  stdlib,
-  system,
-}
+export type ModuleGroup = "user" | "stdlib" | "system" | `ext::${string}`;
+export const moduleGroupNames: ModuleGroup[] = ["user", "stdlib", "system"];
 
 export enum TypeFilter {
   objects,
@@ -50,7 +47,7 @@ export enum TypeFilter {
   other,
 }
 
-const stdlibModules = new Set(["std", "cal", "math"]);
+const stdlibModules = new Set(["std", "cal", "math", "fts"]);
 
 export type SchemaItem =
   | SchemaObjectType
@@ -74,12 +71,16 @@ export interface SchemaModule {
   submodules?: SchemaModule[];
 }
 
-export function getModuleGroup(item: Exclude<SchemaItem, SchemaExtension>) {
+export function getModuleGroup(
+  item: Exclude<SchemaItem, SchemaExtension>
+): ModuleGroup {
   return item.builtin
     ? stdlibModules.has(item.module)
-      ? ModuleGroup.stdlib
-      : ModuleGroup.system
-    : ModuleGroup.user;
+      ? "stdlib"
+      : "system"
+    : item.module.startsWith("ext::")
+    ? (item.module as `ext::${string}`)
+    : "user";
 }
 
 export type SearchMatches = {[path: string]: readonly number[]};
@@ -127,7 +128,7 @@ function buildSearchIndex(items: SchemaItem[]): FuzzysortIndex {
 @model("SchemaTextView")
 export class SchemaTextView extends Model({
   searchText: prop<string>("").withSetter(),
-  selectedModuleGroup: prop<ModuleGroup>(ModuleGroup.user).withSetter(),
+  selectedModuleGroup: prop<ModuleGroup>("user").withSetter(),
   selectedTypeFilter: prop<TypeFilter | null>(null).withSetter(),
   toggledItems: prop(() => arraySet<string>()),
 }) {
@@ -254,11 +255,11 @@ export class SchemaTextView extends Model({
   }
 
   @computed
-  get moduleGroupItems(): SchemaItem[] {
+  get allSchemaItems(): Exclude<SchemaItem, SchemaExtension>[] {
     const schemaData = dbCtx.get(this)!.schemaData;
     if (!schemaData) return [];
 
-    const items = [
+    return [
       ...[...schemaData.globals.values()].sort((a, b) =>
         a.name.localeCompare(b.name)
       ),
@@ -287,14 +288,36 @@ export class SchemaTextView extends Model({
         a.name.localeCompare(b.name)
       ),
     ];
+  }
+
+  @computed
+  get extModuleGroupNames(): `ext::${string}`[] | null {
+    const schemaData = dbCtx.get(this)!.schemaData;
+
+    const moduleNames = schemaData?.shortNamesByModule.keys();
+
+    return moduleNames
+      ? ([...moduleNames].filter((name) =>
+          name.startsWith("ext::")
+        ) as `ext::${string}`[])
+      : null;
+  }
+
+  @computed
+  get moduleGroupItems(): SchemaItem[] {
+    const schemaData = dbCtx.get(this)!.schemaData;
+
+    const items = this.allSchemaItems;
 
     switch (this.selectedModuleGroup) {
-      case ModuleGroup.user:
+      case "user":
         return [
-          ...schemaData.extensions,
-          ...items.filter((type) => !type.builtin),
+          ...(schemaData?.extensions ?? []),
+          ...items.filter(
+            (type) => !type.builtin && !type.module.startsWith("ext::")
+          ),
         ];
-      case ModuleGroup.stdlib:
+      case "stdlib":
         return items.filter(
           (type) =>
             type.builtin &&
@@ -302,12 +325,16 @@ export class SchemaTextView extends Model({
             !type.isDeprecated
         );
 
-      case ModuleGroup.system:
+      case "system":
         return items.filter(
           (type) =>
             type.builtin &&
             !stdlibModules.has(type.module) &&
             !type.isDeprecated
+        );
+      default:
+        return items.filter(
+          (type) => type.module === this.selectedModuleGroup
         );
     }
   }

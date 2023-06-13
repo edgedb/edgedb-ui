@@ -230,7 +230,7 @@ export class FilterExpr extends Model({
   get errMessage(): string | null {
     if (this.isInfixOp && parsers[this.propType]) {
       try {
-        parsers[this.propType](this.val);
+        parsers[this.propType](this.val, null);
         return null;
       } catch (err) {
         return (err as any).message;

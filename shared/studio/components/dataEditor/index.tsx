@@ -528,7 +528,7 @@ const Textbox = forwardRef(function Textbox(
         onChange(value, true);
       } else {
         try {
-          const parsed = parsers[baseTypeName](value);
+          const parsed = parsers[baseTypeName](value, type.arg_values);
           if (validator) {
             const err = validator(parsed);
             if (err !== null) {
@@ -566,7 +566,10 @@ const Textbox = forwardRef(function Textbox(
             err = "Value is required";
           } else {
             try {
-              const parsed = parsers[baseTypeName](e.target.value);
+              const parsed = parsers[baseTypeName](
+                e.target.value,
+                type.arg_values
+              );
               if (validator) {
                 err = validator(parsed);
               }

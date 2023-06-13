@@ -157,7 +157,7 @@ export function parseEditorValue(
       if (typeof value !== "string") {
         throw new Error(`Expected string value for scalar type`);
       }
-      return parser(value);
+      return parser(value, type.arg_values);
     case "Array":
       if (!Array.isArray(value)) {
         throw new Error(`Expected array value for array type`);

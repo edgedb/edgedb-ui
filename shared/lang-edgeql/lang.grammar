@@ -54,7 +54,7 @@ Keyword { reservedKeyword | unreservedKeyword }
 
 Name {
   shortName | BuiltinName | fullyQualifiedName {
-    ModuleName {shortName "::"} (shortName | BuiltinName | unreservedKeyword)
+    (ModuleName {shortName "::"})+ (shortName | BuiltinName | unreservedKeyword)
   }
 }
 

@@ -44,6 +44,7 @@ export interface SchemaScalarType {
   from_alias: boolean;
   default: string | null;
   enum_values: string[] | null;
+  arg_values: string[] | null;
   knownBaseType: SchemaScalarType | null;
   bases: SchemaScalarType[];
   constraints: SchemaConstraint[];
@@ -348,6 +349,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           from_alias: type.from_alias,
           default: type.default,
           enum_values: type.enum_values,
+          arg_values: type.arg_values ?? null,
           annotations: type.annotations,
           isDeprecated: isDeprecated(type.annotations),
         } as any);

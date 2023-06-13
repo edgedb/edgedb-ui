@@ -1,7 +1,7 @@
 import type {_ICodec as ICodec} from "edgedb";
 import type {ObjectCodec} from "edgedb/dist/codecs/object";
 import type {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
-import {scalarItemToString} from "./buildScalar";
+import {float32ArrayToString, scalarItemToString} from "./buildScalar";
 
 export function renderResultAsJson(
   result: any,
@@ -44,6 +44,9 @@ export function _renderToJson(
         case "std::bytes":
           return `"${val.toString("base64")}"`;
         default:
+          if (val instanceof Float32Array) {
+            return float32ArrayToString(val);
+          }
           return JSON.stringify(scalarItemToString(val, typename));
       }
     }

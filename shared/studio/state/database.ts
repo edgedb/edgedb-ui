@@ -54,7 +54,7 @@ import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 4;
+const SCHEMA_DATA_VERSION = 5;
 
 export interface StoredSchemaData {
   version: number;

@@ -205,6 +205,16 @@ export function renderValue(
     };
   }
 
+  if (value instanceof Float32Array) {
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>{float32ArrayToString(value)}</Tag>
+        </span>
+      ),
+    };
+  }
+
   if (isEnum) {
     return {
       body: (
@@ -228,6 +238,9 @@ export function renderValue(
 }
 
 export function scalarItemToString(item: any, typename: string): string {
+  if (item instanceof Float32Array) {
+    return float32ArrayToString(item);
+  }
   switch (typename) {
     case "std::bytes":
       return bufferToString(item);
@@ -238,6 +251,12 @@ export function scalarItemToString(item: any, typename: string): string {
     default:
       return item.toString();
   }
+}
+
+export function float32ArrayToString(vec: Float32Array): string {
+  return `[${[...vec]
+    .map((float) => float.toPrecision(8).replace(/\.?0+$/, ""))
+    .join(", ")}]`;
 }
 
 function formatDatetime(date: Date): string {
