@@ -54,6 +54,7 @@ import {renderCommandResult} from "./commands";
 import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
+import {isEndOfStatement} from "./state/utils";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -274,7 +275,13 @@ const ReplInput = observer(function ReplInput() {
         key: "Enter",
         run: (editor) => {
           const doc = editor.state.doc;
-          if (doc.lines === 1 && doc.line(1).text.trim().startsWith("\\")) {
+          if (
+            (doc.lines === 1 && doc.line(1).text.trim().startsWith("\\")) ||
+            isEndOfStatement(
+              editor.state.doc.toString(),
+              editor.state.selection
+            )
+          ) {
             replState.runQuery();
             return true;
           }
