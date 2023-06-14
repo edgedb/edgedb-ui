@@ -2008,13 +2008,13 @@ __metadata:
   dependencies:
     "@types/react-window": ^1.8.3
     assert-never: ^1.2.1
-    edgedb: ^1.2.0
     mobx: ^6.5.0
     mobx-keystone: ^0.67.2
     mobx-react-lite: ^3.3.0
     react-window: ^1.8.6
   peerDependencies:
     "@types/react": ^16.9.34
+    edgedb: ^1.3.0
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -6475,15 +6475,6 @@ __metadata:
   version: 0.1.2
   resolution: "duplexer@npm:0.1.2"
   checksum: 62ba61a830c56801db28ff6305c7d289b6dc9f859054e8c982abd8ee0b0a14d2e9a8e7d086ffee12e868d43e2bbe8a964be55ddbd8c8957714c87373c7a4f9b0
-  languageName: node
-  linkType: hard
-
-"edgedb@npm:^1.2.0":
-  version: 1.2.2
-  resolution: "edgedb@npm:1.2.2"
-  bin:
-    edgeql-js: dist/cli.js
-  checksum: 087d6ac48821d4c757c1f58b702b27e19ba368116a7af3266558a4461e06accca7714fb97b29c61da7edd97e2349dd848c88d10294364496f68ac16a1ef1cd78
   languageName: node
   linkType: hard
 
