@@ -415,6 +415,71 @@ export class SessionState extends Model({
     this.draftSnapshot = clone(this.draftState!);
   }
 
+  @modelAction
+  updateGlobalsFromCommand(statements: string[], stateUpdate: any) {
+    const globalNames = new Set(
+      statements
+        .map(
+          (statement) =>
+            statement.match(/^\s*(?:re)?set\s+global\s+(.+?)(?:\s|:=|$)/i)?.[1]
+        )
+        .filter((name) => name) as string[]
+    );
+
+    if (!globalNames.size) {
+      return;
+    }
+
+    console.log(globalNames, stateUpdate);
+
+    const dbState = dbCtx.get(this)!;
+
+    const schemaDataGlobals = new Map(
+      [...dbState.schemaData!.globals.values()].map((global) => [
+        global.name,
+        global,
+      ])
+    );
+
+    for (const globalName of globalNames) {
+      const type =
+        schemaDataGlobals.get(globalName) ??
+        schemaDataGlobals.get(`default::${globalName}`);
+      console.log(type);
+      if (!type) {
+        continue;
+      }
+
+      const val = stateUpdate?.[type.name];
+      if (val === undefined || (val === null && !type.default)) {
+        const existingGlobalState = this.draftState!.globals[type.name];
+        if (existingGlobalState) {
+          existingGlobalState.active = false;
+          const [newVal, err] = newPrimitiveValue(
+            type.target as PrimitiveType
+          );
+          existingGlobalState.value = frozen(newVal);
+          existingGlobalState.error = err;
+        }
+      } else {
+        const editorVal =
+          val != null
+            ? valueToEditorValue(val, type.target as PrimitiveType)
+            : null;
+
+        this.draftState!.globals[type.name] = {
+          active: true,
+          type: frozen(type.target, FrozenCheckMode.Off),
+          value: frozen(editorVal),
+          error: false,
+        };
+      }
+    }
+
+    this.updateActiveState();
+    this.storeSessionData();
+  }
+
   storeSessionData() {
     const instanceState = instanceCtx.get(this)!;
     const dbState = dbCtx.get(this)!;

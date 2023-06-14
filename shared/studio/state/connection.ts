@@ -216,6 +216,8 @@ export class Connection extends Model({
         );
       }
 
+      (this.conn as any).lastStateUpdate = null;
+
       const startTime = performance.now();
 
       let inCodec, outCodec, outCodecBuf, capabilities, _;
@@ -259,6 +261,13 @@ export class Connection extends Model({
         prepare: Math.round(parseEndTime - startTime),
         execute: Math.round(executeEndTime - parseEndTime),
       };
+
+      sessionStateCtx
+        .get(this)!
+        .updateGlobalsFromCommand(
+          statements,
+          (this.conn as any).lastStateUpdate?.globals
+        );
 
       return {
         result: decode(outCodecBuf, resultBuf, opts.newCodec),
