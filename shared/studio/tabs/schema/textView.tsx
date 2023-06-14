@@ -26,19 +26,13 @@ import {
   TypeFilter,
   SchemaTextView as SchemaTextState,
   SchemaItem,
+  moduleGroupNames,
 } from "./state/textView";
 import {Schema} from "./state";
 import {renderers} from "./renderers";
 import {ModuleHeaders} from "./renderers/module";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useDBRouter} from "../../hooks/dbRoute";
-
-const schemaModuleGroups = Object.values(ModuleGroup).filter(
-  (v) => typeof v === "number"
-) as ModuleGroup[];
-const moduleGroupNames = new Set(
-  schemaModuleGroups.map((mg) => ModuleGroup[mg])
-);
 
 const typeFilters = Object.values(TypeFilter).filter(
   (v) => typeof v === "number"
@@ -56,15 +50,17 @@ export const SchemaTextView = observer(function SchemaTextView() {
     if (
       selectedModuleGroup !== "" &&
       (selectedModuleGroup === "user" ||
-        !moduleGroupNames.has(selectedModuleGroup))
+        (!moduleGroupNames.includes(selectedModuleGroup as any) &&
+          state.extModuleGroupNames &&
+          !state.extModuleGroupNames.includes(selectedModuleGroup as any)))
     ) {
       navigate(currentPath.slice(0, 2).join("/"), true);
     } else {
       state.setSelectedModuleGroup(
-        ModuleGroup[selectedModuleGroup || ("user" as any)] as any
+        (selectedModuleGroup || "user") as ModuleGroup
       );
     }
-  }, [selectedModuleGroup, navigate, currentPath]);
+  }, [selectedModuleGroup, navigate, currentPath, state.extModuleGroupNames]);
 
   useLayoutEffect(() => {
     const typeFilter = searchParams.get("type");
@@ -131,19 +127,28 @@ export const SchemaTextView = observer(function SchemaTextView() {
             <div className={styles.filterSelectName}>Schema</div>
             <Select
               className={styles.moduleSelect}
-              items={schemaModuleGroups.map((group) => ({
-                id: group,
-                label: (
-                  <span className={styles.selectItem}>
-                    {ModuleGroup[group]}
-                  </span>
-                ),
-              }))}
+              items={{
+                items: moduleGroupNames.map((group) => ({
+                  id: group,
+                  label: <span className={styles.selectItem}>{group}</span>,
+                })),
+                groups: state.extModuleGroupNames?.length
+                  ? [
+                      {
+                        label: "ext::",
+                        items: state.extModuleGroupNames.map((group) => ({
+                          id: group,
+                          label: <span>{group.slice(5)}</span>,
+                        })),
+                      },
+                    ]
+                  : undefined,
+              }}
               selectedItemId={state.selectedModuleGroup}
               onChange={({id: group}) =>
                 navigate(
                   `${currentPath.slice(0, 2).join("/")}/${
-                    group === ModuleGroup.user ? "" : ModuleGroup[group]
+                    group === "user" ? "" : group
                   }`
                 )
               }
@@ -281,7 +286,7 @@ const ListItemRenderer = observer(function ListItemRenderer({
         })}
         style={
           !state.searchText && item.schemaType !== "Extension"
-            ? {marginLeft: (item.module.split("::").length - 1) * 17 + "px"}
+            ? {paddingLeft: (item.module.split("::").length - 1) * 17 + "px"}
             : undefined
         }
         ref={resizeRef}

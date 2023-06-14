@@ -187,6 +187,12 @@
     background: #3d3d3d;
     fill: #e7e7e7;
   }
+
+  &.inline {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-top: -3px;
+  }
 }
 
 .actions {

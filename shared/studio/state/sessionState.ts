@@ -23,7 +23,6 @@ import {
   frozen,
   FrozenCheckMode,
 } from "mobx-keystone";
-import {parsers} from "../components/dataEditor";
 import {
   EditorValue,
   newPrimitiveValue,

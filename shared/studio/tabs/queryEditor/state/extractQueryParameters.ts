@@ -207,7 +207,7 @@ export function extractQueryParameters(
       if (
         resolvedParam &&
         resolvedParam.error == null &&
-        (resolvedParam.type.name !== param.name ||
+        (resolvedParam.type.name !== param.type.name ||
           resolvedParam.optional !== param.optional)
       ) {
         resolvedParams.set(param.name, {

@@ -1,4 +1,4 @@
-import {PropsWithChildren} from "react";
+import {PropsWithChildren, useState} from "react";
 import {_ICodec, Range} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -9,6 +9,7 @@ import {RangeCodec} from "edgedb/dist/codecs/range";
 import {Item, ItemType} from "./buildItem";
 
 import styles from "./inspector.module.scss";
+import {EllipsisIcon} from ".";
 
 export function buildScalarItem(
   base: {
@@ -205,6 +206,18 @@ export function renderValue(
     };
   }
 
+  if (value instanceof Float32Array) {
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>
+            <VectorRenderer vec={value} />
+          </Tag>
+        </span>
+      ),
+    };
+  }
+
   if (isEnum) {
     return {
       body: (
@@ -228,6 +241,9 @@ export function renderValue(
 }
 
 export function scalarItemToString(item: any, typename: string): string {
+  if (item instanceof Float32Array) {
+    return float32ArrayToString(item);
+  }
   switch (typename) {
     case "std::bytes":
       return bufferToString(item);
@@ -237,6 +253,32 @@ export function scalarItemToString(item: any, typename: string): string {
       return formatDatetime(item);
     default:
       return item.toString();
+  }
+}
+
+export function float32ArrayToString(vec: Float32Array): string {
+  return `[${[...vec]
+    .map((float) => float.toPrecision(8).replace(/\.?0+$/, ""))
+    .join(", ")}]`;
+}
+
+function VectorRenderer({vec}: {vec: Float32Array}) {
+  const [expanded, setExpanded] = useState(false);
+  if (vec.length > 20 && !expanded) {
+    return (
+      <>
+        {float32ArrayToString(vec.slice(0, 20)).slice(0, -1)},
+        <span
+          className={cn(styles.ellipsis, styles.inline)}
+          onClick={() => setExpanded(true)}
+        >
+          <EllipsisIcon />
+        </span>
+        {"]"}
+      </>
+    );
+  } else {
+    return <>{float32ArrayToString(vec)}</>;
   }
 }
 

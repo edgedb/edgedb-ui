@@ -288,7 +288,8 @@ function CopyButton({
       {...props}
       onClick={() => {
         const jsonString =
-          rawCopy ?? (item.parent == null
+          rawCopy ??
+          (item.parent == null
             ? renderResultAsJson((item as any).data, item.codec, implicitLimit)
             : _renderToJson(
                 item.type === ItemType.Scalar
@@ -430,7 +431,7 @@ export function ExpandArrowIcon() {
   );
 }
 
-function EllipsisIcon() {
+export function EllipsisIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -62,6 +62,7 @@ export const ScalarTypeRenderer = observer(function ScalarTypeRenderer({
                 {" "}
                 <Keyword>extending</Keyword>{" "}
                 {mapTypeLinkList(type.bases, type.module)}
+                {type.arg_values ? `<${type.arg_values.join(", ")}>` : null}
               </>
             ) : null}
             <Punc>{hasBody ? (collapsed ? " {...};" : " {") : ";"}</Punc>
@@ -99,7 +100,9 @@ export function scalarToSDL(type: SchemaScalarType) {
     type.enum_values
       ? ` extending enum<${type.enum_values.join(", ")}>`
       : type.bases.length
-      ? ` extending ${type.bases.map((t) => t.name).join(", ")}`
+      ? ` extending ${type.bases.map((t) => t.name).join(", ")}${
+          type.arg_values ? `<${type.arg_values.join(", ")}>` : ""
+        }`
       : ""
   }${
     hasBody

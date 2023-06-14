@@ -6,7 +6,9 @@ import {
   LocalTime,
 } from "edgedb";
 
-export const parsers: {[typename: string]: (val: string) => any} = {
+export const parsers: {
+  [typename: string]: (val: string, typeArgs: string[] | null) => any;
+} = {
   "std::str": (val: string) => val,
   "std::json": (val: string) => val,
   "std::bool": (val: string) => {
@@ -229,5 +231,26 @@ export const parsers: {[typename: string]: (val: string) => any} = {
       bytes = bytes * BigInt(1024);
     }
     return new ConfigMemory(bytes);
+  },
+  "ext::pgvector::vector": (val: string, typeArgs) => {
+    const vec = Float32Array.from(
+      val
+        .trim()
+        .replace(/^\[|\]$/g, "")
+        .split(",")
+        .map((num) => {
+          const float = Number(num);
+          if (Number.isNaN(float) || num.trim() === "") {
+            throw new Error(`Invalid float "${num}" in vector`);
+          }
+          return float;
+        })
+    );
+    if (typeArgs?.[0] && vec.length !== Number(typeArgs[0])) {
+      throw new Error(
+        `invalid vector length ${vec.length}, expected ${typeArgs[0]}`
+      );
+    }
+    return vec;
   },
 };

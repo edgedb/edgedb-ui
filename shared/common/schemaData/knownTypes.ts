@@ -19,4 +19,5 @@ export const KnownScalarTypes = [
   "std::json",
   "std::bigint",
   "cfg::memory",
+  "ext::pgvector::vector",
 ] as const;
