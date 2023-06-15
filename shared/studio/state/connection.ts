@@ -103,11 +103,13 @@ export class Connection extends Model({
   });
   private _queryQueue: PendingQuery[] = [];
 
+  private _baseSessionConfig = Session.defaults();
+
   @computed
   get _state() {
     const sessionState = sessionStateCtx.get(this);
 
-    let state = Session.defaults();
+    let state = this._baseSessionConfig;
 
     if (sessionState?.activeState.globals.length) {
       state = state.withGlobals(
@@ -262,12 +264,26 @@ export class Connection extends Model({
         execute: Math.round(executeEndTime - parseEndTime),
       };
 
-      sessionStateCtx
-        .get(this)!
-        .updateGlobalsFromCommand(
-          statements,
-          (this.conn as any).lastStateUpdate?.globals
-        );
+      const stateUpdate = (this.conn as any).lastStateUpdate;
+      if (!opts.ignoreSessionConfig && stateUpdate) {
+        let newState = Session.defaults();
+        if (stateUpdate.module) {
+          newState = newState.withModuleAliases({module: stateUpdate.module});
+        }
+        if (stateUpdate.aliases) {
+          newState = newState.withModuleAliases(
+            (stateUpdate.aliases as [string, string][]).reduce(
+              (aliases, [key, val]) => {
+                aliases[key] = val;
+                return aliases;
+              },
+              {} as {[key: string]: string}
+            )
+          );
+        }
+        this._baseSessionConfig = newState;
+        sessionStateCtx.get(this)!.updateStateFromCommand(stateUpdate);
+      }
 
       return {
         result: decode(outCodecBuf, resultBuf, opts.newCodec),

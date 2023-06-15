@@ -2,6 +2,7 @@ import {SchemaObjectType, SchemaScalarType} from "@edgedb/common/schemaData";
 import {Repl, ReplHistoryItem} from ".";
 import {dbCtx} from "../../../state";
 import {instanceCtx} from "../../../state/instance";
+import {sessionStateCtx} from "../../../state/sessionState";
 
 export enum CommandOutputKind {
   error,
@@ -90,6 +91,50 @@ export async function handleSlashCommand(
     case "retro": {
       item.setCommandResult({kind: CommandOutputKind.none});
       repl.updateSetting("retroMode", !repl.settings.retroMode);
+      break;
+    }
+    case "set": {
+      switch (args[0]) {
+        case "limit":
+          const limit = parseInt(args[1], 10);
+          if (Number.isNaN(limit) || limit < 0) {
+            item.setCommandResult({
+              kind: CommandOutputKind.error,
+              msg: `invalid limit: '${args[1]}'`,
+            });
+          } else {
+            item.setCommandResult({kind: CommandOutputKind.none});
+            const sessionState = sessionStateCtx.get(repl)!;
+            const limitState =
+              sessionState.draftState?.options["Implicit Limit"];
+            console.log(sessionState, limitState);
+            if (limitState) {
+              if (limit === 0) {
+                if (limitState.active) {
+                  sessionState.toggleOptionActive("Implicit Limit");
+                }
+              } else {
+                sessionState.updateItemValue(
+                  limitState,
+                  limit.toString(),
+                  false
+                );
+                if (!limitState.active) {
+                  sessionState.toggleOptionActive("Implicit Limit");
+                }
+              }
+              sessionState.updateActiveState();
+              sessionState.storeSessionData();
+            }
+          }
+          break;
+        default:
+          item.setCommandResult({
+            kind: CommandOutputKind.error,
+            msg: `unknown set command: '${args[0]}'`,
+          });
+          break;
+      }
       break;
     }
     default:

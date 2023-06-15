@@ -416,22 +416,10 @@ export class SessionState extends Model({
   }
 
   @modelAction
-  updateGlobalsFromCommand(statements: string[], stateUpdate: any) {
-    const globalNames = new Set(
-      statements
-        .map(
-          (statement) =>
-            statement.match(/^\s*(?:re)?set\s+global\s+(.+?)(?:\s|:=|$)/i)?.[1]
-        )
-        .filter((name) => name) as string[]
-    );
-
-    if (!globalNames.size) {
-      return;
-    }
-
-    console.log(globalNames, stateUpdate);
-
+  updateStateFromCommand(stateUpdate: {
+    globals?: {[key: string]: any};
+    config?: {[key: string]: any};
+  }) {
     const dbState = dbCtx.get(this)!;
 
     const schemaDataGlobals = new Map(
@@ -441,26 +429,17 @@ export class SessionState extends Model({
       ])
     );
 
-    for (const globalName of globalNames) {
-      const type =
-        schemaDataGlobals.get(globalName) ??
-        schemaDataGlobals.get(`default::${globalName}`);
-      console.log(type);
+    const unsetGlobals = new Set<string>();
+    for (const [globalName, val] of Object.entries(
+      stateUpdate.globals ?? {}
+    )) {
+      const type = schemaDataGlobals.get(globalName);
       if (!type) {
         continue;
       }
 
-      const val = stateUpdate?.[type.name];
-      if (val === undefined || (val === null && !type.default)) {
-        const existingGlobalState = this.draftState!.globals[type.name];
-        if (existingGlobalState) {
-          existingGlobalState.active = false;
-          const [newVal, err] = newPrimitiveValue(
-            type.target as PrimitiveType
-          );
-          existingGlobalState.value = frozen(newVal);
-          existingGlobalState.error = err;
-        }
+      if (val === null && !type.default) {
+        unsetGlobals.add(globalName);
       } else {
         const editorVal =
           val != null
@@ -473,6 +452,45 @@ export class SessionState extends Model({
           value: frozen(editorVal),
           error: false,
         };
+      }
+    }
+    for (const [globalName, globalState] of Object.entries(
+      this.draftState!.globals
+    )) {
+      if (
+        globalState.active &&
+        (unsetGlobals.has(globalName) || !stateUpdate.globals?.[globalName])
+      ) {
+        globalState.active = false;
+        const [newVal, err] = newPrimitiveValue(
+          globalState.type.data as PrimitiveType
+        );
+        globalState.value = frozen(newVal);
+        globalState.error = err;
+      }
+    }
+
+    for (const [configName, configState] of Object.entries(
+      this.draftState!.config
+    )) {
+      const val = stateUpdate.config?.[configName];
+      if (val === undefined) {
+        if (configState.active) {
+          configState.active = false;
+          const [newVal, err] = newPrimitiveValue(
+            configState.type.data as PrimitiveType
+          );
+          configState.value = frozen(newVal);
+          configState.error = err;
+        }
+      } else {
+        configState.active = true;
+        configState.value = frozen(
+          val != null
+            ? valueToEditorValue(val, configState.type.data as PrimitiveType)
+            : null
+        );
+        configState.error = false;
       }
     }
 
