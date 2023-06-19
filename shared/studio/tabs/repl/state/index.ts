@@ -25,8 +25,13 @@ import {
 import {InspectorState, Item} from "@edgedb/inspector/state";
 import {ObservableLRU} from "../../../state/utils/lru";
 import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
-import {CommandResult, handleSlashCommand} from "./commands";
 import {
+  CommandOutputKind,
+  CommandResult,
+  handleSlashCommand,
+} from "./commands";
+import {
+  clearReplHistory,
   fetchReplHistory,
   fetchResultData,
   QueryResultData,
@@ -265,7 +270,7 @@ export class Repl extends Model({
 
     const historyItems: ReplHistoryItem[] = Array(history.length);
     for (let i = history.length - 1; i >= 0; i--) {
-      const item = fromSnapshot<ReplHistoryItem>(history[i].data);
+      const item = fromSnapshot<ReplHistoryItem>(history[i].data as any);
       const date = new Date(item.timestamp);
       if (
         !lastDate ||
@@ -296,6 +301,16 @@ export class Repl extends Model({
     );
 
     this._fetchingHistory = false;
+  });
+
+  @modelFlow
+  clearReplHistory = _async(function* (this: Repl) {
+    const instanceId = instanceCtx.get(this)!.instanceId!;
+    const dbName = dbCtx.get(this)!.name;
+    yield* _await(clearReplHistory(instanceId, dbName));
+    this.queryHistory = [];
+    this.itemHeights = new ItemHeights();
+    this._hasUnfetchedHistory = false;
   });
 
   @observable
@@ -399,16 +414,18 @@ export class Repl extends Model({
       historyItem.setError(extractErrorDetails(err, query));
     }
 
-    storeReplHistoryItem(
-      historyItem.$modelId,
-      {
-        instanceId: instanceCtx.get(this)!.instanceId!,
-        dbName: dbCtx.get(this)!.name,
-        timestamp: historyItem.timestamp,
-        data: getSnapshot(historyItem),
-      },
-      resultData
-    );
+    if (historyItem.commandResult?.data.kind !== CommandOutputKind.nosave) {
+      storeReplHistoryItem(
+        historyItem.$modelId,
+        {
+          instanceId: instanceCtx.get(this)!.instanceId!,
+          dbName: dbCtx.get(this)!.name,
+          timestamp: historyItem.timestamp,
+          data: getSnapshot(historyItem),
+        },
+        resultData
+      );
+    }
 
     dbState.setLoadingTab(Repl, false);
     this.queryRunning = false;

@@ -241,7 +241,7 @@ export class QueryEditor extends Model({
     }
     const items = new Array(history.length);
     for (let i = 0; i < history.length; i++) {
-      const item = fromSnapshot<QueryHistoryItem>(history[i].data);
+      const item = fromSnapshot<QueryHistoryItem>(history[i].data as any);
       const date = new Date(item.timestamp);
 
       if (

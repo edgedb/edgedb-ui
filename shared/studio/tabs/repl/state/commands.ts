@@ -9,11 +9,15 @@ export enum CommandOutputKind {
   none,
   text,
   table,
+  nosave,
 }
 
 export type CommandResult =
   | {
-      kind: CommandOutputKind.none | CommandOutputKind.help;
+      kind:
+        | CommandOutputKind.none
+        | CommandOutputKind.help
+        | CommandOutputKind.nosave;
     }
   | {
       kind: CommandOutputKind.error;
@@ -90,6 +94,11 @@ export async function handleSlashCommand(
     case "retro": {
       item.setCommandResult({kind: CommandOutputKind.none});
       repl.updateSetting("retroMode", !repl.settings.retroMode);
+      break;
+    }
+    case "clear": {
+      item.setCommandResult({kind: CommandOutputKind.nosave});
+      await repl.clearReplHistory();
       break;
     }
     default:

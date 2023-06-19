@@ -6,7 +6,7 @@ export interface QueryHistoryItem {
   instanceId: string;
   dbName: string;
   timestamp: number;
-  data: any;
+  data: {$modelId: string} & {[prop: string]: any};
 }
 
 export interface QueryResultData {
@@ -188,6 +188,30 @@ export function fetchReplHistory(
     fromTimestamp,
     count
   );
+}
+
+export async function clearReplHistory(instanceId: string, dbName: string) {
+  const tx = (await db).transaction(
+    ["replHistory", "queryResultData"],
+    "readwrite"
+  );
+  const replHistory = await tx
+    .objectStore("replHistory")
+    .getAll(
+      IDBKeyRange.bound(
+        [instanceId, dbName, -Infinity],
+        [instanceId, dbName, Infinity]
+      )
+    );
+  await Promise.all([
+    ...replHistory.flatMap((item) => [
+      tx
+        .objectStore("replHistory")
+        .delete([instanceId, dbName, item.timestamp]),
+      tx.objectStore("queryResultData").delete(item.data.$modelId),
+    ]),
+    tx.done,
+  ]);
 }
 
 export async function fetchResultData(itemId: string) {
