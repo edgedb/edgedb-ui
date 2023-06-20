@@ -88,37 +88,39 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
           })}
         >
           {schemaObjectTypes.length ? (
-            <div className={styles.scrollInner}>
-              <div className={styles.shapeBlock}>
-                <div className={styles.row}>
-                  <span className={styles.keyword}>select</span>{" "}
-                  <ObjectTypeSelect
-                    className={styles.select}
-                    objectTypes={schemaObjectTypes}
-                    selectedObjectType={
-                      schemaObjectTypes.find(
-                        (type) => type.name === state.root.typename
-                      )!
+            <>
+              <div className={styles.scrollInner}>
+                <div className={styles.shapeBlock}>
+                  <div className={styles.row}>
+                    <span className={styles.keyword}>select</span>{" "}
+                    <ObjectTypeSelect
+                      className={styles.select}
+                      objectTypes={schemaObjectTypes}
+                      selectedObjectType={
+                        schemaObjectTypes.find(
+                          (type) => type.name === state.root.typename
+                        )!
+                      }
+                      action={(objectType) => {
+                        state.setRoot(
+                          new QueryBuilderShape({typename: objectType.name})
+                        );
+                      }}
+                    />{" "}
+                    {"{"}
+                  </div>
+                  <QueryBuilderShapeRenderer
+                    shape={state.root}
+                    schemaType={
+                      schemaData.objectsByName.get(state.root.typename!)!
                     }
-                    action={(objectType) => {
-                      state.setRoot(
-                        new QueryBuilderShape({typename: objectType.name})
-                      );
-                    }}
-                  />{" "}
-                  {"{"}
+                  />
                 </div>
-                <QueryBuilderShapeRenderer
-                  shape={state.root}
-                  schemaType={
-                    schemaData.objectsByName.get(state.root.typename!)!
-                  }
-                />
               </div>
               <div className={styles.copyButton} onClick={copyQuery}>
                 <CopyIcon /> {copied ? "Copied" : "Copy"}
               </div>
-            </div>
+            </>
           ) : (
             <p className={styles.emptySchemaText}>
               The query builder UI requires a database with a non-empty schema.
@@ -513,6 +515,7 @@ const OrderBy = observer(function OrderBy({
   return (
     <>
       <Select
+        className={styles.select}
         items={propNames.map((name) => ({
           id: name,
           label: name,
@@ -521,6 +524,7 @@ const OrderBy = observer(function OrderBy({
         onChange={(item) => shape.setOrderBy(expr, item.id)}
       />
       <Select<"asc" | "desc">
+        className={styles.select}
         items={[
           {
             id: "asc",
@@ -535,6 +539,7 @@ const OrderBy = observer(function OrderBy({
         onChange={(item) => shape.updateOrderBy(expr, {dir: item.id})}
       />
       <Select<"first" | "last">
+        className={styles.select}
         items={[
           {
             id: "first",
