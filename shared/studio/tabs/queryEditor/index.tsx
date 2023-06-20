@@ -204,9 +204,10 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     [editorState]
   );
 
-  const onChange = useCallback((value: Text) => editorState.setEdgeQL(value), [
-    editorState,
-  ]);
+  const onChange = useCallback(
+    (value: Text) => editorState.setEdgeQL(value),
+    [editorState]
+  );
 
   const codeEditorRef = useCallback((ref: any) => {
     setRef(ref);
