@@ -169,8 +169,18 @@ export class QueryEditor extends Model({
     [EditorKind.VisualBuilder]: false,
   };
 
-  @observable.ref
-  currentResult: QueryHistoryItem | null = null;
+  @observable.shallow
+  currentResults: {
+    [key in EditorKind]: QueryHistoryItem | null;
+  } = {
+    [EditorKind.EdgeQL]: null,
+    [EditorKind.VisualBuilder]: null,
+  };
+
+  @computed
+  get currentResult() {
+    return this.currentResults[this.selectedEditor];
+  }
 
   @computed
   get showEditorResultDecorations() {
@@ -306,13 +316,17 @@ export class QueryEditor extends Model({
 
   draftQueryData: {
     selectedEditor: EditorKind;
-    currentResult: QueryHistoryItem | null;
     [EditorKind.EdgeQL]: {
       query: Text;
       params: Frozen<SerializedParamsData> | null;
       isEdited: boolean;
+      result: QueryHistoryItem | null;
     };
-    [EditorKind.VisualBuilder]: {state: QueryBuilderState; isEdited: boolean};
+    [EditorKind.VisualBuilder]: {
+      state: QueryBuilderState;
+      isEdited: boolean;
+      result: QueryHistoryItem | null;
+    };
   } | null = null;
 
   @action
@@ -320,15 +334,16 @@ export class QueryEditor extends Model({
     const current = this.currentQueryData;
     this.draftQueryData = {
       selectedEditor: this.selectedEditor,
-      currentResult: this.currentResult,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
         params: this.queryParamsEditor.serializeParamsData(),
         isEdited: this.queryIsEdited[EditorKind.EdgeQL],
+        result: this.currentResults[EditorKind.EdgeQL],
       },
       [EditorKind.VisualBuilder]: {
         state: current[EditorKind.VisualBuilder],
         isEdited: this.queryIsEdited[EditorKind.VisualBuilder],
+        result: this.currentResults[EditorKind.VisualBuilder],
       },
     };
   }
@@ -348,7 +363,10 @@ export class QueryEditor extends Model({
       );
 
       this.setSelectedEditor(draft.selectedEditor);
-      this.currentResult = draft.currentResult;
+      this.currentResults = {
+        [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].result,
+        [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].result,
+      };
       this.queryIsEdited = {
         [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].isEdited,
         [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].isEdited,
@@ -381,12 +399,13 @@ export class QueryEditor extends Model({
       implicitLimit: item.implicitLimit!,
     });
 
-    this.currentResult = historyItem;
+    this.currentResults[EditorKind.EdgeQL] = historyItem;
 
     this.queryIsEdited = {
       ...this.queryIsEdited,
       [EditorKind.EdgeQL]: false,
     };
+    this.setSelectedEditor(EditorKind.EdgeQL);
   }
 
   @action
@@ -419,7 +438,7 @@ export class QueryEditor extends Model({
           break;
       }
 
-      this.currentResult = historyItem;
+      this.currentResults[queryData.data.kind] = historyItem;
       this.setSelectedEditor(queryData.data.kind);
       this.queryIsEdited = {
         [EditorKind.EdgeQL]: false,
@@ -546,7 +565,7 @@ export class QueryEditor extends Model({
     }
 
     this.queryHistory.unshift(historyItem);
-    this.currentResult = historyItem;
+    this.currentResults[queryData.kind] = historyItem;
   }
 
   @modelAction
