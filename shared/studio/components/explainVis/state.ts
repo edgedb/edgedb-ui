@@ -38,7 +38,7 @@ export function createExplainState(rawExplainOutput: string) {
     rawData: rawExplainOutput,
     planTree: frozen(planTree, FrozenCheckMode.Off),
     contexts: frozen(contexts),
-    buffers: frozen(rawData.buffers.map((buf: any) => buf[0]).slice(1)),
+    buffers: frozen(rawData.buffers.slice(1)),
   });
 }
 
@@ -301,9 +301,14 @@ export function walkPlanNode(
 
   const selfTime =
     totalTime &&
-    totalTime - subPlans.reduce((sum, plan) => sum + plan.totalTime!, 0);
-  const selfCost =
-    totalCost - subPlans.reduce((sum, plan) => sum + plan.totalCost, 0);
+    Math.max(
+      0,
+      totalTime - subPlans.reduce((sum, plan) => sum + plan.totalTime!, 0)
+    );
+  const selfCost = Math.max(
+    0,
+    totalCost - subPlans.reduce((sum, plan) => sum + plan.totalCost, 0)
+  );
 
   const selfTimePercent = selfTime && selfTime / queryTotalTime!;
   const selfCostPercent = selfCost / queryTotalCost;
