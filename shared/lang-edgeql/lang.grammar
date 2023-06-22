@@ -100,9 +100,9 @@ Number { number BigNumberPostfix? }
   shortName { plainIdent | quotedIdent }
 
   number { int frac? exp?  }
-  int  { '0' | $[1-9] std.digit* }
-  frac { '.' std.digit+ }
-  exp  { $[eE] $[+\-]? std.digit+ }
+  int  { '0' | $[1-9] $[0-9_]* }
+  frac { '.' $[0-9_]+ }
+  exp  { $[eE] $[+\-]? $[0-9_]+ }
 
   strContent { !["'\\] }
   ascii { $[\u{20}\u{21}\u{23}-\u{26}\u{28}-\u{5b}\u{5d}-\u{7e}] }
