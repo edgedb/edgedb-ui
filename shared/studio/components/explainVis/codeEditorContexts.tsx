@@ -135,6 +135,9 @@ export const ExplainHighlightsRenderer = observer(
             className={cn(styles.explainContextRect, {
               [styles.highlighted]: isEditor && state.ctxId === ctxRect.id,
               [styles.highlightedOnHover]:
+                !!(
+                  state?.hoveredPlan && getPlanDepth(state.hoveredPlan) > 0
+                ) &&
                 state.ctxId !== ctxRect.id &&
                 state.hoveredCtxId === ctxRect.id,
             })}
