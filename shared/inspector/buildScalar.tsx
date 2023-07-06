@@ -101,11 +101,13 @@ export function renderValue(
     case "std::float32":
       // https://en.wikipedia.org/wiki/Single-precision_floating-point_format
       // 23 bits of significand + 1 implicit bit = 24 bits of precision
-      // log10(2**24) = 7.225... so 7 decimal digits of precision
+      // log10(2**24) = 7.225... so round up to 8 decimal digits of precision
       return {
         body: (
           <span className={styles.scalar_number}>
-            {(value as number).toPrecision(7).replace(/\.?0+$/, "")}
+            {(value as number)
+              .toPrecision(8)
+              .replace(/(\.\d*?)0+$/, (_, $1) => ($1 === "." ? "" : $1))}
           </span>
         ),
       };
@@ -258,7 +260,11 @@ export function scalarItemToString(item: any, typename: string): string {
 
 export function float32ArrayToString(vec: Float32Array): string {
   return `[${[...vec]
-    .map((float) => float.toPrecision(8).replace(/\.?0+$/, ""))
+    .map((float) =>
+      float
+        .toPrecision(8)
+        .replace(/(\.\d*?)0+$/, (_, $1) => ($1 === "." ? "" : $1))
+    )
     .join(", ")}]`;
 }
 
