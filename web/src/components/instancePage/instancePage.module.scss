@@ -53,6 +53,7 @@
 .databaseCard {
   background: var(--app-card-bg);
   border: 2px solid var(--app-card-bg);
+  word-break: break-all;
 
   span {
     font-weight: bold;
