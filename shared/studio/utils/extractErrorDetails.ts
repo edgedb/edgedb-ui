@@ -20,6 +20,7 @@ export interface ErrorDetails {
   name: string;
   msg: string;
   hint?: string;
+  details?: string;
   range?: [number, number];
 }
 
@@ -46,6 +47,10 @@ export function extractErrorDetails(err: any, query: string): ErrorDetails {
     const hint = attrs.get(ErrorField.hint);
     if (hint) {
       errDetails.hint = utf8Decoder.decode(hint);
+    }
+    const details = attrs.get(ErrorField.details);
+    if (details) {
+      errDetails.details = utf8Decoder.decode(details);
     }
 
     const lineStart = tryParseInt(attrs.get(ErrorField.lineStart));

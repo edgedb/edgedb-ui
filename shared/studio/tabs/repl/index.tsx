@@ -415,6 +415,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       <div className={styles.queryError}>
         <span className={styles.errorName}>{item.error.data.name}</span>:{" "}
         {item.error.data.msg}
+        {item.error.data.details ? (
+          <div className={styles.errorHint}>
+            Details: {item.error.data.details}
+          </div>
+        ) : null}
         {item.error.data.hint ? (
           <div className={styles.errorHint}>Hint: {item.error.data.hint}</div>
         ) : null}
@@ -561,6 +566,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           >
             <div
               className={cn(styles.historyOutput, {
+                [styles.wrapContent]: item.error != null,
                 [styles.explain]: isExplain,
               })}
               style={{

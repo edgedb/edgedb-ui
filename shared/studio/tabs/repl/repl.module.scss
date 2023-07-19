@@ -381,6 +381,10 @@
   height: max-content;
   height: fit-content;
 
+  &.wrapContent {
+    min-width: auto;
+  }
+
   .explain {
     height: 100%;
     display: flex;
