@@ -33,7 +33,7 @@ function tryParseInt(val: any) {
   return null;
 }
 
-export function extractErrorDetails(err: any, query: string): ErrorDetails {
+export function extractErrorDetails(err: any, query?: string): ErrorDetails {
   if (!(err instanceof Error)) {
     throw new Error(`Fatal Error: cannot handle non error as error: ${err}`);
   }
@@ -51,6 +51,10 @@ export function extractErrorDetails(err: any, query: string): ErrorDetails {
     const details = attrs.get(ErrorField.details);
     if (details) {
       errDetails.details = utf8Decoder.decode(details);
+    }
+
+    if (!query) {
+      return errDetails;
     }
 
     const lineStart = tryParseInt(attrs.get(ErrorField.lineStart));

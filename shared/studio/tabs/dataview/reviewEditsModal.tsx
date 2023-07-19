@@ -12,6 +12,11 @@ import {Modal, ModalOverlay} from "@edgedb/common/ui/modal";
 import Button from "@edgedb/common/ui/button";
 import {WarningIcon} from "../../icons";
 
+import {
+  ErrorDetails,
+  extractErrorDetails,
+} from "../../utils/extractErrorDetails";
+
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
@@ -29,7 +34,7 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
   const {openModal} = useModal();
 
   const [commiting, setCommitting] = useState(false);
-  const [commitError, setCommitError] = useState("");
+  const [commitError, setCommitError] = useState<ErrorDetails | null>(null);
 
   const {params, statements} = state.edits.generateStatements();
 
@@ -64,8 +69,7 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
                   state.refreshAllViews();
                   openModal(null);
                 } catch (e: any) {
-                  console.log(e);
-                  setCommitError(e.message);
+                  setCommitError(extractErrorDetails(e));
                 }
                 setCommitting(false);
               }}
@@ -104,7 +108,7 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
               />
               <div className={styles.statementMessages}>
                 {error ? (
-                  <div className={styles.statementError}>
+                  <div className={styles.errorMessage}>
                     <WarningIcon />
                     {error}
                   </div>
@@ -123,7 +127,20 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
             )}
           </pre>
         </details> */}
-        <div className={styles.errorMessage}>{commitError}</div>
+        {commitError ? (
+          <div className={styles.errorMessage}>
+            <WarningIcon />
+            <div>
+              <span className={styles.errorName}>{commitError.name}</span>:{" "}
+              {commitError.msg}
+              {commitError.details ? (
+                <div className={styles.errorDetails}>
+                  Details: {commitError.details}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </ModalOverlay>
   );
