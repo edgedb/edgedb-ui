@@ -742,7 +742,9 @@ export class DataInspector extends Model({
   fullyFetchedData = new Map<string, any>();
 
   async fetchFullCellData(dataId: string, field: ObjectField) {
-    const query = `select (select ${this._getObjectTypeQuery} filter .id = <uuid>$id).${field.escapedName}`;
+    const query = `select (select ${
+      field.escapedSubtypeName ?? this._getObjectTypeQuery
+    } filter .id = <uuid>$id).${field.escapedName}`;
     const conn = connCtx.get(this)!;
 
     const val = (await conn.query(query, {id: dataId})).result![0];
