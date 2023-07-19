@@ -70,7 +70,9 @@ export function DataEditor({
   const getParsedVal = () =>
     val !== null
       ? isMulti
-        ? val.map((v: any) => parseEditorValue(v, type))
+        ? isRequired && !val.length
+          ? null
+          : val.map((v: any) => parseEditorValue(v, type))
         : parseEditorValue(val, type)
       : null;
 
@@ -111,11 +113,7 @@ export function DataEditor({
     };
   }, [val, hasError]);
 
-  const Input = isMulti
-    ? !isRequired
-      ? nullableInputs.get(ArrayEditor)!
-      : ArrayEditor
-    : getInputComponent(type, !isRequired);
+  const Input = isMulti ? ArrayEditor : getInputComponent(type, !isRequired);
 
   return (
     <div
@@ -131,7 +129,7 @@ export function DataEditor({
         type={type as any}
         isMulti={isMulti}
         depth={0}
-        value={val}
+        value={val ?? (isMulti ? [] : null)}
         onChange={(val: any, err: boolean) => {
           setVal(val);
           setError(err);
