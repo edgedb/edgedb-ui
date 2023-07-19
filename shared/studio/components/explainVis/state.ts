@@ -283,15 +283,17 @@ export function walkPlanNode(
   contexts: Contexts,
   planName: string | null = null
 ): Plan {
-  const subPlans: Plan[] = (data.children ?? []).map((child: any) =>
-    walkPlanNode(
-      child.node,
-      queryTotalTime,
-      queryTotalCost,
-      contexts,
-      child.name
-    )
-  );
+  const subPlans: Plan[] = (data.children ?? [])
+    .filter((child: any) => child.node != null)
+    .map((child: any) =>
+      walkPlanNode(
+        child.node,
+        queryTotalTime,
+        queryTotalCost,
+        contexts,
+        child.name
+      )
+    );
 
   const totalTime =
     data.actual_total_time !== undefined
