@@ -35,7 +35,7 @@
   }
 }
 
-.statementError {
+.errorMessage {
   background: rgba(222, 83, 83, 0.1);
   color: #de5353;
   padding: 7px 8px;
@@ -43,14 +43,26 @@
   margin-top: 6px;
   display: flex;
   align-items: center;
-  max-width: 60ch;
   line-height: 20px;
   font-size: 14px;
 
   svg {
+    flex-shrink: 0;
     fill: currentColor;
     height: 15px;
     margin-right: 6px;
+  }
+
+  .errorName {
+    font-weight: 500;
+  }
+
+  .errorDetails {
+    color: #8d6363;
+
+    @include darkTheme {
+      color: #ba6b6b;
+    }
   }
 }
 
@@ -86,8 +98,4 @@
 .redButton {
   --buttonTextColour: #de5353;
   margin-right: auto;
-}
-
-.errorMessage {
-  color: #de5353;
 }
