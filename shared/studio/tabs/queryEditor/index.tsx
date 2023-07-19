@@ -318,6 +318,11 @@ const QueryResult = observer(function QueryResult() {
       <div className={styles.queryError}>
         <span className={styles.errorName}>{result.error.data.name}</span>:{" "}
         {result.error.data.msg}
+        {result.error.data.details ? (
+          <div className={styles.errorHint}>
+            Details: {result.error.data.details}
+          </div>
+        ) : null}
         {result.error.data.hint ? (
           <div className={styles.errorHint}>
             Hint: {result.error.data.hint}
