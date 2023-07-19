@@ -682,7 +682,7 @@ function generateParamExpr(
   multi?: boolean
 ): string {
   if (data === null) {
-    return `<${getNameOfSchemaType(type)}>{}`;
+    return `<${getNameOfSchemaType(type)[1]}>{}`;
   }
 
   if (multi) {

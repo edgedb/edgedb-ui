@@ -8,6 +8,8 @@ import {
   prop,
 } from "mobx-keystone";
 
+import {escapeName} from "@edgedb/common/schemaData";
+
 import {parsers} from "../dataEditor";
 
 export enum OpKind {
@@ -56,7 +58,10 @@ export class QueryBuilderState extends Model({
 
   @computed
   get query() {
-    return `select ${this.root.typename} ${renderQuery(this.root, "")}`;
+    return `select ${escapeName(this.root.typename!, true)} ${renderQuery(
+      this.root,
+      ""
+    )}`;
   }
 }
 
@@ -193,7 +198,6 @@ const _FilterGroup = FilterGroup;
 export class FilterExpr extends Model({
   prop: prop<string>(".id"),
   propType: prop<string>("std::uuid"),
-  func: prop<string | undefined>(),
   op: prop<string>("="),
   val: prop<string>("").withSetter(),
 }) {
@@ -242,14 +246,18 @@ export class FilterExpr extends Model({
 
 function renderQuery(query: QueryBuilderShape, indent: string): string {
   return `{\n${indent + "  "}${[
-    ...[...query.props].map(([name, type]) =>
-      type ? `[is ${type}].${name}` : name
+    ...[...query.props].map(
+      ([name, type]) =>
+        (type ? `[is ${escapeName(type, true)}].` : "") +
+        escapeName(name, false)
     ),
     ...[...query.links].map(
       ([name, subQuery]) =>
         `${
-          subQuery.typename ? `[is ${subQuery.typename}].` : ""
-        }${name}: ${renderQuery(subQuery, indent + "  ")}`
+          subQuery.typename
+            ? `[is ${escapeName(subQuery.typename, true)}].`
+            : ""
+        }${escapeName(name, false)}: ${renderQuery(subQuery, indent + "  ")}`
     ),
   ].join(`,\n  ${indent}`)}\n${indent}}${
     query.filter.exprs.length
@@ -260,9 +268,9 @@ function renderQuery(query: QueryBuilderShape, indent: string): string {
       ? `\n${indent}order by ${query.orderBy
           .map(
             (orderExpr) =>
-              `${orderExpr.expr}${orderExpr.dir ? " " + orderExpr.dir : ""}${
-                orderExpr.empty ? " empty " + orderExpr.empty : ""
-              }`
+              `${escapePropName(orderExpr.expr)}${
+                orderExpr.dir ? " " + orderExpr.dir : ""
+              }${orderExpr.empty ? " empty " + orderExpr.empty : ""}`
           )
           .join(`\n${indent}  then `)}`
       : ""
@@ -281,15 +289,25 @@ function renderFilterGroup(group: FilterGroup, indent: string): string {
     .join(` ${group.kind} `);
 }
 
+function escapePropName(prop: string) {
+  const [typeIntersection, propName] = prop.split(".");
+  return `${
+    typeIntersection
+      ? `[is ${escapeName(typeIntersection.slice(4, -1), true)}]`
+      : ""
+  }.${escapeName(propName, false)}`;
+}
+
 function renderFilterExpr(expr: FilterExpr): string {
   const opDef = operators.get(expr.op);
   if (!opDef) {
     throw new Error(`unknown operator ${expr.op}`);
   }
+  const prop = escapePropName(expr.prop);
   if (opDef.kind === OpKind.prefix) {
-    return `${opDef.op} ${expr.prop}`;
+    return `${opDef.op} ${prop}`;
   } else {
-    return `${expr.prop} ${expr.op} ${
+    return `${prop} ${expr.op} ${
       expr.propType && expr.propType !== "std::str" ? `<${expr.propType}>` : ""
     }${JSON.stringify(expr.val)}`;
   }

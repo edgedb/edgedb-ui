@@ -7,7 +7,8 @@
   "type": "module",
   "scripts": {
     "generate": "lezer-generator lang.grammar -o lang.js",
-    "debug": "node debug.js"
+    "debug": "node debug.js",
+    "genMeta": "node genMeta.js"
   },
   "dependencies": {
     "@lezer/highlight": "^0.16.0"

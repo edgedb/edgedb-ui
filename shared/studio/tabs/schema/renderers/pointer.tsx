@@ -316,14 +316,18 @@ export function pointerToSDL(pointer: SchemaPointer): string {
       : `${overloaded ? "overloaded " : ""}${
           pointer.required ? "required " : ""
         }${pointer.cardinality === "Many" ? "multi " : ""}`
-  }${pointer.type === "Property" ? "property" : "link"} ${pointer.name}${
-    bases.length ? " extending " + bases.map((p) => p.name).join(", ") : ""
+  }${pointer.type === "Property" ? "property" : "link"} ${
+    pointer.escapedName
+  }${
+    bases.length
+      ? " extending " + bases.map((p) => p.escapedName).join(", ")
+      : ""
   }${
     pointer.abstract
       ? ""
       : pointer.expr && !hasBody
       ? ` := (${pointer.expr})`
-      : `: ${pointer.target!.name}`
+      : `: ${pointer.target!.escapedName}`
   }${
     hasBody
       ? ` {\n${pointer.default ? `  default := (${pointer.default});\n` : ""}${
