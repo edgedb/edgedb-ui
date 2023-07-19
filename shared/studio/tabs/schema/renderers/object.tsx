@@ -343,9 +343,9 @@ export function objectToSDL(type: SchemaObjectType) {
     indexes.length ||
     type.accessPolicies.length;
 
-  return `${type.abstract ? "abstract " : ""}type ${type.name}${
+  return `${type.abstract ? "abstract " : ""}type ${type.escapedName}${
     extendingTypes.length
-      ? ` extending ${extendingTypes.map((t) => t.name).join(", ")}`
+      ? ` extending ${extendingTypes.map((t) => t.escapedName).join(", ")}`
       : ""
   }${
     hasBody

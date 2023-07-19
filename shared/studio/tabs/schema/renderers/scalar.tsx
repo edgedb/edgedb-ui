@@ -96,11 +96,11 @@ export const ScalarTypeRenderer = observer(function ScalarTypeRenderer({
 export function scalarToSDL(type: SchemaScalarType) {
   const hasBody = type.annotations.length || type.constraints.length;
 
-  return `${type.abstract ? "abstract " : ""}scalar type ${type.name}${
+  return `${type.abstract ? "abstract " : ""}scalar type ${type.escapedName}${
     type.enum_values
       ? ` extending enum<${type.enum_values.join(", ")}>`
       : type.bases.length
-      ? ` extending ${type.bases.map((t) => t.name).join(", ")}${
+      ? ` extending ${type.bases.map((t) => t.escapedName).join(", ")}${
           type.arg_values ? `<${type.arg_values.join(", ")}>` : ""
         }`
       : ""

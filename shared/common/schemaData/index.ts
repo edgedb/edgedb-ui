@@ -30,6 +30,7 @@ export interface SchemaPseudoType {
   schemaType: "Pseudo";
   id: string;
   name: string;
+  escapedName: string;
 }
 
 export interface SchemaScalarType {
@@ -56,6 +57,7 @@ export interface SchemaArrayType {
   schemaType: "Array";
   id: string;
   name: string;
+  escapedName: string;
   abstract: boolean;
   elementType: SchemaType;
 }
@@ -64,6 +66,7 @@ export interface SchemaTupleType {
   schemaType: "Tuple";
   id: string;
   name: string;
+  escapedName: string;
   abstract: boolean;
   named: boolean;
   elements: {
@@ -76,6 +79,7 @@ export interface SchemaRangeType {
   schemaType: "Range";
   id: string;
   name: string;
+  escapedName: string;
   elementType: SchemaType;
 }
 
@@ -249,6 +253,7 @@ export interface SchemaGlobal {
   schemaType: "Global";
   id: string;
   name: string;
+  escapedName: string;
   module: string;
   shortName: string;
   builtin: string;
@@ -280,11 +285,12 @@ function splitName(typeName: string) {
   };
 }
 
-const keywords = new Set(reserved_keywords);
+const keywords = new Set<string>(reserved_keywords);
 
 function escape(name: string): string {
-  return !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) || keywords.has(name)
-    ? "`" + name + "`"
+  return !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ||
+    keywords.has(name.toLowerCase())
+    ? "`" + name.replace(/`/g, "``") + "`"
     : name;
 }
 
@@ -335,6 +341,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           schemaType: "Pseudo",
           id: type.id,
           name: type.name,
+          escapedName: escape(type.name),
         });
         break;
       case "schema::ScalarType":
@@ -658,6 +665,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       schemaType: "Global",
       id: global.id,
       name: global.name,
+      escapedName: escapeName(global.name, true),
       ...splitName(global.name),
       builtin: global.builtin,
       required: global.required,
@@ -813,8 +821,14 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         }
       }
     }
-    if (type.schemaType === "Array" || type.schemaType === "Tuple") {
-      type.name = getNameOfSchemaType(type);
+    if (
+      type.schemaType === "Array" ||
+      type.schemaType === "Tuple" ||
+      type.schemaType === "Range"
+    ) {
+      const [name, escapedName] = getNameOfSchemaType(type);
+      type.name = name;
+      type.escapedName = escapedName;
     }
     if (type.schemaType === "Object") {
       const ancestors = new Set<SchemaObjectType>();
@@ -864,25 +878,37 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
   };
 }
 
-export function getNameOfSchemaType(type: SchemaType): string {
+/**
+ * @returns Returns tuple type [name, escapedName]
+ */
+export function getNameOfSchemaType(type: SchemaType): [string, string] {
   switch (type.schemaType) {
     case "Scalar":
     case "Pseudo":
     case "Object":
-      return type.name;
-    case "Array":
-      return `array<${getNameOfSchemaType(type.elementType)}>`;
-    case "Tuple":
-      return `tuple<${type.elements
-        .map(
-          (element) =>
-            `${element.name ? `${element.name}: ` : ""}${getNameOfSchemaType(
-              element.type
-            )}`
-        )
-        .join(", ")}>`;
+      return [type.name, type.escapedName];
+    case "Array": {
+      const [name, escaped] = getNameOfSchemaType(type.elementType);
+      return [`array<${name}>`, `array<${escaped}>`];
+    }
+    case "Tuple": {
+      const elements = type.elements.map<[string, string]>((element) => {
+        const [name, escaped] = getNameOfSchemaType(element.type);
+        return [
+          `${element.name ? `${element.name}: ` : ""}${name}`,
+          `${element.name ? `${element.name}: ` : ""}${escaped}`,
+        ];
+      });
+      return [
+        `tuple<${elements.map((item) => item[0]).join(", ")}>`,
+        `tuple<${elements.map((item) => item[1]).join(", ")}>`,
+      ];
+    }
     case "Range":
-      return `range<${type.elementType.name}>`;
+      return [
+        `range<${type.elementType.name}>`,
+        `range<${type.elementType.escapedName}>`,
+      ];
     default:
       throw new Error(`unknown schema type: ${(type as any).schemaType}`);
   }

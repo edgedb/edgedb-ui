@@ -1,5 +1,5 @@
-import { execFileSync } from "child_process";
-import { writeFileSync } from "fs";
+import {execFileSync} from "child_process";
+import {writeFileSync} from "fs";
 
 const stdout = execFileSync("edb", ["gen-meta-grammars", "edgeql"], {
   encoding: "utf8",
@@ -25,4 +25,4 @@ for (const line of stdout.split("\n")) {
   }
 }
 
-writeFileSync("src/lang/meta.js", output.join("\n"));
+writeFileSync("./meta.js", output.join("\n"));

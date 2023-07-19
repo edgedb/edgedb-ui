@@ -107,8 +107,12 @@ export function globalToSDL(type: SchemaGlobal) {
 
   return `${type.required ? "required " : ""}${
     type.cardinality === "Many" ? "multi " : ""
-  }global ${type.name}${
-    !type.expr ? `: ${type.target.name}` : !hasBody ? ` := (${type.expr})` : ""
+  }global ${type.escapedName}${
+    !type.expr
+      ? `: ${type.target.escapedName}`
+      : !hasBody
+      ? ` := (${type.expr})`
+      : ""
   }${
     hasBody
       ? `{\n${type.default ? `  default := (${type.default});\n` : ""}${
