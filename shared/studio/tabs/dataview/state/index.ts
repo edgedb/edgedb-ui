@@ -631,7 +631,14 @@ export class DataInspector extends Model({
     this.visibleOffsets = offsets;
     this._pendingOffsets = offsets.filter((offset) => !this.data.has(offset));
 
-    this._fetchData();
+    if (
+      !this.runningDataFetch ||
+      !this._pendingOffsets.includes(this.runningDataFetch.offset)
+    ) {
+      this.runningDataFetch?.abortController.abort();
+      this.runningDataFetch = null;
+      this._fetchData();
+    }
   }
 
   getRowData(rowIndex: number): DataRowData | ExpandedRowData {
@@ -759,9 +766,13 @@ export class DataInspector extends Model({
   dataCodecs: _ICodec[] | null = null;
 
   @observable
-  fetchingData = false;
+  runningDataFetch: {abortController: AbortController; offset: number} | null =
+    null;
 
-  discardLastFetch = false;
+  @computed
+  get fetchingData() {
+    return this.runningDataFetch != null;
+  }
 
   @observable.ref
   dataFetchingError: Error | null = null;
@@ -786,13 +797,15 @@ export class DataInspector extends Model({
   _fetchData = _async(function* (this: DataInspector) {
     const offset = this._pendingOffsets[0];
 
-    if (this.fetchingData || offset === undefined) {
+    if (offset === undefined) {
       return;
     }
 
     const dbState = dbCtx.get(this)!;
 
-    this.fetchingData = true;
+    this.runningDataFetch?.abortController.abort();
+
+    this.runningDataFetch = {abortController: new AbortController(), offset};
     dbState.setLoadingTab(DataView, true);
 
     let fetchNextOffset = false;
@@ -806,34 +819,38 @@ export class DataInspector extends Model({
       if (dataQuery) {
         // console.log(`fetching ${offset}`);
         const data = yield* _await(
-          conn.query(dataQuery.query, {
-            offset: offset * fetchBlockSize,
-            ...dataQuery.params,
-          })
+          conn.query(
+            dataQuery.query,
+            {
+              offset: offset * fetchBlockSize,
+              ...dataQuery.params,
+            },
+            undefined,
+            this.runningDataFetch.abortController.signal
+          )
         );
 
         this.dataFetchingError = null;
 
         // console.log(offset, data.duration);
 
-        if (!this.discardLastFetch) {
-          if (data.result) {
-            // console.log(`data ${offset}, length ${data.result.length}`);
+        if (data.result) {
+          // console.log(`data ${offset}, length ${data.result.length}`);
 
-            this._setData(offset, data.result);
-          }
-
-          this._pendingOffsets = this._pendingOffsets.filter(
-            (po) => po !== offset
-          );
-        } else {
-          this.discardLastFetch = false;
+          this._setData(offset, data.result);
         }
+
+        this._pendingOffsets = this._pendingOffsets.filter(
+          (po) => po !== offset
+        );
 
         fetchNextOffset = true;
       }
     } catch (err) {
-      if (err instanceof CardinalityViolationError) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // ignore aborted fetches
+        console.log("data fetch aborted");
+      } else if (err instanceof CardinalityViolationError) {
         const match = err.message.match(
           /^required link '.+' of object type '.+' is hidden by access policy \(while evaluating computed link '(.+)' of object type '.+'\)$/
         );
@@ -849,7 +866,7 @@ export class DataInspector extends Model({
         console.error(err);
       }
     } finally {
-      this.fetchingData = false;
+      this.runningDataFetch = null;
       dbState.setLoadingTab(DataView, false);
     }
 
@@ -902,9 +919,8 @@ export class DataInspector extends Model({
     this._pendingOffsets = [...this.visibleOffsets];
     this.fullyFetchedData.clear();
 
-    if (this.fetchingData) {
-      this.discardLastFetch = true;
-    }
+    this.runningDataFetch?.abortController.abort();
+    this.runningDataFetch = null;
 
     if (updateCount) {
       this._updateRowCount();
@@ -1148,6 +1164,9 @@ export class DataInspector extends Model({
     const filterCheckQuery = `SELECT ${this._baseObjectsQuery} FILTER ${filter} ORDER BY .id`;
 
     const conn = connCtx.get(this)!;
+
+    this.runningDataFetch?.abortController.abort();
+    this.runningDataFetch = null;
 
     try {
       yield* _await(conn.parse(filterCheckQuery));
