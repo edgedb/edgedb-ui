@@ -62,6 +62,9 @@ export const QueryEditorView = observer(function QueryEditorView() {
       if (e.key === "Escape" && editorState.extendedViewerItem) {
         editorState.setExtendedViewerItem(null);
       }
+      if (e.key === "c" && e.ctrlKey && editorState.queryRunning) {
+        editorState.runningQueryAbort?.abort();
+      }
     };
 
     window.addEventListener("keydown", listener);
@@ -127,15 +130,26 @@ export const QueryEditorView = observer(function QueryEditorView() {
                   <QueryCodeEditor />
                   <div className={styles.replEditorOverlays}>
                     <div className={styles.controls}>
-                      <Button
-                        className={styles.runBtn}
-                        label="Run"
-                        shortcut="Ctrl+Enter"
-                        macShortcut="⌘+Enter"
-                        disabled={!editorState.canRunQuery}
-                        loading={editorState.queryRunning}
-                        onClick={() => editorState.runQuery()}
-                      />
+                      {!editorState.queryRunning ? (
+                        <Button
+                          className={styles.runBtn}
+                          label="Run"
+                          shortcut="Ctrl+Enter"
+                          macShortcut="⌘+Enter"
+                          disabled={!editorState.canRunQuery}
+                          onClick={() => editorState.runQuery()}
+                        />
+                      ) : (
+                        <Button
+                          className={styles.runBtn}
+                          label="Cancel"
+                          shortcut="Ctrl+C"
+                          loading={true}
+                          onClick={() =>
+                            editorState.runningQueryAbort?.abort()
+                          }
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
