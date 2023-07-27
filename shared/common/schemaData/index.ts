@@ -83,6 +83,14 @@ export interface SchemaRangeType {
   elementType: SchemaType;
 }
 
+export interface SchemaMultirangeType {
+  schemaType: "Multirange";
+  id: string;
+  name: string;
+  escapedName: string;
+  elementType: SchemaType;
+}
+
 interface _SchemaPointer {
   schemaType: "Pointer";
   id: string;
@@ -158,6 +166,7 @@ export type SchemaType =
   | SchemaArrayType
   | SchemaTupleType
   | SchemaRangeType
+  | SchemaMultirangeType
   | SchemaObjectType;
 
 export interface SchemaParam {
@@ -382,6 +391,14 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       case "schema::RangeExprAlias":
         types.set(type.id, {
           schemaType: "Range",
+          id: type.id,
+          name: type.name,
+        } as any);
+        break;
+      case "schema::Multirange":
+      case "schema::MultirangeExprAlias":
+        types.set(type.id, {
+          schemaType: "Multirange",
           id: type.id,
           name: type.name,
         } as any);
@@ -727,7 +744,9 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
         break;
       }
       case "schema::Range":
-      case "schema::RangeExprAlias": {
+      case "schema::RangeExprAlias":
+      case "schema::Multirange":
+      case "schema::MultirangeExprAlias": {
         const elementType = types.get(type.range_element_type_id!);
         if (!elementType) {
           throw new Error(
@@ -824,7 +843,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
     if (
       type.schemaType === "Array" ||
       type.schemaType === "Tuple" ||
-      type.schemaType === "Range"
+      type.schemaType === "Range" ||
+      type.schemaType === "Multirange"
     ) {
       const [name, escapedName] = getNameOfSchemaType(type);
       type.name = name;
@@ -908,6 +928,11 @@ export function getNameOfSchemaType(type: SchemaType): [string, string] {
       return [
         `range<${type.elementType.name}>`,
         `range<${type.elementType.escapedName}>`,
+      ];
+    case "Multirange":
+      return [
+        `multirange<${type.elementType.name}>`,
+        `multirange<${type.elementType.escapedName}>`,
       ];
     default:
       throw new Error(`unknown schema type: ${(type as any).schemaType}`);
