@@ -55,7 +55,8 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
   const editorState = useTabState(QueryEditor);
 
   const schemaObjectTypes = [...schemaData.objects.values()].filter(
-    (type) => !type.builtin
+    (type) =>
+      !type.builtin && !type.unionOf && !type.insectionOf && !type.from_alias
   );
 
   const [copied, setCopied] = useState(false);

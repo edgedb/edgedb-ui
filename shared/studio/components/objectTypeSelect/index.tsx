@@ -44,11 +44,13 @@ export function ObjectTypeSelect({
         groups: group.groups.size ? flattenMap(group.groups) : undefined,
       }));
     };
-    return groups.size === 1 && groups.has("default")
-      ? groups.get("default")!.items
+    const flattenedGroups = flattenMap(groups)!;
+    return flattenedGroups.length === 1 &&
+      flattenedGroups[0].label === "default::"
+      ? flattenedGroups[0]
       : {
           items: [],
-          groups: flattenMap(groups),
+          groups: flattenedGroups,
         };
   }, [objectTypes]);
 
