@@ -25,9 +25,8 @@ function isKeyword(
   );
 }
 
-function stripModuleName(typename: string): string {
-  const [module, name] = typename.split("::");
-  return module === "default" ? name : typename;
+function stripDefaultModuleName(type: SchemaObjectType): string {
+  return type.module === "default" ? type.shortName : type.name;
 }
 
 function getKeywordAndName(
@@ -63,7 +62,8 @@ function getKeywordAndName(
 
 export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
   const userSchemaObjects = [...schemaObjects.values()].filter(
-    (obj) => !obj.builtin && !obj.unionOf && !obj.insectionOf
+    (obj) =>
+      !obj.builtin && !obj.unionOf && !obj.insectionOf && !obj.from_alias
   );
 
   return function completions(
@@ -99,7 +99,7 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
       return {
         from: node?.name === "Keyword" ? context.pos : node!.from,
         options: userSchemaObjects.map((obj) => ({
-          label: stripModuleName(obj.name),
+          label: stripDefaultModuleName(obj),
         })),
         validFor: (text, from, to, state) => {
           return syntaxTree(state).resolveInner(to, -1)?.name === "Name";
