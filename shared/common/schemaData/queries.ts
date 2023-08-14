@@ -83,7 +83,8 @@ select Type {
   ).id,
   constraintIds := [is ConsistencySubject].constraints.id,
   element_type_id := [is Array].element_type.id,
-  range_element_type_id := [is Range].element_type.id,
+  range_element_type_id := [is Range].element_type.id
+                             ?? [is Multirange].element_type.id,
   [is Tuple].element_types: {
     name,
     type_id := .type.id,

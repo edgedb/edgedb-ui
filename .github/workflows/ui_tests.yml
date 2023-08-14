@@ -23,13 +23,15 @@ jobs:
       - name: Install EdgeDB
         uses: edgedb/setup-edgedb@v1
         with:
-          server-version: 3.0-rc.1
+          server-version: nightly
 
       - name: Set up chrome
         uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
 
       - name: Set up chromedriver
-        uses: nanasess/setup-chromedriver@v1
+        uses: nanasess/setup-chromedriver@v2
 
       - name: Install dev deps
         working-directory: web
