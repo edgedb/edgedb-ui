@@ -15,9 +15,9 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./headerTab.module.scss";
 
-const HeaderTabsContext = createContext<ObservableMap<string, JSX.Element>>(
-  null!
-);
+export const HeaderTabsContext = createContext<
+  ObservableMap<string, JSX.Element>
+>(null!);
 
 export function HeaderTabsProvider({children}: PropsWithChildren<{}>) {
   const [headerTabs] = useState(
