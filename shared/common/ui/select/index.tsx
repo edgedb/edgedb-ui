@@ -26,6 +26,7 @@ export type SelectProps<T = any> = {
   rightAlign?: boolean;
   actions?: {label: string | JSX.Element; action: () => void}[];
   searchable?: boolean;
+  disabled?: boolean;
 } & (
   | {
       items: null;
@@ -53,6 +54,7 @@ export function Select<T extends any>({
   rightAlign,
   actions,
   searchable,
+  disabled,
   ...dropdown
 }: SelectProps<T>) {
   const selectRef = useRef<HTMLDivElement>(null);
@@ -161,7 +163,8 @@ export function Select<T extends any>({
     <div
       ref={selectRef}
       className={cn(styles.select, className)}
-      onClick={() => setDropdownOpen(true)}
+      onClick={!disabled ? () => setDropdownOpen(true) : undefined}
+      data-disabled={disabled}
     >
       {title ?? selectedItem?.fullLabel ?? selectedItem?.label}
       {hasDropdown ? (
