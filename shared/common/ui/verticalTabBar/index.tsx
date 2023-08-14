@@ -8,28 +8,28 @@ import styles from "./verticalTabBar.module.scss";
 import {ChevronIcon} from "../icons";
 import {ThemeSwitcher} from "../themeSwitcher";
 
-export interface Tab {
-  id: string;
+export interface Tab<Id extends string> {
+  id: Id;
   label: string;
   icon: (active: boolean) => JSX.Element;
   loading?: boolean;
 }
 
-export interface VerticalTabBarProps {
+export interface VerticalTabBarProps<TabId extends string> {
   className?: string;
-  tabs: Tab[];
-  selectedTabId: string;
-  onTabChange: (tab: Tab) => void;
+  tabs: Tab<TabId>[];
+  selectedTabId: TabId;
+  onTabChange: (tab: Tab<TabId>) => void;
   noExpand?: boolean;
 }
 
-export function VerticalTabBar({
+export function VerticalTabBar<TabId extends string>({
   className,
   tabs,
   selectedTabId,
   onTabChange,
   noExpand,
-}: VerticalTabBarProps) {
+}: VerticalTabBarProps<TabId>) {
   const [expanded, setExpanded] = useReducer(
     (_: any, val: boolean) => {
       localStorage.setItem("nebula_ui_tabbar_expanded", JSON.stringify(val));
