@@ -4,11 +4,15 @@
   display: flex;
   align-items: center;
   margin-left: 58px;
+  overflow-x: scroll;
+
+  @include hideScrollbar;
 }
 
 .tabSep {
   margin: 0 8px;
   opacity: 0.5;
+  flex-shrink: 0;
 }
 
 .splitButton {
