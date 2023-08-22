@@ -395,8 +395,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           name: type.name,
         } as any);
         break;
-      case "schema::Multirange":
-      case "schema::MultirangeExprAlias":
+      case "schema::MultiRange":
+      case "schema::MultiRangeExprAlias":
         types.set(type.id, {
           schemaType: "Multirange",
           id: type.id,
@@ -745,8 +745,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       }
       case "schema::Range":
       case "schema::RangeExprAlias":
-      case "schema::Multirange":
-      case "schema::MultirangeExprAlias": {
+      case "schema::MultiRange":
+      case "schema::MultiRangeExprAlias": {
         const elementType = types.get(type.range_element_type_id!);
         if (!elementType) {
           throw new Error(
