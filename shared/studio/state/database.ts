@@ -54,7 +54,7 @@ import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 6;
+const SCHEMA_DATA_VERSION = 7;
 
 export interface StoredSchemaData {
   version: number;
@@ -239,8 +239,8 @@ export class DatabaseState extends Model({
             conn
               .query(
                 getIntrospectionQuery([
-                  schemaInfo.version.major,
-                  schemaInfo.version.minor,
+                  Number(schemaInfo.version.major),
+                  Number(schemaInfo.version.minor),
                 ])
               )
               .then(({result}) => {
