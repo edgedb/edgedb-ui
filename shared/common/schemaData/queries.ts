@@ -92,7 +92,7 @@ select Type {
   } order by @index,
   [is Tuple].named,
   [is ScalarType].enum_values,
-  ${versionGTE(version, [3, 0]) ? `[is ScalarType].arg_values,` : ""}
+  ${versionGTE(version, [3, 0, "rc", 3]) ? `[is ScalarType].arg_values,` : ""}
   [is ScalarType].default,
   [is AnnotationSubject].annotations: {
     name,
