@@ -241,6 +241,8 @@ export class DatabaseState extends Model({
                 getIntrospectionQuery([
                   Number(schemaInfo.version.major),
                   Number(schemaInfo.version.minor),
+                  schemaInfo.version.stage as any,
+                  Number(schemaInfo.version.stage_no),
                 ])
               )
               .then(({result}) => {
