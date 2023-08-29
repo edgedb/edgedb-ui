@@ -55,6 +55,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -138,7 +139,10 @@ const ReplList = observer(function ReplList({
     [0, 0, 0]
   );
 
-  const headerHeight = 330 + (replState._hasUnfetchedHistory ? 34 : 0);
+  const isMobile = useIsMobile();
+
+  const headerHeight =
+    (isMobile ? 320 : 330) + (replState._hasUnfetchedHistory ? 34 : 0);
 
   useEffect(() => {
     replState.scrollRef = ref.current;

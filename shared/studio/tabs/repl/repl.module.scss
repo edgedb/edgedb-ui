@@ -43,6 +43,10 @@
     background-color: #242424;
     --code-editor-bg: #242424;
   }
+
+  @include breakpoint(sm) {
+    border-radius: 0;
+  }
 }
 
 .extendedViewerContainer {
@@ -90,6 +94,19 @@
         color: #c4c4c4;
       }
     }
+
+    @include breakpoint(sm) {
+      margin-top: 24px;
+    }
+  }
+
+  @include breakpoint(sm) {
+    padding: 24px;
+
+    .headerAscii {
+      font-size: 8px;
+      line-height: 9px;
+    }
   }
 }
 
@@ -111,6 +128,10 @@
   flex-shrink: 0;
   position: relative;
   margin-bottom: 12px;
+
+  @include breakpoint(sm) {
+    margin-bottom: 0;
+  }
 }
 
 .replInput {
