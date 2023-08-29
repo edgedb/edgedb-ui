@@ -14,6 +14,15 @@
     opacity: 0;
     transition-delay: 0.2s;
   }
+
+  @include breakpoint(sm) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+  }
 }
 
 .sessionBar {
