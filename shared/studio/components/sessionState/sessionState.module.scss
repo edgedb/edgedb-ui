@@ -119,6 +119,11 @@
   transition: height 0.2s, left 0.2s, z-index 0s 0.2s, background 0.2s,
     opacity 0s 0.2s;
 
+  @include breakpoint(sm) {
+    left: 0;
+    right: 0;
+  }
+
   .panelOpen & {
     opacity: 1;
     background: var(--app-panel-bg) !important;
@@ -273,6 +278,17 @@
   pointer-events: none;
   transition: opacity 0.2s 0s, z-index 0s 0.2s;
 
+  @include breakpoint(sm) {
+    left: 0;
+    right: 0;
+    width: 100vw;
+    background: #d9d9d9;
+
+    @include darkTheme {
+      background: #141414;
+    }
+  }
+
   &.panelVisible {
     opacity: 1;
     z-index: 101;
@@ -294,12 +310,46 @@
     margin: 8px;
   }
 
+  .mobileClosePanel {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+  }
+
   .searchBar {
     height: 68px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @include breakpoint(sm) {
+      flex-direction: column;
+      height: auto;
+      margin-bottom: 2px;
+      background: #f5f5f5;
+
+      @include darkTheme {
+        background: #2e2e2e;
+      }
+    }
+
+    .title {
+      font-family: Roboto;
+      font-size: 20px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 24px;
+      color: #666;
+
+      @include darkTheme {
+        color: var(--base-text-dark-theme, #b9b9b9);
+      }
+
+      @include breakpointMobileFirst(sm) {
+        display: none;
+      }
+    }
 
     .search {
       position: relative;
@@ -332,6 +382,24 @@
           background: var(--app-bg);
         }
       }
+
+      @include breakpoint(sm) {
+        width: calc(100vw - 32px);
+        margin: 0 0 16px 0;
+
+        svg {
+          stroke: #7c7c7c;
+        }
+
+        input {
+          border-radius: 6px;
+          height: 40px;
+
+          @include darkTheme {
+            background: #141414;
+          }
+        }
+      }
     }
   }
 
@@ -342,6 +410,14 @@
     padding: 0 8px;
     padding-bottom: 4px;
     min-height: 0;
+
+    @include breakpoint(sm) {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      min-height: unset;
+      overflow: auto;
+    }
   }
 
   .group {
@@ -352,6 +428,20 @@
 
     &:first-child {
       margin-left: 8px;
+    }
+
+    @include breakpoint(sm) {
+      margin-bottom: 2px;
+      min-height: unset;
+      background: #f5f5f5;
+
+      @include darkTheme {
+        background: #2e2e2e;
+      }
+
+      &:first-child {
+        margin-left: unset;
+      }
     }
 
     .header {
@@ -368,6 +458,10 @@
     min-height: 0;
     display: flex;
     flex-grow: 1;
+
+    @include breakpoint(sm) {
+      min-height: unset;
+    }
   }
 
   .list {
@@ -421,6 +515,16 @@
 
     @include darkTheme {
       --inputBg: #1f1f1f;
+    }
+
+    @include breakpoint(sm) {
+      padding: 16px 16px 16px 16px;
+
+      background: #e5e5e5;
+
+      @include darkTheme {
+        background: #242424;
+      }
     }
   }
 
@@ -543,6 +647,10 @@
 
     @include darkTheme {
       border-color: #4d4d4d;
+    }
+
+    @include breakpoint(sm) {
+      margin-bottom: 48px;
     }
   }
 }

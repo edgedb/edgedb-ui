@@ -5,7 +5,7 @@ import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import {observer} from "mobx-react-lite";
 import {Fragment, PropsWithChildren, useEffect, useRef, useState} from "react";
-import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
+import {ChevronDownIcon, CloseIcon, SearchIcon, CrossIcon} from "../../icons";
 import {useDatabaseState} from "../../state";
 import {queryOptions, SessionState} from "../../state/sessionState";
 import {getInputComponent, InputValidator} from "../dataEditor";
@@ -21,6 +21,7 @@ import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerTabs";
 import {PrimitiveType} from "../dataEditor/utils";
+import {useWindowSize} from "../../hooks/useWindowSize";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -271,6 +272,9 @@ const SessionEditorPanelContent = observer(
     const dbState = useDatabaseState();
     const sessionState = dbState.sessionState;
 
+    const windowSize = useWindowSize();
+    const isMobile = (windowSize.width && windowSize.width < 768) || false;
+
     const [searchFilter, setSearchFilter] = useState("");
 
     useEffect(() => {
@@ -298,12 +302,15 @@ const SessionEditorPanelContent = observer(
     return (
       <div className={styles.editorPanelContent}>
         <div
-          className={styles.closePanel}
+          className={cn(
+            isMobile ? styles.mobileClosePanel : styles.closePanel
+          )}
           onClick={() => sessionState.closePanel()}
         >
-          <CloseIcon />
+          {isMobile ? <CrossIcon /> : <CloseIcon />}
         </div>
         <div className={styles.searchBar}>
+          <p className={styles.title}>Client settings</p>
           <div className={styles.search}>
             <SearchIcon />
             <input
