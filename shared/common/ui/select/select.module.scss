@@ -101,6 +101,11 @@
   padding-right: 32px;
   color: var(--dropdown-item-color, inherit);
 
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
   &:hover {
     background: var(--app-accent-green);
     color: #fff;
