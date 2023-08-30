@@ -14,6 +14,7 @@ interface SplitViewProps {
   views: JSX.Element[];
   state: SplitViewState;
   minViewSize?: number;
+  showFirstChildOnMobile?: boolean;
 }
 
 interface ResizeDragHandlerParams {
@@ -25,6 +26,7 @@ export default observer(function SplitView({
   state,
   minViewSize = 10,
   className,
+  showFirstChildOnMobile,
   ...otherProps
 }: React.HTMLAttributes<HTMLDivElement> & SplitViewProps) {
   const [_, setGlobalDragCursor] = useGlobalDragCursor();
@@ -104,7 +106,13 @@ export default observer(function SplitView({
 
         return (
           <Fragment key={viewIndex}>
-            <div className={styles.splitViewChild} style={size}>
+            <div
+              className={cn(styles.splitViewChild, {
+                [styles.splitViewChildVisible]:
+                  !!showFirstChildOnMobile == !viewIndex,
+              })}
+              style={size}
+            >
               {view}
             </div>
             {!lastView ? (

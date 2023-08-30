@@ -154,6 +154,8 @@ export class QueryEditor extends Model({
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
 
   showExplain: prop(false).withSetter(),
+
+  showQueryWindow: prop(true).withSetter(),
 }) {
   @observable queryRunning = false;
 
@@ -706,5 +708,6 @@ export class QueryEditor extends Model({
 
     this.queryRunning = false;
     dbState.setLoadingTab(QueryEditor, false);
+    this.setShowQueryWindow(false);
   });
 }

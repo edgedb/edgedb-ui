@@ -689,3 +689,61 @@ export const ArrowDown = () => (
     <path d="M6.91076 0.950216L4.07025 5.68326C3.81675 6.10558 3.18325 6.10558 2.92975 5.68326L0.0892386 0.950216C-0.164262 0.527898 0.152489 0 0.65949 0H6.34051C6.84751 0 7.16426 0.527898 6.91076 0.950216Z" />
   </svg>
 );
+
+export const MobileHistoryIcon = () => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect width="40" height="40" rx="20" fill="#8676B0" />
+    <path
+      d="M19 21.228L19 13"
+      stroke="#242424"
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M19 21.228L22.0001 24.228"
+      stroke="#242424"
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M20 34C27.732 34 34 27.732 34 20C34 12.268 27.732 6 20 6C12.268 6 6 12.268 6 20C6 23.8146 7.52563 27.2729 10 29.798"
+      stroke="#242424"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8.95447 31.1274L11.7139 31.8929L11.3978 29.0468"
+      stroke="#242424"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const MobileRunIcon = () => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g id="Group 2030">
+      <circle id="Ellipse 102" cx="20" cy="20" r="20" fill="#279474" />
+      <path
+        id="Subtract"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.5584 26.2879L25.9091 20.8982C26.6017 20.4989 26.6017 19.5008 25.9091 19.1016L16.5584 13.7118C15.8658 13.3126 15 13.8116 15 14.6101L15 25.3896C15 26.1881 15.8658 26.6872 16.5584 26.2879Z"
+        fill="#141414"
+      />
+    </g>
+  </svg>
+);

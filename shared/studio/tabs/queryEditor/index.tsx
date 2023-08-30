@@ -26,7 +26,12 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 import {HistoryPanel} from "./history";
 import ParamEditorPanel from "./paramEditor";
-import {KebabMenuIcon, TabEditorIcon} from "../../icons";
+import {
+  KebabMenuIcon,
+  TabEditorIcon,
+  MobileHistoryIcon,
+  MobileRunIcon,
+} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
@@ -126,7 +131,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
                   <div className={styles.replEditorOverlays}>
                     <div className={styles.controls}>
                       <Button
-                        className={styles.runButton}
+                        className={styles.runBtn}
                         label="Run"
                         shortcut="Ctrl+Enter"
                         macShortcut="⌘+Enter"
@@ -149,7 +154,45 @@ export const QueryEditorView = observer(function QueryEditorView() {
         ]}
         state={editorState.splitView}
         minViewSize={20}
+        showFirstChildOnMobile={editorState.showQueryWindow}
       />
+      <div className={styles.mobileOverlayControls}>
+        <button
+          className={styles.mobileBtn}
+          onClick={() => editorState.setShowHistory(true)}
+        >
+          <MobileHistoryIcon />
+        </button>
+        <div className={styles.queryControls}>
+          <button
+            className={cn(styles.queryBtn, {
+              [styles.queryBtnActive]: editorState.showQueryWindow,
+            })}
+            onClick={() => editorState.setShowQueryWindow(true)}
+          >
+            QUERY
+          </button>
+          <button
+            className={cn(styles.queryBtn, {
+              [styles.queryBtnActive]: !editorState.showQueryWindow,
+            })}
+            onClick={() => editorState.setShowQueryWindow(false)}
+          >
+            RESULT
+          </button>
+        </div>
+        <button
+          className={styles.mobileBtn}
+          onClick={() => editorState.runQuery()}
+          disabled={!editorState.canRunQuery}
+        >
+          <MobileRunIcon />
+        </button>
+      </div>
+      <div className={styles.mobileHistory}>
+        <p className={styles.title}>History</p>
+        <HistoryPanel className={styles.historyPanel} />
+      </div>
 
       {editorState.extendedViewerItem ? (
         <div className={styles.extendedViewerContainer}>

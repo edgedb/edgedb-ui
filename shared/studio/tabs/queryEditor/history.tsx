@@ -22,7 +22,11 @@ import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
 
-export const HistoryPanel = observer(function HistoryPanel() {
+export const HistoryPanel = observer(function HistoryPanel({
+  className,
+}: {
+  className?: string;
+}) {
   const editorState = useTabState(QueryEditor);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -51,7 +55,12 @@ export const HistoryPanel = observer(function HistoryPanel() {
   }, [editorState.showHistory]);
 
   return showHistory ? (
-    <HistoryPanelInner ref={ref} state={editorState} visible={visible} />
+    <HistoryPanelInner
+      ref={ref}
+      state={editorState}
+      visible={visible}
+      className={className}
+    />
   ) : null;
 });
 
@@ -61,8 +70,9 @@ const HistoryPanelInner = observer(
     {
       state: QueryEditor;
       visible: boolean;
+      className?: string;
     }
-  >(function HistoryPanelInner({state, visible}, ref) {
+  >(function HistoryPanelInner({state, visible, className}, ref) {
     useEffect(() => {
       (ref as RefObject<HTMLDivElement>).current?.focus();
     }, []);
@@ -70,7 +80,7 @@ const HistoryPanelInner = observer(
     return (
       <div
         ref={ref}
-        className={cn(styles.history, {
+        className={cn(styles.history, className, {
           [styles.visible]: visible,
         })}
         tabIndex={0}

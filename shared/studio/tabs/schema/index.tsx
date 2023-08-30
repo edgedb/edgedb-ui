@@ -1,13 +1,11 @@
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
-import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import SplitView from "@edgedb/common/ui/splitView";
 import SwitcherButton from "@edgedb/common/ui/switcherButton";
 
 import styles from "./schema.module.scss";
-// import tabStyles from "../tabView/tabView.module.scss";
 
 import {useTabState} from "../../state";
 import {Schema, SchemaViewType} from "./state";
@@ -20,7 +18,6 @@ import {
   SchemaMinimap,
 } from "@edgedb/schema-graph";
 
-import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 
 import {

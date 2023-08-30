@@ -65,6 +65,10 @@ $historyTransitionTime: 0.15s;
   @include darkTheme {
     background: #2e2e2e;
   }
+
+  @include breakpoint(sm) {
+    display: none;
+  }
 }
 
 .queryResult {
@@ -249,6 +253,12 @@ $historyTransitionTime: 0.15s;
   margin: 16px;
   transition: opacity 0.1s ease-in-out;
 
+  @include breakpoint(sm) {
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
   &:hover {
     background: #fafafa;
 
@@ -415,6 +425,10 @@ $historyTransitionTime: 0.15s;
   .showHistory & {
     opacity: 0;
   }
+
+  @include breakpoint(sm) {
+    pointer-events: unset;
+  }
 }
 
 .controls {
@@ -422,6 +436,11 @@ $historyTransitionTime: 0.15s;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
+  @include breakpoint(sm) {
+    justify-content: space-between;
+    margin: 8px 24px;
+  }
 
   label {
     display: flex;
@@ -464,12 +483,16 @@ $historyTransitionTime: 0.15s;
   }
 }
 
-.runButton {
+.runBtn {
   --buttonBg: var(--app-accent-green);
   --buttonTextColour: #0a4634;
   align-self: flex-start;
   flex-shrink: 0;
   pointer-events: auto;
+
+  @include breakpoint(sm) {
+    display: none;
+  }
 }
 
 .queryOptions {
@@ -524,6 +547,84 @@ $historyTransitionTime: 0.15s;
 
     &.collapsed .queryOptionsWrapper {
       background: #353535;
+    }
+  }
+}
+
+.mobileOverlayControls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  z-index: 2;
+  padding: 8px 24px;
+
+  .mobileBtn {
+    padding: 0;
+    border: none;
+    height: 40px;
+    border-radius: 50%;
+
+    @include breakpointMobileFirst(sm) {
+      display: none;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+    }
+  }
+
+  .queryControls {
+    padding: 4px;
+    border-radius: 22px;
+    background: #999;
+    display: flex;
+    gap: 8px;
+
+    .queryBtn {
+      border-radius: 16px;
+      color: #242424;
+      padding: 8px;
+      font-size: 12px;
+      line-height: 16px;
+      border: none;
+      background: transparent;
+    }
+
+    .queryBtnActive {
+      color: #999;
+      background: #141414;
+    }
+
+    @include breakpointMobileFirst(sm) {
+      display: none;
+    }
+  }
+}
+
+.mobileHistory {
+  @include breakpoint(sm) {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: #141414;
+
+    .title {
+      color: var(--base-text-dark-theme, #b9b9b9);
+      text-align: center;
+      font-family: Roboto;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 24px;
+    }
+
+    .historyPanel {
+      width: 100%;
     }
   }
 }
