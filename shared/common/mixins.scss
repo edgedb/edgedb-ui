@@ -24,3 +24,9 @@
     background-clip: padding-box;
   }
 }
+
+@mixin isMobile {
+  @media (max-width: 767.5px) {
+    @content;
+  }
+}

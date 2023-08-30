@@ -65,7 +65,9 @@ export function MobileNavTabs({
             />
           ))
         }
-      ></div>
+      >
+        <EllipsisIcon />
+      </div>
     </div>
   );
 }
@@ -105,4 +107,22 @@ function useWindowWidth() {
   }, []);
 
   return windowWidth;
+}
+
+function EllipsisIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="49"
+      height="60"
+      viewBox="0 0 49 60"
+      fill="none"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.5 30C16.5 32.2091 14.7091 34 12.5 34C10.2909 34 8.5 32.2091 8.5 30C8.5 27.7909 10.2909 26 12.5 26C14.7091 26 16.5 27.7909 16.5 30ZM28.5 30C28.5 32.2091 26.7091 34 24.5 34C22.2909 34 20.5 32.2091 20.5 30C20.5 27.7909 22.2909 26 24.5 26C26.7091 26 28.5 27.7909 28.5 30ZM36.5 34C38.7091 34 40.5 32.2091 40.5 30C40.5 27.7909 38.7091 26 36.5 26C34.2909 26 32.5 27.7909 32.5 30C32.5 32.2091 34.2909 34 36.5 34Z"
+      />
+    </svg>
+  );
 }
