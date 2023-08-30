@@ -1,10 +1,13 @@
-import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
 import {AnyModel, getTypeInfo, ModelClass, ModelTypeInfo} from "mobx-keystone";
 import {ErrorBoundary, FallbackProps} from "react-error-boundary";
 
 import cn from "@edgedb/common/utils/classNames";
 import Button from "@edgedb/common/ui/button";
+import {BaseTabBarProps} from "@edgedb/common/ui/navtabs/interfaces";
+import {MobileNavTabs} from "@edgedb/common/ui/navtabs/mobile";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {VerticalTabBar} from "@edgedb/common/ui/verticalTabBar";
 
 import {useInstanceState} from "../../state/instance";
 import {DatabaseStateContext, useDatabaseState} from "../../state/database";
@@ -12,7 +15,6 @@ import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./databasePage.module.scss";
 
-import {VerticalTabBar} from "@edgedb/common/ui/verticalTabBar";
 import {SessionStateBar, SessionStateButton} from "../sessionState";
 import {ErrorPage} from "../errorPage";
 import {WarningIcon} from "../../icons";
@@ -30,12 +32,12 @@ export interface DatabaseTabSpec {
 interface DatabasePageProps {
   databaseName: string;
   tabs: DatabaseTabSpec[];
+  mobileMenu?: JSX.Element;
 }
 
-export default observer(function DatabasePageLoadingWrapper({
-  databaseName,
-  tabs,
-}: DatabasePageProps) {
+export default observer(function DatabasePageLoadingWrapper(
+  props: DatabasePageProps
+) {
   const instanceState = useInstanceState();
   const {gotoInstancePage} = useDBRouter();
 
@@ -47,7 +49,7 @@ export default observer(function DatabasePageLoadingWrapper({
     );
   }
 
-  if (!instanceState.databases.includes(databaseName)) {
+  if (!instanceState.databases.includes(props.databaseName)) {
     return (
       <ErrorPage
         title="Database doesn't exist"
@@ -61,12 +63,12 @@ export default observer(function DatabasePageLoadingWrapper({
           />
         }
       >
-        The database '{databaseName}' does not exist.
+        The database '{props.databaseName}' does not exist.
       </ErrorPage>
     );
   }
 
-  return <DatabasePageContent databaseName={databaseName} tabs={tabs} />;
+  return <DatabasePageContent {...props} />;
 });
 
 function ErrorFallback({error}: FallbackProps) {
@@ -99,12 +101,14 @@ function ErrorFallback({error}: FallbackProps) {
 const DatabasePageContent = observer(function DatabasePageContent({
   databaseName,
   tabs,
+  mobileMenu,
 }: DatabasePageProps) {
   const instanceState = useInstanceState();
 
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
 
   const {currentPath, navigate} = useDBRouter();
+  const isMobile = useIsMobile();
 
   const currentTabId = currentPath[1] ?? "";
   const activeTab = tabs.find((tab) => tab.path === currentTabId);
@@ -119,12 +123,17 @@ const DatabasePageContent = observer(function DatabasePageContent({
     <DatabaseStateContext.Provider value={dbState}>
       <SessionStateButton />
 
-      <div className={styles.databasePage}>
+      <div className={cn(styles.databasePage, {[styles.mobile]: isMobile})}>
         <SessionStateBar
           className={styles.sessionBar}
           active={tabs.find((t) => t.path === currentTabId)?.usesSessionState}
         />
-        <TabBar tabs={tabs} hide={dbState.sessionState.panelOpen} />
+        <TabBar
+          tabs={tabs}
+          hide={dbState.sessionState.panelOpen}
+          isMobile={isMobile}
+          mobileMenu={mobileMenu}
+        />
         <div className={styles.tabContent}>
           {activeTab ? (
             <ErrorBoundary
@@ -142,29 +151,58 @@ const DatabasePageContent = observer(function DatabasePageContent({
 
 interface TabBarProps {
   tabs: DatabaseTabSpec[];
+  isMobile: boolean;
   hide?: boolean;
+  mobileMenu?: JSX.Element;
 }
 
-const TabBar = observer(function TabBar({tabs, hide}: TabBarProps) {
+const TabBar = observer(function TabBar({
+  tabs,
+  isMobile,
+  hide,
+  mobileMenu,
+}: TabBarProps) {
   const dbState = useDatabaseState();
 
   const {currentPath, navigate} = useDBRouter();
 
   const currentTabId = currentPath[1] ?? "";
 
-  return (
+  const props: BaseTabBarProps = {
+    className: cn(styles.tabbar, {[styles.hide]: !!hide}),
+    tabs: tabs.map((tab) => ({
+      id: tab.path,
+      icon: tab.icon,
+      label: tab.label,
+      loading:
+        dbState.loadingTabs.get(
+          (getTypeInfo(tab.state) as ModelTypeInfo).modelType
+        ) === true,
+    })),
+    currentTabId: currentTabId,
+    Link: ({to, ...props}) => (
+      <a
+        {...props}
+        href={[
+          ...(currentPath.length > 1
+            ? Array(currentPath.length - 2).fill("..")
+            : []),
+          currentPath[0],
+          to,
+        ].join("/")}
+        onClick={(e) => {
+          e.preventDefault();
+          navigate(`${currentPath[0]}/${to}`);
+        }}
+      />
+    ),
+  };
+
+  return isMobile ? (
+    <MobileNavTabs {...props} extraMenu={mobileMenu} />
+  ) : (
     <VerticalTabBar
-      className={cn(styles.tabbar, {[styles.hide]: !!hide})}
-      tabs={tabs.map((tab) => ({
-        id: tab.path,
-        icon: tab.icon,
-        label: tab.label,
-        loading:
-          dbState.loadingTabs.get(
-            (getTypeInfo(tab.state) as ModelTypeInfo).modelType
-          ) === true,
-      }))}
-      selectedTabId={currentTabId}
+      {...props}
       onTabChange={(tab) => navigate(`${currentPath[0]}/${tab.id}`)}
     />
   );

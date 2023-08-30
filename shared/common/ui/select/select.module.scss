@@ -22,13 +22,24 @@
     }
   }
 
+  &[data-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.6;
+
+    .tabDropdownButton {
+      display: none;
+    }
+  }
+
   @include darkTheme {
     --hoverBg: var(--app-bg-gray);
   }
 }
 
 .tabDropdownButton {
-  margin-left: 8px;
+  padding-left: 8px;
+  margin-left: auto;
+  opacity: 0.8;
 }
 
 .tabDropdown {
@@ -89,6 +100,11 @@
   cursor: pointer;
   padding-right: 32px;
   color: var(--dropdown-item-color, inherit);
+
+  &.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
 
   &:hover {
     background: var(--app-accent-green);

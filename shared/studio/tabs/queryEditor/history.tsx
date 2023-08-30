@@ -15,8 +15,8 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {useTabState} from "../../state";
 import {QueryEditor, QueryHistoryItem} from "./state";
-import {currentTimestamp} from "./state/currentTimestamp";
 import {renderThumbnail} from "./state/thumbnailGen";
+import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 
 import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
@@ -215,28 +215,4 @@ const HistoryItem = observer(function HistoryItem({
       )}
     </div>
   );
-});
-
-const RelativeTime = observer(function RelativeTime({
-  timestamp,
-}: {
-  timestamp: number;
-}) {
-  const cachedTime = useRef<string>();
-
-  if (cachedTime.current) {
-    return <>{cachedTime.current}</>;
-  }
-
-  const diff = (currentTimestamp.timestamp - timestamp) / 1000;
-  if (diff < 60) {
-    return <>{Math.floor(diff)}s ago</>;
-  }
-  if (diff < 3600) {
-    return <>{Math.floor(diff / 60)}m ago</>;
-  }
-
-  const date = new Date(timestamp);
-  cachedTime.current = date.toLocaleTimeString();
-  return <>{cachedTime.current}</>;
 });
