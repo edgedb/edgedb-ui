@@ -59,3 +59,9 @@ $breakpoints: (
     @warn 'Invalid breakpoint: #{$breakpoint}.';
   }
 }
+
+@mixin isMobile {
+  @media (max-width: 767.5px) {
+    @content;
+  }
+}

@@ -5,7 +5,11 @@ describe("clientSettings:", () => {
     await goToPage("_test/editor");
 
     // open client settings bar
-    await driver.findElement(ByUIClass("sessionState_stateButton")).click();
+    await (
+      await driver.wait(
+        until.elementLocated(ByUIClass("sessionState_stateButton"))
+      )
+    ).click();
   });
 
   test("change implicit limit to 10 and show up to 10 results", async () => {
