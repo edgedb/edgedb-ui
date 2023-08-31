@@ -690,36 +690,29 @@ export const ArrowDown = () => (
   </svg>
 );
 
-export const MobileHistoryIcon = () => (
+export const MobileHistoryIcon = ({className}: {className?: string}) => (
   <svg
     width="40"
     height="40"
     viewBox="0 0 40 40"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
   >
     <rect width="40" height="40" rx="20" fill="#8676B0" />
-    <path
-      d="M19 21.228L19 13"
-      stroke="#242424"
-      strokeWidth="4"
-      strokeLinecap="round"
-    />
+    <path d="M19 21.228L19 13" strokeWidth="4" strokeLinecap="round" />
     <path
       d="M19 21.228L22.0001 24.228"
-      stroke="#242424"
       strokeWidth="4"
       strokeLinecap="round"
     />
     <path
       d="M20 34C27.732 34 34 27.732 34 20C34 12.268 27.732 6 20 6C12.268 6 6 12.268 6 20C6 23.8146 7.52563 27.2729 10 29.798"
-      stroke="#242424"
       strokeWidth="2"
       strokeLinecap="round"
     />
     <path
       d="M8.95447 31.1274L11.7139 31.8929L11.3978 29.0468"
-      stroke="#242424"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -727,22 +720,22 @@ export const MobileHistoryIcon = () => (
   </svg>
 );
 
-export const MobileRunIcon = () => (
+export const MobileRunIcon = ({className}: {className?: string}) => (
   <svg
     width="40"
     height="40"
     viewBox="0 0 40 40"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
   >
     <g id="Group 2030">
-      <circle id="Ellipse 102" cx="20" cy="20" r="20" fill="#279474" />
+      <circle id="Ellipse 102" cx="20" cy="20" r="20" />
       <path
         id="Subtract"
         fillRule="evenodd"
         clipRule="evenodd"
         d="M16.5584 26.2879L25.9091 20.8982C26.6017 20.4989 26.6017 19.5008 25.9091 19.1016L16.5584 13.7118C15.8658 13.3126 15 13.8116 15 14.6101L15 25.3896C15 26.1881 15.8658 26.6872 16.5584 26.2879Z"
-        fill="#141414"
       />
     </g>
   </svg>

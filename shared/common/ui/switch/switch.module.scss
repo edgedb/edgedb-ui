@@ -109,7 +109,8 @@
 
   .radio {
     padding: 8px;
-    color: #242424;
+
+    color: #fff;
     border-radius: 16px;
 
     input {
@@ -127,8 +128,19 @@
   }
 
   .checked {
-    background: #141414;
-    color: #999;
+    background: #fff;
+    color: #666;
+  }
+
+  @include darkTheme {
+    .radio {
+      color: #242424;
+    }
+
+    .checked {
+      background: #141414;
+      color: #999;
+    }
   }
 
   @include breakpointMobileFirst(sm) {

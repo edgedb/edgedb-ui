@@ -163,7 +163,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
           className={styles.mobileBtn}
           onClick={() => editorState.setShowHistory(true)}
         >
-          <MobileHistoryIcon />
+          <MobileHistoryIcon className={styles.mobileHistoryIcon} />
         </button>
 
         <LabelsSwitch
@@ -180,7 +180,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
           onClick={() => editorState.runQuery()}
           disabled={!editorState.canRunQuery}
         >
-          <MobileRunIcon />
+          <MobileRunIcon className={styles.mobileRunIcon} />
         </button>
       </div>
       {editorState.showHistory && (
