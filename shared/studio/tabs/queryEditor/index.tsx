@@ -46,6 +46,7 @@ import Spinner from "@edgedb/common/ui/spinner";
 import {ExplainVis} from "../../components/explainVis";
 import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
 import {ExplainStateType} from "../../components/explainVis/state";
+import {LabelsSwitch, switchState} from "@edgedb/common/ui/switch";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
@@ -164,24 +165,16 @@ export const QueryEditorView = observer(function QueryEditorView() {
         >
           <MobileHistoryIcon />
         </button>
-        <div className={styles.queryControls}>
-          <button
-            className={cn(styles.queryBtn, {
-              [styles.queryBtnActive]: editorState.showQueryWindow,
-            })}
-            onClick={() => editorState.setShowQueryWindow(true)}
-          >
-            QUERY
-          </button>
-          <button
-            className={cn(styles.queryBtn, {
-              [styles.queryBtnActive]: !editorState.showQueryWindow,
-            })}
-            onClick={() => editorState.setShowQueryWindow(false)}
-          >
-            RESULT
-          </button>
-        </div>
+
+        <LabelsSwitch
+          labels={["query", "result"]}
+          value={
+            editorState.showQueryWindow ? switchState.left : switchState.right
+          }
+          onChange={() =>
+            editorState.setShowQueryWindow(!editorState.showQueryWindow)
+          }
+        />
         <button
           className={styles.mobileBtn}
           onClick={() => editorState.runQuery()}
@@ -190,11 +183,19 @@ export const QueryEditorView = observer(function QueryEditorView() {
           <MobileRunIcon />
         </button>
       </div>
-      <div className={styles.mobileHistory}>
-        <p className={styles.title}>History</p>
-        <CrossIcon />
-        <HistoryPanel className={styles.historyPanel} />
-      </div>
+      {editorState.showHistory && (
+        <div className={styles.mobileHistory}>
+          <p className={styles.title}>History</p>
+          <button
+            onClick={() => editorState.setShowHistory(false)}
+            className={styles.closeHistoryBtn}
+          >
+            <CrossIcon />
+          </button>
+
+          <HistoryPanel className={styles.historyPanel} />
+        </div>
+      )}
 
       {editorState.extendedViewerItem ? (
         <div className={styles.extendedViewerContainer}>

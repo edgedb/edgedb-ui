@@ -12,7 +12,12 @@ export interface SwitchProps {
   disabled?: boolean;
 }
 
-const Switch = ({labels, value, onChange, disabled = false}: SwitchProps) => (
+export const Switch = ({
+  labels,
+  value,
+  onChange,
+  disabled = false,
+}: SwitchProps) => (
   <div className={styles.container}>
     <div className={styles.switch}>
       <div className={styles.radio}>
@@ -57,4 +62,45 @@ const Switch = ({labels, value, onChange, disabled = false}: SwitchProps) => (
   </div>
 );
 
-export default Switch;
+export interface LabelsSwitchProps {
+  labels: [string, string];
+  value: switchState;
+  onChange: () => void;
+}
+
+export const LabelsSwitch = ({labels, value, onChange}: LabelsSwitchProps) => (
+  <div className={styles.labelsSwitch}>
+    <div
+      className={cn(styles.radio, {
+        [styles.checked]: value === switchState.left,
+      })}
+    >
+      <input
+        type="radio"
+        id={labels[0]}
+        name={labels[0]}
+        onChange={onChange}
+        checked={value === switchState.left}
+      />
+      <label htmlFor={labels[0]}>
+        <span>{labels[0]}</span>
+      </label>
+    </div>
+    <div
+      className={cn(styles.radio, {
+        [styles.checked]: value === switchState.right,
+      })}
+    >
+      <input
+        type="radio"
+        id={labels[1]}
+        name={labels[1]}
+        onChange={onChange}
+        checked={value === switchState.right}
+      />
+      <label htmlFor={labels[1]}>
+        <span>{labels[1]}</span>
+      </label>
+    </div>
+  </div>
+);

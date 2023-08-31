@@ -21,6 +21,7 @@ import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export const HistoryPanel = observer(function HistoryPanel({
   className,
@@ -119,6 +120,8 @@ const HistoryList = observer(function HistoryList({
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     const list = listRef.current;
     if (list) {
@@ -133,6 +136,8 @@ const HistoryList = observer(function HistoryList({
     }
   }, [state.historyCursor, height]);
 
+  const estimatedItemSize = isMobile ? 184 : 121;
+
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
   }, [historyList.length]);
@@ -145,9 +150,11 @@ const HistoryList = observer(function HistoryList({
         itemCount={historyList.length + 1}
         height={height}
         width="100%"
-        estimatedItemSize={121}
+        estimatedItemSize={estimatedItemSize}
         itemSize={(index) =>
-          historyList[index - 1]?.showDateHeader ? 137 : 121
+          historyList[index - 1]?.showDateHeader
+            ? estimatedItemSize + 16
+            : estimatedItemSize
         }
       >
         {({index, style}) => (

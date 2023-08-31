@@ -233,6 +233,10 @@ $historyTransitionTime: 0.15s;
     #000 calc(100% - 50px),
     transparent 100%
   );
+
+  @include breakpoint(sm) {
+    height: calc(100% - 30px);
+  }
 }
 
 .historyList {
@@ -254,6 +258,8 @@ $historyTransitionTime: 0.15s;
   transition: opacity 0.1s ease-in-out;
 
   @include breakpoint(sm) {
+    height: 168px;
+
     &:first-child {
       margin-top: 0;
     }
@@ -560,6 +566,7 @@ $historyTransitionTime: 0.15s;
   justify-content: space-between;
   z-index: 2;
   padding: 8px 24px;
+  background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, #141414 100%);
 
   .mobileBtn {
     padding: 0;
@@ -625,6 +632,14 @@ $historyTransitionTime: 0.15s;
 
     .historyPanel {
       width: 100%;
+    }
+
+    .closeHistoryBtn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: transparent;
+      border: none;
     }
   }
 }

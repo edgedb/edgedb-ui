@@ -99,3 +99,39 @@
     }
   }
 }
+
+.labelsSwitch {
+  display: flex;
+  padding: 4px;
+  background: #999;
+  border-radius: 22px;
+  align-items: center;
+
+  .radio {
+    padding: 8px;
+    color: #242424;
+    border-radius: 16px;
+
+    input {
+      display: none;
+    }
+
+    label {
+      font-family: Roboto;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      text-transform: uppercase;
+      border-radius: 16px;
+    }
+  }
+
+  .checked {
+    background: #141414;
+    color: #999;
+  }
+
+  @include breakpointMobileFirst(sm) {
+    display: none;
+  }
+}
