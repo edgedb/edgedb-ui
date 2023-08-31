@@ -3,6 +3,7 @@
 .tabbar {
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 10px 18px;
   gap: 25px;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
@@ -74,8 +75,15 @@
   cursor: pointer;
   flex-shrink: 0;
 
+  svg {
+    fill: #808080;
+  }
+
   @include darkTheme {
     background: #242424;
+    svg {
+      fill: #999;
+    }
   }
 }
 

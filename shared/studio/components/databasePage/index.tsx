@@ -168,7 +168,7 @@ const TabBar = observer(function TabBar({
 
   const currentTabId = currentPath[1] ?? "";
 
-  const props = {
+  const props: BaseTabBarProps = {
     className: cn(styles.tabbar, {[styles.hide]: !!hide}),
     tabs: tabs.map((tab) => ({
       id: tab.path,
@@ -196,7 +196,7 @@ const TabBar = observer(function TabBar({
         }}
       />
     ),
-  } satisfies BaseTabBarProps;
+  };
 
   return isMobile ? (
     <MobileNavTabs {...props} extraMenu={mobileMenu} />
