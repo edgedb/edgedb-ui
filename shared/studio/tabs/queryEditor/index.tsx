@@ -49,6 +49,7 @@ import {LabelsSwitch, switchState} from "@edgedb/common/ui/switch";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
+  const splitViewState = editorState.splitView;
 
   const [_, theme] = useTheme();
 
@@ -155,7 +156,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
         ]}
         state={editorState.splitView}
         minViewSize={20}
-        showFirstChildOnMobile={editorState.showQueryWindow}
       />
       <div className={styles.mobileOverlayControls}>
         <button
@@ -168,10 +168,12 @@ export const QueryEditorView = observer(function QueryEditorView() {
         <LabelsSwitch
           labels={["query", "result"]}
           value={
-            editorState.showQueryWindow ? switchState.left : switchState.right
+            splitViewState.activeViewIndex
+              ? switchState.right
+              : switchState.left
           }
           onChange={() =>
-            editorState.setShowQueryWindow(!editorState.showQueryWindow)
+            splitViewState.setActiveViewIndex(!splitViewState.activeViewIndex)
           }
         />
         <button
