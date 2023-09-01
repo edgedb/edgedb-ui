@@ -104,11 +104,10 @@ export default observer(function SplitView({
             margins ? ` - ${margins}px` : ""
           })`,
         };
-        console.log("activeViewIndex", state.activeViewIndex);
-        console.log("viewIndex", viewIndex);
+
         return (
           <Fragment key={viewIndex}>
-            {((isMobile && !!state.activeViewIndex == !viewIndex) ||
+            {((isMobile && state.activeViewIndex === viewIndex) ||
               !isMobile) && (
               <div className={styles.splitViewChild} style={size}>
                 {view}

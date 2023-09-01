@@ -173,13 +173,17 @@ export const QueryEditorView = observer(function QueryEditorView() {
               : switchState.left
           }
           onChange={() =>
-            splitViewState.setActiveViewIndex(!splitViewState.activeViewIndex)
+            splitViewState.setActiveViewIndex(
+              splitViewState.activeViewIndex ? 0 : 1
+            )
           }
         />
         <button
           className={styles.mobileBtn}
           onClick={() => editorState.runQuery()}
-          disabled={!editorState.canRunQuery}
+          disabled={
+            !editorState.canRunQuery || !!splitViewState.activeViewIndex
+          }
         >
           <MobileRunIcon className={styles.mobileRunIcon} />
         </button>
