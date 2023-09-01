@@ -72,7 +72,7 @@ $historyTransitionTime: 0.15s;
     background: #2e2e2e;
   }
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     display: none;
   }
 }
@@ -219,14 +219,12 @@ $historyTransitionTime: 0.15s;
   }
 
   .closeHistoryMobile {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    background: transparent;
-    border: none;
-
-    @include breakpointMobileFirst(sm) {
-      display: none;
+    @include breakpoint(mobile) {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: transparent;
+      border: none;
     }
   }
 }
@@ -242,7 +240,7 @@ $historyTransitionTime: 0.15s;
     --buttonTextColour: #141414;
   }
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     display: none;
   }
 }
@@ -256,7 +254,7 @@ $historyTransitionTime: 0.15s;
     transparent 100%
   );
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     height: calc(100% - 30px);
   }
 }
@@ -279,7 +277,7 @@ $historyTransitionTime: 0.15s;
   margin: 16px;
   transition: opacity 0.1s ease-in-out;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     height: 168px;
 
     &:first-child {
@@ -392,7 +390,7 @@ $historyTransitionTime: 0.15s;
     opacity: 0;
     color: #fff;
 
-    @include breakpoint(sm) {
+    @include breakpoint(mobile) {
       div {
         border-radius: 6px;
         padding: 8px 18px;
@@ -466,7 +464,7 @@ $historyTransitionTime: 0.15s;
     opacity: 0;
   }
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     pointer-events: unset;
   }
 }
@@ -477,7 +475,7 @@ $historyTransitionTime: 0.15s;
   align-items: center;
   justify-content: flex-end;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     justify-content: space-between;
     margin: 8px 24px;
   }
@@ -530,7 +528,7 @@ $historyTransitionTime: 0.15s;
   flex-shrink: 0;
   pointer-events: auto;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     display: none;
   }
 }
@@ -592,99 +590,106 @@ $historyTransitionTime: 0.15s;
 }
 
 .mobileOverlayControls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  z-index: 2;
-  padding: 8px 24px;
-  background: linear-gradient(180deg, rgba(247, 247, 247, 0) 0%, #f7f7f7 100%);
+  display: none;
 
-  .mobileBtn {
-    padding: 0;
-    border: none;
-    height: 40px;
-    border-radius: 50%;
+  @include breakpoint(mobile) {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    z-index: 2;
+    padding: 8px 24px;
+    background: linear-gradient(
+      180deg,
+      rgba(247, 247, 247, 0) 0%,
+      #f7f7f7 100%
+    );
 
-    @include breakpointMobileFirst(sm) {
-      display: none;
+    .mobileBtn {
+      padding: 0;
+      border: none;
+      height: 40px;
+      border-radius: 50%;
+
+      &:disabled {
+        opacity: 0.4;
+      }
     }
-
-    &:disabled {
-      opacity: 0.4;
-    }
-  }
-
-  .mobileHistoryIcon {
-    stroke: #fff;
-  }
-
-  .mobileRunIcon {
-    path {
-      fill: #fff;
-    }
-
-    circle {
-      fill: #2cb88e;
-    }
-  }
-
-  @include darkTheme {
-    background: linear-gradient(180deg, rgba(20, 20, 20, 0) 0%, #141414 100%);
 
     .mobileHistoryIcon {
-      stroke: #242424;
+      stroke: #fff;
     }
 
     .mobileRunIcon {
       path {
-        fill: #141414;
+        fill: #fff;
       }
 
       circle {
-        fill: var(--green);
+        fill: #2cb88e;
+      }
+    }
+
+    @include darkTheme {
+      background: linear-gradient(
+        180deg,
+        rgba(20, 20, 20, 0) 0%,
+        #141414 100%
+      );
+
+      .mobileHistoryIcon {
+        stroke: #242424;
+      }
+
+      .mobileRunIcon {
+        path {
+          fill: #141414;
+        }
+
+        circle {
+          fill: var(--green);
+        }
       }
     }
   }
 }
 
 .mobileHistory {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 10;
-  background: #f7f7f7;
+  display: none;
 
-  .title {
-    color: var(--base-text-light-theme, #1a1a1a);
-    text-align: center;
-    font-family: Roboto;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 24px;
-
-    @include breakpointMobileFirst(sm) {
-      display: none;
-    }
-  }
-
-  .historyPanel {
-    width: 100%;
-  }
-
-  @include darkTheme {
-    background: #141414;
+  @include breakpoint(mobile) {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: #f7f7f7;
 
     .title {
-      color: var(--base-text-dark-theme, #b9b9b9);
+      @include breakpoint(mobile) {
+        color: var(--base-text-light-theme, #1a1a1a);
+        text-align: center;
+        font-family: Roboto;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 24px;
+      }
     }
-  }
 
-  @include breakpointMobileFirst(sm) {
-    display: none;
+    .historyPanel {
+      width: 100%;
+    }
+
+    @include darkTheme {
+      background: #141414;
+
+      .title {
+        color: var(--base-text-dark-theme, #b9b9b9);
+      }
+    }
   }
 }

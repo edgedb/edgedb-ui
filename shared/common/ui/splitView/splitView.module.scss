@@ -33,7 +33,7 @@
     border-bottom-right-radius: 8px;
   }
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     width: 100% !important;
     z-index: 0;
 
@@ -71,7 +71,7 @@
   align-items: center;
   justify-content: center;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     display: none;
   }
 

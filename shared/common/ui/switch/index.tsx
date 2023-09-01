@@ -66,10 +66,16 @@ export interface LabelsSwitchProps {
   labels: [string, string];
   value: switchState;
   onChange: () => void;
+  className?: string;
 }
 
-export const LabelsSwitch = ({labels, value, onChange}: LabelsSwitchProps) => (
-  <div className={styles.labelsSwitch}>
+export const LabelsSwitch = ({
+  labels,
+  value,
+  onChange,
+  className,
+}: LabelsSwitchProps) => (
+  <div className={cn(styles.labelsSwitch, className)}>
     <div
       className={cn(styles.radio, {
         [styles.checked]: value === switchState.left,

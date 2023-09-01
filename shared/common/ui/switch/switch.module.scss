@@ -142,8 +142,4 @@
       color: #999;
     }
   }
-
-  @include breakpointMobileFirst(sm) {
-    display: none;
-  }
 }

@@ -247,7 +247,7 @@
   line-height: 24px;
   font-weight: 500;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     flex-grow: 1;
   }
 
@@ -293,7 +293,7 @@
     column-gap: 32px;
     padding: 10px 16px 10px 8px;
 
-    @include breakpoint(sm) {
+    @include breakpoint(mobile) {
       height: 100%;
     }
 
@@ -381,7 +381,7 @@
   position: relative;
   margin: -2px;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     height: calc(100% - 176px);
   }
 
@@ -426,9 +426,12 @@
     }
 
     &.hovered {
-      @include breakpointMobileFirst(sm) {
-        outline: 2px dotted var(--outline-color);
-        outline-offset: -2px;
+      outline: 2px dotted var(--outline-color);
+      outline-offset: -2px;
+
+      @include breakpoint(mobile) {
+        outline: none;
+        outline-offset: 0;
       }
     }
 

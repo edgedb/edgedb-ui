@@ -31,7 +31,6 @@ import {
   TabEditorIcon,
   MobileHistoryIcon,
   MobileRunIcon,
-  CrossIcon,
 } from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
