@@ -186,13 +186,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
       {editorState.showHistory && (
         <div className={styles.mobileHistory}>
           <p className={styles.title}>History</p>
-          <button
-            onClick={() => editorState.setShowHistory(false)}
-            className={styles.closeHistoryBtn}
-          >
-            <CrossIcon />
-          </button>
-
           <HistoryPanel className={styles.historyPanel} />
         </div>
       )}

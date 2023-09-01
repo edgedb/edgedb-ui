@@ -217,6 +217,18 @@ $historyTransitionTime: 0.15s;
     opacity: 1;
     pointer-events: all;
   }
+
+  .closeHistoryMobile {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: transparent;
+    border: none;
+
+    @include breakpointMobileFirst(sm) {
+      display: none;
+    }
+  }
 }
 
 .closeHistory {
@@ -228,6 +240,10 @@ $historyTransitionTime: 0.15s;
 
   @include darkTheme {
     --buttonTextColour: #141414;
+  }
+
+  @include breakpoint(sm) {
+    display: none;
   }
 }
 
@@ -635,42 +651,40 @@ $historyTransitionTime: 0.15s;
 }
 
 .mobileHistory {
-  @include breakpoint(sm) {
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10;
-    background: #f7f7f7;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  background: #f7f7f7;
+
+  .title {
+    color: var(--base-text-light-theme, #1a1a1a);
+    text-align: center;
+    font-family: Roboto;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24px;
+
+    @include breakpointMobileFirst(sm) {
+      display: none;
+    }
+  }
+
+  .historyPanel {
+    width: 100%;
+  }
+
+  @include darkTheme {
+    background: #141414;
 
     .title {
-      color: var(--base-text-light-theme, #1a1a1a);
-      text-align: center;
-      font-family: Roboto;
-      font-size: 20px;
-      font-weight: 700;
-      line-height: 24px;
+      color: var(--base-text-dark-theme, #b9b9b9);
     }
+  }
 
-    .historyPanel {
-      width: 100%;
-    }
-
-    .closeHistoryBtn {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      background: transparent;
-      border: none;
-    }
-
-    @include darkTheme {
-      background: #141414;
-
-      .title {
-        color: var(--base-text-dark-theme, #b9b9b9);
-      }
-    }
+  @include breakpointMobileFirst(sm) {
+    display: none;
   }
 }

@@ -22,6 +22,7 @@ import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CrossIcon} from "../../icons";
 
 export const HistoryPanel = observer(function HistoryPanel({
   className,
@@ -33,6 +34,8 @@ export const HistoryPanel = observer(function HistoryPanel({
   const ref = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(editorState.showHistory);
   const [visible, setVisible] = useState(showHistory);
+
+  const isMobile = useIsMobile();
 
   useLayoutEffect(() => {
     if (editorState.showHistory === showHistory) {
@@ -47,11 +50,13 @@ export const HistoryPanel = observer(function HistoryPanel({
       });
     } else {
       setVisible(false);
-      ref.current!.addEventListener(
-        "transitionend",
-        () => setShowHistory(false),
-        {once: true}
-      );
+      if (isMobile) setShowHistory(false);
+      else
+        ref.current!.addEventListener(
+          "transitionend",
+          () => setShowHistory(false),
+          {once: true}
+        );
     }
   }, [editorState.showHistory]);
 
@@ -95,6 +100,12 @@ const HistoryPanelInner = observer(
           }
         }}
       >
+        <button
+          onClick={() => state.setShowHistory(false)}
+          className={styles.closeHistoryMobile}
+        >
+          <CrossIcon />
+        </button>
         <HistoryList state={state} />
         <div className={styles.closeHistory}>
           <Button
@@ -140,7 +151,7 @@ const HistoryList = observer(function HistoryList({
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [historyList.length]);
+  }, [historyList.length, isMobile]);
 
   return (
     <div ref={ref} className={styles.historyListWrapper}>

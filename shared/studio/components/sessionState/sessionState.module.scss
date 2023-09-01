@@ -143,6 +143,7 @@
   @include breakpoint(sm) {
     display: none;
   }
+
   .barOpen & {
     opacity: 1;
     transition-delay: 0.1s;
