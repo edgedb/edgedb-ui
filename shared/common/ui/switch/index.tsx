@@ -76,11 +76,7 @@ export const LabelsSwitch = ({
   className,
 }: LabelsSwitchProps) => (
   <div className={cn(styles.labelsSwitch, className)}>
-    <div
-      className={cn(styles.radio, {
-        [styles.checked]: value === switchState.left,
-      })}
-    >
+    <div className={styles.radio}>
       <input
         type="radio"
         id={labels[0]}
@@ -88,15 +84,16 @@ export const LabelsSwitch = ({
         onChange={onChange}
         checked={value === switchState.left}
       />
-      <label htmlFor={labels[0]}>
+      <label
+        htmlFor={labels[0]}
+        className={cn(styles.label, {
+          [styles.checked]: value === switchState.left,
+        })}
+      >
         <span>{labels[0]}</span>
       </label>
     </div>
-    <div
-      className={cn(styles.radio, {
-        [styles.checked]: value === switchState.right,
-      })}
-    >
+    <div className={styles.radio}>
       <input
         type="radio"
         id={labels[1]}
@@ -104,7 +101,12 @@ export const LabelsSwitch = ({
         onChange={onChange}
         checked={value === switchState.right}
       />
-      <label htmlFor={labels[1]}>
+      <label
+        htmlFor={labels[1]}
+        className={cn(styles.label, {
+          [styles.checked]: value === switchState.right,
+        })}
+      >
         <span>{labels[1]}</span>
       </label>
     </div>

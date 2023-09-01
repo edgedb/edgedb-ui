@@ -108,38 +108,35 @@
   align-items: center;
 
   .radio {
-    padding: 8px;
-
-    color: #fff;
-    border-radius: 16px;
-
     input {
       display: none;
     }
 
-    label {
+    .label {
+      color: #fff;
       font-family: Roboto;
       font-size: 12px;
       font-weight: 500;
       line-height: 16px;
       text-transform: uppercase;
       border-radius: 16px;
-    }
-  }
-
-  .checked {
-    background: #fff;
-    color: #666;
-  }
-
-  @include darkTheme {
-    .radio {
-      color: #242424;
+      padding: 8px;
     }
 
     .checked {
-      background: #141414;
-      color: #999;
+      background: #fff;
+      color: #666;
+    }
+
+    @include darkTheme {
+      .label {
+        color: #242424;
+      }
+
+      .checked {
+        background: #141414;
+        color: #999;
+      }
     }
   }
 }
