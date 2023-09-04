@@ -94,7 +94,7 @@ interface RowListProps {
   height?: number;
   maxHeight?: number;
   disableVirtualisedRendering?: boolean;
-  showMore?: () => void;
+  setShowExpandBtn: (show: boolean) => void;
 }
 
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
@@ -120,7 +120,7 @@ const RowList = observer(function RowList({
   height,
   maxHeight,
   disableVirtualisedRendering,
-  showMore,
+  setShowExpandBtn,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -137,10 +137,12 @@ const RowList = observer(function RowList({
 
   if (disableVirtualisedRendering) {
     const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
-    const showExpandedButton =
+    const showExpandBtn =
       maxHeight &&
       (rows.length > maxHeight ||
         rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
+
+    setShowExpandBtn(!!showExpandBtn);
 
     return (
       <div
@@ -149,7 +151,7 @@ const RowList = observer(function RowList({
         })}
         style={{
           ...inspectorStyle,
-          ...(showExpandedButton
+          ...(showExpandBtn
             ? {
                 position: "relative",
                 overflow: "hidden",
@@ -163,11 +165,6 @@ const RowList = observer(function RowList({
         {rows.map((_, i) => (
           <Row index={i} style={{}} data={items} key={i} noVirtualised />
         ))}
-        {showExpandedButton ? (
-          <div className={styles.showMore} onClick={() => showMore?.()}>
-            <span>show more...</span>
-          </div>
-        ) : null}
       </div>
     );
   } else {
@@ -284,7 +281,7 @@ function CopyButton({
 
   return (
     <div
-      className={cn(styles.actionButton, styles.copyButton)}
+      className={cn(styles.copyButton)}
       {...props}
       onClick={() => {
         const jsonString =
@@ -388,7 +385,7 @@ export const InspectorRow = observer(function InspectorRow({
           item.type === ItemType.Scalar &&
           state.extendedViewIds?.has(item.codec.getKnownTypeName()) ? (
             <div
-              className={cn(styles.actionButton, styles.openExtendedButton)}
+              className={cn(styles.viewButton)}
               onClick={() => state.openExtendedView?.(item)}
             >
               <OpenExpandedViewIcon /> View

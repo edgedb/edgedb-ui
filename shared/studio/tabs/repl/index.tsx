@@ -363,6 +363,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const editorState = useTabState(QueryEditor);
+  const isMobile = useIsMobile();
+  const [showExpandBtn, setShowExpandBtn] = useState(false);
 
   const {navigate, currentPath} = useDBRouter();
 
@@ -454,10 +456,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
             state={item.inspectorState}
             disableVirtualisedRendering
             maxHeight={item.showMore ? undefined : 16}
-            showMore={() => {
-              item.setShowMore(true);
-              updateScroll.current = true;
-            }}
+            setShowExpandBtn={setShowExpandBtn}
           />
         ) : (
           <>loading ...</>
@@ -478,6 +477,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
+
+  const marginLeftRepl = isMobile
+    ? "0px"
+    : isExplain
+    ? "16px"
+    : `${dbName.length + 2}ch`;
 
   return (
     <div
@@ -574,11 +579,23 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
                 [styles.explain]: isExplain,
               })}
               style={{
-                marginLeft: isExplain ? "16px" : `${dbName.length + 2}ch`,
+                marginLeft: marginLeftRepl,
               }}
             >
               {output}
             </div>
+            {showExpandBtn ? (
+              <div className={styles.showMore}>
+                <button
+                  onClick={() => {
+                    item.setShowMore(true);
+                    updateScroll.current = true;
+                  }}
+                >
+                  show more...
+                </button>
+              </div>
+            ) : null}
           </div>
         </CustomScrollbars>
       ) : null}
