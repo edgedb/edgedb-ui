@@ -9,6 +9,7 @@ import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
 import {useGlobalDragCursor} from "@edgedb/common/hooks/globalDragCursor";
 
 import {SplitViewDirection, SplitViewState} from "./model";
+import {useIsMobile} from "../../hooks/useMobile";
 
 interface SplitViewProps {
   views: JSX.Element[];
@@ -33,6 +34,8 @@ export default observer(function SplitView({
     state.direction === SplitViewDirection.vertical ? "height" : "width";
 
   const ref = useRef<HTMLDivElement>(null);
+
+  const isMobile = useIsMobile();
 
   const resizeHandler = useDragHandler<ResizeDragHandlerParams>(() => {
     let initialPos: Position;
@@ -104,9 +107,12 @@ export default observer(function SplitView({
 
         return (
           <Fragment key={viewIndex}>
-            <div className={styles.splitViewChild} style={size}>
-              {view}
-            </div>
+            {((isMobile && state.activeViewIndex === viewIndex) ||
+              !isMobile) && (
+              <div className={styles.splitViewChild} style={size}>
+                {view}
+              </div>
+            )}
             {!lastView ? (
               <Resizer
                 direction={state.direction}

@@ -8,6 +8,12 @@ $historyTransitionTime: 0.15s;
   min-width: 0;
   display: flex;
 
+  --green: #2cb88e;
+
+  @include darkTheme {
+    --green: #279474;
+  }
+
   .main {
     height: auto;
     transition: margin $historyTransitionTime;
@@ -64,6 +70,10 @@ $historyTransitionTime: 0.15s;
 
   @include darkTheme {
     background: #2e2e2e;
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
   }
 }
 
@@ -207,6 +217,19 @@ $historyTransitionTime: 0.15s;
     opacity: 1;
     pointer-events: all;
   }
+
+  .closeHistoryMobile {
+    display: none;
+
+    @include breakpoint(mobile) {
+      display: block;
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: transparent;
+      border: none;
+    }
+  }
 }
 
 .closeHistory {
@@ -219,6 +242,10 @@ $historyTransitionTime: 0.15s;
   @include darkTheme {
     --buttonTextColour: #141414;
   }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 }
 
 .historyListWrapper {
@@ -229,6 +256,10 @@ $historyTransitionTime: 0.15s;
     #000 calc(100% - 50px),
     transparent 100%
   );
+
+  @include breakpoint(mobile) {
+    height: calc(100% - 30px);
+  }
 }
 
 .historyList {
@@ -249,6 +280,14 @@ $historyTransitionTime: 0.15s;
   margin: 16px;
   transition: opacity 0.1s ease-in-out;
 
+  @include breakpoint(mobile) {
+    height: 168px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
   &:hover {
     background: #fafafa;
 
@@ -258,7 +297,7 @@ $historyTransitionTime: 0.15s;
   }
 
   &.selected {
-    outline: 2px solid #49d8ad;
+    outline: 2px solid var(--green);
   }
 
   &.hasDateHeader {
@@ -305,7 +344,7 @@ $historyTransitionTime: 0.15s;
 
     &.selected {
       outline: none;
-      border-color: #49d8ad;
+      border-color: var(--green);
     }
   }
 
@@ -347,11 +386,23 @@ $historyTransitionTime: 0.15s;
   }
 
   .loadButton {
-    --buttonBg: #49d8ad;
+    --buttonBg: var(--green);
     position: absolute;
     left: 0;
     bottom: 0;
     opacity: 0;
+    color: #fff;
+
+    @include breakpoint(mobile) {
+      div {
+        border-radius: 6px;
+        padding: 8px 18px;
+      }
+    }
+
+    @include darkTheme {
+      color: #242424;
+    }
   }
 
   .visible {
@@ -415,6 +466,10 @@ $historyTransitionTime: 0.15s;
   .showHistory & {
     opacity: 0;
   }
+
+  @include breakpoint(mobile) {
+    pointer-events: unset;
+  }
 }
 
 .controls {
@@ -422,6 +477,11 @@ $historyTransitionTime: 0.15s;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+
+  @include breakpoint(mobile) {
+    justify-content: space-between;
+    margin: 8px 24px;
+  }
 
   label {
     display: flex;
@@ -464,12 +524,16 @@ $historyTransitionTime: 0.15s;
   }
 }
 
-.runButton {
+.runBtn {
   --buttonBg: var(--app-accent-green);
   --buttonTextColour: #0a4634;
   align-self: flex-start;
   flex-shrink: 0;
   pointer-events: auto;
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 }
 
 .queryOptions {
@@ -524,6 +588,111 @@ $historyTransitionTime: 0.15s;
 
     &.collapsed .queryOptionsWrapper {
       background: #353535;
+    }
+  }
+}
+
+.mobileOverlayControls {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: flex;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: space-between;
+    z-index: 2;
+    padding: 8px 24px;
+    background: linear-gradient(
+      180deg,
+      rgba(247, 247, 247, 0) 0%,
+      #f7f7f7 100%
+    );
+
+    .mobileBtn {
+      padding: 0;
+      border: none;
+      height: 40px;
+      border-radius: 50%;
+
+      &:disabled {
+        opacity: 0.4;
+      }
+    }
+
+    .mobileHistoryIcon {
+      stroke: #fff;
+    }
+
+    .mobileRunIcon {
+      path {
+        fill: #fff;
+      }
+
+      circle {
+        fill: #2cb88e;
+      }
+    }
+
+    @include darkTheme {
+      background: linear-gradient(
+        180deg,
+        rgba(20, 20, 20, 0) 0%,
+        #141414 100%
+      );
+
+      .mobileHistoryIcon {
+        stroke: #242424;
+      }
+
+      .mobileRunIcon {
+        path {
+          fill: #141414;
+        }
+
+        circle {
+          fill: var(--green);
+        }
+      }
+    }
+  }
+}
+
+.mobileHistory {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: #f7f7f7;
+
+    .title {
+      @include breakpoint(mobile) {
+        color: var(--base-text-light-theme, #1a1a1a);
+        text-align: center;
+        font-family: Roboto;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 24px;
+      }
+    }
+
+    .historyPanel {
+      width: 100%;
+    }
+
+    @include darkTheme {
+      background: #141414;
+
+      .title {
+        color: var(--base-text-dark-theme, #b9b9b9);
+      }
     }
   }
 }

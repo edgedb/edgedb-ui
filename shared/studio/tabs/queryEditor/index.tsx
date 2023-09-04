@@ -26,7 +26,12 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 import {HistoryPanel} from "./history";
 import ParamEditorPanel from "./paramEditor";
-import {KebabMenuIcon, TabEditorIcon} from "../../icons";
+import {
+  KebabMenuIcon,
+  TabEditorIcon,
+  MobileHistoryIcon,
+  MobileRunIcon,
+} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
@@ -40,9 +45,11 @@ import Spinner from "@edgedb/common/ui/spinner";
 import {ExplainVis} from "../../components/explainVis";
 import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
 import {ExplainStateType} from "../../components/explainVis/state";
+import {LabelsSwitch, switchState} from "@edgedb/common/ui/switch";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
+  const splitViewState = editorState.splitView;
 
   const [_, theme] = useTheme();
 
@@ -126,7 +133,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
                   <div className={styles.replEditorOverlays}>
                     <div className={styles.controls}>
                       <Button
-                        className={styles.runButton}
+                        className={styles.runBtn}
                         label="Run"
                         shortcut="Ctrl+Enter"
                         macShortcut="⌘+Enter"
@@ -150,6 +157,43 @@ export const QueryEditorView = observer(function QueryEditorView() {
         state={editorState.splitView}
         minViewSize={20}
       />
+      <div className={styles.mobileOverlayControls}>
+        <button
+          className={styles.mobileBtn}
+          onClick={() => editorState.setShowHistory(true)}
+        >
+          <MobileHistoryIcon className={styles.mobileHistoryIcon} />
+        </button>
+
+        <LabelsSwitch
+          labels={["query", "result"]}
+          value={
+            splitViewState.activeViewIndex
+              ? switchState.right
+              : switchState.left
+          }
+          onChange={() =>
+            splitViewState.setActiveViewIndex(
+              splitViewState.activeViewIndex ? 0 : 1
+            )
+          }
+        />
+        <button
+          className={styles.mobileBtn}
+          onClick={() => editorState.runQuery()}
+          disabled={
+            !editorState.canRunQuery || !!splitViewState.activeViewIndex
+          }
+        >
+          <MobileRunIcon className={styles.mobileRunIcon} />
+        </button>
+      </div>
+      {editorState.showHistory && (
+        <div className={styles.mobileHistory}>
+          <p className={styles.title}>History</p>
+          <HistoryPanel className={styles.historyPanel} />
+        </div>
+      )}
 
       {editorState.extendedViewerItem ? (
         <div className={styles.extendedViewerContainer}>

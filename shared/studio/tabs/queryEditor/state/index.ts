@@ -36,7 +36,7 @@ import {
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
 
-import {dbCtx, useTabState} from "../../../state";
+import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
@@ -706,5 +706,6 @@ export class QueryEditor extends Model({
 
     this.queryRunning = false;
     dbState.setLoadingTab(QueryEditor, false);
+    this.splitView.setActiveViewIndex(1);
   });
 }

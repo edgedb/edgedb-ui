@@ -25,6 +25,25 @@
   }
 }
 
+$breakpoints: (
+  mobile: 768px,
+);
+
+@mixin breakpoint($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    $breakpoint-value: map-get($breakpoints, $breakpoint);
+    // Subtracts 0.5px to make breakpoint exclusive (width < x) instead of
+    // inclusive (width <= x)
+    // (Uses -0.5px instead of -1px due to incorrect behaviour on some
+    // systems ie. win10 with fractional display scaling ¯\_(ツ)_/¯)
+    @media (max-width: #{$breakpoint-value - 0.5px}) {
+      @content;
+    }
+  } @else {
+    @warn 'Invalid breakpoint: #{$breakpoint}.';
+  }
+}
+
 @mixin isMobile {
   @media (max-width: 767.5px) {
     @content;

@@ -140,6 +140,10 @@
   pointer-events: none;
   transition: opacity 0.2s;
 
+  @include breakpoint(mobile) {
+    display: none;
+  }
+
   .barOpen & {
     opacity: 1;
     transition-delay: 0.1s;

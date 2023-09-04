@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .splitViewContainer {
   display: flex;
   flex-direction: row;
@@ -31,6 +33,18 @@
     border-bottom-right-radius: 8px;
   }
 
+  @include breakpoint(mobile) {
+    width: 100% !important;
+    z-index: 0;
+
+    &:last-child {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+    }
+  }
+
   .splitVertical & {
     &:first-child {
       border-top-right-radius: 8px;
@@ -52,6 +66,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 
   .grabHandle {
     position: absolute;

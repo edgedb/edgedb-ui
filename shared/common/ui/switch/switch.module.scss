@@ -99,3 +99,44 @@
     }
   }
 }
+
+.labelsSwitch {
+  display: flex;
+  padding: 4px;
+  background: #999;
+  border-radius: 22px;
+  align-items: center;
+
+  .radio {
+    input {
+      display: none;
+    }
+
+    .label {
+      color: #fff;
+      font-family: Roboto;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 16px;
+      text-transform: uppercase;
+      border-radius: 16px;
+      padding: 8px;
+    }
+
+    .checked {
+      background: #fff;
+      color: #666;
+    }
+
+    @include darkTheme {
+      .label {
+        color: #242424;
+      }
+
+      .checked {
+        background: #141414;
+        color: #999;
+      }
+    }
+  }
+}

@@ -17,6 +17,7 @@ import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {observer} from "mobx-react-lite";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {explainGraphSettings} from "../../state/explainGraphSettings";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export const lightPalette = ["#D5D8EF", "#FDF5E2", "#DAE9FB", "#E6FFF8"];
 export const darkPalette = ["#292235", "#2B3428", "#182A30", "#20352F"];
@@ -336,6 +337,8 @@ export const TreemapNode = observer(
     const isHovered =
       !isSelected && state.hoveredPlan?.id === plan.id && !!plan.parent;
 
+    const isMobile = useIsMobile();
+
     return (
       <div
         ref={ref}
@@ -399,7 +402,9 @@ export const TreemapNode = observer(
                       }
                     }
                   }}
-                  onMouseOver={() => state.setHoveredPlan(plan)}
+                  onMouseOver={() => {
+                    if (!isMobile) state.setHoveredPlan(plan);
+                  }}
                   onMouseOut={() => state.setHoveredPlan(null)}
                   onDoubleClick={() => {
                     if (plan.parent) state.treemapZoomIn(plan, ref.current!);

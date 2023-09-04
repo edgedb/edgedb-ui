@@ -724,3 +724,71 @@ export const ArrowDown = () => (
     <path d="M6.91076 0.950216L4.07025 5.68326C3.81675 6.10558 3.18325 6.10558 2.92975 5.68326L0.0892386 0.950216C-0.164262 0.527898 0.152489 0 0.65949 0H6.34051C6.84751 0 7.16426 0.527898 6.91076 0.950216Z" />
   </svg>
 );
+
+export const MobileHistoryIcon = ({className}: {className?: string}) => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <rect width="40" height="40" rx="20" fill="#8676B0" />
+    <path d="M19 21.228L19 13" strokeWidth="4" strokeLinecap="round" />
+    <path
+      d="M19 21.228L22.0001 24.228"
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M20 34C27.732 34 34 27.732 34 20C34 12.268 27.732 6 20 6C12.268 6 6 12.268 6 20C6 23.8146 7.52563 27.2729 10 29.798"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8.95447 31.1274L11.7139 31.8929L11.3978 29.0468"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const MobileRunIcon = ({className}: {className?: string}) => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <g id="Group 2030">
+      <circle id="Ellipse 102" cx="20" cy="20" r="20" />
+      <path
+        id="Subtract"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.5584 26.2879L25.9091 20.8982C26.6017 20.4989 26.6017 19.5008 25.9091 19.1016L16.5584 13.7118C15.8658 13.3126 15 13.8116 15 14.6101L15 25.3896C15 26.1881 15.8658 26.6872 16.5584 26.2879Z"
+      />
+    </g>
+  </svg>
+);
+
+export const CrossIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="17"
+    height="16"
+    viewBox="0 0 17 16"
+    fill="none"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M0.393923 13.7047C-0.131308 14.2296 -0.131308 15.0811 0.393923 15.606C0.919153 16.1312 1.77003 16.1312 2.29526 15.606L8.00057 9.90068L13.7059 15.6063C14.2311 16.1312 15.082 16.1312 15.6072 15.6063C15.8633 15.3503 15.9946 15.0168 16.0011 14.6813C16.0077 14.3287 15.8764 13.9738 15.6072 13.7047L9.90191 7.99934L15.6059 2.29534C15.8856 2.01598 16.0156 1.64405 15.9985 1.27836C15.9828 0.956658 15.8515 0.63955 15.6059 0.393677C15.0807 -0.131226 14.2298 -0.131226 13.7046 0.393677L8.00057 6.09801L2.29657 0.394005C1.77134 -0.131226 0.920467 -0.131226 0.395236 0.394005C-0.129995 0.918907 -0.129995 1.77044 0.395236 2.29534L6.09924 7.99934L0.393923 13.7047Z"
+      fill="#737373"
+    />
+  </svg>
+);
