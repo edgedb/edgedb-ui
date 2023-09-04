@@ -28,6 +28,11 @@ jobs:
         run: |
           yarn
 
+      - name: Lint
+        working-directory: web
+        run: |
+          yarn lint
+
       - name: Run build
         working-directory: web
         run: |
