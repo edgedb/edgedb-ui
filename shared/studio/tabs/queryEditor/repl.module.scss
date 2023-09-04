@@ -219,7 +219,10 @@ $historyTransitionTime: 0.15s;
   }
 
   .closeHistoryMobile {
+    display: none;
+
     @include breakpoint(mobile) {
+      display: block;
       position: fixed;
       top: 24px;
       right: 24px;
