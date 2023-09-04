@@ -7,7 +7,7 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {prettyPrintJSON} from "@edgedb/inspector/buildScalar";
 
 import styles from "./jsonViewer.module.scss";
-import {ActionButton, ActionsBar} from "../shared";
+import {ActionsBar} from "../shared";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 interface JsonViewerProps {

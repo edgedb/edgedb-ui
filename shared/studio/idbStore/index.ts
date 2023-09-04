@@ -130,9 +130,6 @@ export function storeReplHistoryItem(
   return _storeHistoryItem("replHistory", itemId, item, resultData);
 }
 
-const sleep = (ms: number) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
 async function _fetchHistory(
   storeId: "queryHistory" | "replHistory",
   instanceId: string,

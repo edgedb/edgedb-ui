@@ -1,12 +1,7 @@
 import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
-import {
-  SchemaConstraint,
-  SchemaFunction,
-  SchemaParam,
-} from "@edgedb/common/schemaData";
+import {SchemaFunction, SchemaParam} from "@edgedb/common/schemaData";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import {
@@ -14,7 +9,6 @@ import {
   Copyable,
   CopyButton,
   CopyHighlight,
-  highlightString,
   ItemHeader,
   Keyword,
   Punc,

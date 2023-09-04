@@ -46,7 +46,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           [styles.popupOpen]: popupOpen,
           [styles.fullyOpen]: isFullyOpen,
         })}
-        onTransitionEnd={(e) => {
+        onTransitionEnd={() => {
           if (popupOpen) {
             setOpenProgress(openProgress + 1);
           }

@@ -1,12 +1,4 @@
-import {
-  computed,
-  observable,
-  action,
-  when,
-  reaction,
-  autorun,
-  runInAction,
-} from "mobx";
+import {computed, observable, action, reaction, runInAction} from "mobx";
 import {
   model,
   Model,

@@ -134,7 +134,7 @@ function SplitButton({
             className={cn(styles.dropdown, {
               [styles.dropdownOpen]: dropdownOpen,
             })}
-            onClick={(e) => setDropdownOpen(false)}
+            onClick={() => setDropdownOpen(false)}
           >
             {items.map(({label, link}) => (
               <Link

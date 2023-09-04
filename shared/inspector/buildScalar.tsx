@@ -153,6 +153,7 @@ export function renderValue(
         ),
       };
 
+    // @ts-ignore - Intentional fallthrough
     case "std::json":
       value = noMultiline ? value : prettyPrintJSON(value);
     case "std::str": {

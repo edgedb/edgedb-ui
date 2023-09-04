@@ -10,12 +10,10 @@ import {
   Copyable,
   CopyButton,
   CopyHighlight,
-  highlightString,
   ItemHeader,
   Keyword,
   Punc,
   Str,
-  TypeLink,
   TypeName,
 } from "./utils";
 import {useSchemaTextState} from "../textView";

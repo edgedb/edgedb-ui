@@ -1,14 +1,6 @@
 import {createContext, useContext} from "react";
 
-import {
-  action,
-  autorun,
-  computed,
-  observable,
-  reaction,
-  runInAction,
-  when,
-} from "mobx";
+import {action, autorun, observable, runInAction, when} from "mobx";
 import {
   AnyModel,
   createContext as createMobxContext,
@@ -16,12 +8,10 @@ import {
   idProp,
   Model,
   model,
-  modelAction,
   ModelClass,
   modelFlow,
   ModelTypeInfo,
   ObjectMap,
-  objectMap,
   prop,
   _async,
   _await,

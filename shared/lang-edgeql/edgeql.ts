@@ -2,6 +2,7 @@ import type {LRParser} from "@lezer/lr";
 import {LRLanguage, LanguageSupport} from "@codemirror/language";
 import {styleTags, tags as t} from "@lezer/highlight";
 
+// @ts-ignore
 import {parser as _parser} from "./lang";
 
 const parser = _parser as LRParser;

@@ -1,7 +1,6 @@
 import {action, computed} from "mobx";
 import {
   createContext,
-  findParent,
   model,
   Model,
   prop,
@@ -22,7 +21,7 @@ import {
   QueryParams,
   codecsRegistry,
 } from "../utils/decodeRawBuffer";
-import {instanceCtx, InstanceState} from "./instance";
+import {instanceCtx} from "./instance";
 import {sessionStateCtx} from "./sessionState";
 import {splitQueryIntoStatements} from "../utils/syntaxTree";
 
@@ -218,6 +217,7 @@ export class Connection extends Model({
 
       const startTime = performance.now();
 
+      // @ts-ignore - Ignore _ is declared but not used error
       let inCodec, outCodec, outCodecBuf, capabilities, _;
 
       if (this._codecCache.has(queryString)) {

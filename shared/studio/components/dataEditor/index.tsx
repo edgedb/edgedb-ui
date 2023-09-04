@@ -1,4 +1,4 @@
-import {forwardRef, memo, RefObject, useEffect, useRef, useState} from "react";
+import {forwardRef, RefObject, useEffect, useRef, useState} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -452,7 +452,7 @@ const EnumEditor = forwardRef(function EnumEditor(
     value: string;
     onChange: (val: string, error: boolean) => void;
   },
-  ref
+  _ref
 ) {
   return (
     <Select

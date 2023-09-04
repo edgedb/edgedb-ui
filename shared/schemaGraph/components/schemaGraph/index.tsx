@@ -4,7 +4,7 @@ import {observer} from "mobx-react";
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";
 import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
-import {DBRouter, useDBRouter} from "@edgedb/studio/hooks/dbRoute";
+import {useDBRouter} from "@edgedb/studio/hooks/dbRoute";
 
 import SchemaNode from "./SchemaNode";
 import SchemaLink from "./SchemaLink";
@@ -177,7 +177,7 @@ export default observer(function SchemaGraph({
       onClick={handleClickOutside}
       onMouseDown={graphDragHandler}
       onWheel={scrollHandler}
-      onDoubleClick={(e) => {
+      onDoubleClick={() => {
         if (schemaState.graph.focusedNode) {
           schemaState.graph.exitFocusMode();
         }

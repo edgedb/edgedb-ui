@@ -31,7 +31,7 @@ class CurrentTimestamp {
     if (this._timer) {
       clearTimeout(this._timer);
     }
-    this._timer = setTimeout(this._updateTimestamp, 1000);
+    this._timer = setTimeout(this._updateTimestamp, 1000) as unknown as number;
   }
 }
 
