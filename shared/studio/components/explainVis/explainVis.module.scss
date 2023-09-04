@@ -247,6 +247,10 @@
   line-height: 24px;
   font-weight: 500;
 
+  @include breakpoint(mobile) {
+    flex-grow: 1;
+  }
+
   .header {
     padding: 4px 16px 4px 8px;
     background: #e5e5e5;
@@ -288,6 +292,10 @@
     display: flex;
     column-gap: 32px;
     padding: 10px 16px 10px 8px;
+
+    @include breakpoint(mobile) {
+      height: 100%;
+    }
 
     @include darkTheme {
       background: #242424;
@@ -373,6 +381,10 @@
   position: relative;
   margin: -2px;
 
+  @include breakpoint(mobile) {
+    height: calc(100% - 176px);
+  }
+
   @include darkTheme {
     --outline-color: #74a6fc;
     background: #1c1c1c;
@@ -416,6 +428,11 @@
     &.hovered {
       outline: 2px dotted var(--outline-color);
       outline-offset: -2px;
+
+      @include breakpoint(mobile) {
+        outline: none;
+        outline-offset: 0;
+      }
     }
 
     .planName,

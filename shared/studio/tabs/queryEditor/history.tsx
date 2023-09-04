@@ -21,13 +21,21 @@ import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CrossIcon} from "../../icons";
 
-export const HistoryPanel = observer(function HistoryPanel() {
+export const HistoryPanel = observer(function HistoryPanel({
+  className,
+}: {
+  className?: string;
+}) {
   const editorState = useTabState(QueryEditor);
 
   const ref = useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = useState(editorState.showHistory);
   const [visible, setVisible] = useState(showHistory);
+
+  const isMobile = useIsMobile();
 
   useLayoutEffect(() => {
     if (editorState.showHistory === showHistory) {
@@ -42,16 +50,23 @@ export const HistoryPanel = observer(function HistoryPanel() {
       });
     } else {
       setVisible(false);
-      ref.current!.addEventListener(
-        "transitionend",
-        () => setShowHistory(false),
-        {once: true}
-      );
+      if (isMobile) setShowHistory(false);
+      else
+        ref.current!.addEventListener(
+          "transitionend",
+          () => setShowHistory(false),
+          {once: true}
+        );
     }
   }, [editorState.showHistory]);
 
   return showHistory ? (
-    <HistoryPanelInner ref={ref} state={editorState} visible={visible} />
+    <HistoryPanelInner
+      ref={ref}
+      state={editorState}
+      visible={visible}
+      className={className}
+    />
   ) : null;
 });
 
@@ -61,8 +76,9 @@ const HistoryPanelInner = observer(
     {
       state: QueryEditor;
       visible: boolean;
+      className?: string;
     }
-  >(function HistoryPanelInner({state, visible}, ref) {
+  >(function HistoryPanelInner({state, visible, className}, ref) {
     useEffect(() => {
       (ref as RefObject<HTMLDivElement>).current?.focus();
     }, []);
@@ -70,7 +86,7 @@ const HistoryPanelInner = observer(
     return (
       <div
         ref={ref}
-        className={cn(styles.history, {
+        className={cn(styles.history, className, {
           [styles.visible]: visible,
         })}
         tabIndex={0}
@@ -84,6 +100,12 @@ const HistoryPanelInner = observer(
           }
         }}
       >
+        <button
+          onClick={() => state.setShowHistory(false)}
+          className={styles.closeHistoryMobile}
+        >
+          <CrossIcon />
+        </button>
         <HistoryList state={state} />
         <div className={styles.closeHistory}>
           <Button
@@ -109,6 +131,8 @@ const HistoryList = observer(function HistoryList({
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     const list = listRef.current;
     if (list) {
@@ -123,9 +147,11 @@ const HistoryList = observer(function HistoryList({
     }
   }, [state.historyCursor, height]);
 
+  const estimatedItemSize = isMobile ? 184 : 121;
+
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
-  }, [historyList.length]);
+  }, [historyList.length, isMobile]);
 
   return (
     <div ref={ref} className={styles.historyListWrapper}>
@@ -135,9 +161,11 @@ const HistoryList = observer(function HistoryList({
         itemCount={historyList.length + 1}
         height={height}
         width="100%"
-        estimatedItemSize={121}
+        estimatedItemSize={estimatedItemSize}
         itemSize={(index) =>
-          historyList[index - 1]?.showDateHeader ? 137 : 121
+          historyList[index - 1]?.showDateHeader
+            ? estimatedItemSize + 16
+            : estimatedItemSize
         }
       >
         {({index, style}) => (

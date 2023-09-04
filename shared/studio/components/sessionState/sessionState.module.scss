@@ -140,7 +140,7 @@
   pointer-events: none;
   transition: opacity 0.2s;
 
-  @include breakpoint(sm) {
+  @include breakpoint(mobile) {
     display: none;
   }
 
