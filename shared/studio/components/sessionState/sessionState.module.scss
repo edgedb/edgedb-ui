@@ -276,7 +276,7 @@
   top: 0;
   left: 16px;
   right: 16px;
-  bottom: 16px;
+  bottom: 0;
   display: flex;
   opacity: 0;
   z-index: 0;
@@ -335,7 +335,7 @@
       background: #f5f5f5;
 
       @include darkTheme {
-        background: #2e2e2e;
+        background: #1f1f1f;
       }
     }
 
@@ -386,6 +386,13 @@
 
         &:focus {
           background: var(--app-bg);
+        }
+
+        @include breakpoint(mobile) {
+          background: #fff;
+
+          @include darkTheme {
+          }
         }
       }
 
@@ -442,11 +449,15 @@
       background: #f5f5f5;
 
       @include darkTheme {
-        background: #2e2e2e;
+        background: #1f1f1f;
       }
 
       &:first-child {
         margin-left: unset;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
       }
     }
 
@@ -457,6 +468,11 @@
       text-align: center;
       font-size: 13px;
       padding: 8px 16px 4px 8px;
+
+      @include breakpoint(mobile) {
+        color: #666;
+        padding-left: 16px;
+      }
     }
   }
 
@@ -482,6 +498,10 @@
     );
 
     @include hideScrollbar;
+
+    @include breakpoint(mobile) {
+      padding-left: 16px;
+    }
   }
 
   .listInner {
@@ -526,10 +546,10 @@
     @include breakpoint(mobile) {
       padding: 16px 16px 16px 16px;
 
-      background: #e5e5e5;
+      background: #e6e6e6;
 
       @include darkTheme {
-        background: #242424;
+        background: #2e2e2e;
       }
     }
   }
@@ -549,6 +569,10 @@
   .headerInner {
     display: flex;
     flex-wrap: wrap;
+
+    @include breakpoint(mobile) {
+      flex-direction: column;
+    }
   }
 
   .itemDesc {
@@ -589,6 +613,10 @@
 
     @include darkTheme {
       opacity: 0.5;
+    }
+
+    @include breakpoint(mobile) {
+      margin-left: 0;
     }
   }
 
@@ -647,16 +675,15 @@
     padding: 12px;
     font-style: italic;
     opacity: 0.8;
-    border: 2px dashed #e1e1e1;
-    border-radius: 4px;
-    margin: 12px 16px 0 8px;
-
-    @include darkTheme {
-      border-color: #4d4d4d;
-    }
+    margin: 24px 16px 48px 8px;
 
     @include breakpoint(mobile) {
-      margin-bottom: 48px;
+      margin-left: 16px;
+      color: #666;
+
+      @include darkTheme {
+        color: #b9b9b9;
+      }
     }
   }
 }

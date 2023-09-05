@@ -21,7 +21,7 @@ import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerTabs";
 import {PrimitiveType} from "../dataEditor/utils";
-import {useWindowSize} from "../../hooks/useWindowSize";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -272,8 +272,7 @@ const SessionEditorPanelContent = observer(
     const dbState = useDatabaseState();
     const sessionState = dbState.sessionState;
 
-    const windowSize = useWindowSize();
-    const isMobile = (windowSize.width && windowSize.width < 768) || false;
+    const isMobile = useIsMobile();
 
     const [searchFilter, setSearchFilter] = useState("");
 
