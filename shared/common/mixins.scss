@@ -26,12 +26,7 @@
 }
 
 $breakpoints: (
-  xs: 320px,
-  sm: 768px,
-  md: 1024px,
-  lg: 1440px,
-  xl: 1920px,
-  xxl: 2560px,
+  mobile: 768px,
 );
 
 @mixin breakpoint($breakpoint) {
@@ -49,13 +44,8 @@ $breakpoints: (
   }
 }
 
-@mixin breakpointMobileFirst($breakpoint) {
-  @if map-has-key($breakpoints, $breakpoint) {
-    $breakpoint-value: map-get($breakpoints, $breakpoint);
-    @media (min-width: #{$breakpoint-value}) {
-      @content;
-    }
-  } @else {
-    @warn 'Invalid breakpoint: #{$breakpoint}.';
+@mixin isMobile {
+  @media (max-width: 767.5px) {
+    @content;
   }
 }

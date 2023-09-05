@@ -13,11 +13,13 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
+import {SessionStateControls} from "../sessionState";
+
 import styles from "./headerTab.module.scss";
 
-const HeaderTabsContext = createContext<ObservableMap<string, JSX.Element>>(
-  null!
-);
+export const HeaderTabsContext = createContext<
+  ObservableMap<string, JSX.Element>
+>(null!);
 
 export function HeaderTabsProvider({children}: PropsWithChildren<{}>) {
   const [headerTabs] = useState(
@@ -193,7 +195,12 @@ export const HeaderTabs = observer(function HeaderTabs({
     }
   }
 
-  return <div className={cn(styles.tabs, className)}>{tabs}</div>;
+  return (
+    <div className={cn(styles.tabs, className)}>
+      {tabs}
+      <SessionStateControls />
+    </div>
+  );
 });
 
 function DropdownIcon() {

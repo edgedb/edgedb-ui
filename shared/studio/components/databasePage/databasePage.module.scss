@@ -15,7 +15,14 @@
     transition-delay: 0.2s;
   }
 
-  @include breakpoint(sm) {
+  &.mobile {
+    grid-template-areas: "session" "content" "tabs";
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+
+  @include breakpoint(mobile) {
     position: absolute;
     top: 0;
     left: 0;
@@ -36,7 +43,12 @@
 }
 
 .tabbar {
+  grid-area: tabs;
   margin-bottom: -16px;
+
+  .mobile & {
+    margin-bottom: 0;
+  }
 }
 
 .tabContent {

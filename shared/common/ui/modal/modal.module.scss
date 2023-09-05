@@ -11,9 +11,25 @@
   justify-content: center;
   overflow: hidden;
   z-index: 300;
-  background: var(--app-modal-overlay);
   user-select: none;
-  backdrop-filter: blur(4px);
+  transition: pointer-events 0.3s;
+
+  &:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--app-modal-overlay);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s;
+  }
+
+  :global(.MODAL_TRANSITION) & {
+    pointer-events: none;
+
+    &:before {
+      opacity: 0;
+    }
+  }
 }
 
 .modalCard {

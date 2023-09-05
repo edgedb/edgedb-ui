@@ -11,6 +11,7 @@
   align-items: center;
   font-weight: 600;
   color: var(--font-inactive-gray);
+  white-space: nowrap;
   padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
@@ -143,6 +144,10 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 
   .barOpen & {
     opacity: 1;

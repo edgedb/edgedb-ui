@@ -245,6 +245,41 @@ export function TabDataExplorerIcon(props: ActiveItem) {
   );
 }
 
+export function TabTeamsIcon(props: ActiveItem) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10 10C11.1046 10 12 9.10457 12 8C12 6.89543 11.1046 6 10 6C8.89543 6 8 6.89543 8 8C8 9.10457 8.89543 10 10 10ZM10 12C12.2091 12 14 10.2091 14 8C14 5.79086 12.2091 4 10 4C7.79086 4 6 5.79086 6 8C6 10.2091 7.79086 12 10 12Z"
+        fill={props.active ? activeColor1 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4 17C4 14.7909 5.79086 13 8 13H12C14.2091 13 16 14.7909 16 17V19C16 19.5523 15.5523 20 15 20C14.4477 20 14 19.5523 14 19V17C14 15.8954 13.1046 15 12 15H8C6.89543 15 6 15.8954 6 17V19C6 19.5523 5.55228 20 5 20C4.44772 20 4 19.5523 4 19V17Z"
+        fill={props.active ? activeColor3 : undefined}
+      />
+      <path
+        d="M17 13C16.4477 13 16 13.4477 16 14C16 14.5523 16.4477 15 17 15C17.2299 15 17.4219 15.0363 17.5599 15.0933C17.6893 15.1469 17.751 15.2086 17.7859 15.2674C17.9115 15.4789 18 15.7243 18 16V19C18 19.5523 18.4477 20 19 20C19.5523 20 20 19.5523 20 19V16C20 15.2803 19.766 14.6848 19.5057 14.2463C18.9071 13.2382 17.7886 13 17 13Z"
+        fill={props.active ? activeColor2 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M15.0572 4.83768C15.2412 4.31696 15.8125 4.04404 16.3332 4.22809C17.8855 4.77673 19 6.25703 19 8.00022C19 9.74341 17.8855 11.2237 16.3332 11.7724C15.8125 11.9564 15.2412 11.6835 15.0572 11.1628C14.8731 10.642 15.146 10.0707 15.6668 9.88668C16.4449 9.61164 17 8.86947 17 8.00022C17 7.13097 16.4449 6.3888 15.6668 6.11377C15.146 5.92972 14.8731 5.3584 15.0572 4.83768Z"
+        fill={props.active ? activeColor2 : undefined}
+      />
+    </svg>
+  );
+}
+
 export function TabGraphQlIcon(props: ActiveItem) {
   return (
     <svg
@@ -690,6 +725,57 @@ export const ArrowDown = () => (
   </svg>
 );
 
+export const MobileHistoryIcon = ({className}: {className?: string}) => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <rect width="40" height="40" rx="20" fill="#8676B0" />
+    <path d="M19 21.228L19 13" strokeWidth="4" strokeLinecap="round" />
+    <path
+      d="M19 21.228L22.0001 24.228"
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
+    <path
+      d="M20 34C27.732 34 34 27.732 34 20C34 12.268 27.732 6 20 6C12.268 6 6 12.268 6 20C6 23.8146 7.52563 27.2729 10 29.798"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8.95447 31.1274L11.7139 31.8929L11.3978 29.0468"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const MobileRunIcon = ({className}: {className?: string}) => (
+  <svg
+    width="40"
+    height="40"
+    viewBox="0 0 40 40"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <g id="Group 2030">
+      <circle id="Ellipse 102" cx="20" cy="20" r="20" />
+      <path
+        id="Subtract"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16.5584 26.2879L25.9091 20.8982C26.6017 20.4989 26.6017 19.5008 25.9091 19.1016L16.5584 13.7118C15.8658 13.3126 15 13.8116 15 14.6101L15 25.3896C15 26.1881 15.8658 26.6872 16.5584 26.2879Z"
+      />
+    </g>
+  </svg>
+);
+
 export const CrossIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -699,8 +785,8 @@ export const CrossIcon = () => (
     fill="none"
   >
     <path
-      fill-rule="evenodd"
-      clip-rule="evenodd"
+      fillRule="evenodd"
+      clipRule="evenodd"
       d="M0.393923 13.7047C-0.131308 14.2296 -0.131308 15.0811 0.393923 15.606C0.919153 16.1312 1.77003 16.1312 2.29526 15.606L8.00057 9.90068L13.7059 15.6063C14.2311 16.1312 15.082 16.1312 15.6072 15.6063C15.8633 15.3503 15.9946 15.0168 16.0011 14.6813C16.0077 14.3287 15.8764 13.9738 15.6072 13.7047L9.90191 7.99934L15.6059 2.29534C15.8856 2.01598 16.0156 1.64405 15.9985 1.27836C15.9828 0.956658 15.8515 0.63955 15.6059 0.393677C15.0807 -0.131226 14.2298 -0.131226 13.7046 0.393677L8.00057 6.09801L2.29657 0.394005C1.77134 -0.131226 0.920467 -0.131226 0.395236 0.394005C-0.129995 0.918907 -0.129995 1.77044 0.395236 2.29534L6.09924 7.99934L0.393923 13.7047Z"
       fill="#737373"
     />

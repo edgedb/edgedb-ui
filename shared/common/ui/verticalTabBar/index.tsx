@@ -8,28 +8,28 @@ import styles from "./verticalTabBar.module.scss";
 import {ChevronIcon} from "../icons";
 import {ThemeSwitcher} from "../themeSwitcher";
 
-export interface Tab {
-  id: string;
-  label: string;
-  icon: (active: boolean) => JSX.Element;
+import {Tab as BaseTab, BaseTabBarProps} from "../navtabs/interfaces";
+
+export interface Tab<Id extends string> extends BaseTab<Id> {
   loading?: boolean;
 }
 
-export interface VerticalTabBarProps {
+export interface VerticalTabBarProps<TabId extends string>
+  extends BaseTabBarProps<TabId> {
   className?: string;
-  tabs: Tab[];
-  selectedTabId: string;
-  onTabChange: (tab: Tab) => void;
+  tabs: Tab<TabId>[];
+  onTabChange: (tab: Tab<TabId>) => void;
   noExpand?: boolean;
 }
 
-export function VerticalTabBar({
+export function VerticalTabBar<TabId extends string>({
   className,
   tabs,
-  selectedTabId,
+  currentTabId,
+  Link,
   onTabChange,
   noExpand,
-}: VerticalTabBarProps) {
+}: VerticalTabBarProps<TabId>) {
   const [expanded, setExpanded] = useReducer(
     (_: any, val: boolean) => {
       localStorage.setItem("nebula_ui_tabbar_expanded", JSON.stringify(val));
@@ -50,14 +50,14 @@ export function VerticalTabBar({
     }
   );
   const [showTabTooltips, setShowTabTooltips] = useState(false);
-  const tabMouseEnterTimeout = useRef<NodeJS.Timeout | null>(null);
-  const tabMouseLeaveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const tabMouseEnterTimeout = useRef<number | null>(null);
+  const tabMouseLeaveTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "m" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        const currentIndex = tabs.findIndex((tab) => tab.id === selectedTabId);
+        const currentIndex = tabs.findIndex((tab) => tab.id === currentTabId);
         if (currentIndex !== -1) {
           onTabChange(
             tabs[
@@ -74,7 +74,7 @@ export function VerticalTabBar({
     return () => {
       window.removeEventListener("keydown", listener);
     };
-  }, [selectedTabId]);
+  }, [currentTabId]);
 
   return (
     <div
@@ -84,12 +84,12 @@ export function VerticalTabBar({
       })}
     >
       {tabs.map((tab) => (
-        <div
+        <Link
           key={tab.id}
           className={cn(styles.tab, {
-            [styles.tabSelected]: tab.id === selectedTabId,
+            [styles.tabSelected]: tab.id === currentTabId,
           })}
-          onClick={() => onTabChange(tab)}
+          to={tab.id}
           onMouseEnter={() => {
             if (tabMouseLeaveTimeout.current) {
               clearTimeout(tabMouseLeaveTimeout.current);
@@ -115,7 +115,7 @@ export function VerticalTabBar({
         >
           <div className={styles.tabInner}>
             <div className={styles.icon}>
-              {tab.icon(tab.id === selectedTabId)}
+              {tab.icon(tab.id === currentTabId)}
             </div>
             <div className={styles.tabLabel}>{tab.label}</div>
           </div>
@@ -127,7 +127,7 @@ export function VerticalTabBar({
               })}
             />
           ) : null}
-        </div>
+        </Link>
       ))}
       <div className={styles.actions}>
         <ThemeSwitcher />

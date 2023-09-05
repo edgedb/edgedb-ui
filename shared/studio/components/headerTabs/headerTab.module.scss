@@ -3,12 +3,31 @@
 .tabs {
   display: flex;
   align-items: center;
-  margin-left: 58px;
+  margin-left: 42px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  padding: 0 16px;
+  padding-bottom: 16px;
+  margin-bottom: -16px;
+  // mask-image: linear-gradient(
+  //   90deg,
+  //   transparent 0px,
+  //   #000 16px,
+  //   #000 calc(100% - 16px),
+  //   transparent 100%
+  // );
+
+  @include hideScrollbar;
+
+  @include isMobile {
+    margin-left: 0;
+  }
 }
 
 .tabSep {
   margin: 0 8px;
   opacity: 0.5;
+  flex-shrink: 0;
 }
 
 .splitButton {

@@ -11,6 +11,7 @@ export interface SelectItem<T = any> {
   id: T;
   label: string | JSX.Element;
   fullLabel?: string;
+  disabled?: boolean;
 }
 
 export type SelectItems<T = any> = {
@@ -26,6 +27,7 @@ export type SelectProps<T = any> = {
   rightAlign?: boolean;
   actions?: {label: string | JSX.Element; action: () => void}[];
   searchable?: boolean;
+  disabled?: boolean;
 } & (
   | {
       items: null;
@@ -53,6 +55,7 @@ export function Select<T extends any>({
   rightAlign,
   actions,
   searchable,
+  disabled,
   ...dropdown
 }: SelectProps<T>) {
   const selectRef = useRef<HTMLDivElement>(null);
@@ -161,7 +164,8 @@ export function Select<T extends any>({
     <div
       ref={selectRef}
       className={cn(styles.select, className)}
-      onClick={() => setDropdownOpen(true)}
+      onClick={!disabled ? () => setDropdownOpen(true) : undefined}
+      data-disabled={disabled}
     >
       {title ?? selectedItem?.fullLabel ?? selectedItem?.label}
       {hasDropdown ? (
@@ -196,6 +200,7 @@ export function Select<T extends any>({
                       className={cn(styles.dropdownItem, {
                         [styles.dropdownItemSelected]:
                           dropdown.selectedItemId === result.obj.item.item.id,
+                        [styles.disabled]: !!result.obj.item.item.disabled,
                       })}
                       onClick={() => {
                         setDropdownOpen(false);
@@ -212,12 +217,16 @@ export function Select<T extends any>({
                 : flattenedItems!.map((item, i) => (
                     <div
                       key={i}
-                      className={cn(styles.dropdownItem, {
-                        [styles.groupHeader]: item.type === "group",
-                        [styles.dropdownItemSelected]:
-                          item.type === "item" &&
-                          dropdown.selectedItemId === item.item.id,
-                      })}
+                      className={cn(
+                        styles.dropdownItem,
+                        item.type === "item"
+                          ? {
+                              [styles.dropdownItemSelected]:
+                                dropdown.selectedItemId === item.item.id,
+                              [styles.disabled]: !!item.item.disabled,
+                            }
+                          : styles.groupHeader
+                      )}
                       style={{
                         paddingLeft: `${12 + 10 * item.depth}px`,
                       }}

@@ -1,0 +1,137 @@
+@import "../../mixins.scss";
+
+.tabbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 18px;
+  gap: 25px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  min-width: 0;
+}
+
+.tabs {
+  display: flex;
+  margin: 0 auto;
+  gap: 25px;
+  min-width: 0;
+
+  &:before {
+    display: block;
+    content: "";
+    width: 48px;
+    flex-shrink: 1;
+  }
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  text-decoration: none;
+
+  .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+
+    & > svg {
+      fill: #999;
+    }
+  }
+
+  .label {
+    max-width: calc(100% + 16px);
+    white-space: nowrap;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #808080;
+    font-family: Roboto;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+  }
+
+  &.selected {
+    .icon {
+      background: #f5f5f5;
+
+      @include darkTheme {
+        background: #242424;
+      }
+    }
+  }
+}
+
+.menuButton {
+  width: 48px;
+  height: 60px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  svg {
+    fill: #808080;
+  }
+  @include darkTheme {
+    svg {
+      fill: #999;
+    }
+  }
+}
+
+.menuPopup {
+  width: 340px;
+  max-width: calc(100% - 36px);
+  max-height: calc(100% - 100px);
+  background: #fff;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+
+  @include darkTheme {
+    background: #2e2e2e;
+  }
+}
+
+.menuTabsList {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 8px;
+
+  &.showSep {
+    border-top: 2px solid #e6e6e6;
+
+    @include darkTheme {
+      border-top-color: #242424;
+    }
+  }
+}
+
+.menuTab {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: #f2f2f2;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  color: inherit;
+
+  .icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+
+  @include darkTheme {
+    background: #242424;
+  }
+}

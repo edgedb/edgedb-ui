@@ -2,7 +2,7 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import cn from "@edgedb/common/utils/classNames";
 import {observer} from "mobx-react-lite";
-import Switch, {switchState} from "@edgedb/common/ui/switch";
+import {Switch, switchState} from "@edgedb/common/ui/switch";
 import * as Tooltip from "@radix-ui/react-tooltip";
 
 import {useRef} from "react";
@@ -17,6 +17,7 @@ import {
   graphType,
   graphUnit,
 } from "../../state/explainGraphSettings";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export enum ExplainType {
   light = "light",
@@ -319,6 +320,8 @@ const FlamegraphNode = observer(function _FlamegraphNode({
 
   const isSelected = !isLight && state.selectedPlan?.id === plan.id;
 
+  const isMobile = useIsMobile();
+
   const flamegraphNode = (
     <div
       className={cn(styles.flamegraphNode, {
@@ -345,7 +348,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
       })}
       onMouseOver={(e) => {
         e.stopPropagation();
-        state.setHoveredPlan(plan);
+        if (!isMobile) state.setHoveredPlan(plan);
       }}
       onMouseOut={(e) => {
         e.stopPropagation();
