@@ -94,7 +94,7 @@ interface RowListProps {
   height?: number;
   maxHeight?: number;
   disableVirtualisedRendering?: boolean;
-  setShowExpandBtn: (show: boolean) => void;
+  showExpandBtn: boolean;
 }
 
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
@@ -120,7 +120,7 @@ const RowList = observer(function RowList({
   height,
   maxHeight,
   disableVirtualisedRendering,
-  setShowExpandBtn,
+  showExpandBtn,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -137,12 +137,6 @@ const RowList = observer(function RowList({
 
   if (disableVirtualisedRendering) {
     const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
-    const showExpandBtn =
-      maxHeight &&
-      (rows.length > maxHeight ||
-        rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
-
-    setShowExpandBtn(!!showExpandBtn);
 
     return (
       <div

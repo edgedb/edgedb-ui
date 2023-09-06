@@ -364,7 +364,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   const ref = useRef<HTMLDivElement>(null);
   const editorState = useTabState(QueryEditor);
   const isMobile = useIsMobile();
-  const [showExpandBtn, setShowExpandBtn] = useState(false);
+  let showExpandBtn = false;
 
   const {navigate, currentPath} = useDBRouter();
 
@@ -450,17 +450,29 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         );
       } else {
         const inspectorState = item.inspectorState;
-        output = inspectorState ? (
-          <Inspector
-            className={styles.inspector}
-            state={item.inspectorState}
-            disableVirtualisedRendering
-            maxHeight={item.showMore ? undefined : 16}
-            setShowExpandBtn={setShowExpandBtn}
-          />
-        ) : (
-          <>loading ...</>
-        );
+
+        if (inspectorState) {
+          const items = inspectorState?.getItems();
+          const maxHeight = item.showMore ? undefined : 16;
+          const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
+
+          showExpandBtn =
+            !!maxHeight &&
+            (rows.length > maxHeight ||
+              rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
+
+          output = (
+            <Inspector
+              className={styles.inspector}
+              state={item.inspectorState}
+              disableVirtualisedRendering
+              maxHeight={item.showMore ? undefined : 16}
+              showExpandBtn={showExpandBtn}
+            />
+          );
+        } else {
+          output = <>loading ...</>;
+        }
       }
     } else {
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
