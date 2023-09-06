@@ -94,7 +94,7 @@ interface RowListProps {
   height?: number;
   maxHeight?: number;
   disableVirtualisedRendering?: boolean;
-  showExpandBtn: boolean;
+  showExpandBtn?: boolean;
 }
 
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
