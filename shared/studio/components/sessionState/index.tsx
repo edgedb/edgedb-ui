@@ -30,6 +30,7 @@ export function SessionStateControls() {
 export const SessionStateButton = observer(function SessionStateButton() {
   const sessionState = useDatabaseState().sessionState;
   const targetEl = document.getElementById("sessionStateControls");
+  const isMobile = useIsMobile();
 
   if (targetEl) {
     return createPortal(
@@ -41,7 +42,8 @@ export const SessionStateButton = observer(function SessionStateButton() {
             [styles.panelOpen]: sessionState.panelOpen,
           })}
           onClick={() => {
-            if (sessionState.barOpen) {
+            if (isMobile) sessionState.openPanel();
+            else if (sessionState.barOpen) {
               sessionState.closePanel();
               sessionState.setBarOpen(false);
             } else {

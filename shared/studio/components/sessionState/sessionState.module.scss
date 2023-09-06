@@ -284,9 +284,10 @@
   transition: opacity 0.2s 0s, z-index 0s 0.2s;
 
   @include breakpoint(mobile) {
+    position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    width: 100vw;
     background: #d9d9d9;
 
     @include darkTheme {
