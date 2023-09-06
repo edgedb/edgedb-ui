@@ -20,9 +20,12 @@ import {
   useState,
 } from "react";
 
-interface InspectorProps extends RowListProps {
+type InspectorProps = RowListProps & {
   state: InspectorState;
-}
+};
+
+export const DEFAULT_ROW_HEIGHT = 28;
+export const DEFAULT_LINE_HEIGHT = 26;
 
 export default function Inspector({state, ...rowProps}: InspectorProps) {
   return (
@@ -87,15 +90,22 @@ export function useInspectorKeybindings(state: InspectorState) {
   );
 }
 
-interface RowListProps {
+type RowListProps = {
   className?: string;
   rowHeight?: number;
   lineHeight?: number;
-  height?: number;
-  maxHeight?: number;
-  disableVirtualisedRendering?: boolean;
-  showExpandBtn?: boolean;
-}
+} & (
+  | {
+      disableVirtualisedRendering: true;
+      maxLines?: number;
+      height?: undefined;
+    }
+  | {
+      disableVirtualisedRendering?: false;
+      height: number;
+      maxLines?: undefined;
+    }
+);
 
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
   forwardRef((props, ref) => <div ref={ref as any} {...attrs} {...props} />);
@@ -115,12 +125,11 @@ const innerElementType = forwardRef((props, ref) => (
 
 const RowList = observer(function RowList({
   className,
-  rowHeight = 28,
-  lineHeight = 26,
+  rowHeight = DEFAULT_ROW_HEIGHT,
+  lineHeight = DEFAULT_LINE_HEIGHT,
   height,
-  maxHeight,
+  maxLines,
   disableVirtualisedRendering,
-  showExpandBtn,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -136,23 +145,25 @@ const RowList = observer(function RowList({
   } as any;
 
   if (disableVirtualisedRendering) {
-    const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
+    let rows: Item[];
+    if (maxLines) {
+      let lineCount = 0;
+      let i = 0;
+      while (i < items.length) {
+        lineCount += items[i++].height ?? 1;
+        if (lineCount > maxLines) break;
+      }
+      rows = items.slice(0, i);
+    } else {
+      rows = items;
+    }
 
     return (
       <div
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonModeData != null,
         })}
-        style={{
-          ...inspectorStyle,
-          ...(showExpandBtn
-            ? {
-                position: "relative",
-                overflow: "hidden",
-                maxHeight: maxHeight! * rowHeight,
-              }
-            : undefined),
-        }}
+        style={inspectorStyle}
         tabIndex={0}
         onKeyDown={onKeyDown}
       >
@@ -164,18 +175,6 @@ const RowList = observer(function RowList({
   } else {
     const itemSize = (index: number) =>
       (items[index].height ?? 1) * lineHeight + vPad;
-
-    if (height == null) {
-      height = 0;
-      maxHeight ??= 10 * rowHeight;
-      for (let i = 0; i < items.length; i++) {
-        height += itemSize(i);
-        if (height > maxHeight) {
-          height = maxHeight;
-          break;
-        }
-      }
-    }
 
     const ref = useRef<List>(null);
 

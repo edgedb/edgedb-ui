@@ -26,7 +26,7 @@ import {
   CodeEditorRef,
   createCodeEditor,
 } from "@edgedb/code-editor";
-import Inspector from "@edgedb/inspector";
+import Inspector, {DEFAULT_ROW_HEIGHT} from "@edgedb/inspector";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
@@ -452,22 +452,17 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         const inspectorState = item.inspectorState;
 
         if (inspectorState) {
-          const items = inspectorState?.getItems();
-          const maxHeight = item.showMore ? undefined : 16;
-          const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
+          const maxLines = item.showMore ? undefined : 16;
 
           showExpandBtn =
-            !!maxHeight &&
-            (rows.length > maxHeight ||
-              rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
+            !!maxLines && inspectorState.totalItemsLines > maxLines;
 
           output = (
             <Inspector
+              disableVirtualisedRendering
               className={styles.inspector}
               state={item.inspectorState}
-              disableVirtualisedRendering
-              maxHeight={item.showMore ? undefined : 16}
-              showExpandBtn={showExpandBtn}
+              maxLines={maxLines}
             />
           );
         } else {
@@ -579,11 +574,15 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         <CustomScrollbars
           className={styles.outputOuterWrapper}
           innerClass={styles.historyOutput}
+          hideVertical
         >
           <div
             className={cn(styles.scrollWrapper, {
               [styles.sticky]: isExplain,
             })}
+            style={
+              showExpandBtn ? {maxHeight: 16 * DEFAULT_ROW_HEIGHT} : undefined
+            }
           >
             <div
               className={cn(styles.historyOutput, {

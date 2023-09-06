@@ -209,7 +209,8 @@
   }
 
   .scrollWrapper {
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     @include hideScrollbar;
 
     &.sticky {
