@@ -71,7 +71,6 @@
 .menuButton {
   width: 48px;
   height: 60px;
-  background: #f5f5f5;
   cursor: pointer;
   flex-shrink: 0;
 
@@ -91,7 +90,7 @@
   width: 340px;
   max-width: calc(100% - 36px);
   max-height: calc(100% - 100px);
-  background: #f5f5f5;
+  background: #fff;
   border-radius: 6px;
   position: absolute;
   bottom: 18px;
@@ -109,7 +108,7 @@
   gap: 8px;
 
   &.showSep {
-    border-top: 2px solid #d7d7d7;
+    border-top: 2px solid #e6e6e6;
 
     @include darkTheme {
       border-top-color: #242424;
@@ -122,7 +121,7 @@
   align-items: center;
   padding: 12px 16px;
   border-radius: 6px;
-  background: #eaeaea;
+  background: #f2f2f2;
   font-size: 16px;
   font-weight: 500;
   text-decoration: none;
