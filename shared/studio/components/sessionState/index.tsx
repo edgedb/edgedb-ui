@@ -5,7 +5,13 @@ import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import {observer} from "mobx-react-lite";
 import {Fragment, PropsWithChildren, useEffect, useRef, useState} from "react";
-import {ChevronDownIcon, CloseIcon, SearchIcon} from "../../icons";
+import {
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+  CrossIcon,
+  OpenNewScreenIcon,
+} from "../../icons";
 import {useDatabaseState} from "../../state";
 import {queryOptions, SessionState} from "../../state/sessionState";
 import {getInputComponent, InputValidator} from "../dataEditor";
@@ -21,6 +27,7 @@ import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerTabs";
 import {PrimitiveType} from "../dataEditor/utils";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -29,6 +36,7 @@ export function SessionStateControls() {
 export const SessionStateButton = observer(function SessionStateButton() {
   const sessionState = useDatabaseState().sessionState;
   const targetEl = document.getElementById("sessionStateControls");
+  const isMobile = useIsMobile();
 
   if (targetEl) {
     return createPortal(
@@ -40,7 +48,8 @@ export const SessionStateButton = observer(function SessionStateButton() {
             [styles.panelOpen]: sessionState.panelOpen,
           })}
           onClick={() => {
-            if (sessionState.barOpen) {
+            if (isMobile) sessionState.openPanel();
+            else if (sessionState.barOpen) {
               sessionState.closePanel();
               sessionState.setBarOpen(false);
             } else {
@@ -50,8 +59,14 @@ export const SessionStateButton = observer(function SessionStateButton() {
         >
           <SettingsIcon className={styles.icon} />
           Client Settings
-          <ChevronDownIcon className={styles.chevron} />
-          <ButtonTabArrow className={styles.tabArrow} />
+          {isMobile ? (
+            <OpenNewScreenIcon className={styles.iconMobile} />
+          ) : (
+            <>
+              <ChevronDownIcon className={styles.chevron} />
+              <ButtonTabArrow className={styles.tabArrow} />
+            </>
+          )}
         </div>
       </div>,
       targetEl
@@ -271,6 +286,8 @@ const SessionEditorPanelContent = observer(
     const dbState = useDatabaseState();
     const sessionState = dbState.sessionState;
 
+    const isMobile = useIsMobile();
+
     const [searchFilter, setSearchFilter] = useState("");
 
     useEffect(() => {
@@ -298,12 +315,15 @@ const SessionEditorPanelContent = observer(
     return (
       <div className={styles.editorPanelContent}>
         <div
-          className={styles.closePanel}
+          className={cn(
+            isMobile ? styles.mobileClosePanel : styles.closePanel
+          )}
           onClick={() => sessionState.closePanel()}
         >
-          <CloseIcon />
+          {isMobile ? <CrossIcon /> : <CloseIcon />}
         </div>
         <div className={styles.searchBar}>
+          <p className={styles.title}>Client settings</p>
           <div className={styles.search}>
             <SearchIcon />
             <input

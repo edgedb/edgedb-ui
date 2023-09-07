@@ -75,6 +75,29 @@
       fill: #242424;
     }
   }
+
+  .iconMobile {
+    margin-left: 8px;
+    path {
+      stroke: #808080;
+
+      @include darkTheme {
+        stroke: #999;
+      }
+    }
+  }
+
+  @include breakpoint(mobile) {
+    padding: 6px 0;
+
+    @include darkTheme {
+      color: #999;
+
+      .icon {
+        fill: #999;
+      }
+    }
+  }
 }
 
 .sessionBarWrapper {
@@ -119,6 +142,11 @@
   z-index: 0;
   transition: height 0.2s, left 0.2s, z-index 0s 0.2s, background 0.2s,
     opacity 0s 0.2s;
+
+  @include breakpoint(mobile) {
+    left: 0;
+    right: 0;
+  }
 
   .panelOpen & {
     opacity: 1;
@@ -271,12 +299,24 @@
   top: 0;
   left: 16px;
   right: 16px;
-  bottom: 16px;
+  bottom: 0;
   display: flex;
   opacity: 0;
   z-index: 0;
   pointer-events: none;
   transition: opacity 0.2s 0s, z-index 0s 0.2s;
+
+  @include breakpoint(mobile) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #d9d9d9;
+
+    @include darkTheme {
+      background: #141414;
+    }
+  }
 
   &.panelVisible {
     opacity: 1;
@@ -299,12 +339,47 @@
     margin: 8px;
   }
 
+  .mobileClosePanel {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+  }
+
   .searchBar {
     height: 68px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @include breakpoint(mobile) {
+      flex-direction: column;
+      height: auto;
+      margin-bottom: 2px;
+      background: #f5f5f5;
+
+      @include darkTheme {
+        background: #1f1f1f;
+      }
+    }
+
+    .title {
+      display: none;
+
+      @include breakpoint(mobile) {
+        display: block;
+        font-family: Roboto;
+        font-size: 20px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 24px;
+        color: #666;
+
+        @include darkTheme {
+          color: var(--base-text-dark-theme, #b9b9b9);
+        }
+      }
+    }
 
     .search {
       position: relative;
@@ -336,6 +411,49 @@
         &:focus {
           background: var(--app-bg);
         }
+
+        @include breakpoint(mobile) {
+          background: #fff;
+
+          @include darkTheme {
+          }
+        }
+      }
+
+      @include breakpoint(mobile) {
+        width: calc(100vw - 32px);
+        margin: 0 0 16px 0;
+
+        svg {
+          stroke: #7c7c7c;
+        }
+
+        input {
+          border-radius: 6px;
+          height: 40px;
+
+          @include darkTheme {
+            background: #141414;
+          }
+        }
+      }
+
+      @include breakpoint(mobile) {
+        width: calc(100vw - 32px);
+        margin: 0 0 16px 0;
+
+        svg {
+          stroke: #7c7c7c;
+        }
+
+        input {
+          border-radius: 6px;
+          height: 40px;
+
+          @include darkTheme {
+            background: #141414;
+          }
+        }
       }
     }
   }
@@ -347,6 +465,14 @@
     padding: 0 8px;
     padding-bottom: 4px;
     min-height: 0;
+
+    @include breakpoint(mobile) {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      min-height: unset;
+      overflow: auto;
+    }
   }
 
   .group {
@@ -359,6 +485,24 @@
       margin-left: 8px;
     }
 
+    @include breakpoint(mobile) {
+      margin-bottom: 2px;
+      min-height: unset;
+      background: #f5f5f5;
+
+      @include darkTheme {
+        background: #1f1f1f;
+      }
+
+      &:first-child {
+        margin-left: unset;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
     .header {
       color: #808080;
       font-weight: 500;
@@ -366,6 +510,11 @@
       text-align: center;
       font-size: 13px;
       padding: 8px 16px 4px 8px;
+
+      @include breakpoint(mobile) {
+        color: #666;
+        padding-left: 16px;
+      }
     }
   }
 
@@ -373,6 +522,10 @@
     min-height: 0;
     display: flex;
     flex-grow: 1;
+
+    @include breakpoint(mobile) {
+      min-height: unset;
+    }
   }
 
   .list {
@@ -387,6 +540,10 @@
     );
 
     @include hideScrollbar;
+
+    @include breakpoint(mobile) {
+      padding-left: 16px;
+    }
   }
 
   .listInner {
@@ -427,6 +584,16 @@
     @include darkTheme {
       --inputBg: #1f1f1f;
     }
+
+    @include breakpoint(mobile) {
+      padding: 16px 16px 16px 16px;
+
+      background: #e6e6e6;
+
+      @include darkTheme {
+        background: #2e2e2e;
+      }
+    }
   }
 
   .activeToggle {
@@ -444,6 +611,10 @@
   .headerInner {
     display: flex;
     flex-wrap: wrap;
+
+    @include breakpoint(mobile) {
+      flex-direction: column;
+    }
   }
 
   .itemDesc {
@@ -484,6 +655,10 @@
 
     @include darkTheme {
       opacity: 0.5;
+    }
+
+    @include breakpoint(mobile) {
+      margin-left: 0;
     }
   }
 
@@ -542,12 +717,19 @@
     padding: 12px;
     font-style: italic;
     opacity: 0.8;
-    border: 2px dashed #e1e1e1;
-    border-radius: 4px;
-    margin: 12px 16px 0 8px;
+    margin: 24px 16px 48px 8px;
 
-    @include darkTheme {
-      border-color: #4d4d4d;
+    @include breakpoint(mobile) {
+      margin-left: 16px;
+      color: #666;
+
+      @include darkTheme {
+        color: #b9b9b9;
+      }
+    }
+
+    @include breakpoint(mobile) {
+      margin-bottom: 48px;
     }
   }
 }
