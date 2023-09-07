@@ -26,7 +26,7 @@ import {
   CodeEditorRef,
   createCodeEditor,
 } from "@edgedb/code-editor";
-import Inspector from "@edgedb/inspector";
+import Inspector, {DEFAULT_ROW_HEIGHT} from "@edgedb/inspector";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
@@ -55,6 +55,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -138,7 +139,10 @@ const ReplList = observer(function ReplList({
     [0, 0, 0]
   );
 
-  const headerHeight = 330 + (replState._hasUnfetchedHistory ? 34 : 0);
+  const isMobile = useIsMobile();
+
+  const headerHeight =
+    (isMobile ? 320 : 330) + (replState._hasUnfetchedHistory ? 34 : 0);
 
   useEffect(() => {
     replState.scrollRef = ref.current;
@@ -359,6 +363,8 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const editorState = useTabState(QueryEditor);
+  const isMobile = useIsMobile();
+  let showExpandBtn = false;
 
   const {navigate, currentPath} = useDBRouter();
 
@@ -444,20 +450,24 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         );
       } else {
         const inspectorState = item.inspectorState;
-        output = inspectorState ? (
-          <Inspector
-            className={styles.inspector}
-            state={item.inspectorState}
-            disableVirtualisedRendering
-            maxHeight={item.showMore ? undefined : 16}
-            showMore={() => {
-              item.setShowMore(true);
-              updateScroll.current = true;
-            }}
-          />
-        ) : (
-          <>loading ...</>
-        );
+
+        if (inspectorState) {
+          const maxLines = item.showMore ? undefined : 16;
+
+          showExpandBtn =
+            !!maxLines && inspectorState.totalItemsLines > maxLines;
+
+          output = (
+            <Inspector
+              disableVirtualisedRendering
+              className={styles.inspector}
+              state={item.inspectorState}
+              maxLines={maxLines}
+            />
+          );
+        } else {
+          output = <>loading ...</>;
+        }
       }
     } else {
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
@@ -474,6 +484,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
+
+  const marginLeftRepl = isMobile
+    ? "0px"
+    : isExplain
+    ? "16px"
+    : `${dbName.length + 2}ch`;
 
   return (
     <div
@@ -558,11 +574,15 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         <CustomScrollbars
           className={styles.outputOuterWrapper}
           innerClass={styles.historyOutput}
+          hideVertical
         >
           <div
             className={cn(styles.scrollWrapper, {
               [styles.sticky]: isExplain,
             })}
+            style={
+              showExpandBtn ? {maxHeight: 16 * DEFAULT_ROW_HEIGHT} : undefined
+            }
           >
             <div
               className={cn(styles.historyOutput, {
@@ -570,11 +590,23 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
                 [styles.explain]: isExplain,
               })}
               style={{
-                marginLeft: isExplain ? "16px" : `${dbName.length + 2}ch`,
+                marginLeft: marginLeftRepl,
               }}
             >
               {output}
             </div>
+            {showExpandBtn ? (
+              <div className={styles.showMore}>
+                <button
+                  onClick={() => {
+                    item.setShowMore(true);
+                    updateScroll.current = true;
+                  }}
+                >
+                  show more...
+                </button>
+              </div>
+            ) : null}
           </div>
         </CustomScrollbars>
       ) : null}

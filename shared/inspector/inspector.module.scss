@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .inspectorTheme {
   --type-color: #888;
 
@@ -30,41 +32,26 @@
   }
 }
 
-.showMore {
-  position: absolute;
-  font-family: Roboto, "sans-serif";
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: 500;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  padding-bottom: 12px;
-  padding-top: 6px;
-  background: linear-gradient(
-    0deg,
-    var(--inspectorBg),
-    var(--inspectorBg) 12px,
-    transparent
-  );
-
-  span {
-    background: #f8f8f8;
-    border-radius: 14px;
-    padding: 4px 10px;
-    opacity: 0.8;
-
-    :global(.dark-theme) & {
-      background: #272727;
-    }
-  }
-}
-
 .rowWrapper {
   position: relative;
+
+  @include breakpoint(mobile) {
+    &:first-of-type {
+      .rowItem {
+        .actions {
+          opacity: 1;
+        }
+      }
+    }
+
+    &:not(:first-of-type) {
+      .rowItem {
+        .actions {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
 .rowItem {
@@ -248,13 +235,17 @@
 }
 
 .copyButton {
+  @extend .actionButton;
+
   svg {
     fill: currentColor;
     margin-right: 6px;
   }
 }
 
-.openExtendedButton {
+.viewButton {
+  @extend .actionButton;
+
   svg {
     stroke: currentColor;
     height: 20px;

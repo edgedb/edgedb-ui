@@ -1,9 +1,4 @@
-import {
-  ByUIClass,
-  goToPage,
-  waitUntilElementNotLocated,
-  uiClass,
-} from "./_utils";
+import {ByUIClass, goToPage, waitUntilElementNotLocated} from "./_utils";
 
 describe("queryEditor:", () => {
   beforeAll(async () => {
@@ -28,7 +23,7 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
       await runButton.click();
 
       const errorElement = await driver.wait(
@@ -64,7 +59,7 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
       await runButton.click();
 
       const errorElement = await driver.wait(
@@ -90,7 +85,7 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
       await runButton.click();
 
       const inspector = await driver.wait(
@@ -119,7 +114,7 @@ describe("queryEditor:", () => {
 
       // when clicking on view button, new window is opened
       const viewButtons = await inspector.findElements(
-        ByUIClass("inspector_openExtendedButton")
+        ByUIClass("inspector_viewButton")
       );
 
       expect(await viewButtons[0].getAttribute("innerText")).toBe(" VIEW");
@@ -159,7 +154,7 @@ describe("queryEditor:", () => {
       await editor.sendKeys("select 1 + 1");
 
       // run the query and populate the history
-      const runButton = await driver.findElement(ByUIClass("repl_runButton"));
+      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
       await runButton.click();
 
       // write something else in the editor

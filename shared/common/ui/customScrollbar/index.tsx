@@ -17,6 +17,8 @@ export interface CustomScrollbarsProps {
   innerClass: string | Element | null;
   headerPadding?: number;
   reverse?: boolean;
+  hideVertical?: boolean;
+  hideHorizontal?: boolean;
 }
 
 const defaultScrollSizes: [number, number] = [-1, -1];
@@ -28,6 +30,8 @@ export function CustomScrollbars({
   innerClass,
   headerPadding = 0,
   reverse,
+  hideVertical,
+  hideHorizontal,
 }: PropsWithChildren<CustomScrollbarsProps>) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -119,8 +123,8 @@ export function CustomScrollbars({
   const onMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = ref.current!.getBoundingClientRect();
-      const vScroll = rect.right - e.clientX < 16;
-      const hScroll = rect.bottom - e.clientY < 16;
+      const vScroll = !hideVertical && rect.right - e.clientX < 16;
+      const hScroll = !hideHorizontal && rect.bottom - e.clientY < 16;
 
       if (vScroll || hScroll) {
         e.stopPropagation();
@@ -205,7 +209,7 @@ export function CustomScrollbars({
       onMouseDownCapture={onMouseDown}
     >
       {children}
-      {scrollSizes.current[0] !== -1 ? (
+      {!hideVertical && scrollSizes.current[0] !== -1 ? (
         <div
           className={styles.verticalBar}
           style={{
@@ -222,7 +226,7 @@ export function CustomScrollbars({
           />
         </div>
       ) : null}
-      {scrollSizes.current[1] !== -1 ? (
+      {!hideHorizontal && scrollSizes.current[1] !== -1 ? (
         <div
           className={styles.horizontalBar}
           style={{right: scrollSizes.current[0] === -1 ? 0 : 6}}

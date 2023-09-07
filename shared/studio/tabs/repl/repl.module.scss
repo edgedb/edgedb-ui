@@ -43,6 +43,10 @@
     background-color: #242424;
     --code-editor-bg: #242424;
   }
+
+  @include breakpoint(mobile) {
+    border-radius: 0;
+  }
 }
 
 .extendedViewerContainer {
@@ -90,6 +94,19 @@
         color: #c4c4c4;
       }
     }
+
+    @include breakpoint(mobile) {
+      margin-top: 24px;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    padding: 24px;
+
+    .headerAscii {
+      font-size: 8px;
+      line-height: 9px;
+    }
   }
 }
 
@@ -111,6 +128,10 @@
   flex-shrink: 0;
   position: relative;
   margin-bottom: 12px;
+
+  @include breakpoint(mobile) {
+    margin-bottom: 0;
+  }
 }
 
 .replInput {
@@ -177,6 +198,10 @@
         }
       }
     }
+
+    @include breakpoint(mobile) {
+      display: block;
+    }
   }
 
   &.showDateHeader {
@@ -184,7 +209,8 @@
   }
 
   .scrollWrapper {
-    overflow: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
     @include hideScrollbar;
 
     &.sticky {
@@ -193,13 +219,6 @@
       position: sticky;
       top: 0;
     }
-
-    // &.explainTreemap {
-    //   height: 100%;
-    //   min-height: 380px;
-    //   max-height: 680px;
-    //   overflow-x: hidden;
-    // }
   }
 
   @include darkTheme {
@@ -274,11 +293,6 @@
       max-height: 20 * 19px;
       overflow: hidden;
     }
-
-    // &.explainTreemap {
-    //   max-height: 668px;
-    //   overflow: hidden;
-    // }
   }
 
   .codeBlockErrorLines {
@@ -365,6 +379,10 @@
   width: 50%;
   border-right: 4px solid #f7f7f7;
 
+  @include breakpoint(mobile) {
+    width: 100%;
+  }
+
   @include darkTheme {
     border-color: #242424;
   }
@@ -373,10 +391,11 @@
 .outputOuterWrapper {
   margin: 0 0 0 -16px;
   flex-grow: 1;
+  padding-bottom: 12px;
 }
 
 .historyOutput {
-  padding: 4px 8px 12px 18px;
+  padding: 4px 8px 0px 18px;
   min-width: max-content;
   height: max-content;
   height: fit-content;
@@ -411,13 +430,12 @@
         color: #141414;
       }
     }
+
+    @include breakpoint(mobile) {
+      padding-right: 8px;
+    }
   }
 }
-
-// .historyOutputTreemap {
-//   height: calc(100% - 60px);
-//   padding-right: 16px;
-// }
 
 .queryError {
   font-size: 14px;
@@ -589,5 +607,46 @@
 
   :global(.cm-cursor) {
     background: rgb(18, 214, 18, 0.5);
+  }
+}
+
+.showMore {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding-bottom: 24px;
+  background: linear-gradient(
+    0deg,
+    var(--inspectorBg),
+    var(--inspectorBg) 12px,
+    transparent
+  );
+
+  button {
+    font-family: Roboto, "sans-serif";
+    text-transform: uppercase;
+    color: var(--app-text-colour);
+    font-size: 12px;
+    font-weight: 500;
+    background: #f8f8f8;
+    border-radius: 14px;
+    padding: 4px 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+
+    :global(.dark-theme) & {
+      background: #272727;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    text-align: unset;
+
+    button {
+      position: sticky;
+      left: calc(50% - 51px);
+    }
   }
 }

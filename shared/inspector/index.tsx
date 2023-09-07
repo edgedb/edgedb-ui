@@ -20,9 +20,12 @@ import {
   useState,
 } from "react";
 
-interface InspectorProps extends RowListProps {
+type InspectorProps = RowListProps & {
   state: InspectorState;
-}
+};
+
+export const DEFAULT_ROW_HEIGHT = 28;
+export const DEFAULT_LINE_HEIGHT = 26;
 
 export default function Inspector({state, ...rowProps}: InspectorProps) {
   return (
@@ -87,15 +90,22 @@ export function useInspectorKeybindings(state: InspectorState) {
   );
 }
 
-interface RowListProps {
+type RowListProps = {
   className?: string;
   rowHeight?: number;
   lineHeight?: number;
-  height?: number;
-  maxHeight?: number;
-  disableVirtualisedRendering?: boolean;
-  showMore?: () => void;
-}
+} & (
+  | {
+      disableVirtualisedRendering: true;
+      maxLines?: number;
+      height?: undefined;
+    }
+  | {
+      disableVirtualisedRendering?: false;
+      height: number;
+      maxLines?: undefined;
+    }
+);
 
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
   forwardRef((props, ref) => <div ref={ref as any} {...attrs} {...props} />);
@@ -115,12 +125,11 @@ const innerElementType = forwardRef((props, ref) => (
 
 const RowList = observer(function RowList({
   className,
-  rowHeight = 28,
-  lineHeight = 26,
+  rowHeight = DEFAULT_ROW_HEIGHT,
+  lineHeight = DEFAULT_LINE_HEIGHT,
   height,
-  maxHeight,
+  maxLines,
   disableVirtualisedRendering,
-  showMore,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -136,55 +145,36 @@ const RowList = observer(function RowList({
   } as any;
 
   if (disableVirtualisedRendering) {
-    const rows = maxHeight ? items.slice(0, maxHeight + 1) : items;
-    const showExpandedButton =
-      maxHeight &&
-      (rows.length > maxHeight ||
-        rows.reduce((s, r) => s + (r.height ?? 1), 0) > maxHeight);
+    let rows: Item[];
+    if (maxLines) {
+      let lineCount = 0;
+      let i = 0;
+      while (i < items.length) {
+        lineCount += items[i++].height ?? 1;
+        if (lineCount > maxLines) break;
+      }
+      rows = items.slice(0, i);
+    } else {
+      rows = items;
+    }
 
     return (
       <div
         className={cn(styles.inspector, className, {
           [styles.jsonMode]: state._jsonModeData != null,
         })}
-        style={{
-          ...inspectorStyle,
-          ...(showExpandedButton
-            ? {
-                position: "relative",
-                overflow: "hidden",
-                maxHeight: maxHeight! * rowHeight,
-              }
-            : undefined),
-        }}
+        style={inspectorStyle}
         tabIndex={0}
         onKeyDown={onKeyDown}
       >
         {rows.map((_, i) => (
           <Row index={i} style={{}} data={items} key={i} noVirtualised />
         ))}
-        {showExpandedButton ? (
-          <div className={styles.showMore} onClick={() => showMore?.()}>
-            <span>show more...</span>
-          </div>
-        ) : null}
       </div>
     );
   } else {
     const itemSize = (index: number) =>
       (items[index].height ?? 1) * lineHeight + vPad;
-
-    if (height == null) {
-      height = 0;
-      maxHeight ??= 10 * rowHeight;
-      for (let i = 0; i < items.length; i++) {
-        height += itemSize(i);
-        if (height > maxHeight) {
-          height = maxHeight;
-          break;
-        }
-      }
-    }
 
     const ref = useRef<List>(null);
 
@@ -284,7 +274,7 @@ function CopyButton({
 
   return (
     <div
-      className={cn(styles.actionButton, styles.copyButton)}
+      className={cn(styles.copyButton)}
       {...props}
       onClick={() => {
         const jsonString =
@@ -388,7 +378,7 @@ export const InspectorRow = observer(function InspectorRow({
           item.type === ItemType.Scalar &&
           state.extendedViewIds?.has(item.codec.getKnownTypeName()) ? (
             <div
-              className={cn(styles.actionButton, styles.openExtendedButton)}
+              className={cn(styles.viewButton)}
               onClick={() => state.openExtendedView?.(item)}
             >
               <OpenExpandedViewIcon /> View

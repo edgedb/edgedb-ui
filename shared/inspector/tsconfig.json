@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
+    "target": "es6",
     "jsx": "react-jsx",
+    "moduleResolution": "node",
     "experimentalDecorators": true,
     "downlevelIteration": true,
     "strict": true
