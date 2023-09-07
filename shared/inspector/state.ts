@@ -11,10 +11,10 @@ import {
   ArraySet,
   idProp,
 } from "mobx-keystone";
-import {action, observable} from "mobx";
+import {action, computed, observable} from "mobx";
 import {_ICodec} from "edgedb";
 import {Item, buildItem, expandItem, ItemType} from "./buildItem";
-import { prettyPrintJSON } from "./buildScalar";
+import {prettyPrintJSON} from "./buildScalar";
 
 export type {Item};
 
@@ -105,6 +105,11 @@ export class InspectorState extends Model({
     }
 
     return this._items;
+  }
+
+  @computed
+  get totalItemsLines() {
+    return this._items.reduce((sum, item) => sum + (item.height ?? 1), 0);
   }
 
   @modelFlow
