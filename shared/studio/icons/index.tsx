@@ -792,3 +792,21 @@ export const CrossIcon = () => (
     />
   </svg>
 );
+
+export const OpenNewScreenIcon = ({className}: {className?: string}) => (
+  <svg
+    width="8"
+    height="8"
+    viewBox="0 0 8 8"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M1.18199 6.66726L6.66727 1.18198M6.66727 1.18198L6.66727 5.54594M6.66727 1.18198L2.30331 1.18198"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);

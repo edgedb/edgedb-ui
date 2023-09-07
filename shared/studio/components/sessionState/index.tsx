@@ -5,7 +5,13 @@ import cn from "@edgedb/common/utils/classNames";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import {observer} from "mobx-react-lite";
 import {Fragment, PropsWithChildren, useEffect, useRef, useState} from "react";
-import {ChevronDownIcon, CloseIcon, SearchIcon, CrossIcon} from "../../icons";
+import {
+  ChevronDownIcon,
+  CloseIcon,
+  SearchIcon,
+  CrossIcon,
+  OpenNewScreenIcon,
+} from "../../icons";
 import {useDatabaseState} from "../../state";
 import {queryOptions, SessionState} from "../../state/sessionState";
 import {getInputComponent, InputValidator} from "../dataEditor";
@@ -53,8 +59,14 @@ export const SessionStateButton = observer(function SessionStateButton() {
         >
           <SettingsIcon className={styles.icon} />
           Client Settings
-          <ChevronDownIcon className={styles.chevron} />
-          <ButtonTabArrow className={styles.tabArrow} />
+          {isMobile ? (
+            <OpenNewScreenIcon className={styles.iconMobile} />
+          ) : (
+            <>
+              <ChevronDownIcon className={styles.chevron} />
+              <ButtonTabArrow className={styles.tabArrow} />
+            </>
+          )}
         </div>
       </div>,
       targetEl

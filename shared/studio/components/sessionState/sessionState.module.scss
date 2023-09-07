@@ -75,6 +75,29 @@
       fill: #242424;
     }
   }
+
+  .iconMobile {
+    margin-left: 8px;
+    path {
+      stroke: #808080;
+
+      @include darkTheme {
+        stroke: #999;
+      }
+    }
+  }
+
+  @include breakpoint(mobile) {
+    padding: 6px 0;
+
+    @include darkTheme {
+      color: #999;
+
+      .icon {
+        fill: #999;
+      }
+    }
+  }
 }
 
 .sessionBarWrapper {
