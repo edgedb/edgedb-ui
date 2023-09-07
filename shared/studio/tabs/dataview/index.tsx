@@ -33,6 +33,7 @@ import {
   TabDataExplorerIcon,
   WarningIcon,
 } from "../../icons";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
@@ -98,6 +99,8 @@ const DataInspectorView = observer(function DataInspectorView({
   const inspectorState = stack[stackIndex];
 
   const nestedPath = stackIndex > 0 ? stack[stack.length - 1] : null;
+
+  const isMobile = useIsMobile();
 
   return (
     <div
@@ -239,8 +242,12 @@ const DataInspectorView = observer(function DataInspectorView({
             }}
           >
             <FilterIcon className={styles.filterIcon} />
-            Filter
-            <ChevronDownIcon className={styles.openIcon} />
+            {!isMobile && (
+              <>
+                Filter
+                <ChevronDownIcon className={styles.openIcon} />
+              </>
+            )}
           </div>
         </div>
       </div>

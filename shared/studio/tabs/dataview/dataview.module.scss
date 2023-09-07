@@ -75,16 +75,55 @@
     font-weight: 500;
     color: var(--btn-text-color);
   }
-}
 
-.rowCount {
-  margin: 0 auto;
-  font-family: "Roboto Mono";
-  font-size: 14px;
+  .rowCount {
+    margin: 0 auto;
+    font-family: "Roboto Mono";
+    font-size: 14px;
 
-  span {
-    opacity: 0.6;
-    font-style: italic;
+    span {
+      opacity: 0.6;
+      font-style: italic;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    position: absolute;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 24px;
+    width: calc(100% - 48px);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0%,
+      #fff 48.44%
+    );
+
+    .rowCount,
+    .headerButton {
+      display: none;
+    }
+
+    .objectSelect {
+      background: #666;
+      border-radius: 4px;
+      color: #f2f2f2;
+      padding: 6px 16px;
+      display: flex;
+      width: 208px;
+      font-weight: 500;
+    }
+  }
+
+  @include darkTheme {
+    background: linear-gradient(180deg, rgba(36, 36, 36, 0) 0%, #242424 100%);
+
+    .objectSelect {
+      background: #999;
+      color: #141414;
+    }
   }
 }
 
@@ -325,6 +364,27 @@
 
     .openIcon {
       transform: rotate(180deg);
+    }
+  }
+
+  @include breakpoint(mobile) {
+    border-radius: 20px;
+    padding: 0 12px;
+    background-color: #666;
+
+    .filterIcon {
+      margin: 0;
+      width: 16px;
+      height: 17px;
+      fill: #f7f7f7;
+    }
+
+    @include darkTheme {
+      background-color: #999;
+
+      .filterIcon {
+        fill: #1a1a1a;
+      }
     }
   }
 }
