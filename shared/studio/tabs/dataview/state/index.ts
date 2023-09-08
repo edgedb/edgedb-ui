@@ -286,6 +286,11 @@ export class DataInspector extends Model({
     this.filterEditStr = filterStr;
   }
 
+  @computed
+  get mobileFields() {
+    return this.fields?.filter((field) => field.name !== "id");
+  }
+
   onAttachedToRootStore() {
     const dataView = findParent<DataView>(
       this,

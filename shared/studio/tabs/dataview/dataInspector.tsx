@@ -41,7 +41,7 @@ import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
 
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {SortIcon, SortedDescIcon} from "./icons";
+import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
 import {
   ChevronDownIcon,
   DeleteIcon,
@@ -51,6 +51,7 @@ import {
 } from "../../icons";
 import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -110,15 +111,21 @@ export default observer(function DataInspectorTable({
 
   const initialScrollOffset = useInitialValue(() => state.scrollPos);
 
+  const isMobile = useIsMobile();
+
+  const rowHeight = isMobile ? 58 : 40;
+
+  const fields = isMobile ? state.mobileFields : state.fields;
+
   useResize(gridContainer, ({width, height}) =>
     setContainerSize([width, height])
   );
 
   useLayoutEffect(() => {
     const availableWidth = gridContainer.current?.clientWidth;
-    if (!state.fieldWidthsUpdated && availableWidth && state.fields) {
+    if (!state.fieldWidthsUpdated && availableWidth && fields) {
       const newWidth = Math.min(
-        Math.floor((availableWidth - 200) / state.fields.length),
+        Math.floor((availableWidth - 200) / fields.length),
         350
       );
       state.setInitialFieldWidths(newWidth);
@@ -175,16 +182,16 @@ export default observer(function DataInspectorTable({
             onScroll={({scrollTop, scrollLeft}) => {
               state.setScrollPos([scrollTop, scrollLeft]);
             }}
-            columnCount={state.fields?.length ?? 0}
+            columnCount={fields?.length ?? 0}
             estimatedColumnWidth={180}
             columnWidth={(index) => state.fieldWidths![index]}
             rowCount={state.gridRowCount}
-            estimatedRowHeight={40}
+            estimatedRowHeight={rowHeight}
             rowHeight={(rowIndex) =>
               state.getRowData(rowIndex - state.insertedRows.length).kind ===
               RowKind.expanded
                 ? 28
-                : 40
+                : rowHeight
             }
             overscanRowCount={5}
             onItemsRendered={({
@@ -321,13 +328,16 @@ const GridCell = observer(function GridCell({
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
 
+  const isMobile = useIsMobile();
+
   const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
   if (rowData && rowData.kind !== RowKind.data) {
     return null;
   }
 
-  const field = state.fields![columnIndex];
+  const fields = isMobile ? state.mobileFields : state.fields;
+  const field = fields![columnIndex];
   const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
 
   const data = rowData ? state.getData(rowData.index) : insertedRow!.data;
@@ -409,6 +419,7 @@ const GridCell = observer(function GridCell({
         );
       } else {
         const codec = state.dataCodecs?.[columnIndex];
+
         if (codec) {
           content = (
             <>
@@ -554,6 +565,9 @@ function FetchingDataPlaceholder({
 
 const FieldHeaders = observer(function FieldHeaders() {
   const {state} = useDataInspectorState();
+  const isMobile = useIsMobile();
+
+  const fields = isMobile ? state.mobileFields : state.fields;
 
   return (
     <div
@@ -573,7 +587,7 @@ const FieldHeaders = observer(function FieldHeaders() {
             </div>
           )
         )}
-        {state.fields?.map((field, i) => (
+        {fields?.map((field, i) => (
           <FieldHeader
             key={field.queryName}
             colIndex={i}
@@ -712,6 +726,8 @@ const DataRowIndex = observer(function DataRowIndex({
   active: boolean;
 }) {
   const {state, edits} = useDataInspectorState();
+
+  const isMobile = useIsMobile();
 
   if (dataIndex !== null && dataIndex >= (state.rowCount ?? 0)) return null;
 
@@ -871,18 +887,25 @@ const DataRowIndex = observer(function DataRowIndex({
           {dataIndex !== null ? dataIndex + 1 : null}
         </div>
         {dataIndex !== null ? (
-          <div
-            className={cn(styles.expandRow, {
-              [styles.isExpanded]: state.expandedDataRowIndexes.has(dataIndex),
-              [styles.isHidden]: isDeletedRow,
-            })}
-            onClick={() => {
-              state.toggleRowExpanded(dataIndex);
-              state.gridRef?.resetAfterRowIndex(rowIndex);
-            }}
-          >
-            <ChevronDownIcon />
-          </div>
+          isMobile ? (
+            <button className={styles.expandRowMobile}>
+              <TopRightIcon />
+            </button>
+          ) : (
+            <div
+              className={cn(styles.expandRow, {
+                [styles.isExpanded]:
+                  state.expandedDataRowIndexes.has(dataIndex),
+                [styles.isHidden]: isDeletedRow,
+              })}
+              onClick={() => {
+                state.toggleRowExpanded(dataIndex);
+                state.gridRef?.resetAfterRowIndex(rowIndex);
+              }}
+            >
+              <ChevronDownIcon />
+            </div>
+          )
         ) : null}
       </div>
       <div
@@ -914,6 +937,9 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
   const basePath = currentPath.join("/");
   const item = rowData.state.getItems()?.[rowData.index];
 
+  const isMobile = useIsMobile();
+  const fields = isMobile ? state.mobileFields : state.fields;
+
   return (
     <div className={styles.inspectorRow} style={{top: styleTop}}>
       {item ? (
@@ -937,7 +963,7 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
                   navigate,
                   rowData.state.objectId,
                   rowData.state.objectTypeName,
-                  state.fields!.find((field) => field.name === item.fieldName)!
+                  fields!.find((field) => field.name === item.fieldName)!
                 )
               }
             >

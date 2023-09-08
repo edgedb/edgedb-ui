@@ -95,9 +95,9 @@ export const SearchIcon = () => (
     <path
       d="M1 17L4.86667 13.1333M2.77778 8.11111C2.77778 12.0385 5.96153 15.2222 9.88889 15.2222C13.8162 15.2222 17 12.0385 17 8.11111C17 4.18375 13.8162 1 9.88889 1C5.96153 1 2.77778 4.18375 2.77778 8.11111Z"
       stroke="#7C7C7C"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );
