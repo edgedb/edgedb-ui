@@ -29,6 +29,7 @@ import {ObjectTypeSelect} from "../../components/objectTypeSelect";
 import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
 import {
   ChevronDownIcon,
+  CrossIcon,
   FilterIcon,
   TabDataExplorerIcon,
   WarningIcon,
@@ -229,7 +230,14 @@ const DataInspectorView = observer(function DataInspectorView({
               </div>
             )
           ) : null}
-
+          {!!inspectorState.filter && (
+            <button
+              className={styles.removeFilter}
+              onClick={() => inspectorState.clearFilter()}
+            >
+              <CrossIcon />
+            </button>
+          )}
           <div
             className={cn(styles.filterButton, {
               [styles.open]: inspectorState.filterPanelOpen,
@@ -295,8 +303,14 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
     [state]
   );
 
+  const applyFilterOnMobile = async () => {
+    await state.applyFilter();
+    state.setFilterPanelOpen(false);
+  };
+
   return (
     <div className={styles.filterPanel}>
+      <p className={styles.title}>Filter</p>
       <CodeEditor
         code={state.filterEditStr}
         onChange={(value) => state.setFilterEditStr(value)}
@@ -334,6 +348,21 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
           onClick={() => state.applyFilter()}
         />
       </div>
+      <button
+        className={styles.applyFilterMobile}
+        disabled={!state.filterEdited}
+        onClick={applyFilterOnMobile}
+      >
+        Apply Filter
+      </button>
+      <button
+        className={styles.closeFilterPanel}
+        onClick={() => {
+          state.setFilterPanelOpen(false);
+        }}
+      >
+        <CrossIcon />
+      </button>
     </div>
   );
 });

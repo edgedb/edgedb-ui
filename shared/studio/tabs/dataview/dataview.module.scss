@@ -16,7 +16,6 @@
   background: var(--app-panel-bg);
   border-radius: 8px;
   overflow: hidden;
-  z-index: 1;
 }
 
 .loadingSkeleton {
@@ -389,6 +388,32 @@
   }
 }
 
+.filterActive {
+  background-color: #b199f2;
+
+  @include darkTheme {
+    background-color: #999;
+  }
+}
+
+.removeFilter {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    position: absolute;
+    bottom: 16px;
+    right: 72px;
+    background: transparent;
+    border: none;
+    color: #808080;
+
+    @include darkTheme {
+      color: #af6963;
+    }
+  }
+}
+
 .filterPanel {
   --code-editor-bg: #f2f2f2;
   position: relative;
@@ -398,6 +423,52 @@
 
   @include darkTheme {
     --code-editor-bg: #2e2e2e;
+  }
+
+  .title {
+    display: none;
+  }
+
+  .closeFilterPanel {
+    display: none;
+  }
+
+  @include breakpoint(mobile) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 11;
+    display: block;
+
+    .closeFilterPanel {
+      display: block;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: #737373;
+    }
+
+    .title {
+      display: block;
+      text-align: center;
+      font-family: Roboto;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 24px;
+      width: 100%;
+    }
+
+    @include darkTheme {
+      --code-editor-bg: #242424;
+
+      .title {
+        color: #b9b9b9;
+      }
+    }
   }
 }
 
@@ -439,6 +510,38 @@
     }
     .applyFilterButton {
       --buttonBg: #29b189;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
+}
+
+.applyFilterMobile {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    width: 100%;
+    height: 64px;
+    position: absolute;
+    bottom: 0px;
+    font-family: Roboto;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 16px;
+    border: none;
+    background: #2cb88e;
+    color: #fff;
+
+    &:disabled {
+      opacity: 0.4;
+    }
+
+    @include darkTheme {
+      color: #141414;
+      background: #279474;
     }
   }
 }
