@@ -75,6 +75,43 @@
     right: 0;
     left: unset;
   }
+
+  @include breakpoint(mobile) {
+    &.fullScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+
+      .dropdownTitle {
+        color: #1a1a1a;
+        text-align: center;
+        font-family: Roboto;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 24px;
+      }
+
+      .closeDropdown {
+        background: transparent;
+        border: none;
+        color: #737373;
+        position: absolute;
+        top: 23px;
+        right: 18px;
+      }
+
+      @include darkTheme {
+        background: #2e2e2e;
+
+        .dropdownTitle {
+          color: #b9b9b9;
+        }
+      }
+    }
+  }
 }
 
 .searchInput {
@@ -89,6 +126,37 @@
 
   @include darkTheme {
     background: #1f1f1f;
+  }
+}
+
+.searchFullScreen {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    padding: 0 24px 12px 24px;
+    position: relative;
+
+    svg {
+      position: absolute;
+      left: 38px;
+      top: 10px;
+    }
+
+    input {
+      outline: 0;
+      border: 0;
+      border-radius: 6px;
+      background: #f2f2f2;
+      padding: 12px 14px 12px 38px;
+      font-weight: 600;
+      color: #7c7c7c;
+      width: calc(100% - 48px);
+
+      @include darkTheme {
+        background: #141414;
+      }
+    }
   }
 }
 
@@ -135,6 +203,22 @@
     background: #1f8aed;
     border-radius: 2px;
     color: #fff;
+  }
+
+  @include breakpoint(mobile) {
+    &.fullScreen {
+      color: #999;
+      font-family: Roboto;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 24px;
+      padding: 24px 16px 24px;
+      border-top: 2px solid #d9d9d9;
+
+      @include darkTheme {
+        border-color: #141414;
+      }
+    }
   }
 }
 

@@ -73,6 +73,10 @@
     margin-right: 16px;
     font-weight: 500;
     color: var(--btn-text-color);
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
   .rowCount {
@@ -89,7 +93,7 @@
   @include breakpoint(mobile) {
     position: absolute;
     bottom: 0;
-    z-index: 2;
+    z-index: 11;
     display: flex;
     justify-content: space-between;
     padding: 8px 24px;
@@ -332,6 +336,10 @@
         background: #767676;
       }
     }
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
   }
 }
 

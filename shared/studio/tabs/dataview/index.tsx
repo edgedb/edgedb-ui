@@ -114,6 +114,8 @@ const DataInspectorView = observer(function DataInspectorView({
           <>
             <ObjectTypeSelect
               className={cn(styles.headerSelect, styles.objectSelect)}
+              fullScreen
+              fullScreenTitle="Object type"
               objectTypes={dataviewState.objectTypes}
               selectedObjectType={stack[0].objectType!}
               action={(objectType) => {

@@ -6,6 +6,8 @@ import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./select.module.scss";
+import {useIsMobile} from "../../hooks/useMobile";
+import {CrossIcon, SearchIcon} from "../icons";
 
 export interface SelectItem<T = any> {
   id: T;
@@ -23,6 +25,8 @@ export type SelectItems<T = any> = {
 
 export type SelectProps<T = any> = {
   className?: string;
+  fullScreen?: boolean;
+  fullScreenTitle?: string;
   title?: string | JSX.Element;
   rightAlign?: boolean;
   actions?: {label: string | JSX.Element; action: () => void}[];
@@ -51,6 +55,8 @@ type FlattenedItems = (
 
 export function Select<T extends any>({
   className,
+  fullScreen,
+  fullScreenTitle,
   title,
   rightAlign,
   actions,
@@ -63,11 +69,13 @@ export function Select<T extends any>({
   const searchRef = useRef<HTMLInputElement>(null);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
 
   const [searchFilter, setSearchFilter] = useState("");
 
   const hasDropdown = !!dropdown.items || !!actions;
+
+  const isMobile = useIsMobile();
 
   const flattenedItems = useMemo(() => {
     if (!dropdown.items) {
@@ -160,6 +168,8 @@ export function Select<T extends any>({
     }
   }, [dropdownOpen]);
 
+  const defaultItemPaddingLeft = isMobile ? 24 : 12;
+
   return (
     <div
       ref={selectRef}
@@ -179,19 +189,41 @@ export function Select<T extends any>({
             className={cn(styles.tabDropdown, {
               [styles.tabDropdownOpen]: dropdownOpen,
               [styles.rightAlign]: !!rightAlign,
+              [styles.fullScreen]: !!fullScreen,
             })}
-            style={{maxHeight: maxHeight ?? maxHeight + "px"}}
+            style={isMobile ? {} : {maxHeight}}
             onClick={(e) => e.stopPropagation()}
           >
-            {searchable ? (
-              <input
-                ref={searchRef}
-                className={styles.searchInput}
-                placeholder="Search..."
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-              />
-            ) : null}
+            {isMobile && !!fullScreenTitle && (
+              <p className={styles.dropdownTitle}>{fullScreenTitle}</p>
+            )}
+            {isMobile && !!fullScreen && (
+              <button
+                className={styles.closeDropdown}
+                onClick={() => setDropdownOpen(false)}
+              >
+                <CrossIcon />
+              </button>
+            )}
+            {!!searchable &&
+              (fullScreen ? (
+                <div className={styles.searchFullScreen}>
+                  <SearchIcon />
+                  <input
+                    ref={searchRef}
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <input
+                  ref={searchRef}
+                  className={styles.searchInput}
+                  placeholder="Search..."
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                />
+              ))}
             {dropdown.items
               ? filteredItems
                 ? filteredItems.map((result) => (
@@ -201,6 +233,7 @@ export function Select<T extends any>({
                         [styles.dropdownItemSelected]:
                           dropdown.selectedItemId === result.obj.item.item.id,
                         [styles.disabled]: !!result.obj.item.item.disabled,
+                        [styles.fullScreen]: !!fullScreen,
                       })}
                       onClick={() => {
                         setDropdownOpen(false);
@@ -224,11 +257,14 @@ export function Select<T extends any>({
                               [styles.dropdownItemSelected]:
                                 dropdown.selectedItemId === item.item.id,
                               [styles.disabled]: !!item.item.disabled,
+                              [styles.fullScreen]: !!fullScreen,
                             }
                           : styles.groupHeader
                       )}
                       style={{
-                        paddingLeft: `${12 + 10 * item.depth}px`,
+                        paddingLeft: `${
+                          defaultItemPaddingLeft + 10 * item.depth
+                        }px`,
                       }}
                       onClick={
                         item.type === "item"
