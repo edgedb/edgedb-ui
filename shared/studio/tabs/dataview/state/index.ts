@@ -697,6 +697,14 @@ export class DataInspector extends Model({
     return new Set(this.expandedRows.map((row) => row.dataRowIndex));
   }
 
+  @observable
+  expandedRowMobile: number = -1;
+
+  @action
+  setExpandedRowMobile(rowIndex: number) {
+    this.expandedRowMobile = rowIndex;
+  }
+
   @action
   toggleRowExpanded(dataRowIndex: number) {
     const existingRowIndex = this.expandedRows.findIndex(

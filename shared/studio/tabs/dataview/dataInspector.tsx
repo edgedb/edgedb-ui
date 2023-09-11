@@ -31,7 +31,6 @@ import styles from "./dataInspector.module.scss";
 
 import {
   DataInspector as DataInspectorState,
-  DataRowData,
   ExpandedRowData,
   ObjectField,
   ObjectFieldType,
@@ -44,14 +43,18 @@ import {useDBRouter} from "../../hooks/dbRoute";
 import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
 import {
   ChevronDownIcon,
+  CrossIcon,
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
   WarningIcon,
+  BackIcon,
 } from "../../icons";
 import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {DataView as DataViewState} from "./state";
+import {useTabState} from "../../state";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -700,8 +703,13 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
   const rowDataIndex = rowIndex - state.insertedRows.length;
   const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
+  const isMobile = useIsMobile();
   if (rowData?.kind === RowKind.expanded) {
-    return <ExpandedDataInspector rowData={rowData} styleTop={style.top} />;
+    return isMobile ? (
+      <MobileDataInspector rowData={rowData} />
+    ) : (
+      <ExpandedDataInspector rowData={rowData} styleTop={style.top} />
+    );
   } else {
     return (
       <DataRowIndex
@@ -872,6 +880,10 @@ const DataRowIndex = observer(function DataRowIndex({
     }
   }
 
+  // const {navigate, currentPath} = useDBRouter();
+  // const basePath = currentPath.join("/");
+  // const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
+
   return (
     <>
       <div
@@ -888,7 +900,12 @@ const DataRowIndex = observer(function DataRowIndex({
         </div>
         {dataIndex !== null ? (
           isMobile ? (
-            <button className={styles.expandRowMobile}>
+            <button
+              className={styles.expandRowMobile}
+              onClick={() => {
+                state.toggleRowExpanded(dataIndex);
+              }}
+            >
               <TopRightIcon />
             </button>
           ) : (
@@ -937,9 +954,6 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
   const basePath = currentPath.join("/");
   const item = rowData.state.getItems()?.[rowData.index];
 
-  const isMobile = useIsMobile();
-  const fields = isMobile ? state.mobileFields : state.fields;
-
   return (
     <div className={styles.inspectorRow} style={{top: styleTop}}>
       {item ? (
@@ -963,7 +977,9 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
                   navigate,
                   rowData.state.objectId,
                   rowData.state.objectTypeName,
-                  fields!.find((field) => field.name === item.fieldName)!
+                  state.mobileFields!.find(
+                    (field) => field.name === item.fieldName
+                  )!
                 )
               }
             >
@@ -977,3 +993,55 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
     </div>
   );
 });
+
+interface MobileDataInspectorProps {
+  rowData: ExpandedRowData;
+}
+const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
+  const item = rowData.state.getItems()?.[0];
+
+  const state = useDataInspectorState().state;
+  const fields = state.fields || [];
+
+  return (
+    <div className={styles.mobileInspectorWindow}>
+      <div className={styles.header}>
+        <button onClick={() => {}}>
+          <BackIcon />
+        </button>
+
+        <p className={styles.title}>
+          {item ? item.data.__tname__ : `loading...`}
+        </p>
+        <button>
+          <CrossIcon onClick={() => {}} />
+        </button>
+      </div>
+      {item &&
+        fields.map((field) => {
+          const isMulti = field.multi;
+          const data = item.data;
+          const value = isMulti ? data[field.name].length : data[field.name];
+
+          return (
+            <div className={styles.field} key={field.name}>
+              <div className={styles.fieldHeader}>
+                <span className={styles.name}>{field.name}</span>
+                <span className={styles.type}>
+                  {`${isMulti ? "multi" : ""} ${field.typename}`}
+                </span>
+              </div>
+              {isMulti ? (
+                <div className={styles.linkObjName}>
+                  {field.typename.split("::")[1]}
+                  <span>{value}</span>
+                </div>
+              ) : (
+                <p className={styles.fieldValue}>{value}</p>
+              )}
+            </div>
+          );
+        })}
+    </div>
+  );
+};

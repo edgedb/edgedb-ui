@@ -646,3 +646,84 @@
     }
   }
 }
+
+.mobileInspectorWindow {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 88px - 60px);
+    z-index: 11;
+    background: #f7f7f7;
+    margin-left: 0;
+
+    button {
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    .header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      background: #666;
+      align-items: center;
+
+      .title {
+        color: #e6e6e6;
+        text-align: center;
+        font-family: Roboto Mono;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 16px;
+      }
+
+      svg {
+        color: #b3b3b3;
+      }
+    }
+
+    .field {
+      padding: 16px 24px;
+      font-family: Roboto Mono;
+      font-size: 14px;
+      line-height: 24px;
+      font-weight: 400;
+      border-bottom: 2px solid #d9d9d9;
+
+      .fieldHeader {
+        display: flex;
+        justify-content: space-between;
+
+        .name {
+          overflow: hidden;
+          color: #1a1a1a;
+          text-overflow: ellipsis;
+          font-weight: 500;
+        }
+
+        .type {
+          color: #808080;
+          text-align: right;
+        }
+      }
+
+      .fieldValue {
+        overflow: hidden;
+        color: #2cb88e;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin: 0;
+      }
+    }
+
+    .linkObjName {
+      margin-top: 4px;
+    }
+  }
+}
