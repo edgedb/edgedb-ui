@@ -16,6 +16,10 @@
   background: var(--app-panel-bg);
   border-radius: 8px;
   overflow: hidden;
+
+  @include breakpoint(mobile) {
+    border-radius: 0;
+  }
 }
 
 .loadingSkeleton {
@@ -118,6 +122,22 @@
       width: 208px;
       font-weight: 500;
     }
+
+    &.nested {
+      top: 0;
+      background: #666;
+      padding: 4px 16px;
+      width: calc(100% - 32px);
+    }
+
+    .backButton {
+      background: transparent;
+      width: unset;
+
+      &:hover {
+        background: transparent;
+      }
+    }
   }
 
   @include darkTheme {
@@ -127,6 +147,13 @@
       background: #999;
       color: #141414;
     }
+  }
+
+  .closeNestedView {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: #b3b3b3;
   }
 }
 
@@ -171,6 +198,10 @@
 
 .nestedPathSteps {
   display: contents;
+
+  @include breakpoint(mobile) {
+    display: flex;
+  }
 }
 
 .nestedPathStep {
@@ -181,6 +212,11 @@
   line-height: 16px;
   color: #4c4c4c;
   margin-right: 2rem;
+
+  @include breakpoint(mobile) {
+    color: #e6e6e6;
+    margin-right: 0;
+  }
 
   .pathStepIdent {
     font-size: 11px;
@@ -199,10 +235,19 @@
       width: 0;
       white-space: nowrap;
     }
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
   &:first-child {
     margin-left: 16px;
+
+    @include breakpoint(mobile) {
+      margin-left: 0;
+      margin-right: 12px;
+    }
   }
 
   &:not(:first-child) {
@@ -500,13 +545,6 @@
     --buttonBg: #49d8ad;
   }
 
-  .filterError {
-    color: #f13f4a;
-    font-family: Roboto Mono;
-    font-size: 14px;
-    margin-right: 16px;
-  }
-
   @include darkTheme {
     --buttonTextColour: #1f1f1f;
 
@@ -523,6 +561,23 @@
 
   @include breakpoint(mobile) {
     display: none;
+  }
+}
+
+.filterError {
+  color: #f13f4a;
+  font-family: Roboto Mono;
+  font-size: 14px;
+  margin-right: 16px;
+}
+
+.filterErrorMobile {
+  @extend .filterError;
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    margin: 16px;
   }
 }
 
@@ -579,4 +634,9 @@
     opacity: 1;
     transform: translateX(-50%);
   }
+}
+
+.inspectorTable {
+  top: 37px;
+  position: relative;
 }

@@ -101,11 +101,13 @@ const outerElementType = forwardRef<HTMLDivElement>(
 interface DataInspectorProps {
   state: DataInspectorState;
   edits: DataEditingManager;
+  className?: string;
 }
 
 export default observer(function DataInspectorTable({
   state,
   edits,
+  className,
 }: DataInspectorProps) {
   const gridContainer = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState<[number, number]>([0, 0]);
@@ -126,12 +128,14 @@ export default observer(function DataInspectorTable({
 
   useLayoutEffect(() => {
     const availableWidth = gridContainer.current?.clientWidth;
+
     if (!state.fieldWidthsUpdated && availableWidth && fields) {
       const newWidth = Math.min(
         Math.floor((availableWidth - 200) / fields.length),
         350
       );
-      state.setInitialFieldWidths(newWidth);
+
+      state.setInitialFieldWidths(isMobile ? 180 : newWidth);
       gridRef.current?.resetAfterColumnIndex(0);
     }
   }, []);
@@ -152,15 +156,22 @@ export default observer(function DataInspectorTable({
     <DataInspectorContext.Provider value={{state, edits}}>
       <div
         ref={gridContainer}
-        className={cn(styles.dataInspector, inspectorStyles.inspectorTheme, {
-          [styles.editMode]: !!state.parentObject?.editMode,
-        })}
+        className={cn(
+          styles.dataInspector,
+          inspectorStyles.inspectorTheme,
+          className,
+          {
+            [styles.editMode]: !!state.parentObject?.editMode,
+          }
+        )}
         style={
           {
             "--rowIndexCharWidth": rowIndexCharWidth,
-            "--gridWidth":
-              (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
-                0) + "px",
+            ...(isMobile && {
+              "--gridWidth":
+                (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
+                  0) + "px",
+            }),
             "--gridBottomPadding":
               containerSize[1] -
               (state.hasSubtypeFields ? 64 : 48) -
@@ -997,24 +1008,33 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
 interface MobileDataInspectorProps {
   rowData: ExpandedRowData;
 }
-const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
+
+export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
   const item = rowData.state.getItems()?.[0];
 
   const state = useDataInspectorState().state;
   const fields = state.fields || [];
 
+  const {navigate, currentPath} = useDBRouter();
+  const basePath = currentPath.join("/");
+
+  const closeExtendedView = () => {
+    state.toggleRowExpanded(rowData.dataRowIndex);
+    state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
+  };
+
   return (
     <div className={styles.mobileInspectorWindow}>
       <div className={styles.header}>
-        <button onClick={() => {}}>
+        <button onClick={closeExtendedView} className={styles.headerBtn}>
           <BackIcon />
         </button>
 
         <p className={styles.title}>
           {item ? item.data.__tname__ : `loading...`}
         </p>
-        <button>
-          <CrossIcon onClick={() => {}} />
+        <button onClick={closeExtendedView} className={styles.headerBtn}>
+          <CrossIcon />
         </button>
       </div>
       {item &&
@@ -1032,10 +1052,21 @@ const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                 </span>
               </div>
               {isMulti ? (
-                <div className={styles.linkObjName}>
+                <button
+                  className={styles.linkObjName}
+                  onClick={() => {
+                    state.openNestedView(
+                      basePath,
+                      navigate,
+                      data.id,
+                      data.__tname__,
+                      field
+                    );
+                  }}
+                >
                   {field.typename.split("::")[1]}
                   <span>{value}</span>
-                </div>
+                </button>
               ) : (
                 <p className={styles.fieldValue}>{value}</p>
               )}

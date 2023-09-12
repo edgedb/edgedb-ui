@@ -453,6 +453,10 @@
         background: #262626;
       }
     }
+
+    @include breakpoint(mobile) {
+      height: 56px;
+    }
   }
 
   .inspectorRow {
@@ -661,7 +665,7 @@
     background: #f7f7f7;
     margin-left: 0;
 
-    button {
+    .headerBtn {
       background: transparent;
       border: none;
       padding: 0;
@@ -724,6 +728,9 @@
 
     .linkObjName {
       margin-top: 4px;
+      padding-top: 0;
+      padding-right: 0;
+      border: none;
     }
   }
 }

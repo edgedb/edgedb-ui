@@ -256,6 +256,8 @@ function pointerTargetHasSelectAccessPolicy(pointer: SchemaLink) {
   );
 }
 
+type ErrorFilter = {filter: string; error: string};
+
 @model("DataInspector")
 export class DataInspector extends Model({
   $modelId: idProp,
@@ -269,7 +271,7 @@ export class DataInspector extends Model({
   expandedInspectors: prop(() => objectMap<ExpandedInspector>()),
 
   filter: prop<string>(""),
-  filterError: prop<string>(""),
+  errorFilter: prop<ErrorFilter | null>(null),
   filterPanelOpen: prop<boolean>(false).withSetter(),
 }) {
   gridRef: Grid | null = null;
@@ -1076,12 +1078,13 @@ export class DataInspector extends Model({
 
   @computed
   get filterEdited() {
-    return (
-      this.filterEditStr
-        .toString()
-        .replace(/^filter\s/i, "")
-        .trim() !== this.filter
-    );
+    const filterStrTrimmed = this.filterEditStr
+      .toString()
+      .replace(/^filter\s/i, "")
+      .trim();
+
+    if (this.errorFilter) return filterStrTrimmed !== this.errorFilter.filter;
+    return filterStrTrimmed !== this.filter;
   }
 
   @modelFlow
@@ -1092,7 +1095,7 @@ export class DataInspector extends Model({
       .trim();
 
     if (!filter) {
-      this.filterError = "";
+      this.errorFilter = null;
       this.filter = "";
 
       this._refreshData(true);
@@ -1108,13 +1111,17 @@ export class DataInspector extends Model({
       yield* _await(conn.parse(filterCheckQuery));
     } catch (err: any) {
       const errMessage = String(err.message);
-      this.filterError = /unexpected 'ORDER'/i.test(errMessage)
-        ? "Filter can only contain 'FILTER' clause"
-        : errMessage;
+      this.errorFilter = {
+        filter,
+        error: /unexpected 'ORDER'/i.test(errMessage)
+          ? "Filter can only contain 'FILTER' clause"
+          : errMessage,
+      };
+
       return;
     }
 
-    this.filterError = "";
+    this.errorFilter = null;
     this.filter = filter;
 
     this._refreshData(true);
@@ -1123,13 +1130,13 @@ export class DataInspector extends Model({
   @modelAction
   revertFilter() {
     this.filterEditStr = Text.of([`filter ${this.filter}`]);
-    this.filterError = "";
+    this.errorFilter = null;
   }
 
   @modelAction
   disableFilter() {
     this.filter = "";
-    this.filterError = "";
+    this.errorFilter = null;
 
     this._refreshData(true);
   }
@@ -1137,7 +1144,7 @@ export class DataInspector extends Model({
   @modelAction
   clearFilter() {
     this.filterEditStr = Text.of(["filter "]);
-    this.filterError = "";
+    this.errorFilter = null;
 
     if (this.filter) {
       this.filter = "";
