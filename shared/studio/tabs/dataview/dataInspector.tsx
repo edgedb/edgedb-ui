@@ -167,7 +167,7 @@ export default observer(function DataInspectorTable({
         style={
           {
             "--rowIndexCharWidth": rowIndexCharWidth,
-            ...(isMobile && {
+            ...(!isMobile && {
               "--gridWidth":
                 (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
                   0) + "px",
