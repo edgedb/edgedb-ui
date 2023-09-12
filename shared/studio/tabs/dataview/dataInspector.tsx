@@ -120,7 +120,7 @@ export default observer(function DataInspectorTable({
 
   const rowHeight = isMobile ? 58 : 40;
 
-  const fields = isMobile ? state.mobileFields : state.fields;
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
 
   useResize(gridContainer, ({width, height}) =>
     setContainerSize([width, height])
@@ -350,7 +350,7 @@ const GridCell = observer(function GridCell({
     return null;
   }
 
-  const fields = isMobile ? state.mobileFields : state.fields;
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
   const field = fields![columnIndex];
   const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
 
@@ -432,7 +432,9 @@ const GridCell = observer(function GridCell({
           </>
         );
       } else {
-        const codec = state.dataCodecs?.[columnIndex];
+        const codec = isMobile
+          ? state.mobileFieldsAndCodecs.codecs[columnIndex]
+          : state.dataCodecs?.[columnIndex];
 
         if (codec) {
           content = (
@@ -581,7 +583,7 @@ const FieldHeaders = observer(function FieldHeaders() {
   const {state} = useDataInspectorState();
   const isMobile = useIsMobile();
 
-  const fields = isMobile ? state.mobileFields : state.fields;
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
 
   return (
     <div
@@ -1038,10 +1040,12 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
         </button>
       </div>
       {item &&
-        fields.map((field) => {
+        fields.map((field, index) => {
           const isMulti = field.multi;
           const data = item.data;
           const value = isMulti ? data[field.name].length : data[field.name];
+
+          const codec = state.dataCodecs?.[index];
 
           return (
             <div className={styles.field} key={field.name}>
@@ -1067,6 +1071,8 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                   {field.typename.split("::")[1]}
                   <span>{value}</span>
                 </button>
+              ) : codec ? (
+                renderCellValue(value, codec)
               ) : (
                 <p className={styles.fieldValue}>{value}</p>
               )}

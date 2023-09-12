@@ -288,11 +288,6 @@ export class DataInspector extends Model({
     this.filterEditStr = filterStr;
   }
 
-  @computed
-  get mobileFields() {
-    return this.fields?.filter((field) => field.name !== "id");
-  }
-
   onAttachedToRootStore() {
     const dataView = findParent<DataView>(
       this,
@@ -1050,6 +1045,20 @@ export class DataInspector extends Model({
     } `,
       params,
     };
+  }
+
+  get mobileFieldsAndCodecs() {
+    const fields = this.fields ? [...this.fields] : [];
+    const codecs = this.dataCodecs ? [...this.dataCodecs] : [];
+
+    const index = fields.findIndex((field) => field.name === "id") || -1;
+
+    if (index > -1) {
+      fields.splice(index, 1);
+      codecs.splice(index, 1);
+    }
+
+    return {fields, codecs};
   }
 
   // sorting

@@ -11,6 +11,14 @@
 
   @include breakpoint(mobile) {
     --rowIndexWidth: calc(var(--rowIndexCharWidth) * 7.8px + 74px);
+
+    --inspector-green: #2cb88e;
+    --inspector-orange: #e5a507;
+
+    @include darkTheme {
+      --inspector-green: #00ba83;
+      --inspector-orange: #d0a02b;
+    }
   }
 
   @include darkTheme {
@@ -761,7 +769,6 @@
 
       .fieldValue {
         overflow: hidden;
-        color: #2cb88e;
         text-overflow: ellipsis;
         white-space: nowrap;
         margin: 0;
