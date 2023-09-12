@@ -98,7 +98,7 @@ export function TopRightIcon() {
     >
       <path
         d="M1.6967 9.66726L10.182 1.18198M10.182 1.18198L10.182 7.54594M10.182 1.18198L3.81802 1.18198"
-        stroke="#B3B3B3"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"

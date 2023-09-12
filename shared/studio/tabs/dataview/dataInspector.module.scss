@@ -15,6 +15,16 @@
 
   @include darkTheme {
     background: #2e2e2e;
+
+    @include breakpoint(mobile) {
+      background: #242424;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    @include darkTheme {
+      background: #242424;
+    }
   }
 }
 
@@ -60,6 +70,10 @@
 
   @include darkTheme {
     background: rgba(37, 37, 37, 0.9);
+
+    @include breakpoint(mobile) {
+      background: #333;
+    }
   }
 }
 
@@ -157,6 +171,10 @@
   @include darkTheme {
     .fieldName {
       color: #c5c5c5;
+
+      @include breakpoint(mobile) {
+        color: #adadad;
+      }
     }
 
     .fieldTypename {
@@ -507,6 +525,12 @@
 .scalar_uuid {
   color: #6f6f6f;
 
+  @include breakpoint(mobile) {
+    @include darkTheme {
+      color: #adadad;
+    }
+  }
+
   &:before,
   &:after {
     content: "";
@@ -554,6 +578,7 @@
 
     .cell {
       line-height: 56px;
+      font-size: 14px;
       color: #7d7d7d;
     }
 
@@ -594,7 +619,12 @@
     background: transparent;
     border: none;
     padding: 4px 14px;
-    margin: 0 12px 0 8px;
+    margin: 3px 12px 0 8px;
+    color: #b3b3b3;
+
+    @include darkTheme {
+      color: #666;
+    }
   }
 
   .rowActions {
@@ -672,7 +702,7 @@
   @include breakpoint(mobile) {
     display: block;
     position: fixed;
-    top: 60px;
+    top: 56px;
     left: 0;
     width: 100%;
     height: calc(100vh - 88px - 60px);
@@ -684,6 +714,7 @@
       background: transparent;
       border: none;
       padding: 0;
+      color: #b3b3b3;
     }
 
     .header {
@@ -692,19 +723,15 @@
       justify-content: space-between;
       background: #666;
       align-items: center;
+    }
 
-      .title {
-        color: #e6e6e6;
-        text-align: center;
-        font-family: Roboto Mono;
-        font-size: 14px;
-        font-weight: 400;
-        line-height: 16px;
-      }
-
-      svg {
-        color: #b3b3b3;
-      }
+    .title {
+      color: #e6e6e6;
+      text-align: center;
+      font-family: Roboto Mono;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 16px;
     }
 
     .field {
@@ -718,18 +745,18 @@
       .fieldHeader {
         display: flex;
         justify-content: space-between;
+      }
 
-        .name {
-          overflow: hidden;
-          color: #1a1a1a;
-          text-overflow: ellipsis;
-          font-weight: 500;
-        }
+      .name {
+        overflow: hidden;
+        color: #1a1a1a;
+        text-overflow: ellipsis;
+        font-weight: 500;
+      }
 
-        .type {
-          color: #808080;
-          text-align: right;
-        }
+      .type {
+        color: #808080;
+        text-align: right;
       }
 
       .fieldValue {
@@ -746,6 +773,30 @@
       padding-top: 0;
       padding-right: 0;
       border: none;
+    }
+
+    @include darkTheme {
+      background: #242424;
+
+      .field {
+        border-color: #141414;
+
+        .name {
+          color: #b9b9b9;
+        }
+      }
+
+      .header {
+        background: #999;
+      }
+
+      .headerBtn {
+        color: #4d4d4d;
+      }
+
+      .title {
+        color: #141414;
+      }
     }
   }
 }

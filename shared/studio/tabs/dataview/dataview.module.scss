@@ -128,14 +128,32 @@
       background: #666;
       padding: 4px 16px;
       width: calc(100% - 32px);
+
+      @include darkTheme {
+        background: #999;
+
+        .nestedPathStep {
+          color: #141414;
+        }
+      }
     }
 
     .backButton {
       background: transparent;
       width: unset;
+      color: #b3b3b3;
 
       &:hover {
         background: transparent;
+      }
+
+      @include darkTheme {
+        background: transparent;
+        color: #4d4d4d;
+
+        &:hover {
+          background: transparent;
+        }
       }
     }
 
@@ -158,6 +176,10 @@
     padding: 0;
     border: none;
     color: #b3b3b3;
+
+    @include darkTheme {
+      color: #4d4d4d;
+    }
   }
 }
 
