@@ -1051,7 +1051,7 @@ export class DataInspector extends Model({
     const fields = this.fields ? [...this.fields] : [];
     const codecs = this.dataCodecs ? [...this.dataCodecs] : [];
 
-    const index = fields.findIndex((field) => field.name === "id") || -1;
+    const index = fields.findIndex((field) => field.name === "id");
 
     if (index > -1) {
       fields.splice(index, 1);
