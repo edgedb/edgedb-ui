@@ -84,6 +84,11 @@
       width: 100vw;
       height: 100vh;
       background: #fff;
+      color: #999;
+      font-family: Roboto;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 24px;
 
       .dropdownTitle {
         color: #1a1a1a;
@@ -105,6 +110,7 @@
 
       @include darkTheme {
         background: #2e2e2e;
+        border-color: #141414;
 
         .dropdownTitle {
           color: #b9b9b9;
@@ -207,17 +213,8 @@
 
   @include breakpoint(mobile) {
     &.fullScreen {
-      color: #999;
-      font-family: Roboto;
-      font-size: 18px;
-      font-weight: 600;
-      line-height: 24px;
       padding: 24px 16px 24px;
       border-top: 2px solid #d9d9d9;
-
-      @include darkTheme {
-        border-color: #141414;
-      }
     }
   }
 }

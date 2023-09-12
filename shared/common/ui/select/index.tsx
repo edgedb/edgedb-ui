@@ -76,6 +76,7 @@ export function Select<T extends any>({
   const hasDropdown = !!dropdown.items || !!actions;
 
   const isMobile = useIsMobile();
+  const isFullscreenMobile = useIsMobile() && !!fullScreen;
 
   const flattenedItems = useMemo(() => {
     if (!dropdown.items) {
@@ -189,24 +190,24 @@ export function Select<T extends any>({
             className={cn(styles.tabDropdown, {
               [styles.tabDropdownOpen]: dropdownOpen,
               [styles.rightAlign]: !!rightAlign,
-              [styles.fullScreen]: !!fullScreen,
+              [styles.fullScreen]: isFullscreenMobile,
             })}
             style={isMobile ? {} : {maxHeight}}
             onClick={(e) => e.stopPropagation()}
           >
-            {isMobile && !!fullScreenTitle && (
-              <p className={styles.dropdownTitle}>{fullScreenTitle}</p>
-            )}
-            {isMobile && !!fullScreen && (
-              <button
-                className={styles.closeDropdown}
-                onClick={() => setDropdownOpen(false)}
-              >
-                <CrossIcon />
-              </button>
+            {isFullscreenMobile && (
+              <>
+                <p className={styles.dropdownTitle}>{fullScreenTitle}</p>
+                <button
+                  className={styles.closeDropdown}
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <CrossIcon />
+                </button>
+              </>
             )}
             {!!searchable &&
-              (fullScreen ? (
+              (isFullscreenMobile ? (
                 <div className={styles.searchFullScreen}>
                   <SearchIcon />
                   <input
@@ -233,7 +234,7 @@ export function Select<T extends any>({
                         [styles.dropdownItemSelected]:
                           dropdown.selectedItemId === result.obj.item.item.id,
                         [styles.disabled]: !!result.obj.item.item.disabled,
-                        [styles.fullScreen]: !!fullScreen,
+                        [styles.fullScreen]: isFullscreenMobile,
                       })}
                       onClick={() => {
                         setDropdownOpen(false);
@@ -257,7 +258,7 @@ export function Select<T extends any>({
                               [styles.dropdownItemSelected]:
                                 dropdown.selectedItemId === item.item.id,
                               [styles.disabled]: !!item.item.disabled,
-                              [styles.fullScreen]: !!fullScreen,
+                              [styles.fullScreen]: isFullscreenMobile,
                             }
                           : styles.groupHeader
                       )}

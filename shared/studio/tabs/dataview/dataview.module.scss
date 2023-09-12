@@ -138,14 +138,18 @@
         background: transparent;
       }
     }
-  }
 
-  @include darkTheme {
-    background: linear-gradient(180deg, rgba(36, 36, 36, 0) 0%, #242424 100%);
+    @include darkTheme {
+      background: linear-gradient(
+        180deg,
+        rgba(36, 36, 36, 0) 0%,
+        #242424 100%
+      );
 
-    .objectSelect {
-      background: #999;
-      color: #141414;
+      .objectSelect {
+        background: #999;
+        color: #141414;
+      }
     }
   }
 

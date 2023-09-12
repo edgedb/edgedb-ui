@@ -233,8 +233,15 @@
   display: flex;
   padding: 4px 0;
   box-sizing: border-box;
-  align-items: center;
-  border-bottom: 2px solid #e6e6e6;
+
+  @include breakpoint(mobile) {
+    border-bottom: 2px solid #e6e6e6;
+    align-items: center;
+
+    @include darkTheme {
+      border-color: #141414;
+    }
+  }
 }
 
 .cell {
@@ -548,6 +555,14 @@
     .cell {
       line-height: 56px;
       color: #7d7d7d;
+    }
+
+    @include darkTheme {
+      border-color: #141414;
+
+      .cell {
+        color: #b9b9b9;
+      }
     }
   }
 
