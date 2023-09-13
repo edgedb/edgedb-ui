@@ -52,6 +52,7 @@ import {
 import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -1007,7 +1008,7 @@ interface MobileDataInspectorProps {
 }
 
 export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
-  const item = rowData.state.getItems()?.[0];
+  const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
 
   const state = useDataInspectorState().state;
   const fields = state.fields || [];
