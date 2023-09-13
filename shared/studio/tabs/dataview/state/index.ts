@@ -738,6 +738,7 @@ export class DataInspector extends Model({
 
   data = new ObservableLRU<number, EdgeDBSet>(20);
 
+  @observable.ref
   dataCodecs: _ICodec[] | null = null;
 
   @observable
@@ -1047,15 +1048,16 @@ export class DataInspector extends Model({
     };
   }
 
+  @computed
   get mobileFieldsAndCodecs() {
-    const fields = this.fields ? [...this.fields] : [];
-    const codecs = this.dataCodecs ? [...this.dataCodecs] : [];
+    const fields = this.fields ? [...this.fields] : null;
+    const codecs = this.dataCodecs ? [...this.dataCodecs] : null;
 
-    const index = fields.findIndex((field) => field.name === "id");
+    const index = fields?.findIndex((field) => field.name === "id");
 
-    if (index > -1) {
-      fields.splice(index, 1);
-      codecs.splice(index, 1);
+    if (index !== undefined && index > -1) {
+      fields?.splice(index, 1);
+      codecs?.splice(index, 1);
     }
 
     return {fields, codecs};

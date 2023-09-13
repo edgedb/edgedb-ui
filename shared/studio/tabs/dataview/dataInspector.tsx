@@ -430,7 +430,7 @@ const GridCell = observer(function GridCell({
         );
       } else {
         const codec = isMobile
-          ? state.mobileFieldsAndCodecs.codecs[columnIndex]
+          ? state.mobileFieldsAndCodecs.codecs?.[columnIndex]
           : state.dataCodecs?.[columnIndex];
 
         if (codec) {
