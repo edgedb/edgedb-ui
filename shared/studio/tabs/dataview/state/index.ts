@@ -1121,7 +1121,7 @@ export class DataInspector extends Model({
     try {
       yield* _await(conn.parse(filterCheckQuery));
     } catch (err: any) {
-      const errMessage = String(err.message);
+      const errMessage = String(err.message).split("\n")[0];
       this.errorFilter = {
         filter,
         error: /unexpected 'ORDER'/i.test(errMessage)
