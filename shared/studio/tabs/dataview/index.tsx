@@ -161,7 +161,8 @@ const DataInspectorView = observer(function DataInspectorView({
           </>
         )}
 
-        {inspectorState.parentObject &&
+        {!isMobile &&
+        inspectorState.parentObject &&
         !inspectorState.parentObject.isComputedLink ? (
           <div
             className={styles.headerButton}
@@ -173,17 +174,18 @@ const DataInspectorView = observer(function DataInspectorView({
           </div>
         ) : null}
 
-        <div className={styles.rowCount}>
-          {inspectorState.rowCount !== null ? (
-            <>{inspectorState.rowCount} Items</>
-          ) : (
-            <span>loading...</span>
-          )}
-        </div>
+        {!isMobile && (
+          <div className={styles.rowCount}>
+            {inspectorState.rowCount !== null ? (
+              <>{inspectorState.rowCount} Items</>
+            ) : (
+              <span>loading...</span>
+            )}
+          </div>
+        )}
 
-        {/* {!nestedPath && ( */}
         <div className={styles.headerButtons}>
-          {inspectorState.subTypes.length ? (
+          {!isMobile && inspectorState.subTypes.length ? (
             <label className={styles.headerToggle}>
               <input
                 type="checkbox"
@@ -234,36 +236,36 @@ const DataInspectorView = observer(function DataInspectorView({
               </div>
             )
           ) : null}
-          {!!inspectorState.filter && (
-            <button
-              className={styles.removeFilter}
-              onClick={() => inspectorState.clearFilter()}
-            >
-              <CrossIcon />
-            </button>
-          )}
-
-          <div
-            className={cn(styles.filterButton, {
-              [styles.open]: inspectorState.filterPanelOpen,
-              [styles.filterActive]: !!inspectorState.filter,
-            })}
-            onClick={() => {
-              inspectorState.setFilterPanelOpen(
-                !inspectorState.filterPanelOpen
-              );
-            }}
-          >
-            <FilterIcon className={styles.filterIcon} />
-            {!isMobile && (
-              <>
-                Filter
-                <ChevronDownIcon className={styles.openIcon} />
-              </>
+          <div className={styles.filterWrapper}>
+            {!!inspectorState.filter && (
+              <button
+                className={styles.removeFilter}
+                onClick={() => inspectorState.clearFilter()}
+              >
+                <CrossIcon />
+              </button>
             )}
+            <div
+              className={cn(styles.filterButton, {
+                [styles.open]: inspectorState.filterPanelOpen,
+                [styles.filterActive]: !!inspectorState.filter,
+              })}
+              onClick={() => {
+                inspectorState.setFilterPanelOpen(
+                  !inspectorState.filterPanelOpen
+                );
+              }}
+            >
+              <FilterIcon className={styles.filterIcon} />
+              {!isMobile && (
+                <>
+                  Filter
+                  <ChevronDownIcon className={styles.openIcon} />
+                </>
+              )}
+            </div>
           </div>
         </div>
-        {/* )} */}
       </div>
       {inspectorState.filterPanelOpen ? (
         <FilterPanel state={inspectorState} />

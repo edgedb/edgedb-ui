@@ -215,6 +215,10 @@
     &.fullScreen {
       padding: 24px 16px 24px;
       border-top: 2px solid #d9d9d9;
+
+      @include darkTheme {
+        border-color: #141414;
+      }
     }
   }
 }
