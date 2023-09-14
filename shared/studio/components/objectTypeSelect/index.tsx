@@ -5,11 +5,15 @@ import {Select, SelectItem, SelectItems} from "@edgedb/common/ui/select";
 
 export function ObjectTypeSelect({
   className,
+  fullScreen,
+  fullScreenTitle,
   objectTypes,
   selectedObjectType,
   action,
 }: {
   className?: string;
+  fullScreen?: boolean;
+  fullScreenTitle?: string;
   objectTypes: SchemaObjectType[];
   selectedObjectType: SchemaObjectType;
   action: (objectType: SchemaObjectType) => void;
@@ -57,6 +61,8 @@ export function ObjectTypeSelect({
   return (
     <Select<SchemaObjectType>
       className={className}
+      fullScreen={fullScreen}
+      fullScreenTitle={fullScreenTitle}
       title={
         !Array.isArray(objectSelectItems) ? (
           <>

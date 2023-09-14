@@ -86,3 +86,23 @@ export function ApplyFilterIcon() {
     </svg>
   );
 }
+
+export function TopRightIcon() {
+  return (
+    <svg
+      width="12"
+      height="11"
+      viewBox="0 0 12 11"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M1.6967 9.66726L10.182 1.18198M10.182 1.18198L10.182 7.54594M10.182 1.18198L3.81802 1.18198"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

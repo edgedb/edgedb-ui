@@ -256,6 +256,8 @@ function pointerTargetHasSelectAccessPolicy(pointer: SchemaLink) {
   );
 }
 
+type ErrorFilter = {filter: string; error: string};
+
 @model("DataInspector")
 export class DataInspector extends Model({
   $modelId: idProp,
@@ -269,7 +271,7 @@ export class DataInspector extends Model({
   expandedInspectors: prop(() => objectMap<ExpandedInspector>()),
 
   filter: prop<string>(""),
-  filterError: prop<string>(""),
+  errorFilter: prop<ErrorFilter | null>(null),
   filterPanelOpen: prop<boolean>(false).withSetter(),
 }) {
   gridRef: Grid | null = null;
@@ -692,6 +694,14 @@ export class DataInspector extends Model({
     return new Set(this.expandedRows.map((row) => row.dataRowIndex));
   }
 
+  @observable
+  expandedRowMobile: number = -1;
+
+  @action
+  setExpandedRowMobile(rowIndex: number) {
+    this.expandedRowMobile = rowIndex;
+  }
+
   @action
   toggleRowExpanded(dataRowIndex: number) {
     const existingRowIndex = this.expandedRows.findIndex(
@@ -728,6 +738,7 @@ export class DataInspector extends Model({
 
   data = new ObservableLRU<number, EdgeDBSet>(20);
 
+  @observable.ref
   dataCodecs: _ICodec[] | null = null;
 
   @observable
@@ -1037,6 +1048,21 @@ export class DataInspector extends Model({
     };
   }
 
+  @computed
+  get mobileFieldsAndCodecs() {
+    const fields = this.fields ? [...this.fields] : null;
+    const codecs = this.dataCodecs ? [...this.dataCodecs] : null;
+
+    const index = fields?.findIndex((field) => field.name === "id");
+
+    if (index !== undefined && index > -1) {
+      fields?.splice(index, 1);
+      codecs?.splice(index, 1);
+    }
+
+    return {fields, codecs};
+  }
+
   // sorting
 
   @modelAction
@@ -1063,12 +1089,13 @@ export class DataInspector extends Model({
 
   @computed
   get filterEdited() {
-    return (
-      this.filterEditStr
-        .toString()
-        .replace(/^filter\s/i, "")
-        .trim() !== this.filter
-    );
+    const filterStrTrimmed = this.filterEditStr
+      .toString()
+      .replace(/^filter\s/i, "")
+      .trim();
+
+    if (this.errorFilter) return filterStrTrimmed !== this.errorFilter.filter;
+    return filterStrTrimmed !== this.filter;
   }
 
   @modelFlow
@@ -1079,7 +1106,7 @@ export class DataInspector extends Model({
       .trim();
 
     if (!filter) {
-      this.filterError = "";
+      this.errorFilter = null;
       this.filter = "";
 
       this._refreshData(true);
@@ -1094,14 +1121,18 @@ export class DataInspector extends Model({
     try {
       yield* _await(conn.parse(filterCheckQuery));
     } catch (err: any) {
-      const errMessage = String(err.message);
-      this.filterError = /unexpected 'ORDER'/i.test(errMessage)
-        ? "Filter can only contain 'FILTER' clause"
-        : errMessage;
+      const errMessage = String(err.message).split("\n")[0];
+      this.errorFilter = {
+        filter,
+        error: /unexpected 'ORDER'/i.test(errMessage)
+          ? "Filter can only contain 'FILTER' clause"
+          : errMessage,
+      };
+
       return;
     }
 
-    this.filterError = "";
+    this.errorFilter = null;
     this.filter = filter;
 
     this._refreshData(true);
@@ -1110,13 +1141,13 @@ export class DataInspector extends Model({
   @modelAction
   revertFilter() {
     this.filterEditStr = Text.of([`filter ${this.filter}`]);
-    this.filterError = "";
+    this.errorFilter = null;
   }
 
   @modelAction
   disableFilter() {
     this.filter = "";
-    this.filterError = "";
+    this.errorFilter = null;
 
     this._refreshData(true);
   }
@@ -1124,7 +1155,7 @@ export class DataInspector extends Model({
   @modelAction
   clearFilter() {
     this.filterEditStr = Text.of(["filter "]);
-    this.filterError = "";
+    this.errorFilter = null;
 
     if (this.filter) {
       this.filter = "";

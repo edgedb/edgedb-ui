@@ -9,8 +9,30 @@
   // 10px (chevron width) + 16px (chevron padding)
   --rowIndexWidth: calc(var(--rowIndexCharWidth) * 7.8px + 62px);
 
+  @include breakpoint(mobile) {
+    --rowIndexWidth: calc(var(--rowIndexCharWidth) * 7.8px + 74px);
+
+    --inspector-green: #2cb88e;
+    --inspector-orange: #e5a507;
+
+    @include darkTheme {
+      --inspector-green: #00ba83;
+      --inspector-orange: #d0a02b;
+    }
+  }
+
   @include darkTheme {
     background: #2e2e2e;
+
+    @include breakpoint(mobile) {
+      background: #242424;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    @include darkTheme {
+      background: #242424;
+    }
   }
 }
 
@@ -56,6 +78,10 @@
 
   @include darkTheme {
     background: rgba(37, 37, 37, 0.9);
+
+    @include breakpoint(mobile) {
+      background: #333;
+    }
   }
 }
 
@@ -153,6 +179,10 @@
   @include darkTheme {
     .fieldName {
       color: #c5c5c5;
+
+      @include breakpoint(mobile) {
+        color: #adadad;
+      }
     }
 
     .fieldTypename {
@@ -229,6 +259,15 @@
   display: flex;
   padding: 4px 0;
   box-sizing: border-box;
+
+  @include breakpoint(mobile) {
+    border-bottom: 2px solid #e6e6e6;
+    align-items: center;
+
+    @include darkTheme {
+      border-color: #141414;
+    }
+  }
 }
 
 .cell {
@@ -447,6 +486,10 @@
         background: #262626;
       }
     }
+
+    @include breakpoint(mobile) {
+      height: 56px;
+    }
   }
 
   .inspectorRow {
@@ -490,6 +533,12 @@
 .scalar_uuid {
   color: #6f6f6f;
 
+  @include breakpoint(mobile) {
+    @include darkTheme {
+      color: #adadad;
+    }
+  }
+
   &:before,
   &:after {
     content: "";
@@ -530,6 +579,26 @@
     line-height: 40px;
   }
 
+  @include breakpoint(mobile) {
+    height: 58px;
+    border-bottom: 2px solid #e6e6e6;
+    box-sizing: border-box;
+
+    .cell {
+      line-height: 56px;
+      font-size: 14px;
+      color: #7d7d7d;
+    }
+
+    @include darkTheme {
+      border-color: #141414;
+
+      .cell {
+        color: #b9b9b9;
+      }
+    }
+  }
+
   .expandRow {
     width: 10px;
     padding: 0 1rem;
@@ -554,8 +623,24 @@
     }
   }
 
+  .expandRowMobile {
+    background: transparent;
+    border: none;
+    padding: 4px 14px;
+    margin: 3px 12px 0 8px;
+    color: #b3b3b3;
+
+    @include darkTheme {
+      color: #666;
+    }
+  }
+
   .rowActions {
     display: flex;
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
   .deleteRowAction {
@@ -615,6 +700,121 @@
 
     .deleteRowAction {
       opacity: 1;
+    }
+  }
+}
+
+.mobileInspectorWindow {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: flex;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 88px - 56px);
+    z-index: 11;
+    background: #f7f7f7;
+    margin-left: 0;
+    overflow: auto;
+    flex-direction: column;
+
+    .fieldsWrapper {
+      flex-grow: 1;
+    }
+
+    .footerBtn {
+      background: transparent;
+      border: none;
+      padding: 0;
+      color: #b3b3b3;
+      line-height: 0.8;
+    }
+
+    .footer {
+      padding: 16px;
+      display: flex;
+      background: #666;
+      align-items: center;
+      position: sticky;
+      bottom: 0;
+    }
+
+    .title {
+      color: #e6e6e6;
+      text-align: center;
+      font-family: Roboto Mono;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 16px;
+      margin: 0px 16px;
+    }
+
+    .field {
+      padding: 16px 24px;
+      font-family: Roboto Mono;
+      font-size: 14px;
+      line-height: 24px;
+      font-weight: 400;
+      border-bottom: 2px solid #d9d9d9;
+
+      .fieldHeader {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .name {
+        overflow: hidden;
+        color: #1a1a1a;
+        text-overflow: ellipsis;
+        font-weight: 500;
+      }
+
+      .type {
+        color: #808080;
+        text-align: right;
+      }
+
+      .fieldValue {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin: 0;
+      }
+    }
+
+    .linkObjName {
+      margin-top: 4px;
+      padding-top: 0;
+      padding-right: 0;
+      border: none;
+      font-family: Roboto Mono;
+      font-size: 14px;
+    }
+
+    @include darkTheme {
+      background: #242424;
+
+      .field {
+        border-color: #141414;
+
+        .name {
+          color: #b9b9b9;
+        }
+      }
+
+      .footer {
+        background: #999;
+      }
+
+      .footerBtn {
+        color: #4d4d4d;
+      }
+
+      .title {
+        color: #141414;
+      }
     }
   }
 }

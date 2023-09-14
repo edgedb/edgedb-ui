@@ -31,7 +31,6 @@ import styles from "./dataInspector.module.scss";
 
 import {
   DataInspector as DataInspectorState,
-  DataRowData,
   ExpandedRowData,
   ObjectField,
   ObjectFieldType,
@@ -41,16 +40,19 @@ import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
 
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {SortIcon, SortedDescIcon} from "./icons";
+import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
 import {
   ChevronDownIcon,
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
   WarningIcon,
+  BackIcon,
 } from "../../icons";
 import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -97,11 +99,13 @@ const outerElementType = forwardRef<HTMLDivElement>(
 interface DataInspectorProps {
   state: DataInspectorState;
   edits: DataEditingManager;
+  className?: string;
 }
 
 export default observer(function DataInspectorTable({
   state,
   edits,
+  className,
 }: DataInspectorProps) {
   const gridContainer = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState<[number, number]>([0, 0]);
@@ -110,18 +114,26 @@ export default observer(function DataInspectorTable({
 
   const initialScrollOffset = useInitialValue(() => state.scrollPos);
 
+  const isMobile = useIsMobile();
+
+  const rowHeight = isMobile ? 58 : 40;
+
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
+
   useResize(gridContainer, ({width, height}) =>
     setContainerSize([width, height])
   );
 
   useLayoutEffect(() => {
     const availableWidth = gridContainer.current?.clientWidth;
-    if (!state.fieldWidthsUpdated && availableWidth && state.fields) {
+
+    if (!state.fieldWidthsUpdated && availableWidth && fields) {
       const newWidth = Math.min(
-        Math.floor((availableWidth - 200) / state.fields.length),
+        Math.floor((availableWidth - 200) / fields.length),
         350
       );
-      state.setInitialFieldWidths(newWidth);
+
+      state.setInitialFieldWidths(isMobile ? 180 : newWidth);
       gridRef.current?.resetAfterColumnIndex(0);
     }
   }, []);
@@ -142,15 +154,22 @@ export default observer(function DataInspectorTable({
     <DataInspectorContext.Provider value={{state, edits}}>
       <div
         ref={gridContainer}
-        className={cn(styles.dataInspector, inspectorStyles.inspectorTheme, {
-          [styles.editMode]: !!state.parentObject?.editMode,
-        })}
+        className={cn(
+          styles.dataInspector,
+          inspectorStyles.inspectorTheme,
+          className,
+          {
+            [styles.editMode]: !!state.parentObject?.editMode,
+          }
+        )}
         style={
           {
             "--rowIndexCharWidth": rowIndexCharWidth,
-            "--gridWidth":
-              (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
-                0) + "px",
+            ...(!isMobile && {
+              "--gridWidth":
+                (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
+                  0) + "px",
+            }),
             "--gridBottomPadding":
               containerSize[1] -
               (state.hasSubtypeFields ? 64 : 48) -
@@ -175,16 +194,16 @@ export default observer(function DataInspectorTable({
             onScroll={({scrollTop, scrollLeft}) => {
               state.setScrollPos([scrollTop, scrollLeft]);
             }}
-            columnCount={state.fields?.length ?? 0}
+            columnCount={fields?.length ?? 0}
             estimatedColumnWidth={180}
             columnWidth={(index) => state.fieldWidths![index]}
             rowCount={state.gridRowCount}
-            estimatedRowHeight={40}
+            estimatedRowHeight={rowHeight}
             rowHeight={(rowIndex) =>
               state.getRowData(rowIndex - state.insertedRows.length).kind ===
               RowKind.expanded
                 ? 28
-                : 40
+                : rowHeight
             }
             overscanRowCount={5}
             onItemsRendered={({
@@ -321,13 +340,16 @@ const GridCell = observer(function GridCell({
 
   const rowDataIndex = rowIndex - state.insertedRows.length;
 
+  const isMobile = useIsMobile();
+
   const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
   if (rowData && rowData.kind !== RowKind.data) {
     return null;
   }
 
-  const field = state.fields![columnIndex];
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
+  const field = fields![columnIndex];
   const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
 
   const data = rowData ? state.getData(rowData.index) : insertedRow!.data;
@@ -408,7 +430,10 @@ const GridCell = observer(function GridCell({
           </>
         );
       } else {
-        const codec = state.dataCodecs?.[columnIndex];
+        const codec = isMobile
+          ? state.mobileFieldsAndCodecs.codecs?.[columnIndex]
+          : state.dataCodecs?.[columnIndex];
+
         if (codec) {
           content = (
             <>
@@ -554,6 +579,9 @@ function FetchingDataPlaceholder({
 
 const FieldHeaders = observer(function FieldHeaders() {
   const {state} = useDataInspectorState();
+  const isMobile = useIsMobile();
+
+  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
 
   return (
     <div
@@ -573,7 +601,7 @@ const FieldHeaders = observer(function FieldHeaders() {
             </div>
           )
         )}
-        {state.fields?.map((field, i) => (
+        {fields?.map((field, i) => (
           <FieldHeader
             key={field.queryName}
             colIndex={i}
@@ -686,8 +714,13 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
   const rowDataIndex = rowIndex - state.insertedRows.length;
   const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
 
+  const isMobile = useIsMobile();
   if (rowData?.kind === RowKind.expanded) {
-    return <ExpandedDataInspector rowData={rowData} styleTop={style.top} />;
+    return isMobile ? (
+      <MobileDataInspector rowData={rowData} />
+    ) : (
+      <ExpandedDataInspector rowData={rowData} styleTop={style.top} />
+    );
   } else {
     return (
       <DataRowIndex
@@ -712,6 +745,8 @@ const DataRowIndex = observer(function DataRowIndex({
   active: boolean;
 }) {
   const {state, edits} = useDataInspectorState();
+
+  const isMobile = useIsMobile();
 
   if (dataIndex !== null && dataIndex >= (state.rowCount ?? 0)) return null;
 
@@ -856,6 +891,10 @@ const DataRowIndex = observer(function DataRowIndex({
     }
   }
 
+  // const {navigate, currentPath} = useDBRouter();
+  // const basePath = currentPath.join("/");
+  // const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
+
   return (
     <>
       <div
@@ -871,18 +910,30 @@ const DataRowIndex = observer(function DataRowIndex({
           {dataIndex !== null ? dataIndex + 1 : null}
         </div>
         {dataIndex !== null ? (
-          <div
-            className={cn(styles.expandRow, {
-              [styles.isExpanded]: state.expandedDataRowIndexes.has(dataIndex),
-              [styles.isHidden]: isDeletedRow,
-            })}
-            onClick={() => {
-              state.toggleRowExpanded(dataIndex);
-              state.gridRef?.resetAfterRowIndex(rowIndex);
-            }}
-          >
-            <ChevronDownIcon />
-          </div>
+          isMobile ? (
+            <button
+              className={styles.expandRowMobile}
+              onClick={() => {
+                state.toggleRowExpanded(dataIndex);
+              }}
+            >
+              <TopRightIcon />
+            </button>
+          ) : (
+            <div
+              className={cn(styles.expandRow, {
+                [styles.isExpanded]:
+                  state.expandedDataRowIndexes.has(dataIndex),
+                [styles.isHidden]: isDeletedRow,
+              })}
+              onClick={() => {
+                state.toggleRowExpanded(dataIndex);
+                state.gridRef?.resetAfterRowIndex(rowIndex);
+              }}
+            >
+              <ChevronDownIcon />
+            </div>
+          )
         ) : null}
       </div>
       <div
@@ -951,3 +1002,80 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
     </div>
   );
 });
+
+interface MobileDataInspectorProps {
+  rowData: ExpandedRowData;
+}
+
+export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
+  const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
+
+  const state = useDataInspectorState().state;
+  const fields = state.fields || [];
+
+  const {navigate, currentPath} = useDBRouter();
+  const basePath = currentPath.join("/");
+
+  const closeExtendedView = () => {
+    state.toggleRowExpanded(rowData.dataRowIndex);
+    state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
+  };
+
+  return (
+    <div className={styles.mobileInspectorWindow}>
+      <div className={styles.fieldsWrapper}>
+        {item &&
+          fields.map((field, index) => {
+            const isLink = field.type === ObjectFieldType.link;
+            const data = item.data;
+            const value = isLink
+              ? Number(data[`__count_${field.name}`])
+              : data[field.name];
+
+            const codec = state.dataCodecs?.[index];
+
+            return (
+              <div className={styles.field} key={field.name}>
+                <div className={styles.fieldHeader}>
+                  <span className={styles.name}>{field.name}</span>
+                  <span className={styles.type}>
+                    {`${field.multi ? "multi" : ""} ${field.typename}`}
+                  </span>
+                </div>
+                {isLink ? (
+                  <button
+                    className={styles.linkObjName}
+                    onClick={() => {
+                      state.openNestedView(
+                        basePath,
+                        navigate,
+                        data.id,
+                        data.__tname__,
+                        field
+                      );
+                    }}
+                  >
+                    {field.typename.split("::").pop()}
+                    <span>{value}</span>
+                  </button>
+                ) : codec ? (
+                  renderCellValue(value, codec)
+                ) : (
+                  <p className={styles.fieldValue}>{value}</p>
+                )}
+              </div>
+            );
+          })}
+      </div>
+      <div className={styles.footer}>
+        <button onClick={closeExtendedView} className={styles.footerBtn}>
+          <BackIcon />
+        </button>
+
+        <p className={styles.title}>
+          {item ? item.data.__tname__ : `loading...`}
+        </p>
+      </div>
+    </div>
+  );
+};

@@ -16,6 +16,16 @@
     --inspector-blue: #1c79de;
     --inspector-orange: #fb9256;
   }
+
+  @include breakpoint(mobile) {
+    --inspector-green: #2cb88e;
+    --inspector-orange: #e5a507;
+
+    :global(.dark-theme) & {
+      --inspector-green: #00ba83;
+      --inspector-orange: #d0a02b;
+    }
+  }
 }
 
 .inspector {

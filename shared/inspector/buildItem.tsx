@@ -20,7 +20,7 @@ export enum ItemType {
   Other,
 }
 
-export type Item = {
+interface _BaseItem {
   id: string;
   parent: Item | null;
   level: number;
@@ -30,26 +30,31 @@ export type Item = {
   body: JSX.Element;
   fieldName?: string;
   comma: boolean;
-} & (
-  | {
-      type: ItemType.Set | ItemType.Array | ItemType.Tuple;
-      data: any[] | null;
-      closingBracket: Item;
-      expectedCount?: number;
-    }
-  | {
-      type: ItemType.Object | ItemType.NamedTuple;
-      data: {[key: string]: any};
-      closingBracket: Item;
-    }
-  | {
-      type: ItemType.Scalar;
-      index: string | number;
-    }
-  | {
-      type: ItemType.Other;
-    }
-);
+}
+
+export interface ArrayLikeItem extends _BaseItem {
+  type: ItemType.Set | ItemType.Array | ItemType.Tuple;
+  data: any[] | null;
+  closingBracket: Item;
+  expectedCount?: number;
+}
+
+export interface ObjectLikeItem extends _BaseItem {
+  type: ItemType.Object | ItemType.NamedTuple;
+  data: {[key: string]: any};
+  closingBracket: Item;
+}
+
+export interface ScalarItem extends _BaseItem {
+  type: ItemType.Scalar;
+  index: string | number;
+}
+
+export interface OtherItem extends _BaseItem {
+  type: ItemType.Other;
+}
+
+export type Item = ArrayLikeItem | ObjectLikeItem | ScalarItem | OtherItem;
 
 export function expandItem(
   item: Item,

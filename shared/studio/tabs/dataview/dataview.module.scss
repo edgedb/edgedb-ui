@@ -16,7 +16,10 @@
   background: var(--app-panel-bg);
   border-radius: 8px;
   overflow: hidden;
-  z-index: 1;
+
+  @include breakpoint(mobile) {
+    border-radius: 0;
+  }
 }
 
 .loadingSkeleton {
@@ -42,6 +45,10 @@
     @include darkTheme {
       background: #242424;
     }
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
   }
 }
 
@@ -74,17 +81,143 @@
     margin-right: 16px;
     font-weight: 500;
     color: var(--btn-text-color);
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
-}
 
-.rowCount {
-  margin: 0 auto;
-  font-family: "Roboto Mono";
-  font-size: 14px;
+  .rowCount {
+    margin: 0 auto;
+    font-family: "Roboto Mono";
+    font-size: 14px;
 
-  span {
-    opacity: 0.6;
-    font-style: italic;
+    span {
+      opacity: 0.6;
+      font-style: italic;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    position: absolute;
+    bottom: 0;
+    z-index: 11;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 24px;
+    width: calc(100% - 48px);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0%,
+      #fff 48.44%
+    );
+
+    .rowCount,
+    .headerButton {
+      display: none;
+    }
+
+    .objectSelect {
+      background: #666;
+      border-radius: 4px;
+      color: #f2f2f2;
+      padding: 6px 16px;
+      display: flex;
+      width: 208px;
+      font-weight: 500;
+    }
+
+    &.nested {
+      bottom: 0;
+      background: #666;
+      padding: 0 16px;
+      height: 48px;
+      box-sizing: border-box;
+      width: 100%;
+      display: flex;
+
+      @include darkTheme {
+        background: #999;
+
+        .nestedPathStep {
+          color: #141414;
+        }
+      }
+
+      .filterWrapper {
+        .filterButton {
+          height: 40px;
+          background-color: #b3b3b3;
+
+          @include darkTheme {
+            background-color: #666;
+          }
+
+          &.filterActive {
+            background-color: #b199f2;
+
+            @include darkTheme {
+              background-color: #666;
+            }
+          }
+        }
+
+        .removeFilter {
+          color: #b3b3b3;
+
+          @include darkTheme {
+            color: #af6963;
+          }
+        }
+      }
+
+      .headerButtons {
+        align-self: unset;
+      }
+    }
+
+    .backButton {
+      background: transparent;
+      width: unset;
+      color: #b3b3b3;
+
+      &:hover {
+        background: transparent;
+      }
+
+      @include darkTheme {
+        background: transparent;
+        color: #4d4d4d;
+
+        &:hover {
+          background: transparent;
+        }
+      }
+    }
+
+    @include darkTheme {
+      background: linear-gradient(
+        180deg,
+        rgba(36, 36, 36, 0) 0%,
+        #242424 100%
+      );
+
+      .objectSelect {
+        background: #999;
+        color: #141414;
+      }
+    }
+  }
+
+  .closeNestedView {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: #b3b3b3;
+
+    @include darkTheme {
+      color: #4d4d4d;
+    }
   }
 }
 
@@ -129,6 +262,12 @@
 
 .nestedPathSteps {
   display: contents;
+
+  @include breakpoint(mobile) {
+    display: flex;
+    margin-left: 16px;
+    flex-grow: 1;
+  }
 }
 
 .nestedPathStep {
@@ -139,6 +278,11 @@
   line-height: 16px;
   color: #4c4c4c;
   margin-right: 2rem;
+
+  @include breakpoint(mobile) {
+    color: #e6e6e6;
+    margin-right: 0;
+  }
 
   .pathStepIdent {
     font-size: 11px;
@@ -157,10 +301,19 @@
       width: 0;
       white-space: nowrap;
     }
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
   &:first-child {
     margin-left: 16px;
+
+    @include breakpoint(mobile) {
+      margin-left: 0;
+      margin-right: 12px;
+    }
   }
 
   &:not(:first-child) {
@@ -295,20 +448,30 @@
       }
     }
   }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 }
 
-.filterButton {
-  align-self: stretch;
+.filterWrapper {
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--btn-text-color);
+  align-self: stretch;
 
-  .filterIcon {
-    fill: var(--btn-green);
-    margin-right: 8px;
+  .filterButton {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--btn-text-color);
+
+    .filterIcon {
+      fill: var(--btn-green);
+      margin-right: 8px;
+    }
   }
 
   .openIcon {
@@ -327,6 +490,53 @@
       transform: rotate(180deg);
     }
   }
+
+  @include breakpoint(mobile) {
+    .filterButton {
+      border-radius: 20px;
+      background-color: #666;
+
+      &.filterActive {
+        background-color: #b199f2;
+      }
+
+      .filterIcon {
+        margin: 0;
+        width: 16px;
+        height: 17px;
+        fill: #f7f7f7;
+      }
+
+      @include darkTheme {
+        background-color: #999;
+
+        .filterIcon {
+          fill: #1a1a1a;
+        }
+
+        &.filterActive {
+          background-color: #999;
+        }
+      }
+    }
+  }
+
+  .removeFilter {
+    display: none;
+
+    @include breakpoint(mobile) {
+      display: block;
+      background: transparent;
+      border: none;
+      color: #808080;
+      margin-right: 12px;
+      padding: 0;
+
+      @include darkTheme {
+        color: #af6963;
+      }
+    }
+  }
 }
 
 .filterPanel {
@@ -338,6 +548,52 @@
 
   @include darkTheme {
     --code-editor-bg: #2e2e2e;
+  }
+
+  .title {
+    display: none;
+  }
+
+  .closeFilterPanel {
+    display: none;
+  }
+
+  @include breakpoint(mobile) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 11;
+    display: block;
+
+    .closeFilterPanel {
+      display: block;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: #737373;
+    }
+
+    .title {
+      display: block;
+      text-align: center;
+      font-family: Roboto;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 24px;
+      width: 100%;
+    }
+
+    @include darkTheme {
+      --code-editor-bg: #242424;
+
+      .title {
+        color: #b9b9b9;
+      }
+    }
   }
 }
 
@@ -361,13 +617,6 @@
     --buttonBg: #49d8ad;
   }
 
-  .filterError {
-    color: #f13f4a;
-    font-family: Roboto Mono;
-    font-size: 14px;
-    margin-right: 16px;
-  }
-
   @include darkTheme {
     --buttonTextColour: #1f1f1f;
 
@@ -379,6 +628,55 @@
     }
     .applyFilterButton {
       --buttonBg: #29b189;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
+}
+
+.filterError {
+  color: #f13f4a;
+  font-family: Roboto Mono;
+  font-size: 14px;
+  margin-right: 16px;
+}
+
+.filterErrorMobile {
+  @extend .filterError;
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    margin: 16px;
+  }
+}
+
+.applyFilterMobile {
+  display: none;
+
+  @include breakpoint(mobile) {
+    display: block;
+    width: 100%;
+    height: 64px;
+    position: absolute;
+    bottom: 0px;
+    font-family: Roboto;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 16px;
+    border: none;
+    background: #2cb88e;
+    color: #fff;
+
+    &:disabled {
+      opacity: 0.4;
+    }
+
+    @include darkTheme {
+      color: #141414;
+      background: #279474;
     }
   }
 }
