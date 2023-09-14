@@ -737,6 +737,8 @@
       display: flex;
       background: #666;
       align-items: center;
+      position: sticky;
+      bottom: 0;
     }
 
     .title {
@@ -787,6 +789,8 @@
       padding-top: 0;
       padding-right: 0;
       border: none;
+      font-family: Roboto Mono;
+      font-size: 14px;
     }
 
     @include darkTheme {

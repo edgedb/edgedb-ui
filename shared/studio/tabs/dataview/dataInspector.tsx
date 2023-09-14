@@ -1030,9 +1030,11 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
       <div className={styles.fieldsWrapper}>
         {item &&
           fields.map((field, index) => {
-            const isMulti = field.multi;
+            const isLink = field.type === ObjectFieldType.link;
             const data = item.data;
-            const value = isMulti ? data[field.name].length : data[field.name];
+            const value = isLink
+              ? data[`${field.name}`].length
+              : data[field.name];
 
             const codec = state.dataCodecs?.[index];
 
@@ -1041,10 +1043,10 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                 <div className={styles.fieldHeader}>
                   <span className={styles.name}>{field.name}</span>
                   <span className={styles.type}>
-                    {`${isMulti ? "multi" : ""} ${field.typename}`}
+                    {`${field.multi ? "multi" : ""} ${field.typename}`}
                   </span>
                 </div>
-                {isMulti ? (
+                {isLink ? (
                   <button
                     className={styles.linkObjName}
                     onClick={() => {
@@ -1057,7 +1059,7 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                       );
                     }}
                   >
-                    {field.typename.split("::")[1]}
+                    {field.typename.split("::").pop()}
                     <span>{value}</span>
                   </button>
                 ) : codec ? (
