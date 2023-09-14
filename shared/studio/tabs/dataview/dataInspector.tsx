@@ -1033,7 +1033,7 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
             const isLink = field.type === ObjectFieldType.link;
             const data = item.data;
             const value = isLink
-              ? data[`${field.name}`].length
+              ? Number(data[`__count_${field.name}`])
               : data[field.name];
 
             const codec = state.dataCodecs?.[index];
