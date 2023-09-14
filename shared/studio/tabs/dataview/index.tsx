@@ -158,11 +158,6 @@ const DataInspectorView = observer(function DataInspectorView({
                 </div>
               </div>
             </div>
-            {isMobile && (
-              <button className={styles.closeNestedView}>
-                <CrossIcon />
-              </button>
-            )}
           </>
         )}
 
@@ -186,89 +181,89 @@ const DataInspectorView = observer(function DataInspectorView({
           )}
         </div>
 
-        {(!isMobile || !nestedPath) && (
-          <div className={styles.headerButtons}>
-            {inspectorState.subTypes.length ? (
-              <label className={styles.headerToggle}>
-                <input
-                  type="checkbox"
-                  checked={dataviewState.showSubtypeFields}
-                  onChange={(e) =>
-                    dataviewState.setShowSubtypeFields(e.target.checked)
-                  }
-                />
-                Show subtype fields
-              </label>
-            ) : null}
-            {dataviewState.edits.hasPendingEdits ? (
-              <>
-                <div
-                  className={cn(styles.headerButton, styles.reviewChanges)}
-                  onClick={() =>
-                    openModal(<ReviewEditsModal state={dataviewState} />)
-                  }
-                >
-                  Review Changes
-                </div>
-              </>
-            ) : null}
-
-            {inspectorState.insertTypeNames.length &&
-            (!inspectorState.parentObject ||
-              inspectorState.parentObject.editMode) ? (
-              inspectorState.insertTypeNames.length > 1 ? (
-                <Select
-                  className={cn(styles.headerSelect, styles.insertSelect)}
-                  title="Insert"
-                  items={null}
-                  actions={inspectorState.insertTypeNames.map((name) => ({
-                    label: name,
-                    action: () => dataviewState.edits.createNewRow(name),
-                  }))}
-                />
-              ) : (
-                <div
-                  className={styles.headerButton}
-                  onClick={() =>
-                    dataviewState.edits.createNewRow(
-                      inspectorState.insertTypeNames[0]
-                    )
-                  }
-                >
-                  Insert {inspectorState.insertTypeNames[0].split("::").pop()}
-                </div>
-              )
-            ) : null}
-            {!!inspectorState.filter && (
-              <button
-                className={styles.removeFilter}
-                onClick={() => inspectorState.clearFilter()}
+        {/* {!nestedPath && ( */}
+        <div className={styles.headerButtons}>
+          {inspectorState.subTypes.length ? (
+            <label className={styles.headerToggle}>
+              <input
+                type="checkbox"
+                checked={dataviewState.showSubtypeFields}
+                onChange={(e) =>
+                  dataviewState.setShowSubtypeFields(e.target.checked)
+                }
+              />
+              Show subtype fields
+            </label>
+          ) : null}
+          {dataviewState.edits.hasPendingEdits ? (
+            <>
+              <div
+                className={cn(styles.headerButton, styles.reviewChanges)}
+                onClick={() =>
+                  openModal(<ReviewEditsModal state={dataviewState} />)
+                }
               >
-                <CrossIcon />
-              </button>
-            )}
+                Review Changes
+              </div>
+            </>
+          ) : null}
 
-            <div
-              className={cn(styles.filterButton, {
-                [styles.open]: inspectorState.filterPanelOpen,
-                [styles.filterActive]: !!inspectorState.filter,
-              })}
-              onClick={() => {
-                inspectorState.setFilterPanelOpen(
-                  !inspectorState.filterPanelOpen
-                );
-              }}
+          {inspectorState.insertTypeNames.length &&
+          (!inspectorState.parentObject ||
+            inspectorState.parentObject.editMode) ? (
+            inspectorState.insertTypeNames.length > 1 ? (
+              <Select
+                className={cn(styles.headerSelect, styles.insertSelect)}
+                title="Insert"
+                items={null}
+                actions={inspectorState.insertTypeNames.map((name) => ({
+                  label: name,
+                  action: () => dataviewState.edits.createNewRow(name),
+                }))}
+              />
+            ) : (
+              <div
+                className={styles.headerButton}
+                onClick={() =>
+                  dataviewState.edits.createNewRow(
+                    inspectorState.insertTypeNames[0]
+                  )
+                }
+              >
+                Insert {inspectorState.insertTypeNames[0].split("::").pop()}
+              </div>
+            )
+          ) : null}
+          {!!inspectorState.filter && (
+            <button
+              className={styles.removeFilter}
+              onClick={() => inspectorState.clearFilter()}
             >
-              <FilterIcon className={styles.filterIcon} />
-              {!isMobile && (
-                <>
-                  Filter
-                  <ChevronDownIcon className={styles.openIcon} />
-                </>
-              )}
-            </div>
+              <CrossIcon />
+            </button>
+          )}
+
+          <div
+            className={cn(styles.filterButton, {
+              [styles.open]: inspectorState.filterPanelOpen,
+              [styles.filterActive]: !!inspectorState.filter,
+            })}
+            onClick={() => {
+              inspectorState.setFilterPanelOpen(
+                !inspectorState.filterPanelOpen
+              );
+            }}
+          >
+            <FilterIcon className={styles.filterIcon} />
+            {!isMobile && (
+              <>
+                Filter
+                <ChevronDownIcon className={styles.openIcon} />
+              </>
+            )}
           </div>
-        )}
+        </div>
+        {/* )} */}
       </div>
       {inspectorState.filterPanelOpen ? (
         <FilterPanel state={inspectorState} />

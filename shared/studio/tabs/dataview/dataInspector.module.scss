@@ -708,27 +708,33 @@
   display: none;
 
   @include breakpoint(mobile) {
-    display: block;
+    display: flex;
     position: fixed;
     top: 56px;
     left: 0;
     width: 100%;
-    height: calc(100vh - 88px - 60px);
+    height: calc(100vh - 88px - 56px);
     z-index: 11;
     background: #f7f7f7;
     margin-left: 0;
+    overflow: auto;
+    flex-direction: column;
 
-    .headerBtn {
+    .fieldsWrapper {
+      flex-grow: 1;
+    }
+
+    .footerBtn {
       background: transparent;
       border: none;
       padding: 0;
       color: #b3b3b3;
+      line-height: 0.8;
     }
 
-    .header {
+    .footer {
       padding: 16px;
       display: flex;
-      justify-content: space-between;
       background: #666;
       align-items: center;
     }
@@ -740,6 +746,7 @@
       font-size: 14px;
       font-weight: 400;
       line-height: 16px;
+      margin: 0px 16px;
     }
 
     .field {
@@ -793,11 +800,11 @@
         }
       }
 
-      .header {
+      .footer {
         background: #999;
       }
 
-      .headerBtn {
+      .footerBtn {
         color: #4d4d4d;
       }
 

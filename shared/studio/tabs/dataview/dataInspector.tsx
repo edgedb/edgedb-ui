@@ -1027,58 +1027,57 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
 
   return (
     <div className={styles.mobileInspectorWindow}>
-      <div className={styles.header}>
-        <button onClick={closeExtendedView} className={styles.headerBtn}>
+      <div className={styles.fieldsWrapper}>
+        {item &&
+          fields.map((field, index) => {
+            const isMulti = field.multi;
+            const data = item.data;
+            const value = isMulti ? data[field.name].length : data[field.name];
+
+            const codec = state.dataCodecs?.[index];
+
+            return (
+              <div className={styles.field} key={field.name}>
+                <div className={styles.fieldHeader}>
+                  <span className={styles.name}>{field.name}</span>
+                  <span className={styles.type}>
+                    {`${isMulti ? "multi" : ""} ${field.typename}`}
+                  </span>
+                </div>
+                {isMulti ? (
+                  <button
+                    className={styles.linkObjName}
+                    onClick={() => {
+                      state.openNestedView(
+                        basePath,
+                        navigate,
+                        data.id,
+                        data.__tname__,
+                        field
+                      );
+                    }}
+                  >
+                    {field.typename.split("::")[1]}
+                    <span>{value}</span>
+                  </button>
+                ) : codec ? (
+                  renderCellValue(value, codec)
+                ) : (
+                  <p className={styles.fieldValue}>{value}</p>
+                )}
+              </div>
+            );
+          })}
+      </div>
+      <div className={styles.footer}>
+        <button onClick={closeExtendedView} className={styles.footerBtn}>
           <BackIcon />
         </button>
 
         <p className={styles.title}>
           {item ? item.data.__tname__ : `loading...`}
         </p>
-        <button onClick={closeExtendedView} className={styles.headerBtn}>
-          <CrossIcon />
-        </button>
       </div>
-      {item &&
-        fields.map((field, index) => {
-          const isMulti = field.multi;
-          const data = item.data;
-          const value = isMulti ? data[field.name].length : data[field.name];
-
-          const codec = state.dataCodecs?.[index];
-
-          return (
-            <div className={styles.field} key={field.name}>
-              <div className={styles.fieldHeader}>
-                <span className={styles.name}>{field.name}</span>
-                <span className={styles.type}>
-                  {`${isMulti ? "multi" : ""} ${field.typename}`}
-                </span>
-              </div>
-              {isMulti ? (
-                <button
-                  className={styles.linkObjName}
-                  onClick={() => {
-                    state.openNestedView(
-                      basePath,
-                      navigate,
-                      data.id,
-                      data.__tname__,
-                      field
-                    );
-                  }}
-                >
-                  {field.typename.split("::")[1]}
-                  <span>{value}</span>
-                </button>
-              ) : codec ? (
-                renderCellValue(value, codec)
-              ) : (
-                <p className={styles.fieldValue}>{value}</p>
-              )}
-            </div>
-          );
-        })}
     </div>
   );
 };

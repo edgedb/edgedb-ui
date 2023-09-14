@@ -46,6 +46,10 @@
       background: #242424;
     }
   }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
 }
 
 .header {
@@ -124,16 +128,40 @@
     }
 
     &.nested {
-      top: 0;
+      bottom: 0;
       background: #666;
-      padding: 4px 16px;
-      width: calc(100% - 32px);
+      padding: 16px;
+      height: 48px;
+      box-sizing: border-box;
+      width: 100%;
 
       @include darkTheme {
         background: #999;
 
         .nestedPathStep {
           color: #141414;
+        }
+      }
+
+      .filterButton {
+        border-radius: 20px;
+        padding: 0 12px;
+        background-color: #666;
+        align-self: stretch;
+
+        // .filterIcon {
+        //   margin: 0;
+        //   width: 16px;
+        //   height: 17px;
+        //   fill: #f7f7f7;
+        // }
+
+        @include darkTheme {
+          background-color: #666;
+
+          // .filterIcon {
+          //   fill: #1a1a1a;
+          // }
         }
       }
     }
@@ -660,9 +688,4 @@
     opacity: 1;
     transform: translateX(-50%);
   }
-}
-
-.inspectorTable {
-  top: 37px;
-  position: relative;
 }
