@@ -43,7 +43,6 @@ import {useDBRouter} from "../../hooks/dbRoute";
 import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
 import {
   ChevronDownIcon,
-  CrossIcon,
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
@@ -53,8 +52,6 @@ import {
 import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {DataView as DataViewState} from "./state";
-import {useTabState} from "../../state";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -990,9 +987,7 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
                   navigate,
                   rowData.state.objectId,
                   rowData.state.objectTypeName,
-                  state.mobileFields!.find(
-                    (field) => field.name === item.fieldName
-                  )!
+                  state.fields!.find((field) => field.name === item.fieldName)!
                 )
               }
             >
