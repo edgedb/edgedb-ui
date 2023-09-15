@@ -19,28 +19,20 @@
   @include darkTheme {
     background: #343434;
   }
+
+  @include breakpoint(mobile) {
+    background: #e6e6e6;
+    padding: 8px;
+  }
 }
 
 .searchRow {
   display: flex;
   align-items: flex-end;
 
-  // .moduleSelect {
-  //   margin-right: 14px;
-  // }
-  // .typeFilterSelect {
-  //   margin-left: 14px;
-  // }
-
   .selectItem,
   .typeFilterSelect {
     text-transform: capitalize;
-    //   font-family: "Inter";
-    //   font-style: normal;
-    //   font-weight: 500;
-    //   font-size: 12px;
-    //   line-height: 16px;
-    //   text-transform: uppercase;
   }
 }
 
@@ -54,6 +46,12 @@
     color: #acacac;
     margin-bottom: 4px;
     padding-left: 12px;
+  }
+
+  @include breakpoint(mobile) {
+    .filterSelectName {
+      display: none;
+    }
   }
 }
 
@@ -72,6 +70,18 @@
 
   @include darkTheme {
     background: #242424;
+  }
+
+  @include breakpoint(mobile) {
+    border-radius: 6px;
+    background: #fff;
+    color: #4d4d4d;
+    font-family: Roboto Mono;
+    line-height: 24px;
+    height: 40px;
+    width: calc(50vw - 36px);
+    box-sizing: border-box;
+    padding: 0 16px;
   }
 }
 
@@ -122,11 +132,18 @@
     padding: 0 8px;
     margin-left: -28px;
     cursor: pointer;
+    pointer-events: all;
 
     svg {
       width: 12px;
       height: 12px;
       color: #bcbcbc;
+    }
+
+    @include breakpoint(mobile) {
+      position: absolute;
+      right: 4px;
+      top: 14px;
     }
   }
 
@@ -147,6 +164,47 @@
 
     .clearSearch svg {
       color: #6b6b6b;
+    }
+  }
+
+  @include breakpoint(mobile) {
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    right: 8px;
+    box-sizing: border-box;
+    justify-content: center;
+    transition: width 0.3s;
+
+    &.expanded {
+      width: calc(100vw - 16px);
+      background-color: #fff;
+      border-radius: 6px;
+      padding: 0 12px;
+      justify-content: start;
+    }
+
+    & > svg {
+      position: absolute;
+      stroke: #4d4d4d;
+    }
+
+    input {
+      width: 40px;
+      opacity: 0;
+      padding: 0;
+      background: #fff;
+      color: #141414;
+      position: absolute;
+      border-radius: 0;
+
+      &.show {
+        background: #fff;
+        color: #141414;
+        opacity: 1;
+        position: static;
+        padding: 0 24px;
+      }
     }
   }
 }
@@ -240,8 +298,6 @@
 
 .listItem {
   position: relative;
-  // left: 0;
-  // width: 100%;
 
   &.highlightedItem:before {
     position: absolute;
@@ -252,9 +308,7 @@
     width: 4px;
     border-radius: 0 4px 4px 0;
     background: #1f8aed;
-    // right: 0;
-    // background: #e5eef6;
-    // border-left: 4px solid #1f8aed;
+
     z-index: 1;
     pointer-events: none;
   }
@@ -290,6 +344,10 @@
   &.isStuck {
     background: #ededed;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.11);
+
+    @include breakpoint(mobile) {
+      background: #e6e6e6;
+    }
   }
 
   @include darkTheme {
@@ -316,18 +374,11 @@
       margin-left: 18px;
     }
   }
-
-  // &.topLevel,
-  // .searchMode & {
-  // margin-left: 0px;
-  // border-left-color: transparent;
-  // }
 }
 
 .typeItem,
 .indentedBlock {
   padding-left: 17px;
-  // border-left: 1px solid #dfdfdf;
 }
 
 .itemHeader {
@@ -382,16 +433,9 @@
   div {
     width: 10px;
     height: 10px;
-    // border-radius: 10px;
-    // border: 1px solid #dfdfdf;
-    // background: #f5f5f5;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    // .inheritedBlock & {
-    //   background: #ebebeb;
-    // }
   }
 
   svg {
@@ -424,7 +468,6 @@
 
 .inheritedBlock {
   width: max-content;
-  // background: rgba(0, 0, 0, 0.04);
   border: 1px solid #d7d7d7;
   border-radius: 6px;
   padding: 4px 12px;
@@ -498,54 +541,6 @@
     }
   }
 }
-
-// .itemHeader {
-//   display: flex;
-//   align-items: center;
-//   margin: -2px;
-//   padding: 2px;
-//   margin-left: -34px !important;
-//   padding-left: 17px;
-//   margin-right: 8px;
-//   border-radius: 6px;
-
-//   .itemActions {
-//     margin-left: auto;
-//     display: flex;
-//     opacity: 0;
-//     font-family: "Inter";
-//     font-style: normal;
-//     font-weight: 500;
-//     font-size: 11px;
-//     text-transform: uppercase;
-//     color: #a2a2a2;
-
-//     .headerButton {
-//       display: flex;
-//       align-items: center;
-//       padding: 0 8px;
-//       cursor: pointer;
-//       margin-right: 4px;
-
-//       svg {
-//         stroke: currentColor;
-//         margin-left: 8px;
-//       }
-//     }
-
-//     .mainHeaderButton {
-//       color: #1f8aed;
-//     }
-//   }
-
-//   &:hover {
-//     background: rgba(0, 0, 0, 0.04);
-
-//     .itemActions {
-//       opacity: 1;
-//     }
-//   }
-// }
 
 .copyButton {
   display: flex;
