@@ -1,0 +1,210 @@
+@import "@edgedb/common/mixins.scss";
+
+.tabs {
+  display: flex;
+  align-items: center;
+  margin-left: 42px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  padding: 0 16px;
+  padding-bottom: 16px;
+  margin-bottom: -16px;
+  // mask-image: linear-gradient(
+  //   90deg,
+  //   transparent 0px,
+  //   #000 16px,
+  //   #000 calc(100% - 16px),
+  //   transparent 100%
+  // );
+
+  @include hideScrollbar;
+
+  @include isMobile {
+    margin-left: 0;
+  }
+}
+
+.tabSep {
+  margin: 0 8px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.headerNavMenu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.headerNav {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  font-size: 14px;
+  color: var(--font-inactive-gray);
+  font-weight: 500;
+  padding: 0 10px;
+  border-radius: 4px;
+  cursor: pointer;
+
+  .title {
+    margin: 0 8px;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    color: var(--font-active-gray);
+    background: var(--app-bg-gray);
+  }
+}
+
+.dropdown {
+  position: fixed;
+  margin-left: calc(-220px * var(--dropdownOffset));
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+  transition: opacity 0.15s, transform 0.15s;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  min-height: 240px;
+  max-width: calc(100% - 24px);
+  box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
+    0px 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+
+  @include darkTheme {
+    background: #2e2e2e;
+  }
+
+  @include isMobile {
+    margin-left: 0;
+    left: calc(50% - min(300px, 100% - 20px) / 2);
+  }
+
+  &.open {
+    opacity: 1;
+    pointer-events: all;
+    transform: none;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    padding: 2px 0;
+
+    &:not(:last-child) {
+      border-right: 1px solid #e2e2e2;
+
+      @include darkTheme {
+        border-color: #121212;
+      }
+    }
+
+    @include isMobile {
+      width: 300px;
+    }
+  }
+
+  .header {
+    padding: 6px 16px;
+    padding-top: 12px;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  .item,
+  .action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    text-decoration: none;
+    color: inherit;
+    padding: 9px 12px;
+    line-height: 22px;
+
+    @include isMobile {
+      padding: 12px;
+    }
+  }
+
+  .showCursor {
+    .item.selected:after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      inset: 1px;
+      border: 2px solid var(--app-accent-green);
+      border-radius: 4px;
+    }
+  }
+
+  .actions {
+    padding-top: 16px;
+    margin-top: auto;
+  }
+
+  .action {
+    margin: 6px 8px;
+    padding: 7px 10px;
+    color: #4d4d4d;
+    justify-content: center;
+    border: 1px solid #e6e6e6;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    @include darkTheme {
+      color: #999;
+      border-color: #3d3d3d;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+    }
+  }
+
+  .avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 16px;
+    background-size: contain;
+    margin-right: 8px;
+  }
+
+  .selected {
+    background: #f2f2f2;
+
+    @include darkTheme {
+      background: #242424;
+    }
+  }
+
+  .dbSpinner {
+    margin: auto;
+    color: #adadad;
+  }
+
+  .noItems {
+    padding: 8px 16px;
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  .dbFetchError {
+    padding: 8px 16px;
+    font-style: italic;
+    color: #db5246;
+  }
+}
