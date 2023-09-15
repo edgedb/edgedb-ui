@@ -82,6 +82,10 @@
     width: calc(50vw - 36px);
     box-sizing: border-box;
     padding: 0 16px;
+
+    @include darkTheme {
+      color: #999;
+    }
   }
 }
 
@@ -138,12 +142,26 @@
       width: 12px;
       height: 12px;
       color: #bcbcbc;
+
+      @include darkTheme {
+        color: #6b6b6b;
+      }
     }
 
     @include breakpoint(mobile) {
       position: absolute;
       right: 4px;
       top: 14px;
+
+      svg {
+        color: #4d4d4d;
+      }
+
+      @include darkTheme {
+        svg {
+          color: #999;
+        }
+      }
     }
   }
 
@@ -160,10 +178,6 @@
         background: #b5b5b5;
         color: #141414;
       }
-    }
-
-    .clearSearch svg {
-      color: #6b6b6b;
     }
   }
 
@@ -193,17 +207,33 @@
       width: 40px;
       opacity: 0;
       padding: 0;
-      background: #fff;
       color: #141414;
       position: absolute;
       border-radius: 0;
 
       &.show {
-        background: #fff;
+        background-color: #fff;
         color: #141414;
         opacity: 1;
         position: static;
         padding: 0 24px;
+      }
+    }
+
+    @include darkTheme {
+      & > svg {
+        stroke: #999;
+      }
+
+      &.expanded {
+        background-color: #242424;
+      }
+
+      input {
+        &.show {
+          background-color: #242424;
+          color: #999;
+        }
       }
     }
   }
