@@ -15,7 +15,7 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import {Select} from "@edgedb/common/ui/select";
 
-import {useDatabaseState, useTabState} from "../../state";
+import {useTabState} from "../../state";
 
 import styles from "./textView.module.scss";
 
@@ -25,7 +25,6 @@ import {
   ModuleGroup,
   TypeFilter,
   SchemaTextView as SchemaTextState,
-  SchemaItem,
   moduleGroupNames,
 } from "./state/textView";
 import {Schema} from "./state";
@@ -106,7 +105,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
   }, []);
 
   const filtersRef = useRef<HTMLDivElement>(null);
-  const [narrowLayout, setNarrowLayout] = useState(true);
+  const [narrowLayout] = useState(true);
 
   // useResize(
   //   filtersRef,

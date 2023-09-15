@@ -98,7 +98,7 @@ export function VerticalTabBar<TabId extends string>({
             if (!tabMouseEnterTimeout.current) {
               tabMouseEnterTimeout.current = setTimeout(() => {
                 setShowTabTooltips(true);
-              }, 500);
+              }, 500) as unknown as number;
             }
           }}
           onMouseLeave={() => {
@@ -109,7 +109,7 @@ export function VerticalTabBar<TabId extends string>({
                   tabMouseEnterTimeout.current = null;
                 }
                 setShowTabTooltips(false);
-              }, 200);
+              }, 200) as unknown as number;
             }
           }}
         >

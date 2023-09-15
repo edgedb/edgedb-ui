@@ -1,7 +1,6 @@
 import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
 import {
   SchemaAccessPolicy,
   SchemaObjectType,
@@ -9,14 +8,13 @@ import {
 } from "@edgedb/common/schemaData";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
-import {SchemaModule, SearchMatches} from "../state/textView";
+import {SearchMatches} from "../state/textView";
 
 import {
   CollapseArrow,
   Copyable,
   CopyButton,
   CopyHighlight,
-  highlightString,
   indent,
   ItemHeader,
   Keyword,

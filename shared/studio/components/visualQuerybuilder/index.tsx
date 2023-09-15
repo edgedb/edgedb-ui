@@ -438,14 +438,12 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
   expr: FilterExpr;
   props: {[name: string]: SchemaProperty};
 }) {
-  const propNames = Object.keys(props);
-
   return (
     <div className={styles.filterExpr}>
       <Select
         className={styles.select}
         items={[
-          ...Object.entries(props).map(([name, prop]) => ({
+          ...Object.entries(props).map(([name, _prop]) => ({
             id: `prop--${name}`,
             label: name,
           })),
@@ -490,7 +488,7 @@ const FilterExprRenderer = observer(function _FilterExprRenderer({
       ) : (
         <Select
           className={styles.select}
-          items={Object.entries(props).map(([name, prop]) => ({
+          items={Object.entries(props).map(([name, _prop]) => ({
             id: name,
             label: name,
           }))}

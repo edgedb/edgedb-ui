@@ -13,7 +13,6 @@ import {
   createContext as createMobxContext,
   getSnapshot,
   fromSnapshot,
-  getParent,
   findParent,
 } from "mobx-keystone";
 import {Text} from "@codemirror/state";

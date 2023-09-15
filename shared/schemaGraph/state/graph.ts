@@ -70,7 +70,7 @@ const GraphViewport = types
     position: types.frozen({x: 0, y: 0}),
     zoomLevel: 1,
   })
-  .volatile((self) => ({
+  .volatile((_self) => ({
     viewportRect: null as DOMRect | null,
     currentEasing: null as Ease | null,
   }))
@@ -221,7 +221,7 @@ export const SchemaGraph = types
     nodesStateHistoryRedoStack: types.array(types.frozen()),
     viewport: GraphViewport,
   })
-  .volatile((self) => ({
+  .volatile((_self) => ({
     nodesBoundingBox: calculateBoundingBox([]),
     routes: [] as SchemaGraphRoute[],
     linkNodePositions: {} as {[id: string]: NodePosition},

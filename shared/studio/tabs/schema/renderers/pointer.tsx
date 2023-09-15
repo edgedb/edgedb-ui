@@ -1,18 +1,9 @@
 import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
-import {
-  SchemaAbstractAnnotation,
-  SchemaAnnotation,
-  SchemaConstraint,
-  SchemaParam,
-  SchemaPointer,
-  SchemaProperty,
-  SchemaRewrite,
-} from "@edgedb/common/schemaData";
+import {SchemaPointer, SchemaRewrite} from "@edgedb/common/schemaData";
 
-import {SchemaModule, SearchMatches} from "../state/textView";
+import {SearchMatches} from "../state/textView";
 
 import {
   CollapseArrow,
@@ -25,7 +16,6 @@ import {
   Keyword,
   mapTypeLinkList,
   Punc,
-  Str,
   TypeLink,
 } from "./utils";
 

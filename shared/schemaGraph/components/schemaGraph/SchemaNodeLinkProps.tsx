@@ -1,4 +1,3 @@
-import React from "react";
 import {observer} from "mobx-react";
 
 import styles from "./schemaGraph.module.scss";

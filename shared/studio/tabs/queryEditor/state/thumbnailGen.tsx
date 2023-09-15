@@ -1,4 +1,3 @@
-import {Tree} from "@lezer/common";
 import {Language} from "@codemirror/language";
 import {highlightTree} from "@lezer/highlight";
 
@@ -31,8 +30,8 @@ export type ThumbnailData = number[][];
 export function getThumbnailData({
   query,
   language,
-  errorRange,
-}: {
+}: // errorRange,
+{
   query: string;
   language?: Language;
   errorRange?: [number, number];

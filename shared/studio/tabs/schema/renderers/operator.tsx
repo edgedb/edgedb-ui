@@ -1,23 +1,9 @@
 import {Fragment} from "react";
 import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
 import {SchemaOperator} from "@edgedb/common/schemaData";
-import CodeBlock from "@edgedb/common/ui/codeBlock";
 
-import {
-  Arrow,
-  Copyable,
-  CopyButton,
-  CopyHighlight,
-  highlightString,
-  ItemHeader,
-  Keyword,
-  Punc,
-  Str,
-  TypeLink,
-  TypeName,
-} from "./utils";
+import {Arrow, ItemHeader, Keyword, Punc, TypeLink, TypeName} from "./utils";
 
 import {SearchMatches} from "../state/textView";
 

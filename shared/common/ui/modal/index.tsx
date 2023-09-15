@@ -1,6 +1,5 @@
 import {
   forwardRef,
-  HTMLInputTypeAttribute,
   InputHTMLAttributes,
   PropsWithChildren,
   useState,
@@ -46,7 +45,6 @@ interface ModalProps {
 export function Modal({
   title,
   actions,
-  error,
   progress,
   close,
   children,

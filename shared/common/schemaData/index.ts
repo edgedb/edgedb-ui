@@ -1,7 +1,4 @@
-import {
-  reserved_keywords,
-  // @ts-ignore
-} from "@edgedb/lang-edgeql/meta";
+import {reserved_keywords} from "@edgedb/lang-edgeql/meta";
 
 import {
   RawAbstractAnnotation,
@@ -16,7 +13,6 @@ import {
   SourceDeleteAction,
   SchemaAccessPolicy,
   SchemaOperatorKind,
-  RawSchemaRewrite,
   SchemaTrigger,
   SchemaRewriteKind,
 } from "./queries";

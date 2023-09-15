@@ -239,6 +239,7 @@ export class ExplainState extends Model({
   }
 }
 
+// @ts-ignore
 function nodesEqual(l: Plan[], r: Plan[]) {
   if (l.length !== r.length) {
     return false;

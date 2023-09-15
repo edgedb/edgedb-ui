@@ -7,12 +7,14 @@ import {TextViewer} from "./textViewer";
 import styles from "./shared.module.scss";
 import {ActionsBar} from "./shared";
 
+type Renderer = (props: {data: any}) => JSX.Element | null;
+
 export const extendedViewerRenderers: {
-  [key: string]: (props: {data: any}) => JSX.Element | null;
+  [key: string]: Renderer;
 } = {
-  "std::str": TextViewer,
+  "std::str": TextViewer as Renderer,
   "std::bytes": HexViewer,
-  "std::json": JsonViewer,
+  "std::json": JsonViewer as Renderer,
 };
 
 export const extendedViewerIds = new Set(Object.keys(extendedViewerRenderers));

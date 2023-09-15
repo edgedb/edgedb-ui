@@ -171,13 +171,13 @@ export class QueryParamsEditor extends Model({}) {
           (args, [name, paramDef]) => {
             if (paramDef.error === null) {
               const param = this.currentParams[name]!;
-              args[name] = param.disabled
+              (args as any)[name] = param.disabled
                 ? null
                 : parseEditorValue(param.data.value.data, paramDef.type);
             }
             return args;
           },
-          isPositional ? [] : ({} as {[key: string]: any})
+          isPositional ? ([] as any[]) : ({} as {[key: string]: any})
         )
       : undefined;
   }

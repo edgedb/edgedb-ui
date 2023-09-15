@@ -54,7 +54,7 @@ async function checkUIServerAlive() {
         resolve(false);
       }
     });
-    req.on("error", (err) => {
+    req.on("error", () => {
       req.destroy();
       resolve(false);
     });

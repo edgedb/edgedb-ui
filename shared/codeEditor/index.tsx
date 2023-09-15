@@ -15,7 +15,6 @@ import {
   StateEffect,
   Range,
   RangeSet,
-  RangeSetBuilder,
 } from "@codemirror/state";
 import {
   EditorView,
@@ -172,7 +171,7 @@ function getExplainContextsExtension({
 }
 
 const specialCharRender = (
-  code: number,
+  _code: number,
   desc: string | null,
   placeholder: string
 ) => {

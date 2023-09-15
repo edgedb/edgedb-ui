@@ -123,7 +123,7 @@ async function handleListCommand(
     if (_flags.size) {
       item.setCommandResult({
         kind: CommandOutputKind.error,
-        msg: `unknown flags: ${[..._flags].map((f) => `'-f'`).join(", ")}`,
+        msg: `unknown flags: ${[..._flags].map((f) => `'-${f}'`).join(", ")}`,
       });
       return null;
     }

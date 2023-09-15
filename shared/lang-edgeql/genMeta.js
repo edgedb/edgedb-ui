@@ -6,6 +6,7 @@ const stdout = execFileSync("edb", ["gen-meta-grammars", "edgeql"], {
 });
 
 const output = [];
+const types = [];
 
 let inGroup = false;
 for (const line of stdout.split("\n")) {
@@ -13,6 +14,7 @@ for (const line of stdout.split("\n")) {
     const match = line.match(/(.+)\s+=\s+\(/);
     if (match) {
       output.push(`export const ${match[1].trim()} = [`);
+      types.push(`export const ${match[1].trim()}: string[];`);
       inGroup = true;
     }
   } else {
@@ -26,3 +28,4 @@ for (const line of stdout.split("\n")) {
 }
 
 writeFileSync("./meta.js", output.join("\n"));
+writeFileSync("./meta.d.ts", types.join("\n"));

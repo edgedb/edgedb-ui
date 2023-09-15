@@ -1,6 +1,5 @@
 import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
 import {SchemaScalarType} from "@edgedb/common/schemaData";
 
 import {useSchemaTextState} from "../textView";
@@ -10,7 +9,6 @@ import {
   Copyable,
   CopyButton,
   CopyHighlight,
-  highlightString,
   ItemHeader,
   Keyword,
   mapTypeLinkList,

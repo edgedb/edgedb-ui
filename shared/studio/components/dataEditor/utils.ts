@@ -172,7 +172,10 @@ export function parseEditorValue(
       }
       return type.elements.reduce(
         (parsed, element, i) => {
-          parsed[element.name ?? i] = parseEditorValue(value[i], element.type);
+          (parsed as any)[element.name ?? i] = parseEditorValue(
+            value[i],
+            element.type
+          );
           return parsed;
         },
         type.named ? ({} as {[key: string]: any}) : []

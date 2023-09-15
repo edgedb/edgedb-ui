@@ -1,5 +1,5 @@
 import {createContext, useContext} from "react";
-import {action, computed, observable, runInAction, when} from "mobx";
+import {computed, observable, runInAction, when} from "mobx";
 import {
   Model,
   model,

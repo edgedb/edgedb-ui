@@ -34,7 +34,8 @@
     "test": "jest --runInBand",
     "eject": "react-scripts eject",
     "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server",
-    "open-browser": "node openBrowser.js"
+    "open-browser": "node openBrowser.js",
+    "lint": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [

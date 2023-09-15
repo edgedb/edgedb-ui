@@ -25,7 +25,7 @@ export interface LayoutOpts {
   initalAllConstraintsIters?: number;
 }
 
-const optDefaults = (opts: LayoutOpts): Required<LayoutOpts> => ({
+const optDefaults = (_opts: LayoutOpts): Required<LayoutOpts> => ({
   margins: [3, 3],
   linkLengthMult: 0.7,
   initialUnconstrainedInter: 20,
@@ -89,7 +89,7 @@ export async function layoutObjectNodes(
   ).map((node) => {
     const margins = opts.margins;
     return {
-      id: ((node as any) as WebcolaNode).id,
+      id: (node as any as WebcolaNode).id,
       x: node.x + margins[0] * GRID_SIZE,
       y: node.y + margins[1] * GRID_SIZE,
       width: node.width! - margins[0] * 2 * GRID_SIZE,
@@ -105,7 +105,7 @@ function runLayout(
   links: WebcolaLink[],
   opts: Required<LayoutOpts>
 ) {
-  return new Promise((resolve: (value: webcolaLayout) => void, reject) => {
+  return new Promise((resolve: (value: webcolaLayout) => void) => {
     const layout = new webcolaLayout();
 
     layout
@@ -113,7 +113,7 @@ function runLayout(
       .linkDistance(nodes[0].width * opts.linkLengthMult)
       .avoidOverlaps(true)
       .nodes(nodes)
-      .links((links as unknown) as webcolaLink<webcolaNode>[])
+      .links(links as unknown as webcolaLink<webcolaNode>[])
       .on(webcolaEventType.end, () => {
         resolve(layout);
       });

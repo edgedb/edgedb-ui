@@ -1,4 +1,4 @@
-import {memo, useEffect, useLayoutEffect, useMemo, useRef} from "react";
+import {memo, useEffect, useMemo, useRef} from "react";
 import {Text, Compartment} from "@codemirror/state";
 import {EditorView} from "@codemirror/view";
 

@@ -22,7 +22,6 @@ import {ArrowRight, ChevronDownIcon, CopyIcon} from "../../../icons";
 
 import {
   getModuleGroup,
-  ModuleGroup,
   SchemaItem,
   SchemaTextView,
   SearchMatches,
@@ -126,10 +125,12 @@ export function TypeLink({
         </>
       );
     }
-    if (type.schemaType === "Range") {
+    if (type.schemaType === "Range" || type.schemaType === "Multirange") {
       return (
         <>
-          <span className={styles.builtin}>range</span>
+          <span className={styles.builtin}>
+            {type.schemaType === "Multirange" ? "multirange" : "range"}
+          </span>
           {"<"}
           {wrapLink(type.elementType)}
           {">"}

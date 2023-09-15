@@ -1,4 +1,4 @@
-import {CSSProperties, memo, useEffect, useRef, useState} from "react";
+import {CSSProperties, useRef, useState} from "react";
 import {FixedSizeList as List} from "react-window";
 
 import styles from "./hexViewer.module.scss";

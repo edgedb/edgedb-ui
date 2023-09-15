@@ -101,7 +101,7 @@ export function getCompletions(schemaObjects: Map<string, SchemaObjectType>) {
         options: userSchemaObjects.map((obj) => ({
           label: stripDefaultModuleName(obj),
         })),
-        validFor: (text, from, to, state) => {
+        validFor: (_text, _from, to, state) => {
           return syntaxTree(state).resolveInner(to, -1)?.name === "Name";
         },
       };

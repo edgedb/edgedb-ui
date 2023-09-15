@@ -707,7 +707,7 @@ interface StickyRowProps {
 }
 
 const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
-  const {state, edits} = useDataInspectorState();
+  const {state} = useDataInspectorState();
 
   const style = (state.gridRef as any)?._getItemStyle(rowIndex, 0) ?? {};
 

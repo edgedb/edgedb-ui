@@ -1,18 +1,8 @@
-import {
-  SchemaArrayType,
-  SchemaGlobal,
-  SchemaRangeType,
-  SchemaScalarType,
-  SchemaTupleType,
-  SchemaType,
-} from "@edgedb/common/schemaData";
+import {SchemaGlobal, SchemaType} from "@edgedb/common/schemaData";
 import fuzzysort from "fuzzysort";
 import {action, computed, observable, runInAction, when} from "mobx";
 import {
   clone,
-  draft,
-  Draft,
-  getSnapshot,
   model,
   Model,
   modelAction,
@@ -28,7 +18,6 @@ import {
   newPrimitiveValue,
   parseEditorValue,
   PrimitiveType,
-  valueToEditorValue,
 } from "../components/dataEditor/utils";
 import {fetchSessionState, storeSessionState} from "../idbStore";
 import {connCtx} from "./connection";

@@ -1,4 +1,4 @@
-import React, {Fragment, HTMLAttributes, useRef} from "react";
+import React, {Fragment, useRef} from "react";
 import {observer} from "mobx-react";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -137,7 +137,7 @@ interface ResizerProps {
   onResizeStart: (event: React.MouseEvent) => void;
 }
 
-function Resizer({direction, onFlip, onResizeStart}: ResizerProps) {
+function Resizer({onResizeStart}: ResizerProps) {
   return (
     <div className={styles.resizer}>
       <div className={styles.grabHandle} onMouseDown={onResizeStart}></div>
