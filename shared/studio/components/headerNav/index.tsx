@@ -30,21 +30,19 @@ export function HeaderNavProvider({children}: PropsWithChildren<{}>) {
   );
 }
 
-export interface HeaderTabProps {
-  headerKey: string;
-  icon: JSX.Element;
-}
-
-export function HeaderTab({headerKey, ...props}: HeaderTabProps) {
+export function HeaderTab({
+  headerKey,
+  children,
+}: PropsWithChildren<{headerKey: string}>) {
   const headerTabs = useContext(HeaderNavContext);
 
   useEffect(() => {
-    headerTabs.set(headerKey, <></>);
+    headerTabs.set(headerKey, <>{children}</>);
 
     return () => {
       headerTabs.delete(headerKey);
     };
-  }, [headerKey, props]);
+  }, [headerKey, children]);
 
   return null;
 }

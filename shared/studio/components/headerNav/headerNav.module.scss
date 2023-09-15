@@ -35,19 +35,24 @@
   flex-shrink: 0;
 }
 
-.headerNav {
+.headerNavButton {
   display: flex;
   align-items: center;
   height: 36px;
   font-size: 14px;
   color: var(--font-inactive-gray);
   font-weight: 500;
+  text-decoration: none;
   padding: 0 10px;
   border-radius: 4px;
   cursor: pointer;
 
   .title {
     margin: 0 8px;
+
+    &:last-child {
+      margin-right: 0;
+    }
   }
 
   svg {
@@ -128,11 +133,11 @@
     margin-bottom: 4px;
     text-decoration: none;
     color: inherit;
-    padding: 9px 12px;
+    padding: 9px 18px;
     line-height: 22px;
 
     @include isMobile {
-      padding: 12px;
+      padding: 12px 18px;
     }
   }
 

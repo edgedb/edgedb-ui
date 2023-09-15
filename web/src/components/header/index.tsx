@@ -1,5 +1,5 @@
 import {observer} from "mobx-react";
-import {HeaderTabs} from "@edgedb/studio/components/headerTabs";
+import {HeaderTabs} from "@edgedb/studio/components/headerNav";
 import cn from "@edgedb/common/utils/classNames";
 
 import {LogoLocal} from "@edgedb/common/ui/icons/logo";

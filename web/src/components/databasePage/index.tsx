@@ -1,8 +1,15 @@
 import {observer} from "mobx-react";
 import {useLocation, useNavigate, useParams, Link} from "react-router-dom";
 
-import {InstanceStateContext} from "@edgedb/studio/state/instance";
-import {HeaderTab} from "@edgedb/studio/components/headerTabs";
+import {
+  InstanceState,
+  InstanceStateContext,
+} from "@edgedb/studio/state/instance";
+import {HeaderTab} from "@edgedb/studio/components/headerNav";
+import {
+  HeaderNav,
+  HeaderNavCol,
+} from "@edgedb/studio/components/headerNav/elements";
 import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 
 import {DBRouterProvider} from "@edgedb/studio/hooks/dbRoute";
@@ -20,7 +27,7 @@ import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 
 import {useAppState} from "src/state/providers";
-import {PropsWithChildren} from "react";
+import {PropsWithChildren, useState} from "react";
 
 const tabs: DatabaseTabSpec[] = [
   dashboardTabSpec,
@@ -33,38 +40,16 @@ const tabs: DatabaseTabSpec[] = [
 export default observer(function DatabasePage() {
   const appState = useAppState();
   const params = useParams();
-  const navigate = useNavigate();
-  const {openModal} = useModal();
 
   return (
     <>
-      <HeaderTab
-        link={Link}
-        headerKey="database"
-        title={params.databaseName ?? ""}
-        mainLink={null}
-        icon={<HeaderDatabaseIcon />}
-        selectedItemId={`/${params.databaseName}`}
-        items={
-          appState.instanceState.databases?.map((db) => ({
-            label: db,
-            link: `/${db}`,
-          }))!
-        }
-        actions={[
-          {
-            label: "Create new database",
-            action: () => {
-              openModal(
-                <CreateDatabaseModal
-                  instanceState={appState.instanceState}
-                  navigateToDB={(dbName) => navigate(`/${dbName}`)}
-                />
-              );
-            },
-          },
-        ]}
-      />
+      <HeaderTab headerKey="database">
+        <HeaderNavMenu
+          currentDB={params.databaseName}
+          databases={appState.instanceState.databases}
+          instanceState={appState.instanceState}
+        />
+      </HeaderTab>
 
       <InstanceStateContext.Provider value={appState.instanceState}>
         <RouterProvider>
@@ -77,6 +62,59 @@ export default observer(function DatabasePage() {
     </>
   );
 });
+
+function HeaderNavMenu({
+  currentDB,
+  databases,
+  instanceState,
+}: {
+  currentDB: string | undefined;
+  databases: string[] | null;
+  instanceState: InstanceState;
+}) {
+  const navigate = useNavigate();
+  const {openModal} = useModal();
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedDB, setSelectedDB] = useState(currentDB);
+
+  return (
+    <HeaderNav
+      icon={<HeaderDatabaseIcon />}
+      title={currentDB ?? ""}
+      dropdownOpen={dropdownOpen}
+      setDropdownOpen={setDropdownOpen}
+    >
+      <HeaderNavCol<{to: string}>
+        Link={Link as any}
+        closeDropdown={() => setDropdownOpen(false)}
+        itemGroups={[
+          {
+            header: "Databases",
+            items:
+              databases?.map((db) => ({
+                key: db,
+                label: db,
+                selected: selectedDB === db,
+                linkProps: {to: `/${db}`},
+                onHover: () => setSelectedDB(db),
+              })) ?? null,
+          },
+        ]}
+        action={{
+          label: "Create New Database",
+          onClick: () =>
+            openModal(
+              <CreateDatabaseModal
+                instanceState={instanceState}
+                navigateToDB={(dbName) => navigate(`/${dbName}`)}
+              />
+            ),
+        }}
+      />
+    </HeaderNav>
+  );
+}
 
 function RouterProvider({children}: PropsWithChildren<{}>) {
   const navigate = useNavigate();

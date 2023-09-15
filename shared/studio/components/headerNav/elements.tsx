@@ -41,7 +41,10 @@ export function HeaderNav({
 
   return (
     <div className={styles.headerNavMenu}>
-      <div className={styles.headerNav} onClick={() => setDropdownOpen(true)}>
+      <div
+        className={styles.headerNavButton}
+        onClick={() => setDropdownOpen(true)}
+      >
         {icon}
         <div className={styles.title}>{title}</div>
         <DropdownIcon />
@@ -173,7 +176,13 @@ export function HeaderNavCol<LinkProps>({
               {action.label}
             </Link>
           ) : (
-            <div className={styles.action} onClick={action.onClick}>
+            <div
+              className={styles.action}
+              onClick={() => {
+                closeDropdown();
+                action.onClick?.();
+              }}
+            >
               {action.label}
             </div>
           )
