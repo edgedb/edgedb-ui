@@ -615,10 +615,23 @@ $historyTransitionTime: 0.15s;
       padding: 0;
       border: none;
       height: 40px;
+      width: 40px;
       border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:disabled {
         opacity: 0.4;
+      }
+
+      &.running {
+        background: #2cb88e;
+        color: #fff;
+
+        @include darkTheme {
+          background: #279474;
+        }
       }
     }
 

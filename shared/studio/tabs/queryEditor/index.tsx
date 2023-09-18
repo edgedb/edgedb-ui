@@ -173,13 +173,19 @@ export const QueryEditorView = observer(function QueryEditorView() {
           }
         />
         <button
-          className={styles.mobileBtn}
+          className={cn(styles.mobileBtn, {
+            [styles.running]: editorState.queryRunning,
+          })}
           onClick={() => editorState.runQuery()}
           disabled={
             !editorState.canRunQuery || !!splitViewState.activeViewIndex
           }
         >
-          <MobileRunIcon className={styles.mobileRunIcon} />
+          {editorState.queryRunning ? (
+            <Spinner size={22} />
+          ) : (
+            <MobileRunIcon className={styles.mobileRunIcon} />
+          )}
         </button>
       </div>
       {editorState.showHistory && (
