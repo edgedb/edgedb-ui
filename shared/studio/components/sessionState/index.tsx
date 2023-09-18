@@ -25,7 +25,7 @@ import {ToggleSwitch} from "@edgedb/common/ui/toggleSwitch";
 import fuzzysort from "fuzzysort";
 import {highlightString} from "@edgedb/common/utils/fuzzysortHighlight";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
-import {TabSep} from "../headerTabs";
+import {TabSep} from "../headerNav";
 import {PrimitiveType} from "../dataEditor/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 

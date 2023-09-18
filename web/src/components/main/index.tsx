@@ -2,12 +2,13 @@ import {useEffect} from "react";
 import {useMatch, useRoutes, Link} from "react-router-dom";
 import {observer} from "mobx-react-lite";
 
-import {HeaderTab} from "@edgedb/studio/components/headerTabs";
+import {HeaderTab} from "@edgedb/studio/components/headerNav";
 import {HeaderInstanceIcon} from "@edgedb/studio/icons";
 
 import {useAppState} from "src/state/providers";
 
 import styles from "./main.module.scss";
+import headerNavStyles from "@edgedb/studio/components/headerNav/headerNav.module.scss";
 
 import InstancePage from "../instancePage";
 import DatabasePage from "../databasePage";
@@ -28,15 +29,16 @@ export default observer(function Main() {
 
   return (
     <>
-      <HeaderTab
-        link={Link}
-        headerKey="instance"
-        title={
-          instanceName ?? <span className={styles.loading}>loading...</span>
-        }
-        icon={<HeaderInstanceIcon />}
-        mainLink={"/"}
-      />
+      <HeaderTab headerKey="instance">
+        <Link className={headerNavStyles.headerNavButton} to={"/"}>
+          <HeaderInstanceIcon />
+          <div className={headerNavStyles.title}>
+            {instanceName ?? (
+              <span className={styles.loading}>loading...</span>
+            )}
+          </div>
+        </Link>
+      </HeaderTab>
 
       {useRoutes([
         {
