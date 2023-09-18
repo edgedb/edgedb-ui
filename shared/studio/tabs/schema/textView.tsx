@@ -32,6 +32,7 @@ import {renderers} from "./renderers";
 import {ModuleHeaders} from "./renderers/module";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useDBRouter} from "../../hooks/dbRoute";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 const typeFilters = Object.values(TypeFilter).filter(
   (v) => typeof v === "number"
@@ -42,8 +43,11 @@ const scrollOffsetCache = new Map<string, number>();
 export const SchemaTextView = observer(function SchemaTextView() {
   const state = useTabState(Schema).textViewState;
   const {navigate, currentPath, searchParams, locationKey} = useDBRouter();
+  const [isInputVisible, setIsInputVisible] = useState(false);
 
   const selectedModuleGroup = currentPath[2] ?? "";
+
+  const isMobile = useIsMobile();
 
   useLayoutEffect(() => {
     if (
@@ -182,10 +186,17 @@ export const SchemaTextView = observer(function SchemaTextView() {
               />
             </div>
           ) : null}
-          <div className={styles.search}>
+          <div
+            className={cn(styles.search, {
+              [styles.expanded]:
+                isMobile && (isInputVisible || searchParams.has("search")),
+            })}
+          >
             <SearchIcon />
             <input
-              placeholder="search..."
+              onFocus={() => setIsInputVisible(true)}
+              className={cn({[styles.show]: isInputVisible})}
+              placeholder={!isMobile ? "search..." : ""}
               value={state.searchText}
               onChange={(e) => {
                 const searchVal = e.target.value;
@@ -202,7 +213,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                 );
               }}
             />
-            {searchParams.has("search") ? (
+            {(isMobile && isInputVisible) || searchParams.has("search") ? (
               <div
                 className={styles.clearSearch}
                 onClick={() => {
@@ -210,6 +221,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                   const params = new URLSearchParams(searchParams);
                   params.delete("search");
                   navigate({searchParams: params});
+                  if (isMobile) setIsInputVisible(false);
                 }}
               >
                 <CloseIcon />
