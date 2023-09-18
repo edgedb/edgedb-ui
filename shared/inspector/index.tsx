@@ -94,6 +94,7 @@ type RowListProps = {
   className?: string;
   rowHeight?: number;
   lineHeight?: number;
+  bottomPadding?: number;
 } & (
   | {
       disableVirtualisedRendering: true;
@@ -110,18 +111,19 @@ type RowListProps = {
 const createOuterElementType = (attrs: HTMLAttributes<HTMLDivElement>) =>
   forwardRef((props, ref) => <div ref={ref as any} {...attrs} {...props} />);
 
-const innerElementType = forwardRef((props, ref) => (
-  <div
-    ref={ref as any}
-    className={styles.innerWrapper}
-    {...props}
-    style={{
-      ...(props as any).style,
-      width: undefined,
-      height: (props as any).style.height + 16,
-    }}
-  />
-));
+const createInnerElementType = ({extraPadding = 0}: {extraPadding?: number}) =>
+  forwardRef((props, ref) => (
+    <div
+      ref={ref as any}
+      className={styles.innerWrapper}
+      {...props}
+      style={{
+        ...(props as any).style,
+        width: undefined,
+        height: (props as any).style.height + 16 + extraPadding,
+      }}
+    />
+  ));
 
 const RowList = observer(function RowList({
   className,
@@ -130,6 +132,7 @@ const RowList = observer(function RowList({
   height,
   maxLines,
   disableVirtualisedRendering,
+  bottomPadding,
 }: RowListProps) {
   const state = useInspectorState();
 
@@ -187,6 +190,10 @@ const RowList = observer(function RowList({
     const outerElementType = useMemo(
       () => createOuterElementType({onKeyDown, tabIndex: 0}),
       [onKeyDown]
+    );
+    const innerElementType = useMemo(
+      () => createInnerElementType({extraPadding: bottomPadding}),
+      [bottomPadding]
     );
 
     return (
