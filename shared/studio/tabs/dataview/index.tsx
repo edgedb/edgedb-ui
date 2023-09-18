@@ -318,11 +318,14 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
   return (
     <div className={styles.filterPanel}>
       <p className={styles.title}>Filter</p>
+
       <CodeEditor
+        className={styles.editor}
         code={state.filterEditStr}
         onChange={(value) => state.setFilterEditStr(value)}
         useDarkTheme={theme === Theme.dark}
         keybindings={keybindings}
+        noPadding
       />
 
       <div className={styles.filterActions}>

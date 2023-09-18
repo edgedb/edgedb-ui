@@ -199,6 +199,7 @@ const baseExtensions = [
 export interface CodeEditorProps {
   code: Text;
   onChange: (value: Text) => void;
+  className?: string;
   keybindings?: KeyBinding[];
   useDarkTheme?: boolean;
   readonly?: boolean;
@@ -329,6 +330,7 @@ export function createCodeEditor({
     {
       code,
       onChange,
+      className,
       keybindings = [],
       noPadding,
       readonly = false,
@@ -508,7 +510,7 @@ export function createCodeEditor({
 
     return (
       <div
-        className={cn(styles.codeEditor, {
+        className={cn(styles.codeEditor, className, {
           [styles.terminalCursor]: !!terminalCursor,
         })}
         ref={ref}
