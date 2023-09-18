@@ -472,22 +472,22 @@
       fill: var(--btn-green);
       margin-right: 8px;
     }
-  }
-
-  .openIcon {
-    margin-left: 8px;
-    width: 10px;
-  }
-
-  &.open {
-    background: #cccccc;
-
-    @include darkTheme {
-      background: #4c4c4c;
-    }
 
     .openIcon {
-      transform: rotate(180deg);
+      margin-left: 8px;
+      width: 10px;
+    }
+
+    &.open {
+      background: #cccccc;
+
+      @include darkTheme {
+        background: #4c4c4c;
+      }
+
+      .openIcon {
+        transform: rotate(180deg);
+      }
     }
   }
 
@@ -495,10 +495,6 @@
     .filterButton {
       border-radius: 20px;
       background-color: #666;
-
-      &.filterActive {
-        background-color: #b199f2;
-      }
 
       .filterIcon {
         margin: 0;
@@ -512,10 +508,6 @@
 
         .filterIcon {
           fill: #1a1a1a;
-        }
-
-        &.filterActive {
-          background-color: #999;
         }
       }
     }

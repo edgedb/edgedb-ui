@@ -30,6 +30,7 @@ import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import styles from "./dataInspector.module.scss";
 
 import {
+  DataView as DataViewState,
   DataInspector as DataInspectorState,
   ExpandedRowData,
   ObjectField,
@@ -53,6 +54,7 @@ import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
+import {useTabState} from "../../state";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -583,6 +585,12 @@ const FieldHeaders = observer(function FieldHeaders() {
 
   const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
 
+  const dataviewState = useTabState(DataViewState);
+
+  useEffect(() => {
+    if (isMobile) dataviewState.setShowSubtypeFields(false);
+  }, []);
+
   return (
     <div
       className={cn(styles.header, {
@@ -891,10 +899,6 @@ const DataRowIndex = observer(function DataRowIndex({
     }
   }
 
-  // const {navigate, currentPath} = useDBRouter();
-  // const basePath = currentPath.join("/");
-  // const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
-
   return (
     <>
       <div
@@ -1010,7 +1014,8 @@ interface MobileDataInspectorProps {
 export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
   const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
 
-  const state = useDataInspectorState().state;
+  const {state} = useDataInspectorState();
+  const dataviewState = useTabState(DataViewState);
   const fields = state.fields || [];
 
   const {navigate, currentPath} = useDBRouter();
@@ -1020,6 +1025,10 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
     state.toggleRowExpanded(rowData.dataRowIndex);
     state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
   };
+
+  useEffect(() => {
+    dataviewState.setShowSubtypeFields(true);
+  }, []);
 
   return (
     <div className={styles.mobileInspectorWindow}>
@@ -1034,7 +1043,7 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
 
             const codec = state.dataCodecs?.[index];
 
-            return (
+            return value ? (
               <div className={styles.field} key={field.name}>
                 <div className={styles.fieldHeader}>
                   <span className={styles.name}>{field.name}</span>
@@ -1064,7 +1073,7 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                   <p className={styles.fieldValue}>{value}</p>
                 )}
               </div>
-            );
+            ) : null;
           })}
       </div>
       <div className={styles.footer}>
