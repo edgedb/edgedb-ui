@@ -30,7 +30,6 @@ import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import styles from "./dataInspector.module.scss";
 
 import {
-  DataView as DataViewState,
   DataInspector as DataInspectorState,
   ExpandedRowData,
   ObjectField,
@@ -54,7 +53,6 @@ import {DataEditor, PrimitiveType} from "../../components/dataEditor";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
-import {useTabState} from "../../state";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 const DataInspectorContext = createContext<{
@@ -586,8 +584,6 @@ const FieldHeaders = observer(function FieldHeaders() {
   const isMobile = useIsMobile();
 
   const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
-
-  const dataviewState = useTabState(DataViewState);
 
   return (
     <div
