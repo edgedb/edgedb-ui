@@ -55,6 +55,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
 import {useTabState} from "../../state";
+import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -169,8 +170,9 @@ export default observer(function DataInspectorTable({
             "--rowIndexCharWidth": rowIndexCharWidth,
             ...(!isMobile && {
               "--gridWidth":
-                (state.fieldWidths?.reduce((sum, width) => sum + width, 0) ??
-                  0) + "px",
+                (state.fieldWidths
+                  ?.slice(0, state.fields?.length)
+                  .reduce((sum, width) => sum + width, 0) ?? 0) + "px",
             }),
             "--gridBottomPadding":
               containerSize[1] -
@@ -586,10 +588,6 @@ const FieldHeaders = observer(function FieldHeaders() {
   const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
 
   const dataviewState = useTabState(DataViewState);
-
-  useEffect(() => {
-    if (isMobile) dataviewState.setShowSubtypeFields(false);
-  }, []);
 
   return (
     <div
@@ -1015,8 +1013,17 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
   const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
 
   const {state} = useDataInspectorState();
-  const dataviewState = useTabState(DataViewState);
-  const fields = state.fields || [];
+  const fields =
+    state.allFields?.fields.filter(
+      (field) =>
+        !field.subtypeName ||
+        field.subtypeName === rowData.state.objectTypeName
+    ) || [];
+  const codecs =
+    (item?.codec as ObjectCodec)?.getFields().reduce((codecs, {name}, i) => {
+      codecs[name] = item?.codec.getSubcodecs()[i]!;
+      return codecs;
+    }, {} as {[name: string]: ICodec}) ?? {};
 
   const {navigate, currentPath} = useDBRouter();
   const basePath = currentPath.join("/");
@@ -1026,24 +1033,20 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
     state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
   };
 
-  useEffect(() => {
-    dataviewState.setShowSubtypeFields(true);
-  }, []);
-
   return (
     <div className={styles.mobileInspectorWindow}>
       <div className={styles.fieldsWrapper}>
         {item &&
-          fields.map((field, index) => {
+          fields.map((field) => {
             const isLink = field.type === ObjectFieldType.link;
             const data = item.data;
             const value = isLink
               ? Number(data[`__count_${field.name}`])
               : data[field.name];
 
-            const codec = state.dataCodecs?.[index];
+            const codec = codecs[field.name];
 
-            return value ? (
+            return (
               <div className={styles.field} key={field.name}>
                 <div className={styles.fieldHeader}>
                   <span className={styles.name}>{field.name}</span>
@@ -1073,7 +1076,7 @@ export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
                   <p className={styles.fieldValue}>{value}</p>
                 )}
               </div>
-            ) : null;
+            );
           })}
       </div>
       <div className={styles.footer}>
