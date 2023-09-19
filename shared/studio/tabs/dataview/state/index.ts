@@ -273,46 +273,62 @@ export class DataInspector extends Model({
   filterEditStr = Text.of(["filter "]);
 
   @observable.ref
-  fields: ObjectField[] | null = null;
+  allFields: {fields: ObjectField[]; subtypeIndex: number} | null = null;
+
+  @computed
+  get fields() {
+    return this.showSubtypeFields
+      ? this.allFields?.fields
+      : this.allFields?.fields.slice(0, this.allFields.subtypeIndex);
+  }
 
   @action
   setFilterEditStr(filterStr: Text) {
     this.filterEditStr = filterStr;
   }
 
-  onAttachedToRootStore() {
-    const dataView = findParent<DataView>(
-      this,
-      (parent) => parent instanceof DataView
-    )!;
+  @computed
+  get showSubtypeFields() {
+    return (
+      findParent<DataView>(this, (parent) => parent instanceof DataView)
+        ?.showSubtypeFields ?? false
+    );
+  }
 
+  onAttachedToRootStore() {
     if (!this.fields) {
-      this._updateFields(dataView.showSubtypeFields);
+      this._updateFields();
     }
 
     this._updateRowCount();
 
     const updateFieldDisposer = reaction(
-      () => [this.objectType, dataView.showSubtypeFields] as const,
-      ([objectType, showSubtypeFields]) => {
+      () => [this.objectType] as const,
+      ([objectType]) => {
         if (objectType) {
-          this._updateFields(showSubtypeFields);
-          this.omittedLinks.clear();
-          this._refreshData(false, true);
+          this._updateFields();
         }
       }
     );
     const refreshDataDisposer = reaction(
-      () => sessionStateCtx.get(this)?.activeState,
+      () => [sessionStateCtx.get(this)?.activeState],
       () => {
         this.omittedLinks.clear();
         this._refreshData(true);
+      }
+    );
+    const refreshSubtypesDataDisposer = reaction(
+      () => [this.fields],
+      () => {
+        this.omittedLinks.clear();
+        this._refreshData(false, true);
       }
     );
 
     return () => {
       updateFieldDisposer();
       refreshDataDisposer();
+      refreshSubtypesDataDisposer();
     };
   }
 
@@ -382,7 +398,7 @@ export class DataInspector extends Model({
   }
 
   @modelAction
-  _updateFields(showSubtypeFields: boolean) {
+  _updateFields() {
     const obj = this.objectType;
 
     if (!obj) {
@@ -397,6 +413,7 @@ export class DataInspector extends Model({
       queryNamePrefix: string = ""
     ): ObjectField {
       const baseField = {
+        id: pointer.id,
         subtypeName,
         escapedSubtypeName,
         name: pointer.name,
@@ -444,30 +461,31 @@ export class DataInspector extends Model({
 
     const baseFieldNames = new Set(baseFields.map((field) => field.name));
 
-    const subtypeFields = showSubtypeFields
-      ? this.subTypes
-          .filter((subType) => !subType.abstract && !subType.from_alias)
-          .flatMap((subtypeObj) => {
-            const queryNamePrefix = `__${subtypeObj.name.replace(/:/g, "")}_`;
+    const subtypeFields = this.subTypes
+      .filter((subType) => !subType.abstract && !subType.from_alias)
+      .flatMap((subtypeObj) => {
+        const queryNamePrefix = `__${subtypeObj.name.replace(/:/g, "")}_`;
 
-            return [
-              ...Object.values(subtypeObj.properties),
-              ...Object.values(subtypeObj.links),
-            ]
-              .filter((pointer) => !baseFieldNames.has(pointer.name))
-              .map((pointer) =>
-                createField(
-                  pointer,
-                  subtypeObj.name,
-                  subtypeObj.escapedName,
-                  queryNamePrefix
-                )
-              );
-          })
-      : [];
+        return [
+          ...Object.values(subtypeObj.properties),
+          ...Object.values(subtypeObj.links),
+        ]
+          .filter((pointer) => !baseFieldNames.has(pointer.name))
+          .map((pointer) =>
+            createField(
+              pointer,
+              subtypeObj.name,
+              subtypeObj.escapedName,
+              queryNamePrefix
+            )
+          );
+      });
 
-    this.fields = [...baseFields, ...subtypeFields];
-    this.fieldWidths = Array(this.fields.length).fill(180);
+    this.allFields = {
+      fields: [...baseFields, ...subtypeFields],
+      subtypeIndex: baseFields.length,
+    };
+    this.fieldWidths = Array(this.allFields.fields.length).fill(180);
     this.gridRef?.resetAfterColumnIndex(0);
   }
 
@@ -944,11 +962,11 @@ export class DataInspector extends Model({
       const dataView = findParent<DataView>(
         this,
         (parent) => parent instanceof DataView
-      )!;
+      );
 
       const addedLinkIds = this.parentObject
         ? [
-            ...(dataView.edits.linkEdits
+            ...(dataView?.edits.linkEdits
               .get(this.parentObject.linkId)
               ?.changes.values() ?? []),
           ]
@@ -1158,7 +1176,7 @@ export class DataInspector extends Model({
   @modelAction
   setInitialFieldWidths(width: number) {
     this.fieldWidthsUpdated = true;
-    this.fieldWidths = new Array(this.fields!.length).fill(
+    this.fieldWidths = new Array(this.allFields!.fields.length).fill(
       Math.max(width, 100)
     );
   }
