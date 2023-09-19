@@ -41,6 +41,7 @@ import {ExplainVis} from "../../components/explainVis";
 import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorContexts";
 import {ExplainStateType} from "../../components/explainVis/state";
 import {LabelsSwitch, switchState} from "@edgedb/common/ui/switch";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
@@ -172,13 +173,19 @@ export const QueryEditorView = observer(function QueryEditorView() {
           }
         />
         <button
-          className={styles.mobileBtn}
+          className={cn(styles.mobileBtn, {
+            [styles.running]: editorState.queryRunning,
+          })}
           onClick={() => editorState.runQuery()}
           disabled={
             !editorState.canRunQuery || !!splitViewState.activeViewIndex
           }
         >
-          <MobileRunIcon className={styles.mobileRunIcon} />
+          {editorState.queryRunning ? (
+            <Spinner size={22} />
+          ) : (
+            <MobileRunIcon className={styles.mobileRunIcon} />
+          )}
         </button>
       </div>
       {editorState.showHistory && (
@@ -301,6 +308,7 @@ const ResultInspector = observer(function ResultInspector({
   state: InspectorState;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
@@ -311,6 +319,7 @@ const ResultInspector = observer(function ResultInspector({
           className={styles.inspector}
           state={state}
           height={height}
+          bottomPadding={isMobile ? 60 : undefined}
         />
       </CustomScrollbars>
     </div>

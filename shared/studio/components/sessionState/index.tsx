@@ -46,10 +46,12 @@ export const SessionStateButton = observer(function SessionStateButton() {
           className={cn(styles.stateButton, {
             [styles.open]: sessionState.barOpen,
             [styles.panelOpen]: sessionState.panelOpen,
+            [styles.disabled]: isMobile && !sessionState.isLoaded,
           })}
           onClick={() => {
-            if (isMobile) sessionState.openPanel();
-            else if (sessionState.barOpen) {
+            if (isMobile) {
+              if (sessionState.isLoaded) sessionState.openPanel();
+            } else if (sessionState.barOpen) {
               sessionState.closePanel();
               sessionState.setBarOpen(false);
             } else {
@@ -236,13 +238,11 @@ const SessionBarContent = observer(function SessionBarContent() {
           })
         ) : (
           <div className={styles.emptySessionBar}>
-            {state.draftState
-              ? "no configured settings"
-              : "loading settings..."}
+            {state.isLoaded ? "no configured settings" : "loading settings..."}
           </div>
         )}
       </div>
-      {state.draftState ? (
+      {state.isLoaded ? (
         <div className={styles.openPanel} onClick={() => state.openPanel()}>
           <div className={styles.panelButton}>
             {overflowCount ? <span>+{overflowCount}</span> : null}

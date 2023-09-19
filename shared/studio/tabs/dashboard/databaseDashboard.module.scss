@@ -129,8 +129,11 @@
 
 .stats {
   display: flex;
-  gap: 90px;
+  gap: 20px 90px;
+  margin: 0 56px;
   margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
 
   .stat {
     display: flex;

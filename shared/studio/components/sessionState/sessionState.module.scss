@@ -43,6 +43,11 @@
     }
   }
 
+  &.disabled {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
   &:hover,
   &.open {
     background: var(--app-bg-gray);

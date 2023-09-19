@@ -131,6 +131,11 @@ export class SessionState extends Model({
     this.highlight = null;
   }
 
+  @computed
+  get isLoaded() {
+    return this.draftState !== null;
+  }
+
   @modelAction
   openPanel(highlight: (typeof this)["highlight"] = null) {
     this.fetchConfigValues();
