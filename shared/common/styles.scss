@@ -1,0 +1,18 @@
+@import "@edgedb/common/mixins.scss";
+
+:root {
+  --grey30: #4d4d4d;
+  --grey50: #808080;
+  --grey60: #999;
+  --grey75: #bfbfbf;
+}
+
+.theme {
+  --font-header-grey: var(--grey50);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.2);
+
+  @include darkTheme {
+    --font-header-grey: var(--grey60);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+  }
+}

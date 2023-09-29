@@ -18,8 +18,8 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: var(--app-modal-overlay);
-    backdrop-filter: blur(4px);
+    background: var(--modal-overlay-bg);
+    backdrop-filter: blur(3px);
     transition: opacity 0.3s;
   }
 

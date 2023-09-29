@@ -12,8 +12,11 @@
   background-color: var(--app-panel-bg);
   border-radius: 8px;
   overflow: auto;
-
   @include hideScrollbar;
+
+  @include breakpoint(mobile) {
+    border-radius: 0;
+  }
 }
 
 .dashboardLayout,
