@@ -37,9 +37,12 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
 
   return (
     <div className={cn(styles.themeSwitcher, className)}>
-      <div className={styles.button} onClick={() => setPopupOpen(true)}>
-        <LightThemeIcon className={styles.lightIcon} />
-        <DarkThemeIcon className={styles.darkIcon} />
+      <div className={styles.switcher}>
+        <p>theme</p>
+        <div className={styles.button} onClick={() => setPopupOpen(true)}>
+          <LightThemeIcon className={styles.lightIcon} />
+          <DarkThemeIcon className={styles.darkIcon} />
+        </div>
       </div>
       <div
         className={cn(styles.popup, {
@@ -58,6 +61,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           })}
           onClick={() => setTheme(Theme.light)}
         >
+          <p className={styles.themeLabel}>Light</p>
           <LightThemeIcon />
           <div className={styles.tooltip}>Light</div>
         </div>
@@ -67,6 +71,8 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           })}
           onClick={() => setTheme(Theme.dark)}
         >
+          <p className={styles.themeLabel}>Dark</p>
+
           <DarkThemeIcon />
           <div className={styles.tooltip}>Dark</div>
         </div>
@@ -76,6 +82,7 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           })}
           onClick={() => setTheme(Theme.system)}
         >
+          <p className={styles.themeLabel}>System</p>
           <SystemThemeIcon />
           <div className={styles.tooltip}>System</div>
         </div>

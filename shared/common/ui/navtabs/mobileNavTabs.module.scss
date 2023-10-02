@@ -87,16 +87,19 @@
 
 .menuPopup {
   width: 340px;
-  max-width: calc(100% - 36px);
   max-height: calc(100% - 100px);
   background: #fff;
   border-radius: 6px;
-  position: absolute;
-  bottom: 18px;
-  right: 18px;
+  position: relative;
 
   @include darkTheme {
     background: #2e2e2e;
+  }
+
+  .themeSwitcher {
+    position: absolute;
+    top: 4px;
+    right: 4px;
   }
 }
 

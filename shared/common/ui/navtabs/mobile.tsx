@@ -7,6 +7,7 @@ import {ModalOverlay} from "../modal";
 import {BaseTabBarProps} from "./interfaces";
 
 import styles from "./mobileNavTabs.module.scss";
+import {ThemeSwitcher} from "../themeSwitcher";
 
 export interface MobileNavTabsProps extends BaseTabBarProps {
   extraMenu?: JSX.Element;
@@ -77,7 +78,8 @@ function MobileMenu({tabs, Link, extraMenu}: MobileNavTabsProps) {
 
   return (
     <ModalOverlay onOverlayClick={() => openModal(null)}>
-      <div className={styles.menuPopup} onClick={() => openModal(null)}>
+      <div className={styles.menuPopup}>
+        <ThemeSwitcher className={styles.themeSwitcher} />
         {extraMenu}
         <div
           className={cn(styles.menuTabsList, {[styles.showSep]: !!extraMenu})}
