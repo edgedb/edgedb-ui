@@ -92,6 +92,10 @@
   border-radius: 6px;
   position: relative;
 
+  &.extraPaddingTop {
+    padding-top: 20px;
+  }
+
   @include darkTheme {
     background: #2e2e2e;
   }
@@ -127,7 +131,11 @@
   font-size: 16px;
   font-weight: 500;
   text-decoration: none;
-  color: inherit;
+  color: var(--grey30);
+
+  @include breakpoint(mobile) {
+    font-weight: 700;
+  }
 
   .icon {
     width: 24px;
@@ -137,5 +145,6 @@
 
   @include darkTheme {
     background: #242424;
+    color: #b3b3b3;
   }
 }

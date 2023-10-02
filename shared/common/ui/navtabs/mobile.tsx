@@ -78,7 +78,11 @@ function MobileMenu({tabs, Link, extraMenu}: MobileNavTabsProps) {
 
   return (
     <ModalOverlay onOverlayClick={() => openModal(null)}>
-      <div className={styles.menuPopup}>
+      <div
+        className={cn(styles.menuPopup, {
+          [styles.extraPaddingTop]: !extraMenu,
+        })}
+      >
         <ThemeSwitcher className={styles.themeSwitcher} />
         {extraMenu}
         <div

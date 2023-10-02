@@ -17,11 +17,16 @@
     align-items: center;
 
     p {
-      color: #999;
-      font-family: Roboto;
-      font-size: 12px;
-      line-height: 24px;
-      margin: 0;
+      display: none;
+
+      @include breakpoint(mobile) {
+        display: block;
+        color: #999;
+        font-family: Roboto;
+        font-size: 12px;
+        line-height: 24px;
+        margin: 0;
+      }
     }
   }
 
