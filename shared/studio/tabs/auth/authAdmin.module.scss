@@ -1,0 +1,402 @@
+.authAdmin {
+  flex-grow: 1;
+  background-color: var(--app-panel-bg);
+  border-radius: 8px;
+  display: flex;
+}
+
+.contentWrapper {
+  overflow: auto;
+  flex-grow: 1;
+}
+
+.tabContent {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: max-content;
+}
+
+.header {
+  font-weight: 500;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+
+  &:not(:first-child) {
+    margin-top: 56px;
+  }
+}
+
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.input {
+  position: relative;
+  background: #fff;
+  border: 1px solid #d6d6d6;
+  border-radius: 6px;
+  line-height: 32px;
+  font-family: "Roboto Mono", monospace;
+  display: flex;
+  width: fit-content;
+
+  input {
+    font-family: inherit;
+    line-height: inherit;
+    border: 0;
+    outline: 0;
+    background: none;
+    padding: 0 10px;
+    color: inherit;
+    padding-left: calc(10px + var(--prefixLen, 0) * 1ch);
+  }
+
+  &.error:after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border: 2px solid #db5246;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+
+  &.disabled {
+    background: none;
+    pointer-events: none;
+  }
+
+  &.placeholder {
+    padding: 0 10px;
+  }
+
+  .prefix {
+    position: absolute;
+    padding-left: 8px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+}
+
+.inputErrorMessage {
+  font-size: 14px;
+  line-height: 20px;
+  min-height: 20px;
+  padding: 4px;
+  padding-bottom: 0;
+  color: #db5246;
+}
+
+.button.button {
+  padding: 0;
+  --buttonBg: #e9e9e9;
+  --buttonTextColour: #4d4d4d;
+  height: 34px;
+
+  & > div {
+    height: 34px;
+    border-radius: 6px;
+    text-transform: none;
+    font-size: 14px;
+  }
+}
+
+.generateKeyButton {
+  position: relative;
+  display: flex;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  color: #747474;
+  font-family: "Roboto", sans-serif;
+  margin-left: -8px;
+  margin-right: 4px;
+
+  span {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+    font-size: 12px;
+    white-space: nowrap;
+    top: 100%;
+    line-height: 16px;
+    color: #4d4d4d;
+    background: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+
+  &:hover {
+    color: #4d4d4d;
+
+    span {
+      opacity: 1;
+    }
+  }
+}
+
+.configGrid {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 24px;
+  margin: 0 16px;
+
+  .configName {
+    font-family: "Roboto Mono", monospace;
+    text-align: right;
+    line-height: 34px;
+  }
+
+  .configInput {
+    display: flex;
+    gap: 8px;
+  }
+
+  .configExplain {
+    max-width: 320px;
+    opacity: 0.7;
+    font-size: 13px;
+    margin: 6px 4px;
+  }
+}
+
+.providersList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.noProviders {
+  border: 2px dashed #ccc;
+  padding: 18px;
+  border-radius: 8px;
+  opacity: 0.7;
+  font-style: italic;
+  width: 560px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.providerCard {
+  background: #eee;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 560px;
+
+  .providerCardHeader {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    font-weight: 500;
+
+    .oauthIcon {
+      width: 24px;
+      height: 24px;
+      margin-left: -8px;
+      margin-right: 4px;
+    }
+  }
+
+  .expandProvider {
+    width: 40px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.8;
+
+    &.collapsed svg {
+      transform: rotate(-90deg);
+    }
+
+    &.disabled {
+      pointer-events: none;
+
+      svg {
+        display: none;
+      }
+    }
+  }
+
+  .providerType {
+    opacity: 0.75;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-top: 1px;
+    margin-bottom: -1px;
+    background: #d3d3d3;
+    padding: 2px 8px;
+    border-radius: 16px;
+  }
+
+  .removeProviderButton {
+    margin-left: auto;
+    --buttonTextColour: #747474;
+    display: none;
+
+    .icon {
+      fill: currentColor;
+    }
+
+    & > div {
+      text-transform: none;
+      font-size: 14px;
+    }
+
+    &.noHide {
+      display: block;
+    }
+  }
+
+  &:hover .removeProviderButton {
+    display: block;
+  }
+
+  .providerDetails {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-self: flex-start;
+    gap: 16px 24px;
+    padding: 16px 18px;
+    padding-top: 6px;
+    font-family: "Roboto Mono", monospace;
+  }
+}
+
+.addProviderForm {
+  background: #eee;
+  border-radius: 8px;
+  width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  box-sizing: border-box;
+
+  .errorMessage {
+    color: #db5246;
+    background-color: #db52461a;
+    border-radius: 6px;
+    padding: 8px 16px;
+  }
+}
+
+.addProviderFormButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+
+  .button {
+    --buttonBg: #e2e2e2;
+  }
+}
+
+.providerSelect {
+  background: #fff;
+  flex-grow: 1;
+  padding: 0px 10px;
+  border: 1px solid #d6d6d6;
+  border-radius: 6px;
+
+  & > .providerSelectItem .oauthIcon {
+    margin-left: 0;
+  }
+}
+
+.providerSelectItem {
+  display: flex;
+  align-items: center;
+  line-height: 22px;
+
+  .oauthIcon {
+    width: 22px;
+    height: 22px;
+    margin-right: 6px;
+    margin-left: -6px;
+  }
+}
+
+.uiConfigSection {
+  display: flex;
+  gap: 56px;
+  align-self: stretch;
+}
+
+.uiConfigFormButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+
+  .disableButton {
+    margin-left: auto;
+  }
+}
+
+.loginUIPreview {
+  flex-grow: 1;
+  max-width: 800px;
+  margin-top: -32px;
+}
+
+.loginUIPreviewHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  padding-left: 6px;
+  opacity: 0.9;
+
+  span {
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .themeSwitch {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+      opacity: 0.7;
+    }
+  }
+}
+
+.colorPickerSwatch {
+  position: relative;
+  border: 1px solid #d6d6d6;
+  height: 32px;
+  width: 32px;
+  border-radius: 6px;
+  background-clip: padding-box;
+  cursor: pointer;
+
+  .colorPickerPopup {
+    position: absolute;
+    bottom: -1px;
+    left: -1px;
+    z-index: 1;
+  }
+}

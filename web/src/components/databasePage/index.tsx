@@ -25,6 +25,7 @@ import {replTabSpec} from "@edgedb/studio/tabs/repl";
 import {editorTabSpec} from "@edgedb/studio/tabs/queryEditor";
 import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
+import {authAdminTabSpec} from "@edgedb/studio/tabs/auth";
 
 import {useAppState} from "src/state/providers";
 import {PropsWithChildren, useState} from "react";
@@ -35,6 +36,7 @@ const tabs: DatabaseTabSpec[] = [
   editorTabSpec,
   schemaTabSpec,
   dataviewTabSpec,
+  authAdminTabSpec,
 ];
 
 export default observer(function DatabasePage() {
