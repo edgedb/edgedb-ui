@@ -368,6 +368,13 @@
     @include hideScrollbar;
   }
 
+  .providerConfigValue {
+    span {
+      opacity: 0.7;
+      font-style: italic;
+    }
+  }
+
   @include darkTheme {
     background-color: #2f2f2f;
 

@@ -268,7 +268,26 @@ const UIConfigForm = observer(function UIConfig({
                 />
               </div>
               <div className={styles.configExplain}>
-                The url to redirect to after successful login.
+                The url to redirect to after successful sign in.
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>redirect_to_on_signup</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <Input
+                  size={32}
+                  value={draft.getConfigValue("redirect_to_on_signup")}
+                  onChange={(val) =>
+                    draft.setConfigValue("redirect_to_on_signup", val)
+                  }
+                />
+              </div>
+              <div className={styles.configExplain}>
+                The url to redirect to after a new user signs up. If not set,
+                'redirect_to' will be used instead.
               </div>
             </div>
           </div>
@@ -573,6 +592,22 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
                 </div>
               </div>
             </div>
+            <div className={styles.gridItem}>
+              <div className={styles.configName}>additional_scope</div>
+              <div className={styles.configInputWrapper}>
+                <div className={styles.configInput}>
+                  <Input
+                    size={32}
+                    value={draftState.additionalScope}
+                    onChange={(val) => draftState.setAdditionalScope(val)}
+                  />
+                </div>
+                <div className={styles.configExplain}>
+                  Space-separated list of scopes to be included in the
+                  authorize request to the OAuth provider.
+                </div>
+              </div>
+            </div>
           </>
         ) : null}
       </div>
@@ -645,6 +680,13 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
 
           <div className={styles.providerConfigName}>secret</div>
           <div className={styles.providerConfigValue}>{secretPlaceholder}</div>
+
+          <div className={styles.providerConfigName}>additional_scope</div>
+          <div className={styles.providerConfigValue}>
+            {(provider as OAuthProviderData).additional_scope || (
+              <span>none</span>
+            )}
+          </div>
         </div>
       ) : null}
     </div>

@@ -25,6 +25,7 @@ export type OAuthProviderData = {
     | "ext::auth::GitHubOAuthProvider"
     | "ext::auth::GoogleOAuthProvider";
   client_id: string;
+  additional_scope: string;
 };
 export type AuthProviderData =
   | OAuthProviderData
@@ -32,6 +33,7 @@ export type AuthProviderData =
 
 export interface AuthUIConfigData {
   redirect_to: string;
+  redirect_to_on_signup: string;
   app_name: string | null;
   logo_url: string | null;
   dark_logo_url: string | null;
@@ -187,9 +189,11 @@ export class AuthAdminState extends Model({
           _typename := .__type__.name,
           name,
           [is OAuthProviderConfig].client_id,
+          [is OAuthProviderConfig].additional_scope,
         },
         ui: {
           redirect_to,
+          redirect_to_on_signup,
           app_name,
           logo_url,
           dark_logo_url,
@@ -221,6 +225,7 @@ export class AuthAdminState extends Model({
 @model("AdminDraftUIConfig")
 export class DraftUIConfig extends Model({
   _redirect_to: prop<string | null>(null),
+  _redirect_to_on_signup: prop<string | null>(null),
   _app_name: prop<string | null>(null),
   _logo_url: prop<string | null>(null),
   _dark_logo_url: prop<string | null>(null),
@@ -257,6 +262,7 @@ export class DraftUIConfig extends Model({
   get formChanged() {
     return (
       this._redirect_to != null ||
+      this._redirect_to_on_signup != null ||
       this._app_name != null ||
       this._logo_url != null ||
       this._dark_logo_url != null ||
@@ -267,6 +273,7 @@ export class DraftUIConfig extends Model({
   @modelAction
   clearForm() {
     this._redirect_to = null;
+    this._redirect_to_on_signup = null;
     this._app_name = null;
     this._logo_url = null;
     this._dark_logo_url = null;
@@ -298,7 +305,13 @@ export class DraftUIConfig extends Model({
               this.getConfigValue("redirect_to")
             )},
             ${(
-              ["app_name", "logo_url", "dark_logo_url", "brand_color"] as const
+              [
+                "redirect_to_on_signup",
+                "app_name",
+                "logo_url",
+                "dark_logo_url",
+                "brand_color",
+              ] as const
             )
               .map((name) => {
                 const val = this.getConfigValue(name);
@@ -325,6 +338,7 @@ export class DraftProviderConfig extends Model({
 
   oauthClientId: prop("").withSetter(),
   oauthSecret: prop("").withSetter(),
+  additionalScope: prop("").withSetter(),
 }) {
   @computed
   get oauthClientIdError() {
@@ -372,7 +386,14 @@ export class DraftProviderConfig extends Model({
               provider.kind === "OAuth"
                 ? `
             client_id := ${JSON.stringify(this.oauthClientId)},
-            secret := ${JSON.stringify(this.oauthSecret)}
+            secret := ${JSON.stringify(this.oauthSecret)},
+            ${
+              this.additionalScope.trim()
+                ? `additional_scope := ${JSON.stringify(
+                    this.additionalScope.trim()
+                  )}`
+                : ""
+            }
             `
                 : ""
             }
