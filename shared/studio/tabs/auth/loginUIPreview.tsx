@@ -4,7 +4,6 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {
   AuthProviderData,
-  AuthUIConfigData,
   DraftUIConfig,
   providers as providersInfo,
 } from "./state";
@@ -45,9 +44,13 @@ export function LoginUIPreview({
 
   return (
     <div
-      className={cn(styles.previewPage, {
-        [styles.darkTheme]: darkTheme,
-      })}
+      className={cn(
+        styles.previewPage,
+        darkTheme ? "dark-theme" : "light-theme",
+        {
+          [styles.darkTheme]: darkTheme,
+        }
+      )}
       style={colorVariables as any}
     >
       {logoUrl ? (
@@ -99,16 +102,16 @@ export function LoginUIPreview({
                 <path
                   d="M5 12.5H19"
                   stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
                 <path
                   d="M12 5.5L19 12.5L12 19.5"
                   stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             </button>

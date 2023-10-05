@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
 import {HexColorPicker, HexColorInput} from "react-colorful";
 
@@ -6,10 +6,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./authAdmin.module.scss";
 
-import {useInstanceState} from "../../state/instance";
-import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {useDBRouter} from "../../hooks/dbRoute";
 
 import {ChevronDownIcon, DeleteIcon, TabDashboardIcon} from "../../icons";
 import {
@@ -20,7 +17,6 @@ import {
   providerTypenames,
   providers,
   DraftUIConfig,
-  AuthUIConfigData,
   ProviderKind,
   OAuthProviderData,
 } from "./state";
@@ -28,7 +24,7 @@ import {useTabState} from "../../state";
 import {encodeB64} from "edgedb/dist/primitives/buffer";
 import Button from "@edgedb/common/ui/button";
 import {GenerateKeyIcon} from "./icons";
-import {Select, SelectItem, SelectItems} from "@edgedb/common/ui/select";
+import {Select, SelectItem} from "@edgedb/common/ui/select";
 import {LoginUIPreview} from "./loginUIPreview";
 import {normaliseHexColor} from "./colourUtils";
 import {useTheme, Theme} from "@edgedb/common/hooks/useTheme";
@@ -36,6 +32,8 @@ import {
   DarkThemeIcon,
   LightThemeIcon,
 } from "@edgedb/common/ui/themeSwitcher/icons";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
+import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 export const AuthAdmin = observer(function AuthAdmin() {
   const state = useTabState(AuthAdminState);
@@ -43,13 +41,31 @@ export const AuthAdmin = observer(function AuthAdmin() {
   return (
     <div className={styles.authAdmin}>
       {state.extEnabled === null ? (
-        <div>Loading schema...</div>
+        <div className={styles.loadingSchema}>Loading schema...</div>
       ) : state.extEnabled ? (
-        <div className={styles.contentWrapper}>
-          {state.selectedTab === "config" ? <ConfigPage /> : null}
-        </div>
+        <CustomScrollbars
+          className={styles.scrollWrapper}
+          innerClass={styles.tabContent}
+        >
+          <div className={styles.contentWrapper}>
+            {state.selectedTab === "config" ? <ConfigPage /> : null}
+          </div>
+        </CustomScrollbars>
       ) : (
-        <div>auth ext disabled</div>
+        <div className={styles.extDisabled}>
+          <h2>The auth extension is not enabled</h2>
+          <p>To enable it add the following to your schema:</p>
+          <CodeBlock code="using extension auth;" />
+          <p>
+            For more information check out the{" "}
+            <a
+              href="https://www.edgedb.com/docs/reference/sdl/extensions"
+              target="_blank"
+            >
+              extension docs
+            </a>
+          </p>
+        </div>
       )}
     </div>
   );
@@ -77,104 +93,109 @@ const ConfigPage = observer(function ConfigPage() {
     <div className={styles.tabContent}>
       <div className={styles.header}>Auth Configuration</div>
       <div className={styles.configGrid}>
-        <div className={styles.configName}>auth_signing_key</div>
-        <div className={styles.configInputWrapper}>
-          <div className={styles.configInput}>
-            {state.configData ? (
-              state.draftSigningKey.value !== null ||
-              !state.configData.signing_key_exists ? (
-                <>
-                  <Input
-                    value={state.draftSigningKey.value ?? ""}
-                    onChange={(key) => state.draftSigningKey.setValue(key)}
-                    error={state.draftSigningKey.error}
-                    size={32.5}
-                    showGenerateKey
-                  />
-                  <Button
-                    className={styles.button}
-                    label={
-                      state.draftSigningKey.updating ? "Updating" : "Update"
-                    }
-                    disabled={!!state.draftSigningKey.error}
-                    loading={state.draftSigningKey.updating}
-                    onClick={() => state.draftSigningKey.update()}
-                  />
-                  {state.configData.signing_key_exists ? (
-                    <Button
-                      className={styles.button}
-                      label="Cancel"
-                      onClick={() => state.draftSigningKey.setValue(null)}
-                    />
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <div
-                    className={cn(
-                      styles.input,
-                      styles.disabled,
-                      styles.placeholder
-                    )}
-                  >
-                    {secretPlaceholder}
-                  </div>
-                  <Button
-                    className={styles.button}
-                    label="Change"
-                    onClick={() => state.draftSigningKey.setValue("")}
-                  />
-                </>
-              )
-            ) : (
-              "loading..."
-            )}
-          </div>
-          <div className={styles.configExplain}>
-            The signing key used for auth extension. Must be at least 32
-            characters long.
-          </div>
-        </div>
-
-        <div className={styles.configName}>token_time_to_live</div>
-        <div className={styles.configInputWrapper}>
-          <div className={styles.configInput}>
-            {state.configData ? (
-              <>
-                <Input
-                  value={
-                    state.draftTokenTime.value ??
-                    state.configData.token_time_to_live.toString()
-                  }
-                  onChange={(dur) => state.draftTokenTime.setValue(dur)}
-                  error={state.draftTokenTime.error}
-                />
-                {state.draftTokenTime.value != null ? (
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>auth_signing_key</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                state.draftSigningKey.value !== null ||
+                !state.configData.signing_key_exists ? (
                   <>
+                    <Input
+                      value={state.draftSigningKey.value ?? ""}
+                      onChange={(key) => state.draftSigningKey.setValue(key)}
+                      error={state.draftSigningKey.error}
+                      size={32.5}
+                      showGenerateKey
+                    />
                     <Button
                       className={styles.button}
                       label={
-                        state.draftTokenTime.updating ? "Updating" : "Update"
+                        state.draftSigningKey.updating ? "Updating" : "Update"
                       }
-                      disabled={!!state.draftTokenTime.error}
-                      loading={state.draftTokenTime.updating}
-                      onClick={() => state.draftTokenTime.update()}
+                      disabled={!!state.draftSigningKey.error}
+                      loading={state.draftSigningKey.updating}
+                      onClick={() => state.draftSigningKey.update()}
                     />
+                    {state.configData.signing_key_exists ? (
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftSigningKey.setValue(null)}
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className={cn(
+                        styles.input,
+                        styles.disabled,
+                        styles.placeholder
+                      )}
+                    >
+                      {secretPlaceholder}
+                    </div>
                     <Button
                       className={styles.button}
-                      label="Cancel"
-                      onClick={() => state.draftTokenTime.setValue(null)}
+                      label="Change"
+                      onClick={() => state.draftSigningKey.setValue("")}
                     />
                   </>
-                ) : null}
-              </>
-            ) : (
-              "loading..."
-            )}
+                )
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              The signing key used for auth extension. Must be at least 32
+              characters long.
+            </div>
           </div>
-          <div className={styles.configExplain}>
-            The time after which an auth token expires. A value of 0 indicates
-            that the token should never expire.
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>token_time_to_live</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <Input
+                    size={16}
+                    value={
+                      state.draftTokenTime.value ??
+                      state.configData.token_time_to_live.toString()
+                    }
+                    onChange={(dur) => state.draftTokenTime.setValue(dur)}
+                    error={state.draftTokenTime.error}
+                  />
+                  {state.draftTokenTime.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftTokenTime.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftTokenTime.error}
+                        loading={state.draftTokenTime.updating}
+                        onClick={() => state.draftTokenTime.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftTokenTime.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              The time after which an auth token expires. A value of 0
+              indicates that the token should never expire.
+            </div>
           </div>
         </div>
       </div>
@@ -235,80 +256,96 @@ const UIConfigForm = observer(function UIConfig({
     <div className={styles.uiConfigSection}>
       <div>
         <div className={styles.configGrid}>
-          <div className={styles.configName}>redirect_to</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              <Input
-                value={draft.getConfigValue("redirect_to")}
-                onChange={(val) => draft.setConfigValue("redirect_to", val)}
-                error={draft.redirectToError}
-              />
-            </div>
-            <div className={styles.configExplain}>
-              The url to redirect to after successful login.
-            </div>
-          </div>
-
-          <div className={styles.configName}>app_name</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              <Input
-                value={draft.getConfigValue("app_name")}
-                onChange={(val) => draft.setConfigValue("app_name", val)}
-              />
-            </div>
-            <div className={styles.configExplain}>
-              The name of your application to be shown on the login screen.
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>redirect_to</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <Input
+                  size={32}
+                  value={draft.getConfigValue("redirect_to")}
+                  onChange={(val) => draft.setConfigValue("redirect_to", val)}
+                  error={draft.redirectToError}
+                />
+              </div>
+              <div className={styles.configExplain}>
+                The url to redirect to after successful login.
+              </div>
             </div>
           </div>
 
-          <div className={styles.configName}>logo_url</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              <Input
-                value={draft.getConfigValue("logo_url")}
-                onChange={(val) => draft.setConfigValue("logo_url", val)}
-              />
-            </div>
-            <div className={styles.configExplain}>
-              A url to an image of your application's logo.
-            </div>
-          </div>
-
-          <div className={styles.configName}>dark_logo_url</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              <Input
-                value={draft.getConfigValue("dark_logo_url")}
-                onChange={(val) => draft.setConfigValue("dark_logo_url", val)}
-              />
-            </div>
-            <div className={styles.configExplain}>
-              A url to an image of your application's logo to be used with the
-              dark theme.
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>app_name</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <Input
+                  size={32}
+                  value={draft.getConfigValue("app_name")}
+                  onChange={(val) => draft.setConfigValue("app_name", val)}
+                />
+              </div>
+              <div className={styles.configExplain}>
+                The name of your application to be shown on the login screen.
+              </div>
             </div>
           </div>
 
-          <div className={styles.configName}>brand_color</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              <div className={styles.inputWrapper}>
-                <ColorPickerInput
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>logo_url</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <Input
+                  size={32}
+                  value={draft.getConfigValue("logo_url")}
+                  onChange={(val) => draft.setConfigValue("logo_url", val)}
+                />
+              </div>
+              <div className={styles.configExplain}>
+                A url to an image of your application's logo.
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>dark_logo_url</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <Input
+                  size={32}
+                  value={draft.getConfigValue("dark_logo_url")}
+                  onChange={(val) =>
+                    draft.setConfigValue("dark_logo_url", val)
+                  }
+                />
+              </div>
+              <div className={styles.configExplain}>
+                A url to an image of your application's logo to be used with
+                the dark theme.
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>brand_color</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <div className={styles.inputWrapper}>
+                  <ColorPickerInput
+                    color={draft.getConfigValue("brand_color")}
+                    onChange={(color) =>
+                      draft.setConfigValue("brand_color", color.slice(1))
+                    }
+                  />
+                </div>
+                <ColorPickerPopup
                   color={draft.getConfigValue("brand_color")}
                   onChange={(color) =>
                     draft.setConfigValue("brand_color", color.slice(1))
                   }
                 />
               </div>
-              <ColorPickerPopup
-                color={draft.getConfigValue("brand_color")}
-                onChange={(color) =>
-                  draft.setConfigValue("brand_color", color.slice(1))
-                }
-              />
-            </div>
-            <div className={styles.configExplain}>
-              The brand color of your application as a hex string.
+              <div className={styles.configExplain}>
+                The brand color of your application as a hex string.
+              </div>
             </div>
           </div>
         </div>
@@ -321,7 +358,7 @@ const UIConfigForm = observer(function UIConfig({
             disabled={draft.formError || !draft.formChanged || draft.updating}
             loading={draft.updating}
           />
-          {draft.formChanged ? (
+          {state.uiConfig && draft.formChanged ? (
             <Button
               className={styles.button}
               label="Clear Changes"
@@ -490,44 +527,52 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
   return (
     <div className={styles.addProviderForm}>
       <div className={styles.configGrid}>
-        <div className={styles.configName}>provider</div>
-        <div className={styles.configInput}>
-          <Select
-            className={styles.providerSelect}
-            selectedItemId={draftState.selectedProviderType}
-            onChange={(item) => draftState.setSelectedProviderType(item.id)}
-            items={providerItems}
-          />
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>provider</div>
+          <div className={styles.configInput}>
+            <Select
+              className={styles.providerSelect}
+              selectedItemId={draftState.selectedProviderType}
+              onChange={(item) => draftState.setSelectedProviderType(item.id)}
+              items={providerItems}
+            />
+          </div>
         </div>
 
         {providerKind === "OAuth" ? (
           <>
-            <div className={styles.configName}>client_id</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <Input
-                  value={draftState.oauthClientId}
-                  onChange={(val) => draftState.setOauthClientId(val)}
-                  error={draftState.oauthClientIdError}
-                />
-              </div>
-              <div className={styles.configExplain}>
-                ID for client provided by auth provider.
+            <div className={styles.gridItem}>
+              <div className={styles.configName}>client_id</div>
+              <div className={styles.configInputWrapper}>
+                <div className={styles.configInput}>
+                  <Input
+                    size={32}
+                    value={draftState.oauthClientId}
+                    onChange={(val) => draftState.setOauthClientId(val)}
+                    error={draftState.oauthClientIdError}
+                  />
+                </div>
+                <div className={styles.configExplain}>
+                  ID for client provided by auth provider.
+                </div>
               </div>
             </div>
-            <div className={styles.configName}>secret</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <Input
-                  value={draftState.oauthSecret}
-                  onChange={(val) => draftState.setOauthSecret(val)}
-                  error={draftState.oauthSecretError}
-                />
+            <div className={styles.gridItem}>
+              <div className={styles.configName}>secret</div>
+              <div className={styles.configInputWrapper}>
+                <div className={styles.configInput}>
+                  <Input
+                    size={32}
+                    value={draftState.oauthSecret}
+                    onChange={(val) => draftState.setOauthSecret(val)}
+                    error={draftState.oauthSecretError}
+                  />
+                </div>
+                <div className={styles.configExplain}>
+                  Secret provided by auth provider.
+                </div>
               </div>
-              <div className={styles.configExplain}>
-                Secret provided by auth provider.
-              </div>
-            </div>{" "}
+            </div>
           </>
         ) : null}
       </div>
@@ -541,7 +586,7 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
           className={styles.button}
           label={draftState.updating ? "Adding Provider..." : "Add Provider"}
           loading={draftState.updating}
-          disabled={!draftState.formValid}
+          disabled={!draftState.formValid || draftState.updating}
           onClick={() => draftState.addProvider()}
         />
         <Button

@@ -244,7 +244,7 @@ export class DraftUIConfig extends Model({
   @computed
   get redirectToError() {
     return !this.getConfigValue("redirect_to").length
-      ? `'redirect_to' url is required`
+      ? `Redirect url is required`
       : null;
   }
 
@@ -364,18 +364,6 @@ export class DraftProviderConfig extends Model({
 
     try {
       const provider = providers[this.selectedProviderType];
-
-      console.log(`configure current database
-      insert ${this.selectedProviderType} {
-        ${
-          provider.kind === "OAuth"
-            ? `
-        client_id := ${JSON.stringify(this.oauthClientId)},
-        secret := ${JSON.stringify(this.oauthSecret)}
-        `
-            : ""
-        }
-      }`);
 
       await conn.execute(
         `configure current database

@@ -1,3 +1,5 @@
+@import "@edgedb/common/mixins.scss";
+
 .previewPage {
   background-color: #f3f4f6;
   margin: 0;
@@ -10,6 +12,19 @@
   justify-content: center;
   justify-items: center;
   font-family: "Roboto Flex Variable", sans-serif;
+
+  @include darkTheme {
+    border-color: #484848;
+  }
+
+  @include isMobile {
+    padding: 48px 32px;
+    margin: 0 -32px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    overflow: hidden;
+  }
 
   a {
     cursor: pointer;
