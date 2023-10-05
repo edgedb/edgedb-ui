@@ -7,27 +7,23 @@
   $iconSize: 32px;
   $iconSpacing: 6px;
 
+  $iconSizeMobile: 48px;
+
   @include breakpoint(mobile) {
-    $iconSize: 40px;
-    $iconSpacing: 0;
+    margin: 24px;
+    border-radius: 8px;
+    padding: 0px 20px 4px 20px;
+    background-color: var(--grey90);
+    color: var(--baseText);
+
+    @include darkTheme {
+      background-color: var(--grey18);
+    }
   }
 
   .switcher {
     display: flex;
     align-items: center;
-
-    p {
-      display: none;
-
-      @include breakpoint(mobile) {
-        display: block;
-        color: #999;
-        font-family: Roboto;
-        font-size: 12px;
-        line-height: 24px;
-        margin: 0;
-      }
-    }
   }
 
   .button {
@@ -40,6 +36,14 @@
     cursor: pointer;
     flex-shrink: 0;
 
+    .dropdownIcon {
+      display: none;
+
+      @include breakpoint(mobile) {
+        display: block;
+      }
+    }
+
     &:hover {
       color: #74a6fc;
 
@@ -48,18 +52,40 @@
       }
     }
 
+    @include breakpoint(mobile) {
+      width: $iconSizeMobile;
+      height: $iconSizeMobile;
+    }
+
     &.active {
       color: #74a6fc;
-      background-color: var(--grey95);
+      // background-color: var(--grey95);
 
       @include darkTheme {
-        background-color: #242424;
+        // background-color: #242424;
+      }
+
+      @include breakpoint(mobile) {
+        background-color: #fff;
+        color: var(--baseText);
+
+        @include darkTheme {
+          background-color: var(--grey30);
+        }
       }
     }
 
-    .fullyOpen &:hover {
-      .tooltip {
-        opacity: 1;
+    .checkIcon {
+      display: none;
+    }
+
+    @include breakpoint(mobile) {
+      width: 100%;
+
+      .checkIcon {
+        display: block;
+        margin-right: 16px;
+        margin-left: 0;
       }
     }
   }
@@ -71,7 +97,7 @@
     background-color: #fff;
     height: $iconSize;
     width: $iconSize;
-    border-radius: calc($iconSize / 2);
+    border-radius: 16px;
     box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
     overflow: hidden;
     opacity: 0;
@@ -89,7 +115,7 @@
       opacity: 0;
       top: 2 * ($iconSize + $iconSpacing);
       transition: opacity 0.1s ease-in-out;
-      width: 100%;
+      // background: transparent;
 
       &:nth-child(2) {
         top: $iconSize + $iconSpacing;
@@ -106,30 +132,40 @@
       top: 0;
       right: 0;
       left: unset;
-      width: 88px;
-      border-radius: 4px;
+      border-radius: 8px;
+      transition: none;
+      background-color: var(--grey90);
+      height: $iconSizeMobile;
+      width: $iconSizeMobile;
 
       .button {
-        justify-content: flex-end;
+        justify-content: flex-start;
         gap: 0 8px;
+        width: 100%;
+        top: 2 * $iconSizeMobile;
 
         svg {
-          margin-right: 10px;
+          margin-left: 16px;
         }
 
         &:nth-child(1) {
-          border-bottom-left-radius: 4px;
-          border-bottom-right-radius: 4px;
+          border-bottom-left-radius: 8px;
+          border-bottom-right-radius: 8px;
+        }
+
+        &:nth-child(2) {
+          top: $iconSizeMobile;
         }
 
         &:nth-child(3) {
-          border-top-left-radius: 4px;
-          border-top-right-radius: 4px;
+          top: 0;
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
         }
       }
 
       @include darkTheme {
-        background-color: var(--grey8);
+        background-color: var(--grey18);
       }
     }
 
@@ -152,26 +188,22 @@
           transition-delay: 0.2s;
         }
       }
+
+      @include breakpoint(mobile) {
+        height: $iconSizeMobile * 3;
+        width: 100%;
+      }
     }
 
     &.fullyOpen {
       overflow: visible;
-    }
-  }
 
-  .themeLabel {
-    display: none;
-
-    @include breakpoint(mobile) {
-      display: inline;
-      text-align: right;
-      font-family: Roboto;
-      font-size: 12px;
-      line-height: 40px;
-      color: var(--baseTextLightTheme);
-
-      @include darkTheme {
-        color: var(--grey60);
+      .button {
+        &:hover {
+          .tooltip {
+            opacity: 1;
+          }
+        }
       }
     }
   }
@@ -217,6 +249,22 @@
     display: none;
     @include darkTheme {
       display: block;
+    }
+  }
+
+  .themeLabel {
+    display: none;
+
+    @include breakpoint(mobile) {
+      color: var(--baseText);
+      text-transform: capitalize;
+      display: block;
+      flex-grow: 1;
+      font-family: Roboto;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 16px;
+      margin: 0 0 0 8px;
     }
   }
 }
