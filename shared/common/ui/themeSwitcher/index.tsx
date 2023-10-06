@@ -2,9 +2,13 @@ import {useState, useEffect} from "react";
 
 import cn from "../../utils/classNames";
 import {useTheme, Theme} from "../../hooks/useTheme";
-
-import {LightThemeIcon, DarkThemeIcon, SystemThemeIcon} from "./icons";
-
+import {DropdownIcon} from "../icons";
+import {
+  LightThemeIcon,
+  DarkThemeIcon,
+  SystemThemeIcon,
+  CheckIcon,
+} from "./icons";
 import styles from "./themeSwitcher.module.scss";
 
 export interface ThemeSwitcherProps {
@@ -37,9 +41,13 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
 
   return (
     <div className={cn(styles.themeSwitcher, className)}>
-      <div className={styles.button} onClick={() => setPopupOpen(true)}>
-        <LightThemeIcon className={styles.lightIcon} />
-        <DarkThemeIcon className={styles.darkIcon} />
+      <div className={styles.switcher}>
+        <div className={styles.button} onClick={() => setPopupOpen(true)}>
+          <LightThemeIcon className={styles.lightIcon} />
+          <DarkThemeIcon className={styles.darkIcon} />
+          <p className={styles.themeLabel}>{theme}</p>
+          <DropdownIcon className={styles.dropdownIcon} />
+        </div>
       </div>
       <div
         className={cn(styles.popup, {
@@ -59,6 +67,8 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.light)}
         >
           <LightThemeIcon />
+          <p className={styles.themeLabel}>Light</p>
+          {theme === Theme.light && <CheckIcon className={styles.checkIcon} />}
           <div className={styles.tooltip}>Light</div>
         </div>
         <div
@@ -68,6 +78,8 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.dark)}
         >
           <DarkThemeIcon />
+          <p className={styles.themeLabel}>Dark</p>
+          {theme === Theme.dark && <CheckIcon className={styles.checkIcon} />}
           <div className={styles.tooltip}>Dark</div>
         </div>
         <div
@@ -77,6 +89,10 @@ export function ThemeSwitcher({className}: ThemeSwitcherProps) {
           onClick={() => setTheme(Theme.system)}
         >
           <SystemThemeIcon />
+          <p className={styles.themeLabel}>System</p>
+          {theme === Theme.system && (
+            <CheckIcon className={styles.checkIcon} />
+          )}
           <div className={styles.tooltip}>System</div>
         </div>
       </div>

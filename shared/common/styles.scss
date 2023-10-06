@@ -1,0 +1,35 @@
+@import "@edgedb/common/mixins.scss";
+
+:root {
+  --baseTextLightTheme: #1a1a1a;
+  --baseTextDarkTheme: #b9b9b9;
+  --accentPurple: #b199f2;
+
+  --grey8: #141414;
+  --grey12: #1f1f1f;
+  --grey18: #2e2e2e;
+  --grey20: #333;
+  --grey30: #4d4d4d;
+  --grey50: #808080;
+  --grey60: #999;
+  --grey65: #a6a6a6;
+  --grey70: #b3b3b3;
+  --grey75: #bfbfbf;
+  --grey80: #ccc;
+  --grey85: #d9d9d9;
+  --grey90: #e6e6e6;
+  --grey95: #f2f2f2;
+  --grey97: #f7f7f7;
+}
+
+.theme {
+  --font-header-grey: var(--grey50);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.2);
+  --baseText: var(--baseTextLightTheme);
+
+  @include darkTheme {
+    --font-header-grey: var(--grey60);
+    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --baseText: var(--baseTextDarkTheme);
+  }
+}

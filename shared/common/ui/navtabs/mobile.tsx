@@ -2,10 +2,9 @@ import {useEffect, useRef, useState} from "react";
 
 import cn from "../../utils/classNames";
 import {useModal} from "../../hooks/useModal";
-import {ModalOverlay} from "../modal";
-
 import {BaseTabBarProps} from "./interfaces";
-
+import {ThemeSwitcher} from "../themeSwitcher";
+import CloseButton from "../closeButton";
 import styles from "./mobileNavTabs.module.scss";
 
 export interface MobileNavTabsProps extends BaseTabBarProps {
@@ -74,23 +73,36 @@ export function MobileNavTabs({
 
 function MobileMenu({tabs, Link, extraMenu}: MobileNavTabsProps) {
   const {openModal} = useModal();
+  const closeModal = () => openModal(null);
 
   return (
-    <ModalOverlay onOverlayClick={() => openModal(null)}>
-      <div className={styles.menuPopup} onClick={() => openModal(null)}>
+    <div className={styles.container}>
+      <div
+        className={cn(styles.menuPopup, {
+          [styles.extraPaddingTop]: !extraMenu,
+        })}
+      >
         {extraMenu}
         <div
           className={cn(styles.menuTabsList, {[styles.showSep]: !!extraMenu})}
         >
           {tabs.map((tab) => (
-            <Link key={tab.id} to={tab.id} className={cn(styles.menuTab)}>
-              <div className={styles.icon}>{tab.icon(true)}</div>
-              {tab.label}
+            <Link
+              key={tab.id}
+              to={tab.id}
+              className={cn(styles.menuTabWrapper)}
+            >
+              <div className={styles.menuTab} onClick={closeModal}>
+                <div className={styles.icon}>{tab.icon(true)}</div>
+                {tab.label}
+              </div>
             </Link>
           ))}
         </div>
+        <ThemeSwitcher className={styles.themeSwitcher} />
+        <CloseButton onClick={closeModal} className={styles.closeBtn} />
       </div>
-    </ModalOverlay>
+    </div>
   );
 }
 

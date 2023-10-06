@@ -3,143 +3,272 @@
 .themeSwitcher {
   position: relative;
   color: #b3b3b3;
-}
 
-$iconSize: 32px;
-$iconSpacing: 6px;
+  $iconSize: 32px;
+  $iconSpacing: 6px;
 
-.popup {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  background-color: #fff;
-  height: $iconSize;
-  width: $iconSize;
-  border-radius: calc($iconSize / 2);
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0);
-  transition: transform 0.1s 0.2s linear,
-    height 0.133s 0.066s cubic-bezier(0.76, 0, 0.78, 0.9), opacity 0s 0.3s;
+  $iconSizeMobile: 48px;
+
+  @include breakpoint(mobile) {
+    margin: 24px;
+    border-radius: 8px;
+    padding: 0px 20px;
+    background-color: var(--grey90);
+    color: var(--baseText);
+
+    @include darkTheme {
+      background-color: var(--grey18);
+    }
+  }
+
+  .switcher {
+    display: flex;
+    align-items: center;
+  }
 
   .button {
-    position: absolute;
-    opacity: 0;
-    top: 2 * ($iconSize + $iconSpacing);
-    transition: opacity 0.1s ease-in-out;
+    position: relative;
+    width: $iconSize;
+    height: $iconSize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
 
-    &:nth-child(2) {
-      top: $iconSize + $iconSpacing;
-      transition-delay: 0.033s;
+    .dropdownIcon {
+      display: none;
+
+      @include breakpoint(mobile) {
+        display: block;
+      }
     }
 
-    &:nth-child(3) {
-      top: 0;
-      transition-delay: 0.066s;
+    &:hover {
+      color: #74a6fc;
+
+      svg {
+        opacity: 1;
+      }
+    }
+
+    @include breakpoint(mobile) {
+      width: $iconSizeMobile;
+      height: $iconSizeMobile;
+    }
+
+    &.active {
+      color: #74a6fc;
+      // background-color: var(--grey95);
+
+      @include darkTheme {
+        // background-color: #242424;
+      }
+
+      @include breakpoint(mobile) {
+        background-color: #fff;
+        color: var(--baseText);
+
+        @include darkTheme {
+          background-color: var(--grey30);
+        }
+      }
+    }
+
+    .checkIcon {
+      display: none;
+    }
+
+    @include breakpoint(mobile) {
+      width: 100%;
+
+      .checkIcon {
+        display: block;
+        margin-right: 16px;
+        margin-left: 0;
+      }
     }
   }
 
-  &.popupOpen {
-    transform: scale(1);
-    height: $iconSize * 3 + $iconSpacing * 2;
-    opacity: 1;
-    pointer-events: all;
-    transition: transform 0.1s linear, height 0.133s 0.1s ease;
+  .popup {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background-color: #fff;
+    height: $iconSize;
+    width: $iconSize;
+    border-radius: 16px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0);
+    transition: transform 0.1s 0.2s linear,
+      height 0.133s 0.066s cubic-bezier(0.76, 0, 0.78, 0.9), opacity 0s 0.3s;
+
+    @include darkTheme {
+      background-color: #212121;
+    }
 
     .button {
-      opacity: 1;
-      transition-delay: 0.133s;
+      position: absolute;
+      opacity: 0;
+      top: 2 * ($iconSize + $iconSpacing);
+      transition: opacity 0.1s ease-in-out;
+      // background: transparent;
 
       &:nth-child(2) {
-        transition-delay: 0.166s;
+        top: $iconSize + $iconSpacing;
+        transition-delay: 0.033s;
       }
 
-      &:nth-child(1) {
-        transition-delay: 0.2s;
+      &:nth-child(3) {
+        top: 0;
+        transition-delay: 0.066s;
+      }
+    }
+
+    @include breakpoint(mobile) {
+      top: 0;
+      right: 0;
+      left: unset;
+      border-radius: 8px;
+      transition: none;
+      background-color: var(--grey90);
+      height: $iconSizeMobile;
+      width: $iconSizeMobile;
+
+      .button {
+        justify-content: flex-start;
+        gap: 0 8px;
+        width: 100%;
+        top: 2 * $iconSizeMobile;
+
+        svg {
+          margin-left: 16px;
+        }
+
+        &:nth-child(1) {
+          border-bottom-left-radius: 8px;
+          border-bottom-right-radius: 8px;
+        }
+
+        &:nth-child(2) {
+          top: $iconSizeMobile;
+        }
+
+        &:nth-child(3) {
+          top: 0;
+          border-top-left-radius: 8px;
+          border-top-right-radius: 8px;
+        }
+      }
+
+      @include darkTheme {
+        background-color: var(--grey18);
+      }
+    }
+
+    &.popupOpen {
+      transform: scale(1);
+      height: $iconSize * 3 + $iconSpacing * 2;
+      opacity: 1;
+      pointer-events: all;
+      transition: transform 0.1s linear, height 0.133s 0.1s ease;
+
+      .button {
+        opacity: 1;
+        transition-delay: 0.133s;
+
+        &:nth-child(2) {
+          transition-delay: 0.166s;
+        }
+
+        &:nth-child(1) {
+          transition-delay: 0.2s;
+        }
+      }
+
+      @include breakpoint(mobile) {
+        height: $iconSizeMobile * 3;
+        width: 100%;
+      }
+    }
+
+    &.fullyOpen {
+      overflow: visible;
+
+      .button {
+        &:hover {
+          .tooltip {
+            opacity: 1;
+          }
+        }
       }
     }
   }
 
-  &.fullyOpen {
-    overflow: visible;
-  }
-
-  @include darkTheme {
-    background-color: #212121;
-  }
-}
-
-.button {
-  position: relative;
-  width: $iconSize;
-  height: $iconSize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-
-  &:hover {
-    color: #74a6fc;
-
-    svg {
-      opacity: 1;
-    }
-  }
-
-  &.active {
-    color: #74a6fc;
-  }
-
-  .fullyOpen &:hover {
-    .tooltip {
-      opacity: 1;
-    }
-  }
-}
-
-.tooltip {
-  position: absolute;
-  line-height: 32px;
-  padding: 0 10px;
-  border-radius: 4px;
-  background: #4c4c4c;
-  color: #f5f5f5;
-  font-weight: 600;
-  font-size: 14px;
-  left: calc(100% + 1px);
-  pointer-events: none;
-  opacity: 0;
-
-  &:before {
-    content: "";
+  .tooltip {
     position: absolute;
-    width: 9px;
-    height: 9px;
-    border-radius: 1px;
-    background: inherit;
-    transform: rotate(45deg);
-    top: 11px;
-    left: -3px;
+    line-height: 32px;
+    padding: 0 10px;
+    border-radius: 4px;
+    background: #4c4c4c;
+    color: #f5f5f5;
+    font-weight: 600;
+    font-size: 14px;
+    left: calc(100% + 1px);
+    pointer-events: none;
+    opacity: 0;
+
+    &:before {
+      content: "";
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 1px;
+      background: inherit;
+      transform: rotate(45deg);
+      top: 11px;
+      left: -3px;
+    }
+
+    @include darkTheme {
+      background: #adadad;
+      color: #141414;
+    }
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
-  @include darkTheme {
-    background: #adadad;
-    color: #141414;
+  .lightIcon {
+    @include darkTheme {
+      display: none;
+    }
   }
-}
 
-.lightIcon {
-  @include darkTheme {
+  .darkIcon {
     display: none;
+    @include darkTheme {
+      display: block;
+    }
   }
-}
 
-.darkIcon {
-  display: none;
-  @include darkTheme {
-    display: block;
+  .themeLabel {
+    display: none;
+
+    @include breakpoint(mobile) {
+      color: var(--baseText);
+      text-transform: capitalize;
+      display: block;
+      flex-grow: 1;
+      font-family: Roboto;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 16px;
+      margin: 0 0 0 8px;
+    }
   }
 }

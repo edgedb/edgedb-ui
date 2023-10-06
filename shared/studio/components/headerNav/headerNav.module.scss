@@ -9,14 +9,6 @@
   padding: 0 16px;
   padding-bottom: 16px;
   margin-bottom: -16px;
-  // mask-image: linear-gradient(
-  //   90deg,
-  //   transparent 0px,
-  //   #000 16px,
-  //   #000 calc(100% - 16px),
-  //   transparent 100%
-  // );
-
   @include hideScrollbar;
 
   @include isMobile {
@@ -26,8 +18,12 @@
 
 .tabSep {
   margin: 0 8px;
-  opacity: 0.5;
   flex-shrink: 0;
+  color: var(--grey75);
+
+  @include darkTheme {
+    color: var(--grey30);
+  }
 }
 
 .headerNavMenu {
@@ -40,8 +36,8 @@
   align-items: center;
   height: 36px;
   font-size: 14px;
-  color: var(--font-inactive-gray);
-  font-weight: 500;
+  color: var(--font-header-grey);
+  font-weight: 600;
   text-decoration: none;
   padding: 0 10px;
   border-radius: 4px;

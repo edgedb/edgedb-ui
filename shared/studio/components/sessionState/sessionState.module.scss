@@ -1,3 +1,4 @@
+@import "@edgedb/common/styles.scss";
 @import "@edgedb/common/mixins.scss";
 
 .sessionState {
@@ -10,20 +11,20 @@
   display: flex;
   align-items: center;
   font-weight: 600;
-  color: var(--font-inactive-gray);
+  color: var(--font-header-grey);
   white-space: nowrap;
   padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
 
   .icon {
-    fill: var(--font-inactive-gray);
+    fill: var(--font-header-grey);
     margin-right: 8px;
   }
 
   .chevron {
     margin-left: 8px;
-    color: var(--font-inactive-gray);
+    fill: var(--font-inactive-gray);
     path {
       stroke-width: 1px;
     }
@@ -83,24 +84,9 @@
 
   .iconMobile {
     margin-left: 8px;
+
     path {
-      stroke: #808080;
-
-      @include darkTheme {
-        stroke: #999;
-      }
-    }
-  }
-
-  @include breakpoint(mobile) {
-    padding: 6px 0;
-
-    @include darkTheme {
-      color: #999;
-
-      .icon {
-        fill: #999;
-      }
+      stroke: var(--font-header-grey);
     }
   }
 }
@@ -506,6 +492,7 @@
 
       &:last-child {
         margin-bottom: 0;
+        flex-grow: 1;
       }
     }
 
