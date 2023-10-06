@@ -237,6 +237,10 @@
       background: #adadad;
       color: #141414;
     }
+
+    @include breakpoint(mobile) {
+      display: none;
+    }
   }
 
   .lightIcon {
