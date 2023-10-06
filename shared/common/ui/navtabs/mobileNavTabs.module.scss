@@ -131,7 +131,6 @@
 }
 
 .menuTabWrapper {
-  border-radius: 6px;
   text-decoration: none;
 
   .menuTab {
@@ -142,6 +141,7 @@
     font-weight: 500;
     color: var(--grey30);
     background: #f2f2f2;
+    border-radius: 6px;
 
     .icon {
       width: 24px;
