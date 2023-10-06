@@ -50,6 +50,10 @@
       svg {
         opacity: 1;
       }
+
+      @include breakpoint(mobile) {
+        color: var(--baseText);
+      }
     }
 
     @include breakpoint(mobile) {
@@ -59,11 +63,6 @@
 
     &.active {
       color: #74a6fc;
-      // background-color: var(--grey95);
-
-      @include darkTheme {
-        // background-color: #242424;
-      }
 
       @include breakpoint(mobile) {
         background-color: #fff;

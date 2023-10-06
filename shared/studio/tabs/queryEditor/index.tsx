@@ -5,6 +5,7 @@ import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
+import {RunButton} from "@edgedb/common/ui/mobileButtons";
 
 import styles from "./repl.module.scss";
 
@@ -172,21 +173,13 @@ export const QueryEditorView = observer(function QueryEditorView() {
             )
           }
         />
-        <button
-          className={cn(styles.mobileBtn, {
-            [styles.running]: editorState.queryRunning,
-          })}
+        <RunButton
           onClick={() => editorState.runQuery()}
+          isLoading={editorState.queryRunning}
           disabled={
             !editorState.canRunQuery || !!splitViewState.activeViewIndex
           }
-        >
-          {editorState.queryRunning ? (
-            <Spinner size={22} />
-          ) : (
-            <MobileRunIcon className={styles.mobileRunIcon} />
-          )}
-        </button>
+        />
       </div>
       {editorState.showHistory && (
         <div className={styles.mobileHistory}>

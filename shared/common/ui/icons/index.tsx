@@ -84,6 +84,23 @@ export const CrossIcon = () => (
   </svg>
 );
 
+export const RunIcon = () => (
+  <svg
+    width="11.43"
+    height="14"
+    viewBox="0 0 12 14"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M1.55844 13.2879L10.9091 7.89815C11.6017 7.49891 11.6017 6.50081 10.9091 6.10157L1.55844 0.711803C0.865802 0.312562 9.9083e-07 0.811613 9.9083e-07 1.6101L0 12.3896C0 13.1881 0.865801 13.6872 1.55844 13.2879Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 export const SearchIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

@@ -4,7 +4,7 @@ import cn from "../../utils/classNames";
 import {useModal} from "../../hooks/useModal";
 import {BaseTabBarProps} from "./interfaces";
 import {ThemeSwitcher} from "../themeSwitcher";
-import CloseButton from "../closeButton";
+import {CloseButton} from "../mobileButtons";
 import styles from "./mobileNavTabs.module.scss";
 
 export interface MobileNavTabsProps extends BaseTabBarProps {
