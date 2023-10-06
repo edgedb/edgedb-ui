@@ -56,6 +56,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {RunButton} from "@edgedb/common/ui/mobileButtons";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -344,6 +345,12 @@ const ReplInput = observer(function ReplInput() {
           noPadding
         />
       </CustomScrollbars>
+      <RunButton
+        onClick={() => replState.runQuery()}
+        isLoading={replState.queryRunning}
+        disabled={!replState.canRunQuery}
+        className={styles.runBtn}
+      />
     </div>
   );
 });

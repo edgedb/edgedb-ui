@@ -1,4 +1,4 @@
-import {action, observable} from "mobx";
+import {action, observable, computed} from "mobx";
 import {
   Frozen,
   frozen,
@@ -309,6 +309,11 @@ export class Repl extends Model({
 
   @observable
   queryRunning = false;
+
+  @computed
+  get canRunQuery() {
+    return !this.queryRunning && !!this.currentQuery.toString().trim();
+  }
 
   @modelFlow
   runQuery = _async(function* (this: Repl, queryStr?: string) {

@@ -167,6 +167,17 @@
     opacity: 0;
     overflow: hidden;
   }
+
+  .runBtn {
+    display: none;
+
+    @include breakpoint(mobile) {
+      display: flex;
+      position: absolute;
+      bottom: 8px;
+      right: 16px;
+    }
+  }
 }
 
 .replHistoryItem {
