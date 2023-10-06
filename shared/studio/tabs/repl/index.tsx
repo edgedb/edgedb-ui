@@ -230,6 +230,12 @@ const ReplList = observer(function ReplList({
         </div>
         <ReplInput />
       </div>
+      <RunButton
+        onClick={() => replState.runQuery()}
+        isLoading={replState.queryRunning}
+        disabled={!replState.canRunQuery}
+        className={styles.runBtn}
+      />
     </div>
   );
 });
@@ -345,12 +351,6 @@ const ReplInput = observer(function ReplInput() {
           noPadding
         />
       </CustomScrollbars>
-      <RunButton
-        onClick={() => replState.runQuery()}
-        isLoading={replState.queryRunning}
-        disabled={!replState.canRunQuery}
-        className={styles.runBtn}
-      />
     </div>
   );
 });
@@ -483,9 +483,13 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     output = renderCommandResult(item.commandResult.data);
   } else {
     output = (
-      <div style={{marginLeft: 8}}>
-        <Spinner size={18} />
-      </div>
+      <>
+        {!isMobile ? (
+          <div style={{marginLeft: 8}}>
+            <Spinner size={18} />
+          </div>
+        ) : null}
+      </>
     );
   }
 

@@ -116,6 +116,17 @@
   overflow: auto;
 
   @include hideScrollbar;
+
+  .runBtn {
+    display: none;
+
+    @include breakpoint(mobile) {
+      display: flex;
+      position: absolute;
+      bottom: 8px;
+      right: 16px;
+    }
+  }
 }
 
 .scrollInner {
@@ -166,17 +177,6 @@
     height: 0;
     opacity: 0;
     overflow: hidden;
-  }
-
-  .runBtn {
-    display: none;
-
-    @include breakpoint(mobile) {
-      display: flex;
-      position: absolute;
-      bottom: 8px;
-      right: 16px;
-    }
   }
 }
 
