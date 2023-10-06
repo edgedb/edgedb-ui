@@ -152,7 +152,7 @@ export function HeaderNavCol<LinkProps>({
                       }}
                     />
                   ) : null}
-                  {item.label}
+                  <span>{item.label}</span>
                 </Link>
               ))
             ) : (
