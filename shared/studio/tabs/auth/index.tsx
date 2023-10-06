@@ -8,7 +8,7 @@ import styles from "./authAdmin.module.scss";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 
-import {ChevronDownIcon, DeleteIcon, TabDashboardIcon} from "../../icons";
+import {ChevronDownIcon, DeleteIcon, TabAuthIcon} from "../../icons";
 import {
   AuthAdminState,
   AuthProviderData,
@@ -74,7 +74,7 @@ export const AuthAdmin = observer(function AuthAdmin() {
 export const authAdminTabSpec: DatabaseTabSpec = {
   path: "auth",
   label: "Auth Admin",
-  icon: (active) => <TabDashboardIcon active={active} />,
+  icon: (active) => <TabAuthIcon active={active} />,
   usesSessionState: false,
   element: <AuthAdmin />,
   state: AuthAdminState,
