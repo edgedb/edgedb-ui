@@ -30,10 +30,12 @@
   --font-header-grey: var(--grey50);
   --modal-overlay-bg: rgba(0, 0, 0, 0.2);
   --baseText: var(--baseTextLightTheme);
+  --accentGreen: var(--accentGreenLightTheme);
 
   @include darkTheme {
     --font-header-grey: var(--grey60);
     --modal-overlay-bg: rgba(0, 0, 0, 0.5);
     --baseText: var(--baseTextDarkTheme);
+    --accentGreen: var(--accentGreenDarkTheme);
   }
 }
