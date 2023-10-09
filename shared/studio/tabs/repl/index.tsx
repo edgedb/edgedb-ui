@@ -56,6 +56,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {RunButton} from "@edgedb/common/ui/mobileButtons";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -229,6 +230,12 @@ const ReplList = observer(function ReplList({
         </div>
         <ReplInput />
       </div>
+      <RunButton
+        onClick={() => replState.runQuery()}
+        isLoading={replState.queryRunning}
+        disabled={!replState.canRunQuery}
+        className={styles.runBtn}
+      />
     </div>
   );
 });
@@ -476,9 +483,13 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     output = renderCommandResult(item.commandResult.data);
   } else {
     output = (
-      <div style={{marginLeft: 8}}>
-        <Spinner size={18} />
-      </div>
+      <>
+        {!isMobile ? (
+          <div style={{marginLeft: 8}}>
+            <Spinner size={18} />
+          </div>
+        ) : null}
+      </>
     );
   }
 
