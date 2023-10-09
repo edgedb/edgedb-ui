@@ -27,7 +27,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 import {HistoryPanel} from "./history";
 import ParamEditorPanel from "./paramEditor";
-import {TabEditorIcon, MobileHistoryIcon, MobileRunIcon} from "../../icons";
+import {TabEditorIcon, MobileHistoryIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
