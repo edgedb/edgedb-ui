@@ -1,6 +1,8 @@
 @import "@edgedb/common/mixins.scss";
 
 :root {
+  --white: #fff;
+
   --baseTextLightTheme: #1a1a1a;
   --baseTextDarkTheme: #b9b9b9;
 
@@ -10,6 +12,7 @@
   --accentPurpleLightTheme: #b199f2;
 
   --grey8: #141414;
+  --grey10: #1a1a1a;
   --grey12: #1f1f1f;
   --grey18: #2e2e2e;
   --grey20: #333;

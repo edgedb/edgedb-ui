@@ -28,6 +28,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerNav";
 import {PrimitiveType} from "../dataEditor/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CloseButton} from "@edgedb/common/ui/mobileButtons";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -315,12 +316,10 @@ const SessionEditorPanelContent = observer(
     return (
       <div className={styles.editorPanelContent}>
         <div
-          className={cn(
-            isMobile ? styles.mobileClosePanel : styles.closePanel
-          )}
+          className={styles.closePanel}
           onClick={() => sessionState.closePanel()}
         >
-          {isMobile ? <CrossIcon /> : <CloseIcon />}
+          <CloseIcon />
         </div>
         <div className={styles.searchBar}>
           <p className={styles.title}>Client settings</p>
@@ -405,6 +404,10 @@ const SessionEditorPanelContent = observer(
             )}
           </div>
         </div>
+        <CloseButton
+          onClick={() => sessionState.closePanel()}
+          className={styles.closeBtn}
+        />
       </div>
     );
   }

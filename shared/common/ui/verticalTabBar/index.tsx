@@ -130,7 +130,6 @@ export function VerticalTabBar<TabId extends string>({
         </Link>
       ))}
       <div className={styles.actions}>
-        <ThemeSwitcher />
         {!noExpand ? (
           <div
             className={styles.action}
