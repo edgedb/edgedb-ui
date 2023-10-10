@@ -409,6 +409,89 @@ export class SessionState extends Model({
     this.draftSnapshot = clone(this.draftState!);
   }
 
+  @modelAction
+  updateStateFromCommand(stateUpdate: {
+    globals?: {[key: string]: any};
+    config?: {[key: string]: any};
+  }) {
+    const dbState = dbCtx.get(this)!;
+
+    const schemaDataGlobals = new Map(
+      [...dbState.schemaData!.globals.values()].map((global) => [
+        global.name,
+        global,
+      ])
+    );
+
+    const unsetGlobals = new Set<string>();
+    for (const [globalName, val] of Object.entries(
+      stateUpdate.globals ?? {}
+    )) {
+      const type = schemaDataGlobals.get(globalName);
+      if (!type) {
+        continue;
+      }
+
+      if (val === null && !type.default) {
+        unsetGlobals.add(globalName);
+      } else {
+        const editorVal =
+          val != null
+            ? valueToEditorValue(val, type.target as PrimitiveType)
+            : null;
+
+        this.draftState!.globals[type.name] = {
+          active: true,
+          type: frozen(type.target, FrozenCheckMode.Off),
+          value: frozen(editorVal),
+          error: false,
+        };
+      }
+    }
+    for (const [globalName, globalState] of Object.entries(
+      this.draftState!.globals
+    )) {
+      if (
+        globalState.active &&
+        (unsetGlobals.has(globalName) || !stateUpdate.globals?.[globalName])
+      ) {
+        globalState.active = false;
+        const [newVal, err] = newPrimitiveValue(
+          globalState.type.data as PrimitiveType
+        );
+        globalState.value = frozen(newVal);
+        globalState.error = err;
+      }
+    }
+
+    for (const [configName, configState] of Object.entries(
+      this.draftState!.config
+    )) {
+      const val = stateUpdate.config?.[configName];
+      if (val === undefined) {
+        if (configState.active) {
+          configState.active = false;
+          const [newVal, err] = newPrimitiveValue(
+            configState.type.data as PrimitiveType
+          );
+          configState.value = frozen(newVal);
+          configState.error = err;
+        }
+      } else {
+        configState.active = true;
+        configState.value = frozen(
+          val != null
+            ? valueToEditorValue(val, configState.type.data as PrimitiveType)
+            : null
+        );
+        configState.error = false;
+      }
+    }
+
+    this.updateActiveState();
+    this.storeSessionData();
+  }
+
   storeSessionData() {
     const instanceState = instanceCtx.get(this)!;
     const dbState = dbCtx.get(this)!;

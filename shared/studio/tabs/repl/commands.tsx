@@ -75,6 +75,13 @@ export function renderCommandResult(result: CommandResult) {
           <div className={styles.command}>\c, \connect DBNAME</div>
           <div className={styles.info}>Switch to database DBNAME</div>
 
+          <div className={styles.heading}>Settings</div>
+
+          <div className={styles.command}>\set limit LIMIT</div>
+          <div className={styles.info}>
+            Set implicit limit to LIMIT. Set to 0 to disable
+          </div>
+
           <div className={styles.heading}>Help</div>
 
           <div className={styles.command}>\?, \h, \help</div>
