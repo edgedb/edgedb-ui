@@ -6,6 +6,7 @@ import {
   useRef,
   useLayoutEffect,
 } from "react";
+import {createPortal} from "react-dom";
 
 const modalContext = createContext<{
   modal: JSX.Element | null;
@@ -80,6 +81,7 @@ export function ModalProvider({children}: PropsWithChildren<{}>) {
         }
       >
         {modal}
+        <div id="modal_target" style={{display: "contents"}} />
       </div>
     </modalContext.Provider>
   );
@@ -87,4 +89,23 @@ export function ModalProvider({children}: PropsWithChildren<{}>) {
 
 export function useModal() {
   return useContext(modalContext);
+}
+
+export function useCloseModal() {
+  const {openModal} = useContext(modalContext);
+  return () => openModal(null);
+}
+
+const modalPlaceholder = <></>;
+
+export function useModal_v2(modal: JSX.Element) {
+  const {modal: placeholder, openModal} = useContext(modalContext);
+
+  return {
+    modal:
+      placeholder === modalPlaceholder
+        ? createPortal(modal, document.getElementById("modal_target")!)
+        : null,
+    openModal: () => openModal(modalPlaceholder),
+  };
 }
