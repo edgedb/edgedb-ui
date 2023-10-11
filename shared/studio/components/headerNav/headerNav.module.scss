@@ -172,6 +172,11 @@
       background: rgba(0, 0, 0, 0.04);
     }
 
+    &.disabled {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
     @include darkTheme {
       color: #999;
       border-color: #3d3d3d;

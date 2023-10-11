@@ -96,6 +96,7 @@ export interface HeaderNavColProps<LinkProps> {
   action:
     | ({
         label: string;
+        disabled?: boolean;
       } & (
         | {linkProps: LinkProps; onClick?: () => void}
         | {linkProps?: undefined; onClick: () => void}
@@ -166,7 +167,9 @@ export function HeaderNavCol<LinkProps>({
         {action ? (
           action.linkProps ? (
             <Link
-              className={styles.action}
+              className={cn(styles.action, {
+                [styles.disabled]: !!action.disabled,
+              })}
               {...action.linkProps}
               onClick={() => {
                 closeDropdown();
@@ -177,7 +180,9 @@ export function HeaderNavCol<LinkProps>({
             </Link>
           ) : (
             <div
-              className={styles.action}
+              className={cn(styles.action, {
+                [styles.disabled]: !!action.disabled,
+              })}
               onClick={() => {
                 closeDropdown();
                 action.onClick?.();
