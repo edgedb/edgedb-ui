@@ -78,8 +78,8 @@
 
   .headerMsg {
     margin-top: 32px;
-    color: #999;
     line-height: 26px;
+    color: var(--grey60);
 
     span {
       text-decoration: underline;
@@ -88,7 +88,7 @@
     }
 
     @include darkTheme {
-      color: #666;
+      color: var(--grey40);
 
       span {
         color: #c4c4c4;
@@ -97,6 +97,19 @@
 
     @include breakpoint(mobile) {
       margin-top: 24px;
+      color: var(--baseTextLightTheme);
+
+      span {
+        color: var(--grey50);
+      }
+
+      @include darkTheme {
+        color: var(--grey60);
+
+        span {
+          color: var(--baseTextDarkTheme);
+        }
+      }
     }
   }
 

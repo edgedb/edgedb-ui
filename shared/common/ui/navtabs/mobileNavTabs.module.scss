@@ -88,15 +88,10 @@
 .container {
   width: 100%;
   height: 100%;
-  backdrop-filter: blur(8px);
-  background: rgba(247, 247, 247, 0.9);
+  background-color: var(--fullscreenOverlayBg);
   position: absolute;
   top: 0;
   z-index: 10;
-
-  @include darkTheme {
-    background: rgba(20, 20, 20, 0.9);
-  }
 
   .menuPopup {
     overflow: auto;

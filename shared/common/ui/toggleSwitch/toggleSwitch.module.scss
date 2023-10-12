@@ -9,12 +9,8 @@
   width: calc(var(--switchSize, 18px) * 2 - 4px);
   height: var(--switchSize, 18px);
   border-radius: var(--switchSize, 18px);
-  background-color: var(--white);
+  background-color: var(--fullscreenOverlayBg);
   transition: background-color 0.2s;
-
-  @include darkTheme {
-    background: var(--grey10);
-  }
 }
 
 .switch {

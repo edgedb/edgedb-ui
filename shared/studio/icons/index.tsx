@@ -760,7 +760,7 @@ export const MobileHistoryIcon = ({className}: {className?: string}) => (
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <rect width="40" height="40" rx="20" fill="#8676B0" />
+    <rect width="40" height="40" rx="20" fill="currentColor" />
     <path d="M19 21.228L19 13" strokeWidth="4" strokeLinecap="round" />
     <path
       d="M19 21.228L22.0001 24.228"
