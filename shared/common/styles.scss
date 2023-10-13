@@ -33,19 +33,21 @@
 }
 
 .theme {
-  --font-header-grey: var(--grey50);
+  --fontHeaderGrey: var(--grey50);
   --baseText: var(--baseTextLightTheme);
   --accentGreen: var(--accentGreenLightTheme);
 
-  --modal-overlay-bg: rgba(0, 0, 0, 0.2);
+  --modalOverlayBg: rgba(0, 0, 0, 0.2);
   --fullscreenOverlayBg: var(--white);
+  --pageBackground: var(--grey97);
 
   @include darkTheme {
-    --font-header-grey: var(--grey60);
+    --fontHeaderGrey: var(--grey60);
     --baseText: var(--baseTextDarkTheme);
     --accentGreen: var(--accentGreenDarkTheme);
 
-    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --modalOverlayBg: rgba(0, 0, 0, 0.5);
     --fullscreenOverlayBg: var(--grey10);
+    --pageBackground: var(--grey14);
   }
 }

@@ -1,7 +1,7 @@
 import cn from "@edgedb/common/utils/classNames";
-import {CrossIcon, RunIcon} from "../icons";
-import styles from "./mobileButtons.module.scss";
-import Spinner from "../spinner";
+import {CrossIcon, RunIcon} from "../../icons";
+import Spinner from "../../spinner";
+import styles from "./button.module.scss";
 
 interface CloseButtonProps {
   onClick: () => void;

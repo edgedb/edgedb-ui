@@ -5,7 +5,7 @@ import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
-import {RunButton} from "@edgedb/common/ui/mobileButtons";
+import {RunButton} from "@edgedb/common/ui/mobile";
 
 import styles from "./repl.module.scss";
 

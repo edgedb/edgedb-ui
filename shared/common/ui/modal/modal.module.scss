@@ -18,7 +18,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: var(--modal-overlay-bg);
+    background: var(--modalOverlayBg);
     backdrop-filter: blur(3px);
     transition: opacity 0.3s;
   }

@@ -1,4 +1,4 @@
-@import "../../mixins.scss";
+@import "../../../mixins.scss";
 
 .container {
   display: none;
@@ -18,14 +18,14 @@
       background-color: var(--accentGreenLightTheme);
 
       &:disabled {
-        opacity: 0.5;
+        background-color: var(--grey75);
       }
     }
 
     &.close {
       width: 48px;
       height: 48px;
-      background-color: var(--grey50);
+      background-color: var(--grey40);
     }
 
     @include darkTheme {
@@ -33,11 +33,15 @@
       color: var(--grey8);
 
       &.close {
-        background-color: var(--grey60);
+        background-color: var(--grey70);
       }
 
       &.run {
         background-color: var(--accentGreenDarkTheme);
+
+        &:disabled {
+          background-color: var(--grey30);
+        }
       }
     }
   }

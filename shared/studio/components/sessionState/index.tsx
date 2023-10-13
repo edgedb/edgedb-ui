@@ -9,7 +9,6 @@ import {
   ChevronDownIcon,
   CloseIcon,
   SearchIcon,
-  CrossIcon,
   OpenNewScreenIcon,
 } from "../../icons";
 import {useDatabaseState} from "../../state";
@@ -28,7 +27,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerNav";
 import {PrimitiveType} from "../dataEditor/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {CloseButton} from "@edgedb/common/ui/mobileButtons";
+import {CloseButton} from "@edgedb/common/ui/mobile";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
