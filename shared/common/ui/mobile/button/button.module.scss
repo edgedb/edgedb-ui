@@ -3,45 +3,39 @@
 .container {
   display: none;
 
+  // Should be updated with styles for red buttons.
   @include breakpoint(mobile) {
     border: none;
-    border-radius: 50%;
-    color: #f9f9f9;
-    filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.2));
+    text-decoration: none;
+    margin: auto;
+    box-sizing: border-box;
+    width: 100%;
+    border-radius: 6px;
+    padding: 16px 12px;
     display: flex;
+    gap: 4px;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
+    line-height: 16px;
+    font-weight: 700;
+    background: var(--accentGreen);
+    color: var(--grey8);
 
-    &.run {
-      height: 40px;
-      width: 40px;
-      background-color: var(--accentGreenLightTheme);
-
-      &:disabled {
-        background-color: var(--grey75);
-      }
+    &.fullWidth {
+      padding: 24px;
+      border-radius: 0;
     }
 
-    &.close {
-      width: 48px;
-      height: 48px;
-      background-color: var(--grey40);
+    &:disabled {
+      color: var(--grey50);
+      background-color: var(--grey80);
     }
 
     @include darkTheme {
-      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.2));
-      color: var(--grey8);
-
-      &.close {
-        background-color: var(--grey70);
-      }
-
-      &.run {
-        background-color: var(--accentGreenDarkTheme);
-
-        &:disabled {
-          background-color: var(--grey30);
-        }
+      &:disabled {
+        color: var(--grey8);
+        background-color: var(--grey30);
       }
     }
   }

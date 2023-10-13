@@ -366,6 +366,33 @@ export function TabGraphQlIcon(props: ActiveItem) {
   );
 }
 
+export function TabInstanceIcon(props: ActiveItem) {
+  return (
+    <svg
+      width="16"
+      height="24"
+      viewBox="0 0 16 24"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fill={props?.active ? activeColor1 : undefined}
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M13 6H3C2.44772 6 2 6.44772 2 7V17C2 17.5523 2.44772 18 3 18H13C13.5523 18 14 17.5523 14 17V7C14 6.44772 13.5523 6 13 6ZM3 4C1.34315 4 0 5.34315 0 7V17C0 18.6569 1.34315 20 3 20H13C14.6569 20 16 18.6569 16 17V7C16 5.34315 14.6569 4 13 4H3Z"
+      />
+      <path
+        fill={props?.active ? activeColor2 : undefined}
+        d="M6 9C6 9.55228 5.55228 10 5 10C4.44772 10 4 9.55228 4 9C4 8.44772 4.44772 8 5 8C5.55228 8 6 8.44772 6 9Z"
+      />
+      <path
+        fill={props?.active ? activeColor3 : undefined}
+        d="M4 15C4 14.4477 4.44772 14 5 14H11C11.5523 14 12 14.4477 12 15C12 15.5523 11.5523 16 11 16H5C4.44772 16 4 15.5523 4 15Z"
+      />
+    </svg>
+  );
+}
+
 export function TabSettingsIcon(props: ActiveItem) {
   return (
     <svg

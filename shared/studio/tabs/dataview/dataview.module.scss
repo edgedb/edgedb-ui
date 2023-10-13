@@ -546,10 +546,6 @@
     display: none;
   }
 
-  .closeFilterPanel {
-    display: none;
-  }
-
   @include breakpoint(mobile) {
     position: fixed;
     top: 0;
@@ -574,14 +570,29 @@
       }
     }
 
-    .closeFilterPanel {
-      display: block;
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: transparent;
-      border: none;
-      color: #737373;
+    .filterActions {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      gap: 8px;
+      margin: 0;
+
+      .filterBtn {
+        width: calc(50% - 40px);
+        min-width: fit-content;
+        margin: 0;
+
+        &:first-of-type {
+          background-color: var(--accentViolet);
+        }
+      }
+
+      .closeFilterPanel {
+        margin-left: 16px;
+        flex-shrink: 0;
+      }
     }
 
     .title {
@@ -620,9 +631,6 @@
   .disableFilterButton {
     --buttonBg: #e5c18c;
   }
-  .applyFilterButton {
-    --buttonBg: #49d8ad;
-  }
 
   @include darkTheme {
     --buttonTextColour: #1f1f1f;
@@ -632,9 +640,6 @@
     }
     .disableFilterButton {
       --buttonBg: #a1843d;
-    }
-    .applyFilterButton {
-      --buttonBg: #29b189;
     }
   }
 

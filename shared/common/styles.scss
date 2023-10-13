@@ -9,7 +9,8 @@
   --accentGreenLightTheme: #2cb88e;
   --accentGreenDarkTheme: #279474;
 
-  --accentPurpleLightTheme: #b199f2;
+  --accentVioletLightTheme: #cfbffb;
+  --accentVioletDarkTheme: #8979b7;
 
   --grey8: #141414;
   --grey10: #1a1a1a;
@@ -36,6 +37,7 @@
   --fontHeaderGrey: var(--grey50);
   --baseText: var(--baseTextLightTheme);
   --accentGreen: var(--accentGreenLightTheme);
+  --accentViolet: var(--accentVioletLightTheme);
 
   --modalOverlayBg: rgba(0, 0, 0, 0.2);
   --fullscreenOverlayBg: var(--white);
@@ -45,6 +47,7 @@
     --fontHeaderGrey: var(--grey60);
     --baseText: var(--baseTextDarkTheme);
     --accentGreen: var(--accentGreenDarkTheme);
+    --accentViolet: var(--accentVioletDarkTheme);
 
     --modalOverlayBg: rgba(0, 0, 0, 0.5);
     --fullscreenOverlayBg: var(--grey10);

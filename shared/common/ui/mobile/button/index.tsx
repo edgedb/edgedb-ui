@@ -1,40 +1,31 @@
 import cn from "@edgedb/common/utils/classNames";
-import {CrossIcon, RunIcon} from "../../icons";
-import Spinner from "../../spinner";
+import {Link} from "react-router-dom";
 import styles from "./button.module.scss";
 
-interface CloseButtonProps {
-  onClick: () => void;
+interface ButtonProps {
+  label: string;
+  to: string;
+  icon?: JSX.Element;
   className?: string;
+  fullWidth?: boolean;
 }
 
-export const CloseButton = ({onClick, className}: CloseButtonProps) => (
-  <button
-    onClick={onClick}
-    className={cn(styles.container, styles.close, className)}
-  >
-    <CrossIcon />
-  </button>
-);
-
-interface RunButtonProps {
-  onClick: () => void;
-  className?: string;
-  disabled?: boolean;
-  isLoading?: boolean;
-}
-
-export const RunButton = ({
-  onClick,
+const Button = ({
+  label,
+  to,
   className,
-  disabled = false,
-  isLoading = false,
-}: RunButtonProps) => (
-  <button
-    className={cn(styles.container, styles.run, className)}
-    onClick={onClick}
-    disabled={disabled}
+  icon,
+  fullWidth = false,
+}: ButtonProps) => (
+  <Link
+    className={cn(styles.container, className, {
+      [styles.fullWidth]: fullWidth,
+    })}
+    to={to}
   >
-    {isLoading ? <Spinner size={22} /> : <RunIcon />}
-  </button>
+    {icon}
+    {label}
+  </Link>
 );
+
+export default Button;

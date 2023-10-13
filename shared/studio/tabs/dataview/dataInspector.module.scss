@@ -117,12 +117,16 @@
       margin-left: 0.5ch;
       opacity: 0.7;
     }
+
+    @include breakpoint(mobile) {
+      color: var(--grey30);
+    }
   }
 
   .fieldTypename {
     font-size: 11px;
     line-height: 16px;
-    color: #6d6d6d;
+    color: var(--grey50);
   }
 
   .fieldSort {
@@ -181,12 +185,8 @@
       color: #c5c5c5;
 
       @include breakpoint(mobile) {
-        color: #adadad;
+        color: var(--baseTextDarkTheme);
       }
-    }
-
-    .fieldTypename {
-      color: #838383;
     }
   }
 }

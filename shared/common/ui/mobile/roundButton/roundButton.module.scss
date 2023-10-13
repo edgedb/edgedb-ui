@@ -1,0 +1,48 @@
+@import "../../../mixins.scss";
+
+.container {
+  display: none;
+
+  @include breakpoint(mobile) {
+    border: none;
+    border-radius: 50%;
+    color: #f9f9f9;
+    filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.run {
+      height: 40px;
+      width: 40px;
+      background-color: var(--accentGreenLightTheme);
+
+      &:disabled {
+        background-color: var(--grey75);
+      }
+    }
+
+    &.close {
+      width: 48px;
+      height: 48px;
+      background-color: var(--grey40);
+    }
+
+    @include darkTheme {
+      filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.2));
+      color: var(--grey8);
+
+      &.close {
+        background-color: var(--grey70);
+      }
+
+      &.run {
+        background-color: var(--accentGreenDarkTheme);
+
+        &:disabled {
+          background-color: var(--grey30);
+        }
+      }
+    }
+  }
+}

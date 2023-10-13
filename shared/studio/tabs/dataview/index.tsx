@@ -9,6 +9,7 @@ import {useModal} from "@edgedb/common/hooks/useModal";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {Select} from "@edgedb/common/ui/select";
 import Button from "@edgedb/common/ui/button";
+import {Button as MobButton} from "@edgedb/common/ui/mobile";
 
 import {useTabState, useDatabaseState} from "../../state";
 import {
@@ -36,6 +37,7 @@ import {
   WarningIcon,
 } from "../../icons";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CloseButton} from "@edgedb/common/ui/mobile";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
@@ -359,21 +361,24 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
         />
       </div>
       <p className={styles.filterErrorMobile}>{state.errorFilter?.error}</p>
-      <button
-        className={styles.applyFilterMobile}
-        disabled={!state.filterEdited}
-        onClick={applyFilterOnMobile}
-      >
-        Apply Filter
-      </button>
-      <button
-        className={styles.closeFilterPanel}
-        onClick={() => {
-          state.setFilterPanelOpen(false);
-        }}
-      >
-        <CrossIcon />
-      </button>
+      <div className={styles.filterActions}>
+        <MobButton // todo fix: create shared link/btn mobile component
+          className={styles.filterBtn}
+          // disabled={!state.filterEdited}
+          onClick={applyFilterOnMobile}
+          label="Remove Filter"
+        />
+        <MobButton
+          className={styles.filterBtn}
+          // disabled={!state.filterEdited}
+          onClick={applyFilterOnMobile}
+          label="Apply"
+        />
+        <CloseButton
+          className={styles.closeFilterPanel}
+          onClick={() => state.setFilterPanelOpen(false)}
+        />
+      </div>
     </div>
   );
 });
