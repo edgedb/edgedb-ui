@@ -84,14 +84,14 @@
     span {
       text-decoration: underline;
       cursor: pointer;
-      color: #4c4c4c;
+      color: var(--baseTextLightTheme);
     }
 
     @include darkTheme {
       color: var(--grey40);
 
       span {
-        color: #c4c4c4;
+        color: var(--grey75);
       }
     }
 

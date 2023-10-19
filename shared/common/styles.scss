@@ -12,12 +12,16 @@
   --accentVioletLightTheme: #cfbffb;
   --accentVioletDarkTheme: #8979b7;
 
+  --accentRedLightTheme: #d78d87;
+  --accentRedDarkTheme: #af6963;
+
   --grey8: #141414;
   --grey10: #1a1a1a;
   --grey12: #1f1f1f;
   --grey14: #242424;
   --grey18: #2e2e2e;
   --grey20: #333;
+  --grey25: #404040;
   --grey30: #4d4d4d;
   --grey40: #666;
   --grey50: #808080;
@@ -38,6 +42,7 @@
   --baseText: var(--baseTextLightTheme);
   --accentGreen: var(--accentGreenLightTheme);
   --accentViolet: var(--accentVioletLightTheme);
+  --accentRed: var(accentRedLightTheme);
 
   --modalOverlayBg: rgba(0, 0, 0, 0.2);
   --fullscreenOverlayBg: var(--white);
@@ -48,6 +53,7 @@
     --baseText: var(--baseTextDarkTheme);
     --accentGreen: var(--accentGreenDarkTheme);
     --accentViolet: var(--accentVioletDarkTheme);
+    --accentRed: var(accentRedDarkTheme);
 
     --modalOverlayBg: rgba(0, 0, 0, 0.5);
     --fullscreenOverlayBg: var(--grey10);

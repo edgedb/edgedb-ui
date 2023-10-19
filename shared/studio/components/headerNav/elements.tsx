@@ -4,6 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 import Spinner from "@edgedb/common/ui/spinner";
 import {DropdownIcon} from "@edgedb/common/ui/icons";
 import styles from "./headerNav.module.scss";
+import {CheckIcon} from "@edgedb/common/ui/themeSwitcher/icons";
 
 export interface HeaderNavProps {
   icon: JSX.Element;
@@ -42,7 +43,7 @@ export function HeaderNav({
   return (
     <div className={styles.headerNavMenu}>
       <div
-        className={styles.headerNavButton}
+        className={cn(styles.headerNavButton, {[styles.active]: dropdownOpen})}
         onClick={() => setDropdownOpen(true)}
       >
         {icon}
@@ -153,6 +154,7 @@ export function HeaderNavCol<LinkProps>({
                     />
                   ) : null}
                   <span>{item.label}</span>
+                  {item.selected && <CheckIcon />}
                 </Link>
               ))
             ) : (

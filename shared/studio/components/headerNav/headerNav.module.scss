@@ -55,21 +55,23 @@
     flex-shrink: 0;
   }
 
-  &:hover {
+  &:hover,
+  &.active {
     color: var(--font-active-gray);
-    background: var(--app-bg-gray);
+    background-color: var(--app-bg-gray);
   }
 }
 
 .dropdown {
   position: fixed;
+  top: 56px;
   margin-left: calc(-220px * var(--dropdownOffset));
   display: flex;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-20px);
   transition: opacity 0.15s, transform 0.15s;
-  background: #fff;
+  background-color: var(--grey25);
   border-radius: 6px;
   overflow: hidden;
   min-height: 240px;
@@ -79,7 +81,7 @@
   z-index: 1;
 
   @include darkTheme {
-    background: #2e2e2e;
+    background-color: var(--grey70);
   }
 
   @include isMobile {
@@ -100,10 +102,10 @@
     padding: 2px 0;
 
     &:not(:last-child) {
-      border-right: 1px solid #e2e2e2;
+      border-right: 2px solid var(--grey20);
 
       @include darkTheme {
-        border-color: #121212;
+        border-color: var(--grey50);
       }
     }
 
@@ -117,8 +119,11 @@
     padding-top: 12px;
     text-transform: uppercase;
     font-size: 12px;
-    font-weight: 500;
-    opacity: 0.8;
+    color: var(--grey85);
+
+    @include darkTheme {
+      color: var(--grey8);
+    }
   }
 
   .item,
@@ -128,9 +133,10 @@
     align-items: center;
     margin-bottom: 4px;
     text-decoration: none;
-    color: inherit;
     padding: 9px 18px;
-    line-height: 22px;
+    line-height: 24px;
+    color: var(--grey85);
+    font-weight: 600;
 
     @include isMobile {
       padding: 12px 18px;
@@ -141,6 +147,14 @@
       text-overflow: ellipsis;
       overflow: hidden;
     }
+
+    @include darkTheme {
+      color: var(--grey8);
+    }
+  }
+
+  .item > span {
+    flex-grow: 1;
   }
 
   .showCursor {
@@ -162,22 +176,22 @@
   .action {
     margin: 6px 8px;
     padding: 7px 10px;
-    color: #4d4d4d;
+    color: var(--grey85);
     justify-content: center;
-    border: 1px solid #e6e6e6;
+    border: 1px solid var(--grey40);
     border-radius: 4px;
     cursor: pointer;
 
     &:hover {
-      background: rgba(0, 0, 0, 0.04);
+      background-color: rgba(0, 0, 0, 0.04);
     }
 
     @include darkTheme {
-      color: #999;
-      border-color: #3d3d3d;
+      color: var(--grey8);
+      border-color: var(--grey60);
 
       &:hover {
-        background: rgba(255, 255, 255, 0.04);
+        background-color: rgba(255, 255, 255, 0.04);
       }
     }
   }
@@ -192,10 +206,10 @@
   }
 
   .selected {
-    background: #f2f2f2;
+    background-color: var(--grey30);
 
     @include darkTheme {
-      background: #242424;
+      background-color: var(--grey60);
     }
   }
 
@@ -213,6 +227,6 @@
   .dbFetchError {
     padding: 8px 16px;
     font-style: italic;
-    color: #db5246;
+    color: var(--accentRed);
   }
 }
