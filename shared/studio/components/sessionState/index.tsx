@@ -286,8 +286,6 @@ const SessionEditorPanelContent = observer(
     const dbState = useDatabaseState();
     const sessionState = dbState.sessionState;
 
-    const isMobile = useIsMobile();
-
     const [searchFilter, setSearchFilter] = useState("");
 
     useEffect(() => {
