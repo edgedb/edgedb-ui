@@ -1,19 +1,29 @@
 @import "@edgedb/common/mixins.scss";
 
 :root {
+  --white: #fff;
+
   --baseTextLightTheme: #1a1a1a;
   --baseTextDarkTheme: #b9b9b9;
 
   --accentGreenLightTheme: #2cb88e;
   --accentGreenDarkTheme: #279474;
 
-  --accentPurpleLightTheme: #b199f2;
+  --accentVioletLightTheme: #cfbffb;
+  --accentVioletDarkTheme: #8979b7;
+
+  --accentRedLightTheme: #d78d87;
+  --accentRedDarkTheme: #af6963;
 
   --grey8: #141414;
+  --grey10: #1a1a1a;
   --grey12: #1f1f1f;
+  --grey14: #242424;
   --grey18: #2e2e2e;
   --grey20: #333;
+  --grey25: #404040;
   --grey30: #4d4d4d;
+  --grey40: #666;
   --grey50: #808080;
   --grey60: #999;
   --grey65: #a6a6a6;
@@ -22,18 +32,31 @@
   --grey80: #ccc;
   --grey85: #d9d9d9;
   --grey90: #e6e6e6;
+  --grey93: #ededed;
   --grey95: #f2f2f2;
   --grey97: #f7f7f7;
 }
 
 .theme {
-  --font-header-grey: var(--grey50);
-  --modal-overlay-bg: rgba(0, 0, 0, 0.2);
+  --fontHeaderGrey: var(--grey50);
   --baseText: var(--baseTextLightTheme);
+  --accentGreen: var(--accentGreenLightTheme);
+  --accentViolet: var(--accentVioletLightTheme);
+  --accentRed: var(--accentRedLightTheme);
+
+  --modalOverlayBg: rgba(0, 0, 0, 0.2);
+  --fullscreenOverlayBg: var(--white);
+  --pageBackground: var(--grey97);
 
   @include darkTheme {
-    --font-header-grey: var(--grey60);
-    --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+    --fontHeaderGrey: var(--grey60);
     --baseText: var(--baseTextDarkTheme);
+    --accentGreen: var(--accentGreenDarkTheme);
+    --accentViolet: var(--accentVioletDarkTheme);
+    --accentRed: var(--accentRedDarkTheme);
+
+    --modalOverlayBg: rgba(0, 0, 0, 0.5);
+    --fullscreenOverlayBg: var(--grey10);
+    --pageBackground: var(--grey14);
   }
 }

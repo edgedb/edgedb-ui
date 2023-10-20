@@ -22,7 +22,7 @@ import styles from "./repl.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {CrossIcon} from "../../icons";
+import {CloseButton} from "@edgedb/common/ui/mobile";
 
 export const HistoryPanel = observer(function HistoryPanel({
   className,
@@ -100,12 +100,10 @@ const HistoryPanelInner = observer(
           }
         }}
       >
-        <button
+        <CloseButton
           onClick={() => state.setShowHistory(false)}
           className={styles.closeHistoryMobile}
-        >
-          <CrossIcon />
-        </button>
+        />
         <HistoryList state={state} />
         <div className={styles.closeHistory}>
           <Button

@@ -166,7 +166,7 @@
           color: #b3b3b3;
 
           @include darkTheme {
-            color: #af6963;
+            color: var(--accentRed);
           }
         }
       }
@@ -512,23 +512,6 @@
       }
     }
   }
-
-  .removeFilter {
-    display: none;
-
-    @include breakpoint(mobile) {
-      display: block;
-      background: transparent;
-      border: none;
-      color: #808080;
-      margin-right: 12px;
-      padding: 0;
-
-      @include darkTheme {
-        color: #af6963;
-      }
-    }
-  }
 }
 
 .filterPanel {
@@ -543,10 +526,6 @@
   }
 
   .title {
-    display: none;
-  }
-
-  .closeFilterPanel {
     display: none;
   }
 
@@ -574,14 +553,39 @@
       }
     }
 
-    .closeFilterPanel {
-      display: block;
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: transparent;
-      border: none;
-      color: #737373;
+    .filterActionsMob {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      gap: 8px;
+      margin: 0;
+
+      .filterBtn {
+        width: calc(50% - 40px);
+        min-width: fit-content;
+        margin: 0;
+
+        &:first-of-type {
+          background-color: var(--accentViolet);
+        }
+
+        &:disabled {
+          color: var(--grey50);
+          background-color: var(--grey80);
+
+          @include darkTheme {
+            color: var(--grey8);
+            background-color: var(--grey30);
+          }
+        }
+      }
+
+      .closeFilterPanel {
+        margin-left: 16px;
+        flex-shrink: 0;
+      }
     }
 
     .title {
@@ -615,26 +619,21 @@
   --buttonTextColour: #fff;
 
   .clearFilterButton {
-    --buttonBg: #e5aaa5;
+    --buttonBg: var(--accentRed);
   }
   .disableFilterButton {
     --buttonBg: #e5c18c;
   }
+
   .applyFilterButton {
-    --buttonBg: #49d8ad;
+    --buttonBg: var(--accentGreen);
   }
 
   @include darkTheme {
     --buttonTextColour: #1f1f1f;
 
-    .clearFilterButton {
-      --buttonBg: #b6635c;
-    }
     .disableFilterButton {
       --buttonBg: #a1843d;
-    }
-    .applyFilterButton {
-      --buttonBg: #29b189;
     }
   }
 
@@ -644,7 +643,7 @@
 }
 
 .filterError {
-  color: #f13f4a;
+  color: var(--accentRed);
   font-family: Roboto Mono;
   font-size: 14px;
   margin-right: 16px;
@@ -655,8 +654,11 @@
   display: none;
 
   @include breakpoint(mobile) {
+    position: absolute;
+    top: -60px;
+    left: 0;
     display: block;
-    margin: 16px;
+    margin: 0;
   }
 }
 
@@ -688,7 +690,7 @@
 
 .dataFetchingError {
   position: absolute;
-  background: #de5353;
+  background: var(--accentRed);
   bottom: 24px;
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.9);

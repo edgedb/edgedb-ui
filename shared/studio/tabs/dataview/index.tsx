@@ -9,6 +9,7 @@ import {useModal} from "@edgedb/common/hooks/useModal";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {Select} from "@edgedb/common/ui/select";
 import Button from "@edgedb/common/ui/button";
+import {Button as MobButton} from "@edgedb/common/ui/mobile";
 
 import {useTabState, useDatabaseState} from "../../state";
 import {
@@ -30,12 +31,12 @@ import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
 import {
   BackIcon,
   ChevronDownIcon,
-  CrossIcon,
   FilterIcon,
   TabDataExplorerIcon,
   WarningIcon,
 } from "../../icons";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CloseButton} from "@edgedb/common/ui/mobile";
 
 export const DataView = observer(function DataView() {
   const dbState = useDatabaseState();
@@ -237,14 +238,6 @@ const DataInspectorView = observer(function DataInspectorView({
             )
           ) : null}
           <div className={styles.filterWrapper}>
-            {!!inspectorState.filter && (
-              <button
-                className={styles.removeFilter}
-                onClick={() => inspectorState.clearFilter()}
-              >
-                <CrossIcon />
-              </button>
-            )}
             <div
               className={cn(styles.filterButton, {
                 [styles.open]: inspectorState.filterPanelOpen,
@@ -315,6 +308,11 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
     if (state.filter) state.setFilterPanelOpen(false);
   };
 
+  const removeFilter = () => {
+    state.clearFilter();
+    state.setFilterPanelOpen(false);
+  };
+
   return (
     <div className={styles.filterPanel}>
       <p className={styles.title}>Filter</p>
@@ -358,22 +356,26 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
           onClick={() => state.applyFilter()}
         />
       </div>
-      <p className={styles.filterErrorMobile}>{state.errorFilter?.error}</p>
-      <button
-        className={styles.applyFilterMobile}
-        disabled={!state.filterEdited}
-        onClick={applyFilterOnMobile}
-      >
-        Apply Filter
-      </button>
-      <button
-        className={styles.closeFilterPanel}
-        onClick={() => {
-          state.setFilterPanelOpen(false);
-        }}
-      >
-        <CrossIcon />
-      </button>
+      <div className={styles.filterActionsMob}>
+        <p className={styles.filterErrorMobile}>{state.errorFilter?.error}</p>
+
+        <MobButton
+          className={styles.filterBtn}
+          disabled={!state.filter && !state.errorFilter?.error}
+          onClick={removeFilter}
+          label="Remove Filter"
+        />
+        <MobButton
+          className={styles.filterBtn}
+          disabled={!state.filterEdited}
+          onClick={applyFilterOnMobile}
+          label="Apply"
+        />
+        <CloseButton
+          className={styles.closeFilterPanel}
+          onClick={() => state.setFilterPanelOpen(false)}
+        />
+      </div>
     </div>
   );
 });

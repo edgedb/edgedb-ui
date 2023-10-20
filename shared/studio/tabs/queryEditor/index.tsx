@@ -5,7 +5,7 @@ import {Text} from "@codemirror/state";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
-import {RunButton} from "@edgedb/common/ui/mobileButtons";
+import {RunButton} from "@edgedb/common/ui/mobile";
 
 import styles from "./repl.module.scss";
 
@@ -376,7 +376,7 @@ const QueryResult = observer(function QueryResult() {
 
 export const editorTabSpec: DatabaseTabSpec = {
   path: "editor",
-  label: "Query Editor",
+  label: "Editor",
   icon: (active) => <TabEditorIcon active={active} />,
   usesSessionState: true,
   state: QueryEditor,

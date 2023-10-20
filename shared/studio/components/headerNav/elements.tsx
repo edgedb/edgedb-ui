@@ -42,7 +42,7 @@ export function HeaderNav({
   return (
     <div className={styles.headerNavMenu}>
       <div
-        className={styles.headerNavButton}
+        className={cn(styles.headerNavButton, {[styles.active]: dropdownOpen})}
         onClick={() => setDropdownOpen(true)}
       >
         {icon}

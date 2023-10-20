@@ -45,7 +45,7 @@
     }
 
     &:hover {
-      color: #74a6fc;
+      color: var(--accentGreen);
 
       svg {
         opacity: 1;
@@ -62,7 +62,7 @@
     }
 
     &.active {
-      color: #74a6fc;
+      color: var(--accentGreen);
 
       @include breakpoint(mobile) {
         background-color: #fff;
@@ -91,7 +91,7 @@
 
   .popup {
     position: absolute;
-    left: 0;
+    right: 0;
     bottom: 0;
     background-color: #fff;
     height: $iconSize;
@@ -112,25 +112,22 @@
     .button {
       position: absolute;
       opacity: 0;
-      top: 2 * ($iconSize + $iconSpacing);
+      right: 2 * ($iconSize + $iconSpacing);
       transition: opacity 0.1s ease-in-out;
-      // background: transparent;
 
       &:nth-child(2) {
-        top: $iconSize + $iconSpacing;
+        right: $iconSize + $iconSpacing;
         transition-delay: 0.033s;
       }
 
       &:nth-child(3) {
-        top: 0;
+        right: 0;
         transition-delay: 0.066s;
       }
     }
 
     @include breakpoint(mobile) {
       top: 0;
-      right: 0;
-      left: unset;
       border-radius: 8px;
       transition: none;
       background-color: var(--grey90);
@@ -150,14 +147,17 @@
         &:nth-child(1) {
           border-bottom-left-radius: 8px;
           border-bottom-right-radius: 8px;
+          right: unset;
         }
 
         &:nth-child(2) {
           top: $iconSizeMobile;
+          right: unset;
         }
 
         &:nth-child(3) {
           top: 0;
+          right: unset;
           border-top-left-radius: 8px;
           border-top-right-radius: 8px;
         }
@@ -170,10 +170,11 @@
 
     &.popupOpen {
       transform: scale(1);
-      height: $iconSize * 3 + $iconSpacing * 2;
+      width: $iconSize * 3 + $iconSpacing * 2;
       opacity: 1;
       pointer-events: all;
       transition: transform 0.1s linear, height 0.133s 0.1s ease;
+      z-index: 1;
 
       .button {
         opacity: 1;
@@ -216,20 +217,21 @@
     color: #f5f5f5;
     font-weight: 600;
     font-size: 14px;
-    left: calc(100% + 1px);
+    top: calc(100% + 10px);
     pointer-events: none;
     opacity: 0;
 
-    &:before {
+    &:after {
       content: "";
       position: absolute;
       width: 9px;
       height: 9px;
       border-radius: 1px;
       background: inherit;
-      transform: rotate(45deg);
-      top: 11px;
-      left: -3px;
+      transform: rotate(135deg);
+      bottom: 26px;
+      left: calc(50% - 4px);
+      z-index: 200;
     }
 
     @include darkTheme {

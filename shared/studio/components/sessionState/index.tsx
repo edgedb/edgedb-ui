@@ -9,7 +9,6 @@ import {
   ChevronDownIcon,
   CloseIcon,
   SearchIcon,
-  CrossIcon,
   OpenNewScreenIcon,
 } from "../../icons";
 import {useDatabaseState} from "../../state";
@@ -28,6 +27,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {TabSep} from "../headerNav";
 import {PrimitiveType} from "../dataEditor/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {CloseButton} from "@edgedb/common/ui/mobile";
 
 export function SessionStateControls() {
   return <div id="sessionStateControls" />;
@@ -286,8 +286,6 @@ const SessionEditorPanelContent = observer(
     const dbState = useDatabaseState();
     const sessionState = dbState.sessionState;
 
-    const isMobile = useIsMobile();
-
     const [searchFilter, setSearchFilter] = useState("");
 
     useEffect(() => {
@@ -315,12 +313,10 @@ const SessionEditorPanelContent = observer(
     return (
       <div className={styles.editorPanelContent}>
         <div
-          className={cn(
-            isMobile ? styles.mobileClosePanel : styles.closePanel
-          )}
+          className={styles.closePanel}
           onClick={() => sessionState.closePanel()}
         >
-          {isMobile ? <CrossIcon /> : <CloseIcon />}
+          <CloseIcon />
         </div>
         <div className={styles.searchBar}>
           <p className={styles.title}>Client settings</p>
@@ -405,6 +401,10 @@ const SessionEditorPanelContent = observer(
             )}
           </div>
         </div>
+        <CloseButton
+          onClick={() => sessionState.closePanel()}
+          className={styles.closeBtn}
+        />
       </div>
     );
   }

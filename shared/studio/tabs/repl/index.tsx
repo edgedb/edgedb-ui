@@ -56,7 +56,7 @@ import {useDBRouter} from "../../hooks/dbRoute";
 import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {RunButton} from "@edgedb/common/ui/mobileButtons";
+import {RunButton} from "@edgedb/common/ui/mobile";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
