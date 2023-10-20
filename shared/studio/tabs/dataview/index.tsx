@@ -31,7 +31,6 @@ import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
 import {
   BackIcon,
   ChevronDownIcon,
-  CrossIcon,
   FilterIcon,
   TabDataExplorerIcon,
   WarningIcon,
@@ -239,14 +238,6 @@ const DataInspectorView = observer(function DataInspectorView({
             )
           ) : null}
           <div className={styles.filterWrapper}>
-            {!!inspectorState.filter && (
-              <button
-                className={styles.removeFilter}
-                onClick={() => inspectorState.clearFilter()}
-              >
-                <CrossIcon />
-              </button>
-            )}
             <div
               className={cn(styles.filterButton, {
                 [styles.open]: inspectorState.filterPanelOpen,
@@ -317,6 +308,11 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
     if (state.filter) state.setFilterPanelOpen(false);
   };
 
+  const removeFilter = () => {
+    state.clearFilter();
+    state.setFilterPanelOpen(false);
+  };
+
   return (
     <div className={styles.filterPanel}>
       <p className={styles.title}>Filter</p>
@@ -360,17 +356,18 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
           onClick={() => state.applyFilter()}
         />
       </div>
-      <p className={styles.filterErrorMobile}>{state.errorFilter?.error}</p>
-      <div className={styles.filterActions}>
-        <MobButton // todo fix: create shared link/btn mobile component
+      <div className={styles.filterActionsMob}>
+        <p className={styles.filterErrorMobile}>{state.errorFilter?.error}</p>
+
+        <MobButton
           className={styles.filterBtn}
-          // disabled={!state.filterEdited}
-          onClick={applyFilterOnMobile}
+          disabled={!state.filter && !state.errorFilter?.error}
+          onClick={removeFilter}
           label="Remove Filter"
         />
         <MobButton
           className={styles.filterBtn}
-          // disabled={!state.filterEdited}
+          disabled={!state.filterEdited}
           onClick={applyFilterOnMobile}
           label="Apply"
         />

@@ -42,7 +42,7 @@
   --baseText: var(--baseTextLightTheme);
   --accentGreen: var(--accentGreenLightTheme);
   --accentViolet: var(--accentVioletLightTheme);
-  --accentRed: var(accentRedLightTheme);
+  --accentRed: var(--accentRedLightTheme);
 
   --modalOverlayBg: rgba(0, 0, 0, 0.2);
   --fullscreenOverlayBg: var(--white);
@@ -53,7 +53,7 @@
     --baseText: var(--baseTextDarkTheme);
     --accentGreen: var(--accentGreenDarkTheme);
     --accentViolet: var(--accentVioletDarkTheme);
-    --accentRed: var(accentRedDarkTheme);
+    --accentRed: var(--accentRedDarkTheme);
 
     --modalOverlayBg: rgba(0, 0, 0, 0.5);
     --fullscreenOverlayBg: var(--grey10);

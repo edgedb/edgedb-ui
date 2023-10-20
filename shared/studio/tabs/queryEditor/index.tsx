@@ -376,7 +376,7 @@ const QueryResult = observer(function QueryResult() {
 
 export const editorTabSpec: DatabaseTabSpec = {
   path: "editor",
-  label: "Query Editor",
+  label: "Editor",
   icon: (active) => <TabEditorIcon active={active} />,
   usesSessionState: true,
   state: QueryEditor,

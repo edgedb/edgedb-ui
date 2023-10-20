@@ -166,7 +166,7 @@
           color: #b3b3b3;
 
           @include darkTheme {
-            color: #af6963;
+            color: var(--accentRed);
           }
         }
       }
@@ -512,23 +512,6 @@
       }
     }
   }
-
-  .removeFilter {
-    display: none;
-
-    @include breakpoint(mobile) {
-      display: block;
-      background: transparent;
-      border: none;
-      color: #808080;
-      margin-right: 12px;
-      padding: 0;
-
-      @include darkTheme {
-        color: #af6963;
-      }
-    }
-  }
 }
 
 .filterPanel {
@@ -570,7 +553,7 @@
       }
     }
 
-    .filterActions {
+    .filterActionsMob {
       position: fixed;
       bottom: 24px;
       left: 24px;
@@ -586,6 +569,16 @@
 
         &:first-of-type {
           background-color: var(--accentViolet);
+        }
+
+        &:disabled {
+          color: var(--grey50);
+          background-color: var(--grey80);
+
+          @include darkTheme {
+            color: var(--grey8);
+            background-color: var(--grey30);
+          }
         }
       }
 
@@ -626,18 +619,19 @@
   --buttonTextColour: #fff;
 
   .clearFilterButton {
-    --buttonBg: #e5aaa5;
+    --buttonBg: var(--accentRed);
   }
   .disableFilterButton {
     --buttonBg: #e5c18c;
   }
 
+  .applyFilterButton {
+    --buttonBg: var(--accentGreen);
+  }
+
   @include darkTheme {
     --buttonTextColour: #1f1f1f;
 
-    .clearFilterButton {
-      --buttonBg: #b6635c;
-    }
     .disableFilterButton {
       --buttonBg: #a1843d;
     }
@@ -649,7 +643,7 @@
 }
 
 .filterError {
-  color: #f13f4a;
+  color: var(--accentRed);
   font-family: Roboto Mono;
   font-size: 14px;
   margin-right: 16px;
@@ -660,8 +654,11 @@
   display: none;
 
   @include breakpoint(mobile) {
+    position: absolute;
+    top: -60px;
+    left: 0;
     display: block;
-    margin: 16px;
+    margin: 0;
   }
 }
 
@@ -693,7 +690,7 @@
 
 .dataFetchingError {
   position: absolute;
-  background: #de5353;
+  background: var(--accentRed);
   bottom: 24px;
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.9);

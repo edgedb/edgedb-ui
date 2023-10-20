@@ -1,31 +1,27 @@
 import cn from "@edgedb/common/utils/classNames";
-import {Link} from "react-router-dom";
+import { PropsWithChildren } from "react";
 import styles from "./button.module.scss";
 
-interface ButtonProps {
-  label: string;
-  to: string;
-  icon?: JSX.Element;
-  className?: string;
-  fullWidth?: boolean;
-}
+type ButtonProps = {
+  label: string,
+  icon?: JSX.Element,
+  className?: string,
+  disabled?: boolean,
+} & ({
+  Element: ((props: PropsWithChildren<{ className?: string }>) => JSX.Element)
+} | {
+  Element?: "button",
+  onClick: () => void;
+})
 
 const Button = ({
   label,
-  to,
-  className,
   icon,
-  fullWidth = false,
-}: ButtonProps) => (
-  <Link
-    className={cn(styles.container, className, {
-      [styles.fullWidth]: fullWidth,
-    })}
-    to={to}
-  >
-    {icon}
-    {label}
-  </Link>
-);
+  className,
+  Element ="button",
+  ...props
+}: ButtonProps) => {
+  return <Element className={cn(styles.button, className)} {...props}>{icon}{label}</Element>;
+}
 
 export default Button;
