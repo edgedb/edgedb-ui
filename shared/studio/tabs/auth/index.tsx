@@ -19,6 +19,7 @@ import {
   DraftUIConfig,
   ProviderKind,
   OAuthProviderData,
+  LocalEmailPasswordProviderData,
 } from "./state";
 import {useTabState} from "../../state";
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -609,6 +610,27 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
               </div>
             </div>
           </>
+        ) : providerKind === "Local" ? (
+          <div className={styles.gridItem}>
+            <div className={styles.configName}>require_verification</div>
+            <div className={styles.configInputWrapper}>
+              <div className={styles.configInput}>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={draftState.requireEmailVerification}
+                    onChange={(e) =>
+                      draftState.setRequireEmailVerification(e.target.checked)
+                    }
+                  />
+                </label>
+              </div>
+              <div className={styles.configExplain}>
+                Whether the email needs to be verified before the user is
+                allowed to sign in.
+              </div>
+            </div>
+          </div>
         ) : null}
       </div>
 
@@ -647,7 +669,7 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
         <div
           className={cn(styles.expandProvider, {
             [styles.collapsed]: !expanded,
-            [styles.disabled]: kind !== "OAuth",
+            // [styles.disabled]: kind !== "OAuth",
           })}
           onClick={() => setExpanded(!expanded)}
         >
@@ -671,22 +693,39 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
           }}
         />
       </div>
-      {expanded && kind === "OAuth" ? (
+      {expanded ? (
         <div className={styles.providerDetails}>
-          <div className={styles.providerConfigName}>client_id</div>
-          <div className={styles.providerConfigValue}>
-            {(provider as OAuthProviderData).client_id}
-          </div>
+          {kind === "OAuth" ? (
+            <>
+              <div className={styles.providerConfigName}>client_id</div>
+              <div className={styles.providerConfigValue}>
+                {(provider as OAuthProviderData).client_id}
+              </div>
 
-          <div className={styles.providerConfigName}>secret</div>
-          <div className={styles.providerConfigValue}>{secretPlaceholder}</div>
+              <div className={styles.providerConfigName}>secret</div>
+              <div className={styles.providerConfigValue}>
+                {secretPlaceholder}
+              </div>
 
-          <div className={styles.providerConfigName}>additional_scope</div>
-          <div className={styles.providerConfigValue}>
-            {(provider as OAuthProviderData).additional_scope || (
-              <span>none</span>
-            )}
-          </div>
+              <div className={styles.providerConfigName}>additional_scope</div>
+              <div className={styles.providerConfigValue}>
+                {(provider as OAuthProviderData).additional_scope || (
+                  <span>none</span>
+                )}
+              </div>
+            </>
+          ) : kind === "Local" ? (
+            <>
+              <div className={styles.providerConfigName}>
+                require_verification
+              </div>
+              <div className={styles.providerConfigValue}>
+                {(
+                  provider as LocalEmailPasswordProviderData
+                ).require_verification.toString()}
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -27,9 +27,14 @@ export type OAuthProviderData = {
   client_id: string;
   additional_scope: string;
 };
+export type LocalEmailPasswordProviderData = {
+  name: string;
+  _typename: "ext::auth::EmailPasswordProviderConfig";
+  require_verification: boolean;
+};
 export type AuthProviderData =
   | OAuthProviderData
-  | {name: string; _typename: "ext::auth::EmailPasswordProviderConfig"};
+  | LocalEmailPasswordProviderData;
 
 export interface AuthUIConfigData {
   redirect_to: string;
@@ -190,6 +195,7 @@ export class AuthAdminState extends Model({
           name,
           [is OAuthProviderConfig].client_id,
           [is OAuthProviderConfig].additional_scope,
+          [is EmailPasswordProviderConfig].require_verification,
         },
         ui: {
           redirect_to,
@@ -339,6 +345,8 @@ export class DraftProviderConfig extends Model({
   oauthClientId: prop("").withSetter(),
   oauthSecret: prop("").withSetter(),
   additionalScope: prop("").withSetter(),
+
+  requireEmailVerification: prop(true).withSetter(),
 }) {
   @computed
   get oauthClientIdError() {
@@ -395,6 +403,10 @@ export class DraftProviderConfig extends Model({
                 : ""
             }
             `
+                : provider.kind === "Local"
+                ? `require_verification := ${
+                    this.requireEmailVerification ? "true" : "false"
+                  },`
                 : ""
             }
           }`
