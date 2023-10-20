@@ -57,8 +57,13 @@
 
   &:hover,
   &.active {
-    color: var(--font-active-gray);
-    background-color: var(--app-bg-gray);
+    color: var(--grey85);
+    background-color: var(--grey25);
+
+    @include darkTheme {
+      color: var(--grey8);
+      background-color: var(--grey70);
+    }
   }
 }
 
