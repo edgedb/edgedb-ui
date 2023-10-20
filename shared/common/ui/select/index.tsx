@@ -7,7 +7,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./select.module.scss";
 import {useIsMobile} from "../../hooks/useMobile";
-import {CrossIcon, DropdownIcon, SearchIcon} from "../icons";
+import {CrossIcon, DropdownIcon, SearchIcon, CheckIcon} from "../icons";
 
 export interface SelectItem<T = any> {
   id: T;
@@ -276,7 +276,16 @@ export function Select<T extends any>({
                           : undefined
                       }
                     >
-                      {item.type === "item" ? item.item.label : item.label}
+                      {item.type === "item" ? (
+                        <div className={styles.itemContent}>
+                          {item.item.label}
+                          {dropdown.selectedItemId === item.item.id && (
+                            <CheckIcon />
+                          )}
+                        </div>
+                      ) : (
+                        item.label
+                      )}
                     </div>
                   ))
               : null}

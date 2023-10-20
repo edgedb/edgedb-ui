@@ -157,3 +157,23 @@ export function PlusIcon() {
     </svg>
   );
 }
+
+export function CheckIcon({className}: {className?: string}) {
+  return (
+    <svg
+      width="10"
+      height="7"
+      viewBox="0 0 10 7"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.70703 6.70703L9.70703 1.70703C10.0977 1.31641 10.0977 0.683105 9.70703 0.292969C9.31641 -0.0976562 8.68359 -0.0976562 8.29297 0.292969L4 4.58545L1.70703 2.29297C1.31641 1.90234 0.683594 1.90234 0.292969 2.29297C0.117188 2.46875 0.0205078 2.69434 0.00292969 2.9248C-0.0185547 3.20508 0.078125 3.49268 0.292969 3.70703L3.29297 6.70703C3.68359 7.09766 4.31641 7.09766 4.70703 6.70703Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
