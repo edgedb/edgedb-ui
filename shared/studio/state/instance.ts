@@ -10,6 +10,8 @@ import {
   AnyModel,
   createContext as createMobxContext,
   ModelCreationData,
+  getTypeInfo,
+  ModelTypeInfo,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -124,23 +126,31 @@ export class InstanceState extends Model({
     databaseName: string,
     tabs: {path: string; state?: ModelClass<AnyModel>}[]
   ) {
-    if (!this.databasePageStates.has(databaseName)) {
-      this.databasePageStates.set(
-        databaseName,
-        new DatabaseState({
-          name: databaseName,
-          tabStates: objectMap(
-            tabs
-              .filter((t) => t.state)
-              .map((t) => {
-                const state = new t.state!({});
-                return [state.$modelType, state];
-              })
-          ),
-        })
-      );
+    let dbState = this.databasePageStates.get(databaseName);
+    if (!dbState) {
+      dbState = new DatabaseState({
+        name: databaseName,
+        tabStates: objectMap(
+          tabs
+            .filter((t) => t.state)
+            .map((t) => {
+              const state = new t.state!({});
+              return [state.$modelType, state];
+            })
+        ),
+      });
+      this.databasePageStates.set(databaseName, dbState);
+    } else {
+      for (const tab of tabs) {
+        if (!tab.state) continue;
+        const modelType = (getTypeInfo(tab.state) as ModelTypeInfo).modelType;
+        if (!dbState.tabStates.has(modelType)) {
+          const state = new tab.state({});
+          dbState.tabStates.set(state.$modelType, state);
+        }
+      }
     }
-    return this.databasePageStates.get(databaseName)!;
+    return dbState;
   }
 
   @observable creatingExampleDB = false;
