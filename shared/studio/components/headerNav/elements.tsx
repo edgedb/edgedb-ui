@@ -2,7 +2,7 @@ import {Fragment, PropsWithChildren, useEffect, useRef} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 import Spinner from "@edgedb/common/ui/spinner";
-import {DropdownIcon} from "@edgedb/common/ui/icons";
+import {CheckIcon, DropdownIcon} from "@edgedb/common/ui/icons";
 import styles from "./headerNav.module.scss";
 
 export interface HeaderNavProps {
@@ -93,6 +93,10 @@ export interface HeaderNavColProps<LinkProps> {
           | string;
         emptyMessage?: string;
       }[];
+  currentOrgSlug?: string;
+  currentInstanceName?: string;
+  currentDatabaseName?: string;
+  selectedItems?: string[];
   action:
     | ({
         label: string;
@@ -109,8 +113,27 @@ export function HeaderNavCol<LinkProps>({
   showCursor = false,
   closeDropdown,
   itemGroups,
+  currentOrgSlug,
+  currentInstanceName,
+  currentDatabaseName,
+  selectedItems,
   action,
 }: HeaderNavColProps<LinkProps>) {
+  const getIsSelected = (type: string, label: string) => {
+    if (type === "Personal Org" || type === "Orgs") {
+      return label === currentOrgSlug;
+    } else if (type === "Instances") {
+      return (
+        currentOrgSlug === selectedItems![0] && currentInstanceName === label
+      );
+    } else
+      return (
+        currentOrgSlug === selectedItems![0] &&
+        currentInstanceName === selectedItems![1] &&
+        currentDatabaseName === label
+      );
+  };
+
   return (
     <div
       className={cn(styles.col, {
@@ -154,6 +177,7 @@ export function HeaderNavCol<LinkProps>({
                     />
                   ) : null}
                   <span>{item.label}</span>
+                  {getIsSelected(group.header, item.label) && <CheckIcon />}
                 </Link>
               ))
             ) : (
