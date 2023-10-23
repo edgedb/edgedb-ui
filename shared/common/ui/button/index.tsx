@@ -47,6 +47,7 @@ export default function Button({
 
   return (
     <button
+      type="button"
       className={cn(styles.button, className, {
         [styles.largeButton]: size === "large",
         [styles.squareButton]: style === "square",
