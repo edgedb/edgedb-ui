@@ -8,7 +8,6 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  z-index: 100;
   transition: opacity 0s, width 0.2s;
 
   &.expanded {
@@ -92,6 +91,7 @@
   border-radius: 4px;
   font-weight: 600;
   line-height: 24px;
+  z-index: 11;
 
   &:before {
     position: absolute;
