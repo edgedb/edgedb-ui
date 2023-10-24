@@ -32,6 +32,7 @@ export interface DatabaseTabSpec {
 interface DatabasePageProps {
   databaseName: string;
   tabs: DatabaseTabSpec[];
+  tabsLoading?: boolean;
   mobileMenu?: JSX.Element;
 }
 
@@ -101,6 +102,7 @@ function ErrorFallback({error}: FallbackProps) {
 const DatabasePageContent = observer(function DatabasePageContent({
   databaseName,
   tabs,
+  tabsLoading,
   mobileMenu,
 }: DatabasePageProps) {
   const instanceState = useInstanceState();
@@ -113,9 +115,9 @@ const DatabasePageContent = observer(function DatabasePageContent({
   const currentTabId = currentPath[1] ?? "";
   const activeTab = tabs.find((tab) => tab.path === currentTabId);
 
-  if (!activeTab) {
+  if (!activeTab && !tabsLoading) {
     navigate(currentPath[0], true);
-  } else if (!activeTab.allowNested && currentPath.length > 2) {
+  } else if (activeTab && !activeTab.allowNested && currentPath.length > 2) {
     navigate(currentPath.slice(0, 2).join("/"), true);
   }
 
