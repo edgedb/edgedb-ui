@@ -4,6 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 import Spinner from "@edgedb/common/ui/spinner";
 import {DropdownIcon} from "@edgedb/common/ui/icons";
 import styles from "./headerNav.module.scss";
+import {useTooltips} from "@edgedb/common/hooks/useTooltips";
 
 export interface HeaderNavProps {
   icon: JSX.Element;
@@ -22,10 +23,12 @@ export function HeaderNav({
   children,
 }: PropsWithChildren<HeaderNavProps>) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [_, setShowTooltips] = useTooltips();
 
   useEffect(() => {
     if (dropdownOpen) {
       dropdownRef.current?.focus();
+      setShowTooltips(false);
       const listener = (e: MouseEvent) => {
         if (!dropdownRef.current?.contains(e.target as Node)) {
           setDropdownOpen(false);

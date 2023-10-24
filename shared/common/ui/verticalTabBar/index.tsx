@@ -8,6 +8,7 @@ import styles from "./verticalTabBar.module.scss";
 import {ChevronIcon} from "../icons";
 
 import {Tab as BaseTab, BaseTabBarProps} from "../navtabs/interfaces";
+import {useTooltips} from "../../hooks/useTooltips";
 
 export interface Tab<Id extends string> extends BaseTab<Id> {
   loading?: boolean;
@@ -29,6 +30,8 @@ export function VerticalTabBar<TabId extends string>({
   onTabChange,
   noExpand,
 }: VerticalTabBarProps<TabId>) {
+  const [globalShowTooltips] = useTooltips();
+
   const [expanded, setExpanded] = useReducer(
     (_: any, val: boolean) => {
       localStorage.setItem("nebula_ui_tabbar_expanded", JSON.stringify(val));
@@ -79,7 +82,8 @@ export function VerticalTabBar<TabId extends string>({
     <div
       className={cn(styles.tabs, className, {
         [styles.expanded]: expanded,
-        [styles.showTooltips]: !expanded && showTabTooltips,
+        [styles.showTooltips]:
+          !expanded && showTabTooltips && globalShowTooltips,
       })}
     >
       {tabs.map((tab) => (
