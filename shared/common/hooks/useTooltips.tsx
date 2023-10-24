@@ -23,5 +23,5 @@ export function useTooltips() {
     );
   }
 
-  return useContext(GlobalTooltipsContext);
+  return context;
 }
