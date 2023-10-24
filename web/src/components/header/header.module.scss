@@ -41,3 +41,11 @@
     }
   }
 }
+
+.themeSwitcher {
+  margin-left: auto;
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
+}
