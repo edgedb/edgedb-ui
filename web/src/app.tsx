@@ -11,6 +11,7 @@ import {GlobalDragCursorProvider} from "@edgedb/common/hooks/globalDragCursor";
 import {ThemeProvider} from "@edgedb/common/hooks/useTheme";
 import {ModalProvider} from "@edgedb/common/hooks/useModal";
 import {HeaderNavProvider} from "@edgedb/studio/components/headerNav";
+import {GlobalTooltipsProvider} from "@edgedb/common/hooks/useTooltips";
 
 import Header from "src/components/header";
 import Main from "src/components/main";
@@ -21,9 +22,11 @@ function App() {
     <appContext.Provider value={appState}>
       <ThemeProvider>
         <GlobalDragCursorProvider>
-          <HeaderNavProvider>
-            <AppMain />
-          </HeaderNavProvider>
+          <GlobalTooltipsProvider>
+            <HeaderNavProvider>
+              <AppMain />
+            </HeaderNavProvider>
+          </GlobalTooltipsProvider>
         </GlobalDragCursorProvider>
       </ThemeProvider>
     </appContext.Provider>
