@@ -1,5 +1,6 @@
 import {observer} from "mobx-react";
 import {HeaderTabs} from "@edgedb/studio/components/headerNav";
+import {ThemeSwitcher} from "@edgedb/common/ui/themeSwitcher";
 import cn from "@edgedb/common/utils/classNames";
 
 import {LogoLocal} from "@edgedb/common/ui/icons/logo";
@@ -15,6 +16,8 @@ export default observer(function Header() {
     <div className={styles.header}>
       <Logo />
       <HeaderTabs keys={["instance", "database"]} />
+
+      <ThemeSwitcher className={styles.themeSwitcher} />
     </div>
   );
 });
