@@ -2,7 +2,7 @@ import {Fragment, PropsWithChildren, useEffect, useRef} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 import Spinner from "@edgedb/common/ui/spinner";
-import {DropdownIcon} from "@edgedb/common/ui/icons";
+import {CheckIcon, DropdownIcon} from "@edgedb/common/ui/icons";
 import styles from "./headerNav.module.scss";
 
 export interface HeaderNavProps {
@@ -86,6 +86,7 @@ export interface HeaderNavColProps<LinkProps> {
               linkProps: LinkProps;
               avatarUrl?: string;
               selected: boolean;
+              checked?: boolean;
               onHover: () => void;
               onClick?: () => void;
             }[]
@@ -93,6 +94,10 @@ export interface HeaderNavColProps<LinkProps> {
           | string;
         emptyMessage?: string;
       }[];
+  currentOrgSlug?: string;
+  currentInstanceName?: string;
+  currentDatabaseName?: string;
+  selectedItems?: string[];
   action:
     | ({
         label: string;
@@ -154,6 +159,7 @@ export function HeaderNavCol<LinkProps>({
                     />
                   ) : null}
                   <span>{item.label}</span>
+                  {!!item.checked && <CheckIcon />}
                 </Link>
               ))
             ) : (

@@ -149,9 +149,29 @@ export function PlusIcon() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M5 0C4.44772 0 4 0.447716 4 1V4H1C0.447715 4 0 4.44771 0 5C0 5.55228 0.447716 6 1 6H4V9C4 9.55229 4.44772 10 5 10C5.55229 10 6 9.55228 6 9V6H9C9.55228 6 10 5.55229 10 5C10 4.44772 9.55228 4 9 4H6V1C6 0.447715 5.55229 0 5 0Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export function CheckIcon({className}: {className?: string}) {
+  return (
+    <svg
+      width="10"
+      height="7"
+      viewBox="0 0 10 7"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.70703 6.70703L9.70703 1.70703C10.0977 1.31641 10.0977 0.683105 9.70703 0.292969C9.31641 -0.0976562 8.68359 -0.0976562 8.29297 0.292969L4 4.58545L1.70703 2.29297C1.31641 1.90234 0.683594 1.90234 0.292969 2.29297C0.117188 2.46875 0.0205078 2.69434 0.00292969 2.9248C-0.0185547 3.20508 0.078125 3.49268 0.292969 3.70703L3.29297 6.70703C3.68359 7.09766 4.31641 7.09766 4.70703 6.70703Z"
         fill="currentColor"
       />
     </svg>

@@ -2,13 +2,8 @@ import {useState, useEffect} from "react";
 
 import cn from "../../utils/classNames";
 import {useTheme, Theme} from "../../hooks/useTheme";
-import {DropdownIcon} from "../icons";
-import {
-  LightThemeIcon,
-  DarkThemeIcon,
-  SystemThemeIcon,
-  CheckIcon,
-} from "./icons";
+import {CheckIcon, DropdownIcon} from "../icons";
+import {LightThemeIcon, DarkThemeIcon, SystemThemeIcon} from "./icons";
 import styles from "./themeSwitcher.module.scss";
 
 export interface ThemeSwitcherProps {

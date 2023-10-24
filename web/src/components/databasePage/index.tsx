@@ -98,6 +98,7 @@ function HeaderNavMenu({
                 key: db,
                 label: db,
                 selected: selectedDB === db,
+                checked: currentDB === db,
                 linkProps: {to: `/${db}`},
                 onHover: () => setSelectedDB(db),
               })) ?? null,
