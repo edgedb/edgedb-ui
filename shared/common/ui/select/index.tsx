@@ -278,7 +278,7 @@ export function Select<T extends any>({
                     >
                       {item.type === "item" ? (
                         <div className={styles.itemContent}>
-                          {item.item.label}
+                          <span>{item.item.label}</span>
                           {dropdown.selectedItemId === item.item.id && (
                             <CheckIcon />
                           )}
