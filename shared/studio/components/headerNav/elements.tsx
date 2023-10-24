@@ -27,8 +27,10 @@ export function HeaderNav({
 
   useEffect(() => {
     if (dropdownOpen) {
-      dropdownRef.current?.focus();
       setShowTooltips(false);
+
+      dropdownRef.current?.focus();
+
       const listener = (e: MouseEvent) => {
         if (!dropdownRef.current?.contains(e.target as Node)) {
           setDropdownOpen(false);
@@ -39,6 +41,8 @@ export function HeaderNav({
       return () => {
         window.removeEventListener("click", listener, {capture: true});
       };
+    } else {
+      setShowTooltips(true);
     }
   }, [dropdownOpen]);
 

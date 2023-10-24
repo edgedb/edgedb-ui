@@ -1,11 +1,11 @@
 import {createContext, PropsWithChildren, useState, useContext} from "react";
 
 const GlobalTooltipsContext = createContext<
-  [boolean, (showTooltips: boolean) => void]
+  [boolean, React.Dispatch<React.SetStateAction<boolean>>]
 >(null!);
 
 export function GlobalTooltipsProvider({children}: PropsWithChildren<{}>) {
-  const [showTooltips, setShowTooltips] = useState<boolean>(false);
+  const [showTooltips, setShowTooltips] = useState(true);
 
   return (
     <GlobalTooltipsContext.Provider value={[showTooltips, setShowTooltips]}>
@@ -15,5 +15,13 @@ export function GlobalTooltipsProvider({children}: PropsWithChildren<{}>) {
 }
 
 export function useTooltips() {
+  const context = useContext(GlobalTooltipsContext);
+
+  if (!context) {
+    throw new Error(
+      "useTooltips must be used within a GlobalTooltipsProvider"
+    );
+  }
+
   return useContext(GlobalTooltipsContext);
 }
