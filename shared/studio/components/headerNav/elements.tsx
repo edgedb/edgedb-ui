@@ -86,6 +86,7 @@ export interface HeaderNavColProps<LinkProps> {
               linkProps: LinkProps;
               avatarUrl?: string;
               selected: boolean;
+              checked?: boolean;
               onHover: () => void;
               onClick?: () => void;
             }[]
@@ -113,27 +114,8 @@ export function HeaderNavCol<LinkProps>({
   showCursor = false,
   closeDropdown,
   itemGroups,
-  currentOrgSlug,
-  currentInstanceName,
-  currentDatabaseName,
-  selectedItems,
   action,
 }: HeaderNavColProps<LinkProps>) {
-  const getIsSelected = (type: string, label: string) => {
-    if (type === "Personal Org" || type === "Orgs") {
-      return label === currentOrgSlug;
-    } else if (type === "Instances") {
-      return (
-        currentOrgSlug === selectedItems![0] && currentInstanceName === label
-      );
-    } else
-      return (
-        currentOrgSlug === selectedItems![0] &&
-        currentInstanceName === selectedItems![1] &&
-        currentDatabaseName === label
-      );
-  };
-
   return (
     <div
       className={cn(styles.col, {
@@ -177,7 +159,7 @@ export function HeaderNavCol<LinkProps>({
                     />
                   ) : null}
                   <span>{item.label}</span>
-                  {getIsSelected(group.header, item.label) && <CheckIcon />}
+                  {!!item.checked && <CheckIcon />}
                 </Link>
               ))
             ) : (
