@@ -880,3 +880,23 @@ export const BackIcon = () => (
     />
   </svg>
 );
+
+export function BookIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 9C12 7.93913 12.4214 6.92172 13.1716 6.17157C13.9217 5.42143 14.9391 5 16 5H22V20H15.6569C14.596 20 13.5786 20.4214 12.8284 21.1716L12 22M12 9V22M12 9C12 7.93913 11.5786 6.92172 10.8284 6.17157C10.0783 5.42143 9.06087 5 8 5H2V20H8.34315C9.40401 20 10.4214 20.4214 11.1716 21.1716L12 22M5 9H9M5 12.5H9M15 9H19M15 12.5H19M15 16H19M5 16H9"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
