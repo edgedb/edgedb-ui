@@ -8,7 +8,7 @@ import styles from "./authAdmin.module.scss";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 
-import {ChevronDownIcon, DeleteIcon, TabAuthIcon} from "../../icons";
+import {BookIcon, ChevronDownIcon, DeleteIcon, TabAuthIcon} from "../../icons";
 import {
   AuthAdminState,
   AuthProviderData,
@@ -59,11 +59,8 @@ export const AuthAdmin = observer(function AuthAdmin() {
           <CodeBlock code="using extension auth;" />
           <p>
             For more information check out the{" "}
-            <a
-              href="https://www.edgedb.com/docs/reference/sdl/extensions"
-              target="_blank"
-            >
-              extension docs
+            <a href="https://www.edgedb.com/p/auth-ext-docs" target="_blank">
+              auth extension docs
             </a>
           </p>
         </div>
@@ -92,6 +89,17 @@ const ConfigPage = observer(function ConfigPage() {
 
   return (
     <div className={styles.tabContent}>
+      <div className={styles.docsNote}>
+        <BookIcon />
+        <span>
+          Need help integrating EdgeDB Auth into your app? Check out the{" "}
+          <a href="https://www.edgedb.com/p/auth-ext-docs" target="_blank">
+            auth extension docs
+          </a>
+          .
+        </span>
+      </div>
+
       <div className={styles.header}>Auth Configuration</div>
       <div className={styles.configGrid}>
         <div className={styles.gridItem}>

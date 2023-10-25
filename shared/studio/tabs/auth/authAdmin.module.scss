@@ -70,6 +70,32 @@
   min-height: max-content;
 }
 
+.docsNote {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background: #dee6f6;
+  border-radius: 8px;
+  margin: -8px;
+  margin-bottom: -16px;
+
+  a {
+    text-decoration: none;
+    color: #1f8aed;
+  }
+
+  > svg {
+    width: 22px;
+    margin: -4px;
+    margin-right: 8px;
+    opacity: 0.7;
+  }
+
+  @include darkTheme {
+    background: #252d3d;
+  }
+}
+
 .header {
   font-weight: 500;
   font-size: 13px;
