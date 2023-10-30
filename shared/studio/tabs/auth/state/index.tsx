@@ -1,4 +1,3 @@
-import {Duration} from "edgedb";
 import {action, computed, observable, runInAction} from "mobx";
 import {
   getParent,
@@ -8,7 +7,6 @@ import {
   objectActions,
   prop,
 } from "mobx-keystone";
-import {parsers} from "../../../components/dataEditor";
 import {connCtx, dbCtx} from "../../../state";
 import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
 
