@@ -14,7 +14,7 @@ import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
 
 export interface AuthConfigData {
   signing_key_exists: boolean;
-  token_time_to_live: Duration;
+  token_time_to_live: string;
 }
 
 export type OAuthProviderData = {
@@ -106,12 +106,7 @@ export class AuthAdminState extends Model({
     "std::duration",
     (dur) => {
       if (dur === null) return null;
-      try {
-        parsers["std::duration"](dur, null);
-        return null;
-      } catch (e) {
-        return e instanceof Error ? e.message : String(e);
-      }
+      return /^\d+$/.test(dur) ? null : "Invalid duration";
     }
   ),
 
@@ -189,7 +184,7 @@ export class AuthAdminState extends Model({
       `with module ext::auth
       select cfg::Config.extensions[is AuthConfig] {
         signing_key_exists := signing_key_exists(),
-        token_time_to_live,
+        token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
         providers: {
           _typename := .__type__.name,
           name,
@@ -217,7 +212,7 @@ export class AuthAdminState extends Model({
     runInAction(() => {
       this.configData = {
         signing_key_exists: data.signing_key_exists,
-        token_time_to_live: data.token_time_to_live,
+        token_time_to_live: data.token_time_to_live_seconds,
       };
       this.providers = data.providers;
       this.uiConfig = data.ui ?? false;

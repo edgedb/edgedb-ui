@@ -173,7 +173,7 @@ const ConfigPage = observer(function ConfigPage() {
                     size={16}
                     value={
                       state.draftTokenTime.value ??
-                      state.configData.token_time_to_live.toString()
+                      state.configData.token_time_to_live
                     }
                     onChange={(dur) => state.draftTokenTime.setValue(dur)}
                     error={state.draftTokenTime.error}
@@ -202,8 +202,8 @@ const ConfigPage = observer(function ConfigPage() {
               )}
             </div>
             <div className={styles.configExplain}>
-              The time after which an auth token expires. A value of 0
-              indicates that the token should never expire.
+              The number of seconds after which an auth token expires. A value
+              of 0 indicates that the token should never expire.
             </div>
           </div>
         </div>
