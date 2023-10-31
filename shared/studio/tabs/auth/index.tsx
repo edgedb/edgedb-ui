@@ -115,7 +115,9 @@ const AuthUrls = observer(function AuthUrls({
         style={{display: "contents"}}
       >
         <div className={styles.label}>Built-in UI sign in url:</div>
-        <CopyUrl url={`${baseUrl}/ui/signin`} />{" "}
+        <CopyUrl url={`${baseUrl}/ui/signin`} />
+        <div className={styles.label}>Built-in UI sign up url:</div>
+        <CopyUrl url={`${baseUrl}/ui/signup`} />
       </div>
     </div>
   );
