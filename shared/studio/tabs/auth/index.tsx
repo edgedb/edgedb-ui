@@ -94,7 +94,13 @@ const AuthUrls = observer(function AuthUrls() {
   const instanceState = useInstanceState();
   const databaseState = useDatabaseState();
 
-  const baseUrl = `${instanceState.serverUrl}/db/${databaseState.name}/ext/auth`;
+  const url = new URL(instanceState.serverUrl);
+  if (url.hostname.endsWith(".edgedb.cloud")) {
+    url.port = "";
+  }
+  url.pathname = `db/${databaseState.name}/ext/auth`;
+
+  const baseUrl = url.toString();
 
   return (
     <div className={styles.authUrls}>
