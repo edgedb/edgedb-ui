@@ -181,6 +181,14 @@
     }
   }
 
+  .disabled {
+    .label,
+    .copyUrl {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  }
+
   @include isMobile {
     grid-template-columns: auto;
     gap: 4px;

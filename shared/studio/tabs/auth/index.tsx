@@ -90,7 +90,11 @@ export const authAdminTabSpec: DatabaseTabSpec = {
 
 const secretPlaceholder = "".padStart(32, "•");
 
-const AuthUrls = observer(function AuthUrls() {
+const AuthUrls = observer(function AuthUrls({
+  builtinUIEnabled,
+}: {
+  builtinUIEnabled: boolean;
+}) {
   const instanceState = useInstanceState();
   const databaseState = useDatabaseState();
 
@@ -106,8 +110,13 @@ const AuthUrls = observer(function AuthUrls() {
     <div className={styles.authUrls}>
       <div className={styles.label}>OAuth callback endpoint:</div>
       <CopyUrl url={`${baseUrl}/callback`} />
-      <div className={styles.label}>Built-in UI sign in url:</div>
-      <CopyUrl url={`${baseUrl}/ui/signin`} />
+      <div
+        className={cn({[styles.disabled]: !builtinUIEnabled})}
+        style={{display: "contents"}}
+      >
+        <div className={styles.label}>Built-in UI sign in url:</div>
+        <CopyUrl url={`${baseUrl}/ui/signin`} />{" "}
+      </div>
     </div>
   );
 });
@@ -156,7 +165,7 @@ const ConfigPage = observer(function ConfigPage() {
             auth extension docs
           </a>
           , also here are some useful URLs:
-          <AuthUrls />
+          <AuthUrls builtinUIEnabled={state.draftUIConfig !== null} />
         </div>
       </div>
 
