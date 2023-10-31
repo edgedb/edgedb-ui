@@ -8,7 +8,16 @@ import styles from "./authAdmin.module.scss";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 
-import {BookIcon, ChevronDownIcon, DeleteIcon, TabAuthIcon} from "../../icons";
+import {useInstanceState} from "../../state/instance";
+import {useDatabaseState, useTabState} from "../../state";
+
+import {
+  BookIcon,
+  ChevronDownIcon,
+  CopyIcon,
+  DeleteIcon,
+  TabAuthIcon,
+} from "../../icons";
 import {
   AuthAdminState,
   AuthProviderData,
@@ -21,7 +30,7 @@ import {
   OAuthProviderData,
   LocalEmailPasswordProviderData,
 } from "./state";
-import {useTabState} from "../../state";
+
 import {encodeB64} from "edgedb/dist/primitives/buffer";
 import Button from "@edgedb/common/ui/button";
 import {GenerateKeyIcon} from "./icons";
@@ -35,6 +44,7 @@ import {
 } from "@edgedb/common/ui/themeSwitcher/icons";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {CheckIcon} from "@edgedb/common/ui/icons";
 
 export const AuthAdmin = observer(function AuthAdmin() {
   const state = useTabState(AuthAdminState);
@@ -80,6 +90,47 @@ export const authAdminTabSpec: DatabaseTabSpec = {
 
 const secretPlaceholder = "".padStart(32, "•");
 
+const AuthUrls = observer(function AuthUrls() {
+  const instanceState = useInstanceState();
+  const databaseState = useDatabaseState();
+
+  const baseUrl = `${instanceState.serverUrl}/db/${databaseState.name}/ext/auth`;
+
+  return (
+    <div className={styles.authUrls}>
+      <div className={styles.label}>OAuth callback endpoint:</div>
+      <CopyUrl url={`${baseUrl}/callback`} />
+      <div className={styles.label}>Built-in UI sign in url:</div>
+      <CopyUrl url={`${baseUrl}/ui/signin`} />
+    </div>
+  );
+});
+
+function CopyUrl({url}: {url: string}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timeout = setTimeout(() => setCopied(false), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [copied]);
+
+  return (
+    <div className={cn(styles.copyUrl, {[styles.copied]: copied})}>
+      <span>{url}</span>
+      <button
+        onClick={() => {
+          navigator.clipboard.writeText(url);
+          setCopied(true);
+        }}
+      >
+        {copied ? <CheckIcon /> : <CopyIcon />}
+      </button>
+    </div>
+  );
+}
+
 const ConfigPage = observer(function ConfigPage() {
   const state = useTabState(AuthAdminState);
 
@@ -91,13 +142,16 @@ const ConfigPage = observer(function ConfigPage() {
     <div className={styles.tabContent}>
       <div className={styles.docsNote}>
         <BookIcon />
-        <span>
-          Need help integrating EdgeDB Auth into your app? Check out the{" "}
+        <div>
+          <b>Need help integrating EdgeDB Auth into your app?</b>
+          <br />
+          Check out the{" "}
           <a href="https://www.edgedb.com/p/auth-ext-docs" target="_blank">
             auth extension docs
           </a>
-          .
-        </span>
+          , also here are some useful URLs:
+          <AuthUrls />
+        </div>
       </div>
 
       <div className={styles.header}>Auth Configuration</div>

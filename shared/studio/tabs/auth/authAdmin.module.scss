@@ -72,27 +72,126 @@
 
 .docsNote {
   display: flex;
-  align-items: center;
-  padding: 16px 24px;
+  align-items: flex-start;
+  padding: 14px 24px;
+  line-height: 22px;
   background: #dee6f6;
   border-radius: 8px;
   margin: -8px;
   margin-bottom: -16px;
+  max-width: 100%;
+  box-sizing: border-box;
 
   a {
     text-decoration: none;
     color: #1f8aed;
   }
 
+  b {
+    font-weight: 500;
+  }
+
+  > div {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   > svg {
     width: 22px;
     margin: -4px;
     margin-right: 8px;
+    margin-top: -1px;
     opacity: 0.7;
+    flex-shrink: 0;
   }
 
   @include darkTheme {
     background: #252d3d;
+  }
+}
+
+.authUrls {
+  display: grid;
+  grid-template-columns: auto auto;
+  margin-left: 8px;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 12px;
+
+  .label {
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .copyUrl {
+    display: flex;
+    align-items: center;
+    font-family: "Roboto Mono", monospace;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.35);
+    height: 32px;
+    padding-left: 12px;
+    border-radius: 6px;
+    user-select: text;
+    min-width: 0;
+
+    @include darkTheme {
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    span {
+      margin-right: 6px;
+      flex-shrink: 1;
+      overflow: auto;
+
+      @include hideScrollbar;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 0;
+      margin-left: auto;
+      background: none;
+      border: 0;
+      outline: 0;
+      color: inherit;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      opacity: 0.3;
+      flex-shrink: 0;
+
+      svg {
+        fill: currentColor;
+      }
+
+      &:hover {
+        opacity: 0.5;
+      }
+    }
+
+    &.copied {
+      button {
+        opacity: 1;
+        color: #1f8aed;
+      }
+    }
+  }
+
+  @include isMobile {
+    grid-template-columns: auto;
+    gap: 4px;
+
+    .label {
+      text-align: left;
+
+      &:not(:first-child) {
+        margin-top: 6px;
+      }
+    }
   }
 }
 
