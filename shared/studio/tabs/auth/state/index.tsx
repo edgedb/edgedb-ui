@@ -122,7 +122,7 @@ export class AuthAdminState extends Model({
       return null;
     },
     (urls) => {
-      if (urls === null) return null;
+      if (urls === null) return "{}";
       const urlList = urls.split("\n").filter((str) => str.trim() !== "");
       return `{${urlList.map((u) => `'${u}'`).join(", ")}}`;
     }
@@ -443,7 +443,7 @@ function createDraftAuthConfig(
   name: string,
   type: string,
   validate: (val: string | null) => string | null,
-  transform: (val: string | null) => string | null = JSON.stringify
+  transform: (val: string | null) => string = JSON.stringify
 ) {
   @model(`DraftAuthConfig/${name}`)
   class DraftAuthConfig extends Model({
