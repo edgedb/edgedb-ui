@@ -1,10 +1,10 @@
-import {PropsWithChildren, useState} from "react";
-import {_ICodec, Range} from "edgedb";
+import {PropsWithChildren, useState, Fragment} from "react";
+import {_ICodec, Range, MultiRange} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import {EnumCodec} from "edgedb/dist/codecs/enum";
-import {RangeCodec} from "edgedb/dist/codecs/range";
+import {RangeCodec, MultiRangeCodec} from "edgedb/dist/codecs/range";
 
 import {Item, ItemType} from "./buildItem";
 
@@ -28,7 +28,7 @@ export function buildScalarItem(
     data,
     base.codec.getKnownTypeName(),
     base.codec instanceof EnumCodec,
-    base.codec instanceof RangeCodec
+    base.codec instanceof RangeCodec || base.codec instanceof MultiRangeCodec
       ? base.codec.getSubcodecs()[0].getKnownTypeName()
       : undefined,
     undefined,
@@ -192,6 +192,31 @@ export function renderValue(
               </span>
             </>
           )}
+          )
+        </span>
+      ),
+    };
+  }
+  if (value instanceof MultiRange) {
+    const ranges = [...value];
+
+    return {
+      body: (
+        <span>
+          multirange(
+          {ranges.map((range, i) => (
+            <Fragment key={i}>
+              {
+                renderValue(
+                  range,
+                  `multirange<${rangeKnownTypeName!}>`,
+                  false,
+                  rangeKnownTypeName!
+                ).body
+              }
+              {i < ranges.length - 1 ? ", " : null}
+            </Fragment>
+          ))}
           )
         </span>
       ),

@@ -74,6 +74,8 @@ const code = `select {
   d := <optional std::str>$d,
   e := <optional>$e,
   f := <array<str>>$f,
+  g := <range<int32>>$g,
+  h := <multirange<int32>>$h
 }`;
 
 const tree = parser.parse(code);

@@ -691,7 +691,11 @@ function generateParamExpr(
       .join(", ")}}`;
   }
 
-  if (type.schemaType === "Scalar" || type.schemaType === "Range") {
+  if (
+    type.schemaType === "Scalar" ||
+    type.schemaType === "Range" ||
+    type.schemaType === "Multirange"
+  ) {
     const paramName = `p${Object.keys(params).length}`;
     params[paramName] = {type, value: data};
     return `<${type.name}>$${paramName}`;

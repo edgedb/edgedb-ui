@@ -13,6 +13,7 @@ export const reserved_keywords = [
   "analyze",
   "and",
   "anyarray",
+  "anyobject",
   "anytuple",
   "anytype",
   "begin",
@@ -196,10 +197,16 @@ export const unreserved_keywords = [
 export const bool_literals = ["false", "true"];
 
 export const type_builtins = [
+  "Base64Alphabet",
   "BaseObject",
+  "ElasticLanguage",
   "FreeObject",
   "JsonEmpty",
+  "Language",
+  "LuceneLanguage",
   "Object",
+  "PGLanguage",
+  "Weight",
   "anycontiguous",
   "anydiscrete",
   "anyenum",
@@ -216,6 +223,7 @@ export const type_builtins = [
   "date_duration",
   "datetime",
   "decimal",
+  "document",
   "duration",
   "enum",
   "float32",
@@ -227,7 +235,8 @@ export const type_builtins = [
   "local_date",
   "local_datetime",
   "local_time",
-  "range",
+  // "multirange",
+  // "range",
   "relative_duration",
   "sequence",
   "str",
@@ -238,6 +247,7 @@ export const type_builtins = [
 export const module_builtins = [
   "cal",
   "cfg",
+  "enc",
   "ext",
   "fts",
   "math",
@@ -321,11 +331,11 @@ export const fn_builtins = [
   "max",
   "mean",
   "min",
-  "multirange",
+  // "multirange",
   "multirange_unpack",
   "overlaps",
   "random",
-  "range",
+  // "range",
   "range_get_lower",
   "range_get_upper",
   "range_is_empty",
@@ -337,6 +347,7 @@ export const fn_builtins = [
   "re_replace",
   "re_test",
   "round",
+  "search",
   "sequence_next",
   "sequence_reset",
   "sqrt",
@@ -363,6 +374,7 @@ export const fn_builtins = [
   "sum",
   "time_get",
   "to_bigint",
+  "to_bytes",
   "to_date_duration",
   "to_datetime",
   "to_decimal",
@@ -382,6 +394,17 @@ export const fn_builtins = [
   "uuid_generate_v4",
   "var",
   "var_pop",
+  "with_options",
+];
+
+export const index_builtins = [
+  "brin",
+  "btree",
+  "gin",
+  "gist",
+  "hash",
+  "index",
+  "spgist",
 ];
 
 export const operators = [

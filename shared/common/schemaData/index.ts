@@ -85,6 +85,11 @@ export interface SchemaMultirangeType {
   name: string;
   escapedName: string;
   elementType: SchemaType;
+  rangeType: {
+    schemaType: "Range";
+    name: string;
+    elementType: SchemaType;
+  };
 }
 
 interface _SchemaPointer {
@@ -750,6 +755,14 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
           );
         }
         (types.get(type.id) as SchemaRangeType).elementType = elementType;
+
+        if (type.type === "schema::MultiRange") {
+          (types.get(type.id) as SchemaMultirangeType).rangeType = {
+            schemaType: "Range",
+            name: `range<${elementType.name}>`,
+            elementType,
+          };
+        }
         break;
       }
       case "schema::ObjectType": {

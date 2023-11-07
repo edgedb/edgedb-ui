@@ -1,4 +1,4 @@
-import { ExternalTokenizer } from "@lezer/lr";
+import {ExternalTokenizer} from "@lezer/lr";
 import {
   reservedKeyword,
   unreservedKeyword,
@@ -16,6 +16,7 @@ import {
   constraint_builtins,
   fn_builtins,
   type_builtins,
+  index_builtins,
 } from "./meta.js";
 
 const reservedKeywords = new Set(reserved_keywords);
@@ -24,6 +25,7 @@ const builtins = new Set([
   ...constraint_builtins,
   ...fn_builtins,
   ...type_builtins,
+  ...index_builtins,
 ]);
 
 const chars = {
