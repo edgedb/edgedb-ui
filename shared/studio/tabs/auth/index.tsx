@@ -919,7 +919,10 @@ function TextArea({
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          style={{height: 22 * (value?.split("\n").length ?? 1) + 10 + "px", width: size ? `${size}ch` : undefined}}
+          style={{
+            height: 32 * (value?.split("\n").length ?? 1) + 20 + "px",
+            width: size ? `${size}ch` : undefined
+          }}
         />
       </div>
       {error ? <div className={styles.inputErrorMessage}>{error}</div> : null}
