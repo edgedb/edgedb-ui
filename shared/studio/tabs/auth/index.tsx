@@ -299,7 +299,7 @@ const ConfigPage = observer(function ConfigPage() {
                       <Button
                         className={styles.button}
                         label={
-                          state.draftTokenTime.updating ? "Updating" : "Update"
+                          state.draftAllowedRedirectUrls.updating ? "Updating" : "Update"
                         }
                         disabled={!!state.draftAllowedRedirectUrls.error}
                         loading={state.draftAllowedRedirectUrls.updating}
