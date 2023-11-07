@@ -920,7 +920,8 @@ function TextArea({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           style={{
-            height: 32 * (value?.split("\n").length ?? 1) + 20 + "px",
+            whiteSpace: "pre",
+            height: 32 * 2.5 + "px",
             width: size ? `${size}ch` : undefined
           }}
         />
