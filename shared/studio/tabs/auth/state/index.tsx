@@ -119,12 +119,25 @@ export class AuthAdminState extends Model({
         return "Too many URLs, maximum supported number of URLs is 128."
       }
 
+      const invalidUrls = urlList.filter((u) => {
+        try {
+          new URL(u);
+          return false;
+        } catch (e) {
+          return true;
+        }
+      });
+
+      if (invalidUrls.length > 0) {
+        return `List contained the following invalid URLs: ${invalidUrls}`;
+      }
+
       return null;
     },
     (urls) => {
       if (urls === null) return "{}";
       const urlList = urls.split("\n").filter((str) => str.trim() !== "");
-      return `{${urlList.map((u) => `'${u}'`).join(", ")}}`;
+      return `{${urlList.map((u) => JSON.stringify(u)).join(", ")}}`;
     }
   ),
 
