@@ -37,6 +37,7 @@ import {InspectorState, resultGetterCtx} from "@edgedb/inspector/state";
 import {dbCtx, connCtx} from "../../../state";
 import {DataEditingManager, UpdateLinkChangeKind} from "./edits";
 import {sessionStateCtx} from "../../../state/sessionState";
+import {sortObjectTypes} from "../../../components/objectTypeSelect";
 
 const fetchBlockSize = 100;
 
@@ -66,9 +67,14 @@ export class DataView extends Model({
   get objectTypes() {
     const objects = dbCtx.get(this)!.schemaData?.objects;
     return objects
-      ? [...objects.values()].filter(
-          (obj) =>
-            !obj.builtin && !obj.unionOf && !obj.insectionOf && !obj.from_alias
+      ? sortObjectTypes(
+          [...objects.values()].filter(
+            (obj) =>
+              !obj.builtin &&
+              !obj.unionOf &&
+              !obj.insectionOf &&
+              !obj.from_alias
+          )
         )
       : [];
   }

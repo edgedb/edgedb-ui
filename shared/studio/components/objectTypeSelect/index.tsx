@@ -3,6 +3,22 @@ import {useMemo} from "react";
 import {SchemaObjectType} from "@edgedb/common/schemaData";
 import {Select, SelectItem, SelectItems} from "@edgedb/common/ui/select";
 
+export function sortObjectTypes(objectTypes: SchemaObjectType[]) {
+  const user: SchemaObjectType[] = [];
+  const exts: SchemaObjectType[] = [];
+  for (const type of objectTypes) {
+    if (type.module.startsWith("ext::")) {
+      exts.push(type);
+    } else {
+      user.push(type);
+    }
+  }
+  return [
+    ...user.sort((a, b) => a.name.localeCompare(b.name)),
+    ...exts.sort((a, b) => a.name.localeCompare(b.name)),
+  ];
+}
+
 export function ObjectTypeSelect({
   className,
   fullScreen,

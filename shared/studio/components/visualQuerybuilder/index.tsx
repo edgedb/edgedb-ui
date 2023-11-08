@@ -18,7 +18,7 @@ import {Select} from "@edgedb/common/ui/select";
 import {CopyIcon, DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Button from "@edgedb/common/ui/button";
-import {ObjectTypeSelect} from "../objectTypeSelect";
+import {ObjectTypeSelect, sortObjectTypes} from "../objectTypeSelect";
 import {useEffect, useState} from "react";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({
@@ -32,32 +32,40 @@ export const VisualQuerybuilder = observer(function VisualQuerybuilder({
     return <div>loading schema...</div>;
   }
 
+  const schemaObjectTypes = sortObjectTypes(
+    [...schemaData.objects.values()].filter(
+      (type) =>
+        !type.builtin && !type.unionOf && !type.insectionOf && !type.from_alias
+    )
+  );
+
   if (state.root.typename === null) {
     state.setRoot(
       new QueryBuilderShape({
-        typename: [...schemaData.objects.values()].find(
-          (type) => !type.builtin
-        )?.name,
+        typename: schemaObjectTypes[0]?.name,
       })
     );
   }
 
-  return <QuerybuilderRoot schemaData={schemaData} state={state} />;
+  return (
+    <QuerybuilderRoot
+      schemaData={schemaData}
+      state={state}
+      schemaObjectTypes={schemaObjectTypes}
+    />
+  );
 });
 
 const QuerybuilderRoot = observer(function QuerybuilderRoot({
   schemaData,
   state,
+  schemaObjectTypes,
 }: {
   schemaData: SchemaData;
   state: QueryBuilderState;
+  schemaObjectTypes: SchemaObjectType[];
 }) {
   const editorState = useTabState(QueryEditor);
-
-  const schemaObjectTypes = [...schemaData.objects.values()].filter(
-    (type) =>
-      !type.builtin && !type.unionOf && !type.insectionOf && !type.from_alias
-  );
 
   const [copied, setCopied] = useState(false);
 
