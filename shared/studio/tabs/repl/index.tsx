@@ -233,7 +233,15 @@ const ReplList = observer(function ReplList({
       <RunButton
         onClick={() => replState.runQuery()}
         isLoading={replState.queryRunning}
-        disabled={!replState.canRunQuery}
+        onCancel={
+          replState._runningQuery instanceof AbortController
+            ? () => (replState._runningQuery as AbortController)?.abort()
+            : undefined
+        }
+        disabled={
+          !replState.canRunQuery &&
+          !(replState._runningQuery instanceof AbortController)
+        }
         className={styles.runBtn}
       />
     </div>
@@ -271,6 +279,21 @@ const ReplInput = observer(function ReplInput() {
   useEffect(() => {
     ref.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (replState._runningQuery instanceof AbortController) {
+      const listener = (e: KeyboardEvent) => {
+        if (e.ctrlKey && (e.key === "c" || e.key === "C")) {
+          (replState._runningQuery as AbortController)?.abort();
+        }
+      };
+      window.addEventListener("keydown", listener, {capture: true});
+
+      return () => {
+        window.removeEventListener("keydown", listener, {capture: true});
+      };
+    }
+  }, [replState._runningQuery]);
 
   const keybindings = useMemo<CodeEditorProps["keybindings"]>(
     () => [
@@ -369,6 +392,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   dbName: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const replState = useTabState(Repl);
   const editorState = useTabState(QueryEditor);
   const isMobile = useIsMobile();
   let showExpandBtn = false;
@@ -485,8 +509,18 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     output = (
       <>
         {!isMobile ? (
-          <div style={{marginLeft: 8}}>
+          <div className={styles.queryRunningSpinner} style={{marginLeft: 8}}>
             <Spinner size={18} />
+            {replState._runningQuery instanceof AbortController ? (
+              <div
+                className={styles.queryCancelButton}
+                onClick={() =>
+                  (replState._runningQuery as AbortController).abort()
+                }
+              >
+                Cancel query (Ctrl+C)
+              </div>
+            ) : null}
           </div>
         ) : null}
       </>

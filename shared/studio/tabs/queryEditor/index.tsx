@@ -190,8 +190,10 @@ export const QueryEditorView = observer(function QueryEditorView() {
         <RunButton
           onClick={() => editorState.runQuery()}
           isLoading={editorState.queryRunning}
+          onCancel={() => editorState.runningQueryAbort?.abort()}
           disabled={
-            !editorState.canRunQuery || !!splitViewState.activeViewIndex
+            (!editorState.canRunQuery && !editorState.queryRunning) ||
+            !!splitViewState.activeViewIndex
           }
         />
       </div>

@@ -307,8 +307,11 @@ export class Repl extends Model({
     this.settings[key] = value;
   }
 
-  @observable
-  queryRunning = false;
+  @observable _runningQuery: AbortController | true | null = null;
+
+  @computed get queryRunning() {
+    return this._runningQuery != null;
+  }
 
   @computed
   get canRunQuery() {
@@ -348,14 +351,16 @@ export class Repl extends Model({
       this.currentQuery = Text.empty;
     }
 
-    this.queryRunning = true;
+    const isCommandQuery = query.startsWith("\\") && !query.includes("\n");
+
+    this._runningQuery = isCommandQuery ? true : new AbortController();
     this.historyCursor = -1;
 
     dbState.setLoadingTab(Repl, true);
 
     let resultData: QueryResultData | undefined = undefined;
     try {
-      if (query.startsWith("\\") && !query.includes("\n")) {
+      if (isCommandQuery) {
         yield* _await(handleSlashCommand(query, this, historyItem));
       } else {
         const implicitLimit = sessionStateCtx
@@ -366,10 +371,17 @@ export class Repl extends Model({
 
         const {result, outCodecBuf, resultBuf, capabilities, status} =
           yield* _await(
-            conn.query(query, undefined, {
-              implicitLimit:
-                implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
-            })
+            conn.query(
+              query,
+              undefined,
+              {
+                implicitLimit:
+                  implicitLimit != null
+                    ? implicitLimit + BigInt(1)
+                    : undefined,
+              },
+              (this._runningQuery as AbortController).signal
+            )
           );
 
         dbState.refreshCaches(capabilities, status ? [status] : []);
@@ -415,6 +427,6 @@ export class Repl extends Model({
     );
 
     dbState.setLoadingTab(Repl, false);
-    this.queryRunning = false;
+    this._runningQuery = null;
   });
 }

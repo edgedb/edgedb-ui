@@ -1,5 +1,5 @@
 import cn from "@edgedb/common/utils/classNames";
-import {CrossIcon, RunIcon} from "../../icons";
+import {CrossIcon, RunIcon, CancelQueryIcon} from "../../icons";
 import Spinner from "../../spinner";
 import styles from "./roundButton.module.scss";
 
@@ -22,6 +22,7 @@ interface RunButtonProps {
   className?: string;
   disabled?: boolean;
   isLoading?: boolean;
+  onCancel?: () => void;
 }
 
 export const RunButton = ({
@@ -29,12 +30,20 @@ export const RunButton = ({
   className,
   disabled = false,
   isLoading = false,
+  onCancel,
 }: RunButtonProps) => (
   <button
     className={cn(styles.container, styles.run, className)}
-    onClick={onClick}
+    onClick={isLoading ? onCancel : onClick}
     disabled={disabled}
   >
-    {isLoading ? <Spinner size={22} /> : <RunIcon />}
+    {isLoading ? (
+      <>
+        <Spinner size={26} />
+        {onCancel ? <CancelQueryIcon /> : null}
+      </>
+    ) : (
+      <RunIcon />
+    )}
   </button>
 );
