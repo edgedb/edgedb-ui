@@ -84,7 +84,7 @@
   max-width: calc(100% - 24px);
   box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
     0px 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1;
+  z-index: 10;
 
   @include darkTheme {
     background-color: var(--grey70);
