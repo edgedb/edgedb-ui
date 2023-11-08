@@ -40,7 +40,14 @@ export default observer(function ParamEditorPanel() {
           Query Parameters
         </div>
 
-        <div ref={contentRef}>
+        <div
+          ref={contentRef}
+          onKeyDown={(e) => {
+            if (e.ctrlKey && e.key === "Enter") {
+              editorState.runQuery();
+            }
+          }}
+        >
           {paramEditorState.mixedParamsError ? (
             <div className={cn(styles.paramError, styles.topLevelError)}>
               Cannot have both positional and named parameters in query
