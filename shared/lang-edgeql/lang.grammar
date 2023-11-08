@@ -22,7 +22,7 @@ element {
   Brackets { "[" element* "]" }
 }
 
-commaSep<content> { content ("," content)* }
+commaSep<content> { content ("," content)* ","? }
 
 castStart { @extend<operator, "<"> }
 
