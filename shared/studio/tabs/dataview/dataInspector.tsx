@@ -201,12 +201,15 @@ export default observer(function DataInspectorTable({
             columnWidth={(index) => state.fieldWidths![index]}
             rowCount={state.gridRowCount}
             estimatedRowHeight={rowHeight}
-            rowHeight={(rowIndex) =>
-              state.getRowData(rowIndex - state.insertedRows.length).kind ===
-              RowKind.expanded
-                ? 28
-                : rowHeight
-            }
+            rowHeight={(rowIndex) => {
+              const rowData = state.getRowData(
+                rowIndex - state.insertedRows.length
+              );
+              return rowData.kind === RowKind.expanded
+                ? (rowData.state.state.getItems()[rowData.index + 1]?.height ??
+                    1) * 28
+                : rowHeight;
+            }}
             overscanRowCount={5}
             onItemsRendered={({
               overscanRowStartIndex,
