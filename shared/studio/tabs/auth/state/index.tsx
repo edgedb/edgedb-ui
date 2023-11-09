@@ -116,7 +116,7 @@ export class AuthAdminState extends Model({
 
       const urlList = urls.split("\n").filter((str) => str.trim() !== "");
       if (urlList.length > 128) {
-        return "Too many URLs, maximum supported number of URLs is 128."
+        return "Too many URLs, maximum supported number of URLs is 128.";
       }
 
       const invalidUrls = urlList.filter((u) => {
@@ -129,7 +129,9 @@ export class AuthAdminState extends Model({
       });
 
       if (invalidUrls.length > 0) {
-        return `List contained the following invalid URLs: ${invalidUrls}`;
+        return `List contained the following invalid URLs:\n${invalidUrls.join(
+          ",\n"
+        )}`;
       }
 
       return null;
