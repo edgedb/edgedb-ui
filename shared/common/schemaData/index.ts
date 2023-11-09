@@ -17,7 +17,7 @@ import {
   SchemaRewriteKind,
 } from "./queries";
 import {KnownScalarTypes} from "./knownTypes";
-import {paramToSDL} from "./utils";
+import {EdgeDBVersion, paramToSDL, versionGTE} from "./utils";
 
 export {KnownScalarTypes};
 export type {SchemaAnnotation, SchemaAccessPolicy, SchemaTrigger};
@@ -110,6 +110,7 @@ interface _SchemaPointer {
   cardinality: SchemaCardinality;
   default: string | null;
   expr: string | null;
+  secret: boolean;
   constraints: SchemaConstraint[];
   annotations: SchemaAnnotation[];
   rewrites: SchemaRewrite[];
@@ -315,7 +316,16 @@ function isDeprecated(annotations: SchemaAnnotation[] | null): boolean {
   return annotations?.some((anno) => anno.name === "std::deprecated") ?? false;
 }
 
-export function buildTypesGraph(data: RawIntrospectionResult): {
+const secretPointers = new Set([
+  "ext::auth::OAuthProviderConfig.secret",
+  "ext::auth::AuthConfig.auth_signing_key",
+  "ext::auth::SMTPConfig.password",
+]);
+
+export function buildTypesGraph(
+  data: RawIntrospectionResult,
+  version: EdgeDBVersion
+): {
   types: Map<string, SchemaType>;
   pointers: Map<string, SchemaPointer>;
   functions: Map<string, SchemaFunction>;
@@ -335,6 +345,8 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
   const globals = new Map<string, SchemaGlobal>();
 
   const extendedBy = new Map<string, Set<SchemaObjectType>>();
+
+  const patchSecretProps = !versionGTE(version, [5, 0]);
 
   function getType(id: string, errMessage: string) {
     const type = types.get(id);
@@ -585,6 +597,7 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
       cardinality: pointer.cardinality,
       default: pointer.default,
       expr: pointer.expr,
+      secret: pointer.secret ?? false,
       constraints: pointer.constraintIds.map((id) => {
         const constraint = constraints.get(id);
         if (!constraint) {
@@ -807,6 +820,18 @@ export function buildTypesGraph(data: RawIntrospectionResult): {
 
           if (pointer.type === "Link" && pointer.name === "__type__") {
             continue;
+          }
+
+          if (patchSecretProps) {
+            const keys = [t.name, ...t.bases.map((b) => b.name)].map(
+              (name) => `${name}.${pointer.name}`
+            );
+            for (const key of keys) {
+              if (secretPointers.has(key)) {
+                pointer.secret = true;
+                break;
+              }
+            }
           }
 
           pointer["@owned"] = p["@owned"];

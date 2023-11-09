@@ -228,6 +228,7 @@ export type ObjectField = {
   computedExpr: string | null;
   readonly: boolean;
   multi: boolean;
+  secret: boolean;
 } & (
   | {
       type: ObjectFieldType.property;
@@ -442,6 +443,7 @@ export class DataInspector extends Model({
         multi: pointer.cardinality === "Many",
         computedExpr: pointer.expr,
         readonly: pointer.readonly,
+        secret: pointer.secret,
       };
 
       if (pointer.type === "Property") {
@@ -1040,7 +1042,7 @@ export class DataInspector extends Model({
       id,
       ${inEditMode ? "__isLinked," : ""}
       ${this.fields
-        .filter((field) => field.name !== "id")
+        .filter((field) => field.name !== "id" && !field.secret)
         .map((field) => {
           const selectName = `${
             field.subtypeName ? `[IS ${field.escapedSubtypeName}]` : ""
