@@ -278,6 +278,54 @@ const ConfigPage = observer(function ConfigPage() {
             </div>
           </div>
         </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>allowed_redirect_urls</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <TextArea
+                    value={
+                      state.draftAllowedRedirectUrls.value ??
+                      state.configData.allowed_redirect_urls
+                    }
+                    onChange={(urls) => state.draftAllowedRedirectUrls.setValue(urls)}
+                    error={state.draftAllowedRedirectUrls.error}
+                    size={32.5}
+                  />
+                  {state.draftAllowedRedirectUrls.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftAllowedRedirectUrls.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftAllowedRedirectUrls.error}
+                        loading={state.draftAllowedRedirectUrls.updating}
+                        onClick={() => state.draftAllowedRedirectUrls.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftAllowedRedirectUrls.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+                New line seperated list of URLs that will be checked against
+                this list to ensure they are going to a trusted domain controlled
+                by the application. URLs are matched based on checking if the
+                candidate redirect URL is a match or a subdirectory of any of
+                these allowed URLs
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className={styles.header}>Providers</div>
@@ -848,6 +896,35 @@ function Input({
             <span>Generate Random Key</span>
           </div>
         ) : null}
+      </div>
+      {error ? <div className={styles.inputErrorMessage}>{error}</div> : null}
+    </div>
+  );
+}
+
+function TextArea({
+  value,
+  onChange,
+  error,
+  size,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  error?: string | null;
+  size?: number;
+}) {
+  return (
+    <div className={styles.inputWrapper}>
+      <div className={cn(styles.input, {[styles.error]: !!error})}>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            whiteSpace: "pre",
+            height: 32 * 2.5 + "px",
+            width: size ? `${size}ch` : undefined
+          }}
+        />
       </div>
       {error ? <div className={styles.inputErrorMessage}>{error}</div> : null}
     </div>

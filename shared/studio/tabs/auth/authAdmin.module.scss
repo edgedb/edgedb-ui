@@ -232,6 +232,7 @@
   min-width: 0;
   max-width: 100%;
 
+  textarea,
   input {
     font-family: inherit;
     line-height: inherit;
@@ -283,6 +284,7 @@
   padding: 4px;
   padding-bottom: 0;
   color: #db5246;
+  white-space: pre-wrap;
 }
 
 .button.button {

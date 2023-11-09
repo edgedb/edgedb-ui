@@ -13,6 +13,7 @@ import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
 export interface AuthConfigData {
   signing_key_exists: boolean;
   token_time_to_live: string;
+  allowed_redirect_urls: string;
 }
 
 export type OAuthProviderData = {
@@ -107,6 +108,40 @@ export class AuthAdminState extends Model({
       return /^\d+$/.test(dur) ? null : "Invalid duration";
     }
   ),
+  draftAllowedRedirectUrls: createDraftAuthConfig(
+    "allowed_redirect_urls",
+    "std::str",
+    (urls) => {
+      if (urls === null) return null;
+
+      const urlList = urls.split("\n").filter((str) => str.trim() !== "");
+      if (urlList.length > 128) {
+        return "Too many URLs, maximum supported number of URLs is 128.";
+      }
+
+      const invalidUrls = urlList.filter((u) => {
+        try {
+          new URL(u);
+          return false;
+        } catch (e) {
+          return true;
+        }
+      });
+
+      if (invalidUrls.length > 0) {
+        return `List contained the following invalid URLs:\n${invalidUrls.join(
+          ",\n"
+        )}`;
+      }
+
+      return null;
+    },
+    (urls) => {
+      if (urls === null) return "{}";
+      const urlList = urls.split("\n").filter((str) => str.trim() !== "");
+      return `{${urlList.map((u) => JSON.stringify(u)).join(", ")}}`;
+    }
+  ),
 
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
@@ -183,6 +218,7 @@ export class AuthAdminState extends Model({
       select cfg::Config.extensions[is AuthConfig] {
         signing_key_exists := signing_key_exists(),
         token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
+        allowed_redirect_urls,
         providers: {
           _typename := .__type__.name,
           name,
@@ -211,6 +247,7 @@ export class AuthAdminState extends Model({
       this.configData = {
         signing_key_exists: data.signing_key_exists,
         token_time_to_live: data.token_time_to_live_seconds,
+        allowed_redirect_urls: data.allowed_redirect_urls.join("\n"),
       };
       this.providers = data.providers;
       this.uiConfig = data.ui ?? false;
@@ -420,7 +457,8 @@ export class DraftProviderConfig extends Model({
 function createDraftAuthConfig(
   name: string,
   type: string,
-  validate: (val: string | null) => string | null
+  validate: (val: string | null) => string | null,
+  transform: (val: string | null) => string = JSON.stringify
 ) {
   @model(`DraftAuthConfig/${name}`)
   class DraftAuthConfig extends Model({
@@ -447,7 +485,7 @@ function createDraftAuthConfig(
         await conn.execute(
           `
     configure current database set
-      ext::auth::AuthConfig::${name} := <${type}>${JSON.stringify(this.value)}`
+      ext::auth::AuthConfig::${name} := <${type}>${transform(this.value)}`
         );
         await state.refreshConfig();
         this.setValue(null);
