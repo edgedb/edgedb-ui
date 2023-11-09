@@ -1,4 +1,4 @@
-import {Range} from "edgedb";
+import {MultiRange, Range} from "edgedb";
 
 import {SchemaScalarType} from "@edgedb/common/schemaData";
 import {assertNever} from "@edgedb/common/utils/assertNever";
@@ -28,9 +28,16 @@ export interface EditorRangeType {
   elementType: SchemaScalarType;
 }
 
+export interface EditorMultirangeType {
+  schemaType: "Multirange";
+  name: string;
+  rangeType: EditorRangeType;
+}
+
 export type PrimitiveType =
   | SchemaScalarType
   | EditorRangeType
+  | EditorMultirangeType
   | EditorArrayType
   | EditorTupleType;
 
@@ -55,6 +62,7 @@ export function newPrimitiveValue(
         (type.knownBaseType ?? type).name !== "std::str",
       ];
     case "Array":
+    case "Multirange":
       return [[], false];
     case "Range":
       return [
@@ -130,6 +138,13 @@ export function valueToEditorValue(
         incUpper: value.incUpper,
         empty: value.isEmpty,
       };
+    case "Multirange":
+      if (!(value instanceof MultiRange)) {
+        throw new Error(`Expected MultiRange value for multirange type`);
+      }
+      return [...value].map((range) =>
+        valueToEditorValue(range, type.rangeType)
+      );
     default:
       assertNever(schemaType);
   }
@@ -198,6 +213,14 @@ export function parseEditorValue(
           : null,
         val.incLower,
         val.incUpper
+      );
+    }
+    case "Multirange": {
+      if (!Array.isArray(value)) {
+        throw new Error(`Expected array value for array type`);
+      }
+      return new MultiRange(
+        value.map((val) => parseEditorValue(val, type.rangeType))
       );
     }
     default:

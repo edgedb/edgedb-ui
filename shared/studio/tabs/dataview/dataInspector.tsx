@@ -14,7 +14,7 @@ import {VariableSizeGrid as Grid} from "react-window";
 import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
 import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
-import {RangeCodec} from "edgedb/dist/codecs/range";
+import {MultiRangeCodec, RangeCodec} from "edgedb/dist/codecs/range";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -259,11 +259,12 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
   switch (codec.getKind()) {
     case "scalar":
     case "range":
+    case "multirange":
       return renderValue(
         value,
         codec.getKnownTypeName(),
         codec instanceof EnumCodec,
-        codec instanceof RangeCodec
+        codec instanceof RangeCodec || codec instanceof MultiRangeCodec
           ? codec.getSubcodecs()[0].getKnownTypeName()
           : undefined,
         false,

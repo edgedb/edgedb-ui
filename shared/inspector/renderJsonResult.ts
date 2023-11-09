@@ -51,23 +51,12 @@ export function _renderToJson(
       }
     }
     case "range": {
-      if (val.isEmpty) {
-        return `{"empty": true}`;
-      }
-      const subcodec = codec.getSubcodecs()[0];
-      return `{"lower": ${_renderToJson(
-        val.lower,
-        subcodec,
-        depth,
-        implicitLimit
-      )}, "upper": ${_renderToJson(
-        val.upper,
-        subcodec,
-        depth,
-        implicitLimit
-      )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
-        val.incUpper ? "true" : "false"
-      }}`;
+      return _renderRangeToJSON(val, codec, depth, implicitLimit);
+    }
+    case "multirange": {
+      return `[${[...val]
+        .map((range) => _renderRangeToJSON(range, codec, depth, implicitLimit))
+        .join(", ")}]`;
     }
     case "set":
     case "array":
@@ -128,4 +117,29 @@ export function _renderToJson(
     case "sparse_object":
       throw new Error("unexpected sparse_object");
   }
+}
+
+function _renderRangeToJSON(
+  val: any,
+  codec: ICodec,
+  depth: string,
+  implicitLimit: number | null
+) {
+  if (val.isEmpty) {
+    return `{"empty": true}`;
+  }
+  const subcodec = codec.getSubcodecs()[0];
+  return `{"lower": ${_renderToJson(
+    val.lower,
+    subcodec,
+    depth,
+    implicitLimit
+  )}, "upper": ${_renderToJson(
+    val.upper,
+    subcodec,
+    depth,
+    implicitLimit
+  )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
+    val.incUpper ? "true" : "false"
+  }}`;
 }

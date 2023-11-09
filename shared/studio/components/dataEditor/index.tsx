@@ -10,6 +10,7 @@ import styles from "./dataEditor.module.scss";
 import {EmptySetIcon, SubmitChangesIcon} from "../../icons";
 import {
   EditorArrayType,
+  EditorMultirangeType,
   EditorRangeType,
   EditorRangeValue,
   EditorTupleType,
@@ -207,6 +208,8 @@ export function getInputComponent<AllowNull extends boolean = false>(
     Input = TupleEditor;
   } else if (type.schemaType === "Range") {
     Input = RangeEditor;
+  } else if (type.schemaType === "Multirange") {
+    Input = MultiRangeEditor;
   } else {
     Input = () => <></>;
   }
@@ -442,6 +445,77 @@ export const RangeEditor = forwardRef(function RangeEditor(
   );
 });
 
+export const MultiRangeEditor = forwardRef(function MultiRangeEditor(
+  {
+    type,
+    value,
+    onChange,
+    depth,
+  }: {
+    type: EditorMultirangeType;
+    value: EditorValue[];
+    onChange: (val: EditorValue[], error: boolean) => void;
+    depth: number;
+  },
+  ref
+) {
+  const [errs, setErrs] = useState<boolean[]>(
+    Array(value?.length ?? 0).fill(false)
+  );
+
+  return (
+    <div
+      className={cn(styles.arrayEditor, styles.isMultirange, styles.panel, {
+        [styles.panelNested]: depth % 2 !== 0,
+      })}
+    >
+      {value.map((val, i) => {
+        return (
+          <div key={i} className={styles.arrayItem}>
+            <RangeEditor
+              ref={i === 0 ? (ref as any) : undefined}
+              type={type.rangeType}
+              depth={depth + 1}
+              value={val as EditorRangeValue}
+              onChange={(val, err) => {
+                const newVal = [...value];
+                const newErrs = [...errs];
+                newVal[i] = val;
+                newErrs[i] = err;
+                setErrs(newErrs);
+                onChange(newVal, newErrs.includes(true));
+              }}
+            />
+            <div
+              className={styles.removeButton}
+              onClick={() => {
+                const newVal = [...value];
+                const newErrs = [...errs];
+                newVal.splice(i, 1);
+                newErrs.splice(i, 1);
+                setErrs(newErrs);
+                onChange(newVal, newErrs.includes(true));
+              }}
+            >
+              <DeleteIcon />
+            </div>
+          </div>
+        );
+      })}
+      <div
+        className={styles.addButton}
+        onClick={() => {
+          const [val, err] = newPrimitiveValue(type.rangeType);
+          setErrs([...errs, err]);
+          onChange([...value, val], errs.includes(true));
+        }}
+      >
+        +
+      </div>
+    </div>
+  );
+});
+
 const EnumEditor = forwardRef(function EnumEditor(
   {
     type,
@@ -670,7 +744,7 @@ const nullableInputs = new Map<any, any>([
         ),
       ] as [any, any]
   ),
-  ...[ArrayEditor, TupleEditor, RangeEditor].map(
+  ...[ArrayEditor, TupleEditor, RangeEditor, MultiRangeEditor].map(
     (Input: any) =>
       [
         Input,

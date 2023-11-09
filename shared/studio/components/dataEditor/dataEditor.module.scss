@@ -422,6 +422,12 @@
     }
   }
 
+  &.isMultirange {
+    &:before {
+      content: "multirange";
+    }
+  }
+
   .arrayItem {
     display: flex;
     align-items: flex-start;

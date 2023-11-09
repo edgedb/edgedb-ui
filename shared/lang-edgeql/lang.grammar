@@ -15,6 +15,7 @@ element {
   Punctuation |
   Cast |
   compoundType |
+  fns |
   QueryParameter |
   Parens { "(" element* ")" } |
   Braces { "{" (element | ";")* "}" } |
@@ -38,10 +39,14 @@ TupleType {
 }
 
 RangeType {
-  BuiltinName { @specialize<shortName, "range"> } castStart Name ">"
+  BuiltinName { @specialize<shortName, "range" | "multirange"> } castStart Name ">"
 }
 
 compoundType { ArrayType | TupleType }
+
+fns {
+  BuiltinName { @specialize<shortName, "range" | "multirange"> }
+}
 
 Cast { castStart ( Name | compoundType | RangeType ) ~cast ">" }
 

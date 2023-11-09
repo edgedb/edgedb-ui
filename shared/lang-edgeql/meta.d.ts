@@ -5,5 +5,6 @@ export const type_builtins: string[];
 export const module_builtins: string[];
 export const constraint_builtins: string[];
 export const fn_builtins: string[];
+export const index_builtins: string[];
 export const operators: string[];
 export const navigation: string[];

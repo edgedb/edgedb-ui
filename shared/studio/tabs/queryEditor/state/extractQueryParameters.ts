@@ -4,7 +4,10 @@ import {parser} from "@edgedb/lang-edgeql";
 import {KnownScalarTypes, SchemaScalarType} from "@edgedb/common/schemaData";
 
 import {getAllChildren, getNodeText} from "../../../utils/syntaxTree";
-import {PrimitiveType} from "../../../components/dataEditor/utils";
+import {
+  EditorRangeType,
+  PrimitiveType,
+} from "../../../components/dataEditor/utils";
 
 export type ResolvedParameter =
   | {
@@ -77,6 +80,7 @@ function resolveCastType(
       };
     }
     case "RangeType": {
+      const type = getNodeText(query, castNode.firstChild!);
       const elementType = resolveCastType(
         query,
         schemaScalars,
@@ -86,13 +90,20 @@ function resolveCastType(
         elementType.schemaType !== "Scalar" ||
         !validRangeScalars.has((elementType.knownBaseType ?? elementType).name)
       ) {
-        throw new Error("Invalid type in range type");
+        throw new Error(`Invalid type in ${type} type`);
       }
-      return {
+      const rangeType: EditorRangeType = {
         schemaType: "Range",
         name: `range<${elementType.name}>`,
         elementType,
       };
+      return type === "multirange"
+        ? {
+            schemaType: "Multirange",
+            name: `multirange<${elementType.name}>`,
+            rangeType,
+          }
+        : rangeType;
     }
     case "TupleType": {
       let elementNode = castNode.firstChild?.nextSibling ?? null;
