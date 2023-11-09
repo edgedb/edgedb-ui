@@ -134,7 +134,7 @@
     display: none;
 
     @include breakpoint(mobile) {
-      display: flex;
+      display: grid;
       position: absolute;
       bottom: 8px;
       right: 16px;
@@ -587,6 +587,20 @@
   justify-content: center;
   align-items: center;
   opacity: 0.8;
+}
+
+.queryRunningSpinner {
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+
+  .queryCancelButton {
+    font-size: 13px;
+    margin-left: 12px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 }
 
 .retroMode {

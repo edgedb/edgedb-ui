@@ -155,7 +155,11 @@ export class QueryEditor extends Model({
 
   showExplain: prop(false).withSetter(),
 }) {
-  @observable queryRunning = false;
+  @observable runningQueryAbort: AbortController | null = null;
+
+  @computed get queryRunning() {
+    return this.runningQueryAbort != null;
+  }
 
   @observable.shallow
   currentQueryData: QueryData = {
@@ -651,7 +655,8 @@ export class QueryEditor extends Model({
             {
               implicitLimit:
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
-            }
+            },
+            this.runningQueryAbort?.signal
           )
         );
 
@@ -694,7 +699,7 @@ export class QueryEditor extends Model({
         : null;
     if (!query) return;
 
-    this.queryRunning = true;
+    this.runningQueryAbort = new AbortController();
 
     const dbState = dbCtx.get(this)!;
     dbState.setLoadingTab(QueryEditor, true);
@@ -704,7 +709,7 @@ export class QueryEditor extends Model({
 
     dbState.refreshCaches(capabilities ?? 0, status ? [status] : []);
 
-    this.queryRunning = false;
+    this.runningQueryAbort = null;
     dbState.setLoadingTab(QueryEditor, false);
     this.splitView.setActiveViewIndex(1);
   });

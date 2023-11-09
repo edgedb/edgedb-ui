@@ -68,6 +68,7 @@ type PendingQuery = {
   query: string;
   params?: QueryParams;
   opts: QueryOpts;
+  abortSignal: AbortSignal | null;
   reject: (error: Error) => void;
 } & (
   | {kind: "query"; resolve: (result: QueryResult) => void}
@@ -130,9 +131,10 @@ export class Connection extends Model({
   query(
     query: string,
     params?: QueryParams,
-    opts: QueryOpts = {}
+    opts: QueryOpts = {},
+    abortSignal?: AbortSignal
   ): Promise<QueryResult> {
-    return this._addQueryToQueue("query", query, params, opts);
+    return this._addQueryToQueue("query", query, params, abortSignal, opts);
   }
 
   parse(query: string): Promise<ParseResult> {
@@ -147,6 +149,7 @@ export class Connection extends Model({
     kind: QueryKind,
     query: string,
     params?: QueryParams,
+    abortSignal: AbortSignal | null = null,
     opts: QueryOpts = {}
   ) {
     return new Promise<any>((resolve, reject) => {
@@ -155,6 +158,7 @@ export class Connection extends Model({
         query,
         params,
         opts,
+        abortSignal,
         resolve,
         reject,
       });
@@ -175,7 +179,8 @@ export class Connection extends Model({
           query.kind,
           query.query,
           query.opts,
-          query.params
+          query.params,
+          query.abortSignal
         );
         query.resolve(result as any);
       } catch (e: any) {
@@ -187,13 +192,22 @@ export class Connection extends Model({
     }
   }
 
+  private checkAborted(abortSignal: AbortSignal | null) {
+    if (abortSignal?.aborted) {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }
+  }
+
   async _query(
     kind: QueryKind,
     queryString: string,
     opts: QueryOpts,
-    params?: QueryParams
+    params: QueryParams | undefined,
+    abortSignal: AbortSignal | null
   ): Promise<QueryResult | ParseResult | void> {
     try {
+      this.checkAborted(abortSignal);
+
       let state = this._state;
 
       if (opts.ignoreSessionConfig) {
@@ -201,7 +215,15 @@ export class Connection extends Model({
       }
 
       if (kind === "execute") {
-        await this.conn.rawExecute(queryString, state);
+        await this.conn.rawExecute(
+          queryString,
+          state,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          abortSignal
+        );
         return;
       }
 
@@ -228,7 +250,8 @@ export class Connection extends Model({
           await this.conn.rawParse(
             queryString,
             state,
-            isExplain ? {} : queryOptions
+            isExplain ? {} : queryOptions,
+            abortSignal
           );
         this._codecCache.set(queryString, [
           inCodec,
@@ -244,13 +267,16 @@ export class Connection extends Model({
         return {outCodecBuf, duration: Math.round(parseEndTime - startTime)};
       }
 
+      this.checkAborted(abortSignal);
+
       const resultBuf = await this.conn.rawExecute(
         queryString,
         state,
         outCodec,
         isExplain ? {} : {...queryOptions, implicitLimit: opts.implicitLimit},
         inCodec,
-        params
+        params,
+        abortSignal
       );
 
       const executeEndTime = performance.now();
@@ -271,6 +297,9 @@ export class Connection extends Model({
     } catch (err) {
       if (err instanceof AuthenticationError) {
         instanceCtx.get(this)!._refreshAuthToken?.();
+      }
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new DOMException("Query was canceled by user.", "AbortError");
       }
       throw err;
     }
