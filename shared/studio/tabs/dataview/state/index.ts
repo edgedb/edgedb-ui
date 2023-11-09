@@ -1040,13 +1040,21 @@ export class DataInspector extends Model({
             if (this.omittedLinks.has(field.name)) {
               return `__count_${field.queryName} := <int64>{}`;
             }
+            const typeUnionNames = resolveObjectTypeUnion(
+              this.objectType!
+            ).map((t) => t.escapedName);
             return `__count_${field.queryName} := (for g in (
               group ${
                 field.targetHasSelectAccessPolicy && field.required
                   ? `(
                 with sourceId := .id
                 select ${field.escapedTypename}
-                filter .<${field.escapedName}.id = sourceId
+                filter ${typeUnionNames
+                  .map(
+                    (name) =>
+                      `.<${field.escapedName}[is ${name}].id = sourceId`
+                  )
+                  .join(" or ")}
               )`
                   : selectName
               }
