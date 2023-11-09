@@ -6,7 +6,9 @@ describe("REPL:", () => {
   });
 
   test("check basic UI and click on \\help command", async () => {
-    const header = await driver.findElement(ByUIClass("repl_replHeader"));
+    const header = await driver.wait(
+      until.elementLocated(ByUIClass("repl_replHeader"))
+    );
 
     const headerMessage = await header.findElement(
       ByUIClass("repl_headerMsg")
