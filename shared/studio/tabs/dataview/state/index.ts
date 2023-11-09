@@ -268,7 +268,8 @@ export class DataInspector extends Model({
   fieldWidths: prop<number[]>(() => []),
   expandedInspectors: prop(() => objectMap<ExpandedInspector>()),
 
-  filter: prop<string>(""),
+  // [stripped filter, original filter str]
+  filter: prop<[string, string]>(() => ["", ""] as [string, string]),
   errorFilter: prop<ErrorFilter | null>(null),
   filterPanelOpen: prop<boolean>(false).withSetter(),
 }) {
@@ -680,7 +681,7 @@ export class DataInspector extends Model({
       const data = yield* _await(
         conn.query(
           `SELECT count((${query}${
-            this.filter ? ` FILTER ${this.filter}` : ""
+            this.filter[0] ? ` FILTER ${this.filter[0]}` : ""
           }))`,
           params
         )
@@ -1009,7 +1010,7 @@ export class DataInspector extends Model({
       query: `WITH
     baseObjects := (${baseObjectsQuery}),
     rows := (SELECT baseObjects ${
-      this.filter ? `FILTER ${this.filter}` : ""
+      this.filter[0] ? `FILTER ${this.filter[0]}` : ""
     } ORDER BY ${inEditMode ? `.__isLinked DESC THEN` : ""}${
         sortField
           ? `${
@@ -1103,27 +1104,33 @@ export class DataInspector extends Model({
 
   // filters
 
+  _getStrippedFilter() {
+    const filter = this.filterEditStr.toString();
+    return [
+      filter
+        .replace(/#.*/g, "")
+        .trimStart()
+        .replace(/^filter\s/i, "")
+        .trimEnd(),
+      filter,
+    ] as [string, string];
+  }
+
   @computed
   get filterEdited() {
-    const filterStrTrimmed = this.filterEditStr
-      .toString()
-      .replace(/^filter\s/i, "")
-      .trim();
-
-    if (this.errorFilter) return filterStrTrimmed !== this.errorFilter.filter;
-    return filterStrTrimmed !== this.filter;
+    if (this.errorFilter) {
+      return this._getStrippedFilter()[0] !== this.errorFilter.filter;
+    }
+    return this._getStrippedFilter()[0] !== this.filter[0];
   }
 
   @modelFlow
   applyFilter = _async(function* (this: DataInspector) {
-    const filter = this.filterEditStr
-      .toString()
-      .replace(/^filter\s/i, "")
-      .trim();
+    const [filter, origFilter] = this._getStrippedFilter();
 
     if (!filter) {
       this.errorFilter = null;
-      this.filter = "";
+      this.filter = ["", ""];
 
       this._refreshData(true);
 
@@ -1149,20 +1156,20 @@ export class DataInspector extends Model({
     }
 
     this.errorFilter = null;
-    this.filter = filter;
+    this.filter = [filter, origFilter];
 
     this._refreshData(true);
   });
 
   @modelAction
   revertFilter() {
-    this.filterEditStr = Text.of([`filter ${this.filter}`]);
+    this.filterEditStr = Text.of([this.filter[1]]);
     this.errorFilter = null;
   }
 
   @modelAction
   disableFilter() {
-    this.filter = "";
+    this.filter = ["", ""];
     this.errorFilter = null;
 
     this._refreshData(true);
@@ -1173,8 +1180,8 @@ export class DataInspector extends Model({
     this.filterEditStr = Text.of(["filter "]);
     this.errorFilter = null;
 
-    if (this.filter) {
-      this.filter = "";
+    if (this.filter[0]) {
+      this.filter = ["", ""];
       this._refreshData(true);
     }
   }

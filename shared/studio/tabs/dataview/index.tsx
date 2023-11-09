@@ -241,7 +241,7 @@ const DataInspectorView = observer(function DataInspectorView({
             <div
               className={cn(styles.filterButton, {
                 [styles.open]: inspectorState.filterPanelOpen,
-                [styles.filterActive]: !!inspectorState.filter,
+                [styles.filterActive]: !!inspectorState.filter[0],
               })}
               onClick={() => {
                 inspectorState.setFilterPanelOpen(
@@ -305,7 +305,7 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
 
   const applyFilterOnMobile = async () => {
     await state.applyFilter();
-    if (state.filter) state.setFilterPanelOpen(false);
+    if (state.filter[0]) state.setFilterPanelOpen(false);
   };
 
   const removeFilter = () => {
@@ -334,7 +334,7 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
           label="Clear"
           icon={<ClearFilterIcon />}
           leftIcon
-          disabled={!state.filter && !state.filterEdited}
+          disabled={!state.filter[0] && !state.filterEdited}
           onClick={() => state.clearFilter()}
         />
 
@@ -343,13 +343,13 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
           label="Disable Filter"
           icon={<ClearFilterIcon />}
           leftIcon
-          disabled={!state.filter}
+          disabled={!state.filter[0]}
           onClick={() => state.disableFilter()}
         />
 
         <Button
           className={styles.applyFilterButton}
-          label={state.filter ? "Update Filter" : "Apply Filter"}
+          label={state.filter[0] ? "Update Filter" : "Apply Filter"}
           icon={<ApplyFilterIcon />}
           leftIcon
           disabled={!state.filterEdited}
@@ -361,7 +361,7 @@ const FilterPanel = observer(function FilterPanel({state}: FilterPanelProps) {
 
         <MobButton
           className={styles.filterBtn}
-          disabled={!state.filter && !state.errorFilter?.error}
+          disabled={!state.filter[0] && !state.errorFilter?.error}
           onClick={removeFilter}
           label="Remove Filter"
         />
