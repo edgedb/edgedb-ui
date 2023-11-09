@@ -165,6 +165,7 @@ export interface RawPointerType {
   cardinality: SchemaCardinality;
   default: string | null;
   expr: string | null;
+  secret?: boolean;
   constraintIds: string[];
   annotations: SchemaAnnotation[];
   rewrites?: RawSchemaRewrite[];
@@ -195,6 +196,7 @@ select Pointer {
   cardinality,
   default,
   expr,
+  ${versionGTE(version, [5, 0]) ? "secret," : ""}
   constraintIds := .constraints.id,
   annotations: {
     name,

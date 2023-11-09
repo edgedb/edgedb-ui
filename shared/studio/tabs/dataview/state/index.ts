@@ -52,6 +52,7 @@ type ParentObject = {
   linkId: string;
   isMultiLink: boolean;
   isComputedLink: boolean;
+  readonly: boolean;
 };
 
 @model("DataView")
@@ -183,6 +184,7 @@ export class DataView extends Model({
                   ? pointer.cardinality === "Many"
                   : false,
               isComputedLink: !!pointer.expr,
+              readonly: parentSchemaObject.readonly,
             },
           });
         }
@@ -228,6 +230,7 @@ export type ObjectField = {
   computedExpr: string | null;
   readonly: boolean;
   multi: boolean;
+  secret: boolean;
 } & (
   | {
       type: ObjectFieldType.property;
@@ -373,6 +376,7 @@ export class DataInspector extends Model({
       linkId: `${objectId}__${field.name}`,
       isMultiLink: field.type === ObjectFieldType.link ? field.multi : false,
       isComputedLink: !!field.computedExpr,
+      readonly: this.objectType!.readonly,
     });
   }
 
@@ -442,6 +446,7 @@ export class DataInspector extends Model({
         multi: pointer.cardinality === "Many",
         computedExpr: pointer.expr,
         readonly: pointer.readonly,
+        secret: pointer.secret,
       };
 
       if (pointer.type === "Property") {
@@ -1041,7 +1046,7 @@ export class DataInspector extends Model({
       id,
       ${inEditMode ? "__isLinked," : ""}
       ${this.fields
-        .filter((field) => field.name !== "id")
+        .filter((field) => field.name !== "id" && !field.secret)
         .map((field) => {
           const selectName = `${
             field.subtypeName ? `[IS ${field.escapedSubtypeName}]` : ""
@@ -1297,9 +1302,9 @@ class ExpandedInspector extends Model({
     } filter .id = <uuid><str>$id)
       select parentObj.\`${fieldName}\` {
         ${[
-          ...Object.values(objectType.properties).map(
-            (prop) => prop.escapedName
-          ),
+          ...Object.values(objectType.properties)
+            .filter((p) => !p.secret)
+            .map((prop) => prop.escapedName),
           ...Object.values(objectType.links).map(
             (link) => `${link.escapedName} limit 0,
         \`__count_${link.name}\` := count(.${link.escapedName})`
@@ -1381,9 +1386,11 @@ class ExpandedInspector extends Model({
 
     return `select ${objectType.escapedName} {
       ${[
-        ...Object.values(objectType.properties).map((prop) => {
-          return prop.escapedName;
-        }),
+        ...Object.values(objectType.properties)
+          .filter((p) => !p.secret)
+          .map((prop) => {
+            return prop.escapedName;
+          }),
         ...Object.values(objectType.links).map((link) => {
           if (dataInspector.omittedLinks.has(link.name)) {
             return `\`__${link.name}\` := <std::Object>{},

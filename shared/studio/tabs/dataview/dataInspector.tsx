@@ -415,7 +415,9 @@ const GridCell = observer(function GridCell({
   if (isEmptySubtype) {
     content = <span className={styles.emptySubtypeField}>-</span>;
   } else if (data) {
-    if (field.type === ObjectFieldType.property) {
+    if (field.secret) {
+      content = <span className={styles.emptySet}>secret data hidden</span>;
+    } else if (field.type === ObjectFieldType.property) {
       const undoEdit =
         !isDeletedRow && !!cellEditState ? (
           <div
@@ -502,6 +504,7 @@ const GridCell = observer(function GridCell({
   const isEditable =
     !isEmptySubtype &&
     !field.computedExpr &&
+    !state.objectType?.readonly &&
     (!field.readonly || !rowData) &&
     data &&
     (field.type === ObjectFieldType.link || field.name !== "id");
@@ -676,7 +679,9 @@ const FieldHeader = observer(function FieldHeader({
         </div>
       </div>
 
-      {field.type === ObjectFieldType.property && field.name !== "id" ? (
+      {!field.secret &&
+      field.type === ObjectFieldType.property &&
+      field.name !== "id" ? (
         <div
           className={cn(styles.fieldSort, {
             [styles.fieldSorted]: !!sortDir,
@@ -777,7 +782,7 @@ const DataRowIndex = observer(function DataRowIndex({
     : !!editedLink;
 
   let rowAction: JSX.Element | null = null;
-  if (dataIndex === null || data) {
+  if ((dataIndex === null || data) && !state.objectType?.readonly) {
     if (state.parentObject?.editMode) {
       let input: JSX.Element;
       if (state.parentObject.isMultiLink) {

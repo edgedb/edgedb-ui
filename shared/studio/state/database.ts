@@ -35,6 +35,7 @@ import {
   SchemaGlobal,
   SchemaOperator,
 } from "@edgedb/common/schemaData";
+import {EdgeDBVersion} from "@edgedb/common/schemaData/utils";
 
 import {fetchSchemaData, storeSchemaData} from "../idbStore";
 
@@ -44,7 +45,7 @@ import {SessionState, sessionStateCtx} from "./sessionState";
 
 export const dbCtx = createMobxContext<DatabaseState>();
 
-const SCHEMA_DATA_VERSION = 7;
+const SCHEMA_DATA_VERSION = 8;
 
 export interface StoredSchemaData {
   version: number;
@@ -216,6 +217,13 @@ export class DatabaseState extends Model({
         return;
       }
 
+      const edgedbVersion = [
+        Number(schemaInfo.version.major),
+        Number(schemaInfo.version.minor),
+        schemaInfo.version.stage as any,
+        Number(schemaInfo.version.stage_no),
+      ] as EdgeDBVersion;
+
       let rawData: RawIntrospectionResult;
       if (
         storedSchemaData?.migrationId !== schemaInfo.migrationId ||
@@ -227,14 +235,7 @@ export class DatabaseState extends Model({
         try {
           rawData = yield* _await(
             conn
-              .query(
-                getIntrospectionQuery([
-                  Number(schemaInfo.version.major),
-                  Number(schemaInfo.version.minor),
-                  schemaInfo.version.stage as any,
-                  Number(schemaInfo.version.stage_no),
-                ])
-              )
+              .query(getIntrospectionQuery(edgedbVersion))
               .then(({result}) => {
                 return result![0] as RawIntrospectionResult;
               })
@@ -261,7 +262,7 @@ export class DatabaseState extends Model({
         aliases,
         globals,
         extensions,
-      } = buildTypesGraph(rawData);
+      } = buildTypesGraph(rawData, edgedbVersion);
 
       const schemaData: SchemaData = {
         objects: new Map(

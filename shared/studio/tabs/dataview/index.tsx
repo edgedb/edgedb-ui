@@ -164,7 +164,10 @@ const DataInspectorView = observer(function DataInspectorView({
 
         {!isMobile &&
         inspectorState.parentObject &&
-        !inspectorState.parentObject.isComputedLink ? (
+        !(
+          inspectorState.parentObject.isComputedLink ||
+          inspectorState.parentObject.readonly
+        ) ? (
           <div
             className={styles.headerButton}
             onClick={() => inspectorState.toggleEditLinkMode()}
@@ -211,7 +214,8 @@ const DataInspectorView = observer(function DataInspectorView({
             </>
           ) : null}
 
-          {inspectorState.insertTypeNames.length &&
+          {!inspectorState.objectType?.readonly &&
+          inspectorState.insertTypeNames.length &&
           (!inspectorState.parentObject ||
             inspectorState.parentObject.editMode) ? (
             inspectorState.insertTypeNames.length > 1 ? (
@@ -223,6 +227,7 @@ const DataInspectorView = observer(function DataInspectorView({
                   label: name,
                   action: () => dataviewState.edits.createNewRow(name),
                 }))}
+                rightAlign
               />
             ) : (
               <div
