@@ -143,6 +143,7 @@ export interface SchemaObjectType {
   shortName: string;
   abstract: boolean;
   builtin: boolean;
+  readonly: boolean;
   from_alias: boolean;
   expr: string;
   bases: SchemaObjectType[];
@@ -425,6 +426,7 @@ export function buildTypesGraph(
           ...splitName(type.name),
           abstract: type.abstract,
           builtin: type.builtin,
+          readonly: false,
           from_alias: type.from_alias,
           expr: type.expr,
           annotations: type.annotations,
@@ -903,6 +905,10 @@ export function buildTypesGraph(
 
       type.ancestors = [...ancestors].reverse();
       type.descendents = [...descendents];
+
+      if (type.ancestors.some((t) => t.name === "cfg::ConfigObject")) {
+        type.readonly = true;
+      }
     }
   }
 

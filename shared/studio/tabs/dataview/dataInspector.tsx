@@ -504,6 +504,7 @@ const GridCell = observer(function GridCell({
   const isEditable =
     !isEmptySubtype &&
     !field.computedExpr &&
+    !state.objectType?.readonly &&
     (!field.readonly || !rowData) &&
     data &&
     (field.type === ObjectFieldType.link || field.name !== "id");
@@ -781,7 +782,7 @@ const DataRowIndex = observer(function DataRowIndex({
     : !!editedLink;
 
   let rowAction: JSX.Element | null = null;
-  if (dataIndex === null || data) {
+  if ((dataIndex === null || data) && !state.objectType?.readonly) {
     if (state.parentObject?.editMode) {
       let input: JSX.Element;
       if (state.parentObject.isMultiLink) {
