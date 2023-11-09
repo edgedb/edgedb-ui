@@ -687,7 +687,8 @@ export class DataInspector extends Model({
     try {
       const data = yield* _await(
         conn.query(
-          `SELECT count((${query}${
+          `with baseQuery := (${query})
+          select count((select baseQuery ${
             this.filter[0] ? ` FILTER ${this.filter[0]}` : ""
           }))`,
           params
