@@ -610,6 +610,12 @@
   }
 }
 
+.smtpConfigFormButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+}
+
 .uiConfigSection {
   display: flex;
   gap: 56px;

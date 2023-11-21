@@ -7,6 +7,7 @@ import {
   objectActions,
   prop,
 } from "mobx-keystone";
+import {parsers} from "../../../components/dataEditor/parsers";
 import {connCtx, dbCtx} from "../../../state";
 import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
 
@@ -42,6 +43,27 @@ export interface AuthUIConfigData {
   logo_url: string | null;
   dark_logo_url: string | null;
   brand_color: string | null;
+}
+
+export const smtpSecurity = [
+  "PlainText",
+  "TLS",
+  "STARTTLS",
+  "STARTTLSOrPlainText",
+] as const;
+
+export type SMTPSecurity = (typeof smtpSecurity)[number];
+
+export interface SMTPConfigData {
+  sender: string;
+  host: string;
+  port: string;
+  username: string;
+  password: string;
+  security: SMTPSecurity;
+  validate_certs: boolean;
+  timeout_per_email: string;
+  timeout_per_attempt: string;
 }
 
 export type ProviderKind = "OAuth" | "Local";
@@ -145,6 +167,7 @@ export class AuthAdminState extends Model({
 
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
+  draftSMTPConfig: prop(() => new DraftSMTPConfig({})),
 }) {
   @computed
   get extEnabled() {
@@ -210,30 +233,45 @@ export class AuthAdminState extends Model({
   @observable.ref
   uiConfig: AuthUIConfigData | false | null = null;
 
+  @observable.ref
+  smtpConfig: SMTPConfigData | null = null;
+
   async refreshConfig() {
     const conn = connCtx.get(this)!;
 
     const {result} = await conn.query(
       `with module ext::auth
-      select cfg::Config.extensions[is AuthConfig] {
-        signing_key_exists := signing_key_exists(),
-        token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
-        allowed_redirect_urls,
-        providers: {
-          _typename := .__type__.name,
-          name,
-          [is OAuthProviderConfig].client_id,
-          [is OAuthProviderConfig].additional_scope,
-          [is EmailPasswordProviderConfig].require_verification,
-        },
-        ui: {
-          redirect_to,
-          redirect_to_on_signup,
-          app_name,
-          logo_url,
-          dark_logo_url,
-          brand_color,
-        }
+      select {
+        auth := assert_single(cfg::Config.extensions[is AuthConfig] {
+          signing_key_exists := signing_key_exists(),
+          token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
+          allowed_redirect_urls,
+          providers: {
+            _typename := .__type__.name,
+            name,
+            [is OAuthProviderConfig].client_id,
+            [is OAuthProviderConfig].additional_scope,
+            [is EmailPasswordProviderConfig].require_verification,
+          },
+          ui: {
+            redirect_to,
+            redirect_to_on_signup,
+            app_name,
+            logo_url,
+            dark_logo_url,
+            brand_color,
+          }
+        }),
+        smtp := assert_single(cfg::Config.extensions[is SMTPConfig] {
+          sender,
+          host,
+          port,
+          username,
+          security,
+          validate_certs,
+          timeout_per_email,
+          timeout_per_attempt
+        })
       }`,
       undefined,
       {ignoreSessionConfig: true}
@@ -241,19 +279,25 @@ export class AuthAdminState extends Model({
 
     if (result === null) return;
 
-    const data = result[0];
+    const {auth, smtp} = result[0];
 
     runInAction(() => {
       this.configData = {
-        signing_key_exists: data.signing_key_exists,
-        token_time_to_live: data.token_time_to_live_seconds,
-        allowed_redirect_urls: data.allowed_redirect_urls.join("\n"),
+        signing_key_exists: auth.signing_key_exists,
+        token_time_to_live: auth.token_time_to_live_seconds,
+        allowed_redirect_urls: auth.allowed_redirect_urls.join("\n"),
       };
-      this.providers = data.providers;
-      this.uiConfig = data.ui ?? false;
-      if (data.ui) {
+      this.providers = auth.providers;
+      this.uiConfig = auth.ui ?? false;
+      if (auth.ui) {
         this.enableUI();
       }
+      this.smtpConfig = {
+        ...smtp,
+        port: smtp.port?.toString(),
+        timeout_per_email: smtp.timeout_per_email.toString(),
+        timeout_per_attempt: smtp.timeout_per_attempt.toString(),
+      };
     });
   }
 }
@@ -359,6 +403,169 @@ export class DraftUIConfig extends Model({
       await state.refreshConfig();
       this.clearForm();
     } catch (e) {
+      runInAction(
+        () => (this.error = e instanceof Error ? e.message : String(e))
+      );
+    } finally {
+      runInAction(() => (this.updating = false));
+    }
+  }
+}
+
+@model("AdminDraftSMTPConfig")
+export class DraftSMTPConfig extends Model({
+  _sender: prop<string | null>(null),
+  _host: prop<string | null>(null),
+  _port: prop<string | null>(null),
+  _username: prop<string | null>(null),
+  _password: prop<string | null>(null),
+  _security: prop<SMTPSecurity | null>(null),
+  _validate_certs: prop<boolean | null>(null),
+  _timeout_per_email: prop<string | null>(null),
+  _timeout_per_attempt: prop<string | null>(null),
+}) {
+  getConfigValue(name: Exclude<keyof SMTPConfigData, "validate_certs">) {
+    return (
+      this[`_${name}`] ??
+      (getParent<AuthAdminState>(this)?.smtpConfig || null)?.[name] ??
+      ""
+    );
+  }
+
+  @modelAction
+  setConfigValue<Name extends keyof SMTPConfigData>(
+    name: Name,
+    val: SMTPConfigData[Name]
+  ) {
+    (this as any)[`_${name}`] = val;
+  }
+
+  @computed
+  get portError() {
+    const val = this.getConfigValue("port").trim();
+    if (val === "") {
+      return null;
+    }
+    const int = parseInt(val, 10);
+    if (!/^\d+$/.test(val) || Number.isNaN(int) || int < 0 || int > 65535) {
+      return `Port must be an integer between 0 and 65535`;
+    }
+    return null;
+  }
+
+  @computed
+  get timeoutPerEmailError() {
+    const val = this.getConfigValue("timeout_per_email");
+    if (!val.length) {
+      return `Value is required`;
+    }
+    try {
+      parsers["std::duration"](val, null);
+    } catch {
+      return `Invalid duration`;
+    }
+    return null;
+  }
+
+  @computed
+  get timeoutPerAttemptError() {
+    const val = this.getConfigValue("timeout_per_attempt");
+    if (!val.length) {
+      return `Value is required`;
+    }
+    try {
+      parsers["std::duration"](val, null);
+    } catch {
+      return `Invalid duration`;
+    }
+    return null;
+  }
+
+  @computed
+  get formError() {
+    return (
+      !!this.portError ||
+      !!this.timeoutPerEmailError ||
+      !!this.timeoutPerAttemptError
+    );
+  }
+
+  @computed
+  get formChanged() {
+    return (
+      this._sender != null ||
+      this._host != null ||
+      this._port != null ||
+      this._username != null ||
+      this._password != null ||
+      this._security != null ||
+      this._validate_certs != null ||
+      this._timeout_per_email != null ||
+      this._timeout_per_attempt != null
+    );
+  }
+
+  @modelAction
+  clearForm() {
+    this._sender = null;
+    this._host = null;
+    this._port = null;
+    this._username = null;
+    this._password = null;
+    this._security = null;
+    this._validate_certs = null;
+    this._timeout_per_email = null;
+    this._timeout_per_attempt = null;
+  }
+
+  @observable
+  updating = false;
+
+  @observable
+  error: string | null = null;
+
+  @action
+  async update() {
+    if (this.formError || !this.formChanged) return;
+
+    const conn = connCtx.get(this)!;
+    const state = getParent<AuthAdminState>(this)!;
+
+    this.updating = true;
+    this.error = null;
+
+    const query = (
+      [
+        {name: "sender", cast: null},
+        {name: "host", cast: null},
+        {name: "port", cast: "int32"},
+        {name: "username", cast: null},
+        {name: "password", cast: null},
+        {name: "security", cast: "ext::auth::SMTPSecurity"},
+        {name: "validate_certs", cast: null},
+        {name: "timeout_per_email", cast: "std::duration"},
+        {name: "timeout_per_email", cast: "std::duration"},
+      ] as const
+    )
+      .map(({name, cast}) => {
+        const val = this[`_${name}`];
+        if (val == null) return null;
+        if (typeof val === "string" && val.trim() === "") {
+          return `configure current database reset ext::auth::SMTPConfig::${name};`;
+        }
+        return `configure current database set ext::auth::SMTPConfig::${name} := ${
+          cast ? `<${cast}>` : ""
+        }${JSON.stringify(val)};`;
+      })
+      .filter((s) => s != null)
+      .join("\n");
+
+    try {
+      await conn.execute(query);
+      await state.refreshConfig();
+      this.clearForm();
+    } catch (e) {
+      console.log(e);
       runInAction(
         () => (this.error = e instanceof Error ? e.message : String(e))
       );
