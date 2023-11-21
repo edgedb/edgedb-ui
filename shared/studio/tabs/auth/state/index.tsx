@@ -110,7 +110,7 @@ export const providerTypenames = Object.keys(providers) as ProviderTypename[];
 
 @model("AuthAdmin")
 export class AuthAdminState extends Model({
-  selectedTab: prop<"config">("config").withSetter(),
+  selectedTab: prop<"config" | "providers" | "smtp">("config").withSetter(),
 
   draftSigningKey: createDraftAuthConfig(
     "auth_signing_key",
