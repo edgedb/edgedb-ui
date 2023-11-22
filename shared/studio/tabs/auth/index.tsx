@@ -282,7 +282,9 @@ const ConfigPage = observer(function ConfigPage() {
                       state.draftTokenTime.value ??
                       state.configData.token_time_to_live
                     }
-                    onChange={(dur) => state.draftTokenTime.setValue(dur)}
+                    onChange={(dur) =>
+                      state.draftTokenTime.setValue(dur.toUpperCase())
+                    }
                     error={state.draftTokenTime.error}
                   />
                   {state.draftTokenTime.value != null ? (
@@ -583,7 +585,8 @@ const SMTPConfigPage = observer(function SMTPConfigPage() {
               />
             </div>
             <div className={styles.configExplain}>
-              Maximum time to send an email, including retry attempts.
+              Maximum time in seconds to send an email, including retry
+              attempts.
             </div>
           </div>
         </div>
@@ -601,7 +604,7 @@ const SMTPConfigPage = observer(function SMTPConfigPage() {
               />
             </div>
             <div className={styles.configExplain}>
-              Maximum time for each SMTP request.
+              Maximum time in seconds for each SMTP request.
             </div>
           </div>
         </div>

@@ -127,7 +127,17 @@ export class AuthAdminState extends Model({
     "std::duration",
     (dur) => {
       if (dur === null) return null;
-      return /^\d+$/.test(dur) ? null : "Invalid duration";
+      dur = dur.trim();
+      if (!dur.length) {
+        return `Duration is required`;
+      }
+      try {
+        if (/^\d+$/.test(dur)) return null;
+        parsers["std::duration"](dur, null);
+      } catch {
+        return `Invalid duration`;
+      }
+      return null;
     }
   ),
   draftAllowedRedirectUrls: createDraftAuthConfig(
@@ -269,8 +279,8 @@ export class AuthAdminState extends Model({
           username,
           security,
           validate_certs,
-          timeout_per_email,
-          timeout_per_attempt
+          timeout_per_email_seconds := <str>duration_get(.timeout_per_email, 'totalseconds'),
+          timeout_per_attempt_seconds := <str>duration_get(.timeout_per_attempt, 'totalseconds'),
         })
       }`,
       undefined,
@@ -295,8 +305,8 @@ export class AuthAdminState extends Model({
       this.smtpConfig = {
         ...smtp,
         port: smtp.port?.toString(),
-        timeout_per_email: smtp.timeout_per_email.toString(),
-        timeout_per_attempt: smtp.timeout_per_attempt.toString(),
+        timeout_per_email: smtp.timeout_per_email_seconds,
+        timeout_per_attempt: smtp.timeout_per_attempt_seconds,
       };
     });
   }
@@ -455,11 +465,12 @@ export class DraftSMTPConfig extends Model({
 
   @computed
   get timeoutPerEmailError() {
-    const val = this.getConfigValue("timeout_per_email");
+    const val = this.getConfigValue("timeout_per_email").trim();
     if (!val.length) {
       return `Value is required`;
     }
     try {
+      if (/^\d+$/.test(val)) return null;
       parsers["std::duration"](val, null);
     } catch {
       return `Invalid duration`;
@@ -469,11 +480,12 @@ export class DraftSMTPConfig extends Model({
 
   @computed
   get timeoutPerAttemptError() {
-    const val = this.getConfigValue("timeout_per_attempt");
+    const val = this.getConfigValue("timeout_per_attempt").trim();
     if (!val.length) {
       return `Value is required`;
     }
     try {
+      if (/^\d+$/.test(val)) return null;
       parsers["std::duration"](val, null);
     } catch {
       return `Invalid duration`;
@@ -544,7 +556,7 @@ export class DraftSMTPConfig extends Model({
         {name: "security", cast: "ext::auth::SMTPSecurity"},
         {name: "validate_certs", cast: null},
         {name: "timeout_per_email", cast: "std::duration"},
-        {name: "timeout_per_email", cast: "std::duration"},
+        {name: "timeout_per_attempt", cast: "std::duration"},
       ] as const
     )
       .map(({name, cast}) => {
