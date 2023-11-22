@@ -6,6 +6,19 @@
   border-radius: 8px;
   display: flex;
   min-width: 0;
+  min-height: 0;
+
+  &.loaded {
+    background-color: #ededed;
+
+    @include darkTheme {
+      background-color: #1c1c1c;
+    }
+  }
+
+  @include isMobile {
+    flex-direction: column;
+  }
 }
 
 .loadingSchema {
@@ -54,12 +67,51 @@
   display: flex;
   flex-grow: 1;
   min-width: 0;
+  min-height: 0;
+  background: var(--app-panel-bg);
+  border-radius: 8px;
 }
 
 .contentWrapper {
   overflow: auto;
   flex-grow: 1;
   @include hideScrollbar;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 8px;
+  flex-shrink: 0;
+  color: #545454;
+
+  .tab {
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-transform: uppercase;
+
+    &.selected {
+      background: #f8f8f8;
+
+      @include darkTheme {
+        background: #2c2c2c;
+      }
+    }
+  }
+
+  @include darkTheme {
+    color: #c5c5c5;
+  }
+
+  @include isMobile {
+    flex-direction: row;
+    justify-content: center;
+    padding: 8px;
+  }
 }
 
 .tabContent {
@@ -352,6 +404,7 @@
   padding: 0 16px;
   max-width: 100%;
   box-sizing: border-box;
+  margin-top: 8px;
 
   .gridItem {
     display: contents;
@@ -578,7 +631,8 @@
   }
 }
 
-.providerSelect {
+.providerSelect,
+.securitySelect {
   background: #fff;
   flex-grow: 1;
   padding: 0px 10px;
@@ -586,14 +640,20 @@
   border-radius: 6px;
   height: 34px;
 
-  & > .providerSelectItem .oauthIcon {
-    margin-left: 0;
-  }
-
   @include darkTheme {
     background-color: #1a1a1a;
     border-color: #545454;
     color: #d6d6d6;
+  }
+}
+
+.securitySelect {
+  font-family: "Roboto Mono", monospace;
+}
+
+.providerSelect {
+  & > .providerSelectItem .oauthIcon {
+    margin-left: 0;
   }
 }
 
@@ -610,6 +670,35 @@
   }
 }
 
+.stickyBottomBar {
+  position: sticky;
+  bottom: 0;
+  align-self: stretch;
+  background: var(--app-panel-bg);
+  padding-bottom: 24px;
+  margin: 24px -8px -32px -8px;
+}
+
+.formButtons {
+  display: flex;
+  gap: 12px;
+  background: #ededed;
+  padding: 8px;
+  border-radius: 8px;
+
+  .button {
+    --buttonBg: #fafafa;
+  }
+
+  .disableButton {
+    margin-left: auto;
+  }
+
+  @include darkTheme {
+    background: #1c1c1c;
+  }
+}
+
 .uiConfigSection {
   display: flex;
   gap: 56px;
@@ -617,13 +706,9 @@
   flex-wrap: wrap;
 }
 
-.uiConfigFormButtons {
-  display: flex;
-  gap: 8px;
-  margin-top: 24px;
-
-  .disableButton {
-    margin-left: auto;
+.uiConfigFormWrapper {
+  @include isMobile {
+    flex-grow: 1;
   }
 }
 

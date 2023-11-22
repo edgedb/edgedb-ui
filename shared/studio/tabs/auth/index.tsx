@@ -29,6 +29,8 @@ import {
   ProviderKind,
   OAuthProviderData,
   LocalEmailPasswordProviderData,
+  SMTPSecurity,
+  smtpSecurity,
 } from "./state";
 
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -49,19 +51,57 @@ import {CheckIcon} from "@edgedb/common/ui/icons";
 export const AuthAdmin = observer(function AuthAdmin() {
   const state = useTabState(AuthAdminState);
 
+  useEffect(() => {
+    if (state.extEnabled) {
+      state.refreshConfig();
+    }
+  }, [state.extEnabled]);
+
   return (
-    <div className={styles.authAdmin}>
+    <div
+      className={cn(styles.authAdmin, {
+        [styles.loaded]: state.extEnabled === true,
+      })}
+    >
       {state.extEnabled === null ? (
         <div className={styles.loadingSchema}>Loading schema...</div>
       ) : state.extEnabled ? (
-        <CustomScrollbars
-          className={styles.scrollWrapper}
-          innerClass={styles.tabContent}
-        >
-          <div className={styles.contentWrapper}>
-            {state.selectedTab === "config" ? <ConfigPage /> : null}
+        <>
+          <div className={styles.tabs}>
+            {(
+              [
+                ["config", "Config"],
+                ["providers", "Providers"],
+                ["smtp", "SMTP"],
+              ] as const
+            ).map(([key, label]) => (
+              <div
+                key={key}
+                className={cn(styles.tab, {
+                  [styles.selected]: state.selectedTab === key,
+                })}
+                onClick={() => state.setSelectedTab(key)}
+              >
+                {label}
+              </div>
+            ))}
           </div>
-        </CustomScrollbars>
+          <CustomScrollbars
+            key={state.selectedTab}
+            className={styles.scrollWrapper}
+            innerClass={styles.tabContent}
+          >
+            <div className={styles.contentWrapper}>
+              {state.selectedTab === "config" ? (
+                <ConfigPage />
+              ) : state.selectedTab === "providers" ? (
+                <ProvidersPage />
+              ) : (
+                <SMTPConfigPage />
+              )}
+            </div>
+          </CustomScrollbars>
+        </>
       ) : (
         <div className={styles.extDisabled}>
           <h2>The auth extension is not enabled</h2>
@@ -150,10 +190,6 @@ function CopyUrl({url}: {url: string}) {
 
 const ConfigPage = observer(function ConfigPage() {
   const state = useTabState(AuthAdminState);
-
-  useEffect(() => {
-    state.refreshConfig();
-  }, []);
 
   return (
     <div className={styles.tabContent}>
@@ -246,7 +282,9 @@ const ConfigPage = observer(function ConfigPage() {
                       state.draftTokenTime.value ??
                       state.configData.token_time_to_live
                     }
-                    onChange={(dur) => state.draftTokenTime.setValue(dur)}
+                    onChange={(dur) =>
+                      state.draftTokenTime.setValue(dur.toUpperCase())
+                    }
                     error={state.draftTokenTime.error}
                   />
                   {state.draftTokenTime.value != null ? (
@@ -290,7 +328,9 @@ const ConfigPage = observer(function ConfigPage() {
                       state.draftAllowedRedirectUrls.value ??
                       state.configData.allowed_redirect_urls
                     }
-                    onChange={(urls) => state.draftAllowedRedirectUrls.setValue(urls)}
+                    onChange={(urls) =>
+                      state.draftAllowedRedirectUrls.setValue(urls)
+                    }
                     error={state.draftAllowedRedirectUrls.error}
                     size={32.5}
                   />
@@ -299,7 +339,9 @@ const ConfigPage = observer(function ConfigPage() {
                       <Button
                         className={styles.button}
                         label={
-                          state.draftAllowedRedirectUrls.updating ? "Updating" : "Update"
+                          state.draftAllowedRedirectUrls.updating
+                            ? "Updating"
+                            : "Update"
                         }
                         disabled={!!state.draftAllowedRedirectUrls.error}
                         loading={state.draftAllowedRedirectUrls.updating}
@@ -308,7 +350,9 @@ const ConfigPage = observer(function ConfigPage() {
                       <Button
                         className={styles.button}
                         label="Cancel"
-                        onClick={() => state.draftAllowedRedirectUrls.setValue(null)}
+                        onClick={() =>
+                          state.draftAllowedRedirectUrls.setValue(null)
+                        }
                       />
                     </>
                   ) : null}
@@ -318,16 +362,24 @@ const ConfigPage = observer(function ConfigPage() {
               )}
             </div>
             <div className={styles.configExplain}>
-                New line seperated list of URLs that will be checked against
-                this list to ensure they are going to a trusted domain controlled
-                by the application. URLs are matched based on checking if the
-                candidate redirect URL is a match or a subdirectory of any of
-                these allowed URLs
+              New line seperated list of URLs that will be checked against this
+              list to ensure they are going to a trusted domain controlled by
+              the application. URLs are matched based on checking if the
+              candidate redirect URL is a match or a subdirectory of any of
+              these allowed URLs
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+});
 
+const ProvidersPage = observer(function ProvidersPage() {
+  const state = useTabState(AuthAdminState);
+
+  return (
+    <div className={styles.tabContent}>
       <div className={styles.header}>Providers</div>
       {state.providers ? (
         <>
@@ -370,6 +422,216 @@ const ConfigPage = observer(function ConfigPage() {
   );
 });
 
+const SMTPConfigPage = observer(function SMTPConfigPage() {
+  const state = useTabState(AuthAdminState);
+
+  const smtp = state.draftSMTPConfig;
+
+  const security = smtp.getConfigValue("security") as unknown as SMTPSecurity;
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.header}>SMTP Configuration</div>
+      <div className={styles.configGrid}>
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>sender</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("sender")}
+                onChange={(val) => smtp.setConfigValue("sender", val)}
+                size={32}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              "From" address of system emails sent for e.g. password reset,
+              etc.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>host</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("host")}
+                onChange={(val) => smtp.setConfigValue("host", val)}
+                placeholder="localhost"
+                size={32}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Host of SMTP server to use for sending emails. If not set,
+              "localhost" will be used.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>port</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("port")}
+                onChange={(val) => smtp.setConfigValue("port", val)}
+                placeholder={
+                  security === "STARTTLSOrPlainText"
+                    ? "587 or 25"
+                    : security === "TLS"
+                    ? "465"
+                    : security === "STARTTLS"
+                    ? "587"
+                    : "25"
+                }
+                error={smtp.portError}
+                size={10}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Port of SMTP server to use for sending emails. If not set, common
+              defaults will be used depending on security: 465 for TLS, 587 for
+              STARTTLS, 25 otherwise.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>username</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("username")}
+                onChange={(val) => smtp.setConfigValue("username", val)}
+                size={32}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Username to login as after connected to SMTP server.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>new password</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("password")}
+                onChange={(val) => smtp.setConfigValue("password", val)}
+                size={32}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Password for login after connected to SMTP server. Note: will
+              replace the currently configured SMTP password (if set).
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>security</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Select<SMTPSecurity>
+                className={styles.securitySelect}
+                selectedItemId={smtp.getConfigValue("security") as any}
+                onChange={(item) => smtp.setConfigValue("security", item.id)}
+                items={smtpSecurity.map((val) => ({id: val, label: val}))}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Security mode of the connection to SMTP server. By default,
+              initiate a STARTTLS upgrade if supported by the server, or
+              fallback to PlainText.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>validate_certs</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={
+                    smtp._validate_certs ??
+                    state.smtpConfig?.validate_certs ??
+                    true
+                  }
+                  onChange={(e) =>
+                    smtp.setConfigValue("validate_certs", e.target.checked)
+                  }
+                />
+              </label>
+            </div>
+            <div className={styles.configExplain}>
+              Determines if SMTP server certificates are validated.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>timeout_per_email</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("timeout_per_email")}
+                onChange={(val) =>
+                  smtp.setConfigValue("timeout_per_email", val.toUpperCase())
+                }
+                error={smtp.timeoutPerEmailError}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Maximum time in seconds to send an email, including retry
+              attempts.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>timeout_per_attempt</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              <Input
+                value={smtp.getConfigValue("timeout_per_attempt")}
+                onChange={(val) =>
+                  smtp.setConfigValue("timeout_per_attempt", val.toUpperCase())
+                }
+                error={smtp.timeoutPerAttemptError}
+              />
+            </div>
+            <div className={styles.configExplain}>
+              Maximum time in seconds for each SMTP request.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.stickyBottomBar}>
+        <div className={styles.formButtons}>
+          <Button
+            className={styles.button}
+            label="Update"
+            onClick={() => smtp.update()}
+            disabled={smtp.formError || !smtp.formChanged || smtp.updating}
+            loading={smtp.updating}
+          />
+          {smtp.formChanged ? (
+            <Button
+              className={styles.button}
+              label="Clear Changes"
+              onClick={() => smtp.clearForm()}
+            />
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const UIConfigForm = observer(function UIConfig({
   draft,
 }: {
@@ -382,7 +644,7 @@ const UIConfigForm = observer(function UIConfig({
 
   return (
     <div className={styles.uiConfigSection}>
-      <div>
+      <div className={styles.uiConfigFormWrapper}>
         <div className={styles.configGrid}>
           <div className={styles.gridItem}>
             <div className={styles.configName}>redirect_to</div>
@@ -497,34 +759,39 @@ const UIConfigForm = observer(function UIConfig({
           </div>
         </div>
 
-        <div className={styles.uiConfigFormButtons}>
-          <Button
-            className={styles.button}
-            label="Update"
-            onClick={() => draft.update()}
-            disabled={draft.formError || !draft.formChanged || draft.updating}
-            loading={draft.updating}
-          />
-          {state.uiConfig && draft.formChanged ? (
+        <div className={styles.stickyBottomBar}>
+          <div className={styles.formButtons}>
             <Button
               className={styles.button}
-              label="Clear Changes"
-              onClick={() => draft.clearForm()}
+              label="Update"
+              onClick={() => draft.update()}
+              disabled={
+                draft.formError || !draft.formChanged || draft.updating
+              }
+              loading={draft.updating}
             />
-          ) : null}
+            {state.uiConfig && draft.formChanged ? (
+              <Button
+                className={styles.button}
+                label="Clear Changes"
+                onClick={() => draft.clearForm()}
+              />
+            ) : null}
 
-          <Button
-            className={cn(styles.button, styles.disableButton)}
-            label="Disable UI"
-            onClick={() => {
-              setDisablingUI(true);
-              state.disableUI();
-            }}
-            loading={disablingUI}
-            disabled={disablingUI}
-          />
+            <Button
+              className={cn(styles.button, styles.disableButton)}
+              label="Disable UI"
+              onClick={() => {
+                setDisablingUI(true);
+                state.disableUI();
+              }}
+              loading={disablingUI}
+              disabled={disablingUI}
+            />
+          </div>
         </div>
       </div>
+
       <div className={styles.loginUIPreview}>
         <div className={styles.loginUIPreviewHeader}>
           <span>Preview</span>
@@ -865,12 +1132,14 @@ function Input({
   error,
   showGenerateKey = false,
   size,
+  placeholder,
 }: {
   value: string;
   onChange: (val: string) => void;
   error?: string | null;
   showGenerateKey?: boolean;
   size?: number;
+  placeholder?: string;
 }) {
   return (
     <div className={styles.inputWrapper}>
@@ -879,6 +1148,7 @@ function Input({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           size={size}
+          placeholder={placeholder}
         />
         {showGenerateKey ? (
           <div
@@ -922,7 +1192,7 @@ function TextArea({
           style={{
             whiteSpace: "pre",
             height: 32 * 2.5 + "px",
-            width: size ? `${size}ch` : undefined
+            width: size ? `${size}ch` : undefined,
           }}
         />
       </div>
