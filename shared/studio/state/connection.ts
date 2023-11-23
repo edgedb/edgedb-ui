@@ -13,7 +13,8 @@ import {Session} from "edgedb/dist/options";
 import LRU from "edgedb/dist/primitives/lru";
 import {Capabilities} from "edgedb/dist/baseConn";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
-import {QueryOptions} from "edgedb/dist/ifaces";
+import {Cardinality, OutputFormat, QueryOptions} from "edgedb/dist/ifaces";
+import {ICodec} from "edgedb/dist/codecs/ifaces";
 
 import {
   decode,
@@ -242,7 +243,7 @@ export class Connection extends Model({
       // @ts-ignore - Ignore _ is declared but not used error
       let inCodec, outCodec, outCodecBuf, capabilities, _;
 
-      if (this._codecCache.has(queryString)) {
+      if (kind !== "parse" && this._codecCache.has(queryString)) {
         [inCodec, outCodec, outCodecBuf, capabilities] =
           this._codecCache.get(queryString)!;
       } else {
@@ -278,6 +279,34 @@ export class Connection extends Model({
         params,
         abortSignal
       );
+      const newOutCodec = (
+        (this.conn as any).queryCodecCache as LRU<
+          string,
+          [number, ICodec, ICodec, number]
+        >
+      ).get(
+        (this.conn as any)._getQueryCacheKey(
+          queryString,
+          OutputFormat.BINARY,
+          Cardinality.MANY
+        )
+      )?.[2];
+      if (newOutCodec && newOutCodec?.tid !== outCodec.tid) {
+        this.checkAborted(abortSignal);
+        [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
+          await this.conn.rawParse(
+            queryString,
+            state,
+            isExplain ? {} : queryOptions,
+            abortSignal
+          );
+        this._codecCache.set(queryString, [
+          inCodec,
+          outCodec,
+          outCodecBuf,
+          capabilities,
+        ]);
+      }
 
       const executeEndTime = performance.now();
 
