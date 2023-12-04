@@ -29,6 +29,7 @@ export default observer(function SchemaNode({node}: SchemaNodeProps) {
   if (node.type === SchemaGraphNodeType.object) {
     const nodeState = schemaGraphState.nodesState.get(node.id);
     return nodeState ? (
+      // @ts-ignore
       <CSSTransition
         in={nodeState.visible}
         timeout={300}
