@@ -197,6 +197,7 @@ const RowList = observer(function RowList({
     );
 
     return (
+      // @ts-ignore
       <List<Item[]>
         ref={ref}
         className={cn(styles.inspector, className, {
