@@ -23,8 +23,6 @@ import {
   AuthProviderData,
   DraftProviderConfig,
   ProviderTypename,
-  providerTypenames,
-  providers,
   DraftUIConfig,
   ProviderKind,
   OAuthProviderData,
@@ -33,6 +31,7 @@ import {
   smtpSecurity,
   DraftAppConfig,
   AbstractDraftConfig,
+  _providersInfo,
 } from "./state";
 
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -449,7 +448,7 @@ const ProvidersPage = observer(function ProvidersPage() {
           </div>
           {state.draftProviderConfig ? (
             <DraftProviderConfigForm draftState={state.draftProviderConfig} />
-          ) : state.providers.length < providerTypenames.length ? (
+          ) : state.providers.length < state.providerTypenames.length ? (
             <Button
               className={styles.button}
               label="Add Provider"
@@ -889,7 +888,10 @@ function ColorPickerPopup({
   );
 }
 
-function getProviderSelectItems(existingProviders: Set<string>) {
+function getProviderSelectItems(
+  providers: typeof _providersInfo,
+  existingProviders: Set<string>
+) {
   return {
     items: [],
     groups: Object.entries(
@@ -925,11 +927,12 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
   const providerItems = useMemo(
     () =>
       getProviderSelectItems(
+        state.providersInfo,
         new Set(state.providers?.map((p) => p._typename))
       ),
     [state.providers]
   );
-  const providerKind = providers[draftState.selectedProviderType].kind;
+  const providerKind = _providersInfo[draftState.selectedProviderType].kind;
 
   return (
     <div className={styles.addProviderForm}>
@@ -1048,7 +1051,7 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
   const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const {displayName, icon, kind} = providers[provider._typename];
+  const {displayName, icon, kind} = _providersInfo[provider._typename];
 
   return (
     <div className={styles.providerCard}>

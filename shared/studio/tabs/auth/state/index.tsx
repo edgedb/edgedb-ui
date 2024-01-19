@@ -10,7 +10,13 @@ import {
 } from "mobx-keystone";
 import {parsers} from "../../../components/dataEditor/parsers";
 import {connCtx, dbCtx} from "../../../state";
-import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
+import {
+  AppleIcon,
+  AzureIcon,
+  DiscordIcon,
+  GithubIcon,
+  GoogleIcon,
+} from "../icons";
 
 interface AuthAppData {
   app_name: string | null;
@@ -30,6 +36,7 @@ export type OAuthProviderData = {
   _typename:
     | "ext::auth::AppleOAuthProvider"
     | "ext::auth::AzureOAuthProvider"
+    | "ext::auth::DiscordOAuthProvider"
     | "ext::auth::GitHubOAuthProvider"
     | "ext::auth::GoogleOAuthProvider";
   client_id: string;
@@ -72,7 +79,7 @@ export interface SMTPConfigData {
 
 export type ProviderKind = "OAuth" | "Local";
 
-export const providers: {
+export const _providersInfo: {
   [key in AuthProviderData["_typename"]]: {
     kind: ProviderKind;
     displayName: string;
@@ -89,6 +96,11 @@ export const providers: {
     kind: "OAuth",
     displayName: "Azure",
     icon: <AzureIcon />,
+  },
+  "ext::auth::DiscordOAuthProvider": {
+    kind: "OAuth",
+    displayName: "Discord",
+    icon: <DiscordIcon />,
   },
   "ext::auth::GitHubOAuthProvider": {
     kind: "OAuth",
@@ -108,9 +120,7 @@ export const providers: {
   },
 };
 
-export type ProviderTypename = keyof typeof providers;
-
-export const providerTypenames = Object.keys(providers) as ProviderTypename[];
+export type ProviderTypename = keyof typeof _providersInfo;
 
 @model("AuthAdmin")
 export class AuthAdminState extends Model({
@@ -137,11 +147,30 @@ export class AuthAdminState extends Model({
     );
   }
 
+  @computed
+  get providersInfo() {
+    const objects = dbCtx.get(this)!.schemaData?.objectsByName;
+    const providers = {} as typeof _providersInfo;
+    for (const providerName of Object.keys(
+      _providersInfo
+    ) as ProviderTypename[]) {
+      if (objects?.has(providerName)) {
+        providers[providerName] = _providersInfo[providerName];
+      }
+    }
+    return providers;
+  }
+
+  @computed
+  get providerTypenames() {
+    return Object.keys(this.providersInfo) as ProviderTypename[];
+  }
+
   @modelAction
   addDraftProvider() {
     const existingProviders = new Set(this.providers?.map((p) => p._typename));
     this.draftProviderConfig = new DraftProviderConfig({
-      selectedProviderType: providerTypenames.find(
+      selectedProviderType: this.providerTypenames.find(
         (name) => !existingProviders.has(name)
       )!,
     });
@@ -824,7 +853,7 @@ export class DraftProviderConfig extends Model({
 
   @computed
   get formValid(): boolean {
-    switch (providers[this.selectedProviderType].kind) {
+    switch (_providersInfo[this.selectedProviderType].kind) {
       case "OAuth":
         return !this.oauthClientIdError && !this.oauthSecretError;
       case "Local":
@@ -849,7 +878,7 @@ export class DraftProviderConfig extends Model({
     this.error = null;
 
     try {
-      const provider = providers[this.selectedProviderType];
+      const provider = _providersInfo[this.selectedProviderType];
 
       await conn.execute(
         `configure current database
