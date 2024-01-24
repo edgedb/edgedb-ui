@@ -16,6 +16,7 @@ import {
   DiscordIcon,
   GithubIcon,
   GoogleIcon,
+  SlackIcon,
 } from "../icons";
 
 interface AuthAppData {
@@ -38,7 +39,8 @@ export type OAuthProviderData = {
     | "ext::auth::AzureOAuthProvider"
     | "ext::auth::DiscordOAuthProvider"
     | "ext::auth::GitHubOAuthProvider"
-    | "ext::auth::GoogleOAuthProvider";
+    | "ext::auth::GoogleOAuthProvider"
+    | "ext::auth::SlackOAuthProvider";
   client_id: string;
   additional_scope: string;
 };
@@ -111,6 +113,11 @@ export const _providersInfo: {
     kind: "OAuth",
     displayName: "Google",
     icon: <GoogleIcon />,
+  },
+  "ext::auth::SlackOAuthProvider": {
+    kind: "OAuth",
+    displayName: "Slack",
+    icon: <SlackIcon />,
   },
   // local
   "ext::auth::EmailPasswordProviderConfig": {
