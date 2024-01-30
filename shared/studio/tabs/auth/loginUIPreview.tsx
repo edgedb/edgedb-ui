@@ -4,7 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {
   AuthProviderData,
-  DraftUIConfig,
+  AuthAdminState,
   providers as providersInfo,
 } from "./state";
 
@@ -12,18 +12,18 @@ import styles from "./loginuipreview.module.scss";
 import {getColourVariables, normaliseHexColor} from "./colourUtils";
 
 export function LoginUIPreview({
-  draft,
+  authAdminState,
   providers,
   darkTheme,
 }: {
-  draft: DraftUIConfig;
+  authAdminState: AuthAdminState;
   providers: AuthProviderData[];
   darkTheme: boolean;
 }) {
-  const appName = draft.getConfigValue("app_name");
-  const brandColor = draft.getConfigValue("brand_color") || "1f8aed";
-  const logoUrl = draft.getConfigValue("logo_url");
-  const darkLogoUrl = draft.getConfigValue("dark_logo_url");
+  const appName = authAdminState.configData?.app_name ?? null;
+  const brandColor = authAdminState.configData?.brand_color ?? "1f8aed";
+  const logoUrl = authAdminState.configData?.logo_url ?? null;
+  const darkLogoUrl = authAdminState.configData?.dark_logo_url ?? null;
 
   const colorVariables = getColourVariables(normaliseHexColor(brandColor));
 

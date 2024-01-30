@@ -15,6 +15,10 @@ export interface AuthConfigData {
   signing_key_exists: boolean;
   token_time_to_live: string;
   allowed_redirect_urls: string;
+  app_name: string | null;
+  logo_url: string | null;
+  dark_logo_url: string | null;
+  brand_color: string | null;
 }
 
 export type OAuthProviderData = {
@@ -39,10 +43,6 @@ export type AuthProviderData =
 export interface AuthUIConfigData {
   redirect_to: string;
   redirect_to_on_signup: string;
-  app_name: string | null;
-  logo_url: string | null;
-  dark_logo_url: string | null;
-  brand_color: string | null;
 }
 
 export const smtpSecurity = [
@@ -174,6 +174,26 @@ export class AuthAdminState extends Model({
       return `{${urlList.map((u) => JSON.stringify(u)).join(", ")}}`;
     }
   ),
+  draftAppName: createDraftAuthConfig(
+    "app_name",
+    "std::str",
+    () => null,
+  ),
+  draftLogoUrl: createDraftAuthConfig(
+    "logo_url",
+    "std::str",
+    () => null,
+  ),
+  draftDarkLogoUrl: createDraftAuthConfig(
+    "dark_logo_url",
+    "std::str",
+    () => null,
+  ),
+  draftBrandColor: createDraftAuthConfig(
+    "brand_color",
+    "std::str",
+    () => null,
+  ),
 
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
@@ -255,6 +275,10 @@ export class AuthAdminState extends Model({
         auth := assert_single(cfg::Config.extensions[is AuthConfig] {
           signing_key_exists := signing_key_exists(),
           token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
+          app_name,
+          logo_url,
+          dark_logo_url,
+          brand_color,
           allowed_redirect_urls,
           providers: {
             _typename := .__type__.name,
@@ -266,10 +290,6 @@ export class AuthAdminState extends Model({
           ui: {
             redirect_to,
             redirect_to_on_signup,
-            app_name,
-            logo_url,
-            dark_logo_url,
-            brand_color,
           }
         }),
         smtp := assert_single(cfg::Config.extensions[is SMTPConfig] {
@@ -296,6 +316,10 @@ export class AuthAdminState extends Model({
         signing_key_exists: auth.signing_key_exists,
         token_time_to_live: auth.token_time_to_live_seconds,
         allowed_redirect_urls: auth.allowed_redirect_urls.join("\n"),
+        app_name: auth.app_name,
+        logo_url: auth.logo_url,
+        dark_logo_url: auth.dark_logo_url,
+        brand_color: auth.brand_color,
       };
       this.providers = auth.providers;
       this.uiConfig = auth.ui ?? false;
@@ -316,10 +340,6 @@ export class AuthAdminState extends Model({
 export class DraftUIConfig extends Model({
   _redirect_to: prop<string | null>(null),
   _redirect_to_on_signup: prop<string | null>(null),
-  _app_name: prop<string | null>(null),
-  _logo_url: prop<string | null>(null),
-  _dark_logo_url: prop<string | null>(null),
-  _brand_color: prop<string | null>(null),
 
   showDarkTheme: prop<boolean | null>(null).withSetter(),
 }) {
@@ -352,11 +372,7 @@ export class DraftUIConfig extends Model({
   get formChanged() {
     return (
       this._redirect_to != null ||
-      this._redirect_to_on_signup != null ||
-      this._app_name != null ||
-      this._logo_url != null ||
-      this._dark_logo_url != null ||
-      this._brand_color != null
+      this._redirect_to_on_signup != null
     );
   }
 
@@ -364,10 +380,6 @@ export class DraftUIConfig extends Model({
   clearForm() {
     this._redirect_to = null;
     this._redirect_to_on_signup = null;
-    this._app_name = null;
-    this._logo_url = null;
-    this._dark_logo_url = null;
-    this._brand_color = null;
   }
 
   @observable
@@ -397,10 +409,6 @@ export class DraftUIConfig extends Model({
             ${(
               [
                 "redirect_to_on_signup",
-                "app_name",
-                "logo_url",
-                "dark_logo_url",
-                "brand_color",
               ] as const
             )
               .map((name) => {

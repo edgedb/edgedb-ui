@@ -210,6 +210,210 @@ const ConfigPage = observer(function ConfigPage() {
       <div className={styles.header}>Auth Configuration</div>
       <div className={styles.configGrid}>
         <div className={styles.gridItem}>
+          <div className={styles.configName}>app_name</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <Input
+                    size={32}
+                    value={
+                      state.draftAppName.value ??
+                      state.configData.app_name ??
+                      ""
+                    }
+                    onChange={(appName) =>
+                      state.draftAppName.setValue(
+                        appName.trim() === "" ? null : appName
+                      )
+                    }
+                    error={state.draftAppName.error}
+                  />
+                  {state.draftAppName.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftAppName.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftAppName.error}
+                        loading={state.draftAppName.updating}
+                        onClick={() => state.draftAppName.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftAppName.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              The name of your application.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>logo_url</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <Input
+                    size={32}
+                    value={
+                      state.draftLogoUrl.value ??
+                      state.configData.logo_url ??
+                      ""
+                    }
+                    onChange={(logoUrl) =>
+                      state.draftLogoUrl.setValue(
+                        logoUrl.trim() === "" ? null : logoUrl
+                      )
+                    }
+                    error={state.draftLogoUrl.error}
+                  />
+                  {state.draftLogoUrl.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftLogoUrl.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftLogoUrl.error}
+                        loading={state.draftLogoUrl.updating}
+                        onClick={() => state.draftLogoUrl.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftLogoUrl.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              A url to an image of your application's logo.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>dark_logo_url</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <Input
+                    size={32}
+                    value={
+                      state.draftDarkLogoUrl.value ??
+                      state.configData.dark_logo_url ??
+                      ""
+                    }
+                    onChange={(logoUrl) =>
+                      state.draftDarkLogoUrl.setValue(
+                        logoUrl.trim() === "" ? null : logoUrl
+                      )
+                    }
+                    error={state.draftDarkLogoUrl.error}
+                  />
+                  {state.draftDarkLogoUrl.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftDarkLogoUrl.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftDarkLogoUrl.error}
+                        loading={state.draftDarkLogoUrl.updating}
+                        onClick={() => state.draftDarkLogoUrl.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftDarkLogoUrl.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              A url to an image of your application's logo to be used with
+              the dark theme.
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.gridItem}>
+          <div className={styles.configName}>brand_color</div>
+          <div className={styles.configInputWrapper}>
+            <div className={styles.configInput}>
+              {state.configData ? (
+                <>
+                  <div className={styles.inputWrapper}>
+                    <ColorPickerInput
+                      color={
+                        state.draftBrandColor.value ??
+                        state.configData.brand_color ??
+                        ""
+                      }
+                      onChange={(color) =>
+                        state.draftBrandColor.setValue(color.slice(1))
+                      }
+                    />
+                  </div>
+                  <ColorPickerPopup
+                    color={
+                      state.draftBrandColor.value ??
+                      state.configData.brand_color ??
+                      ""
+                    }
+                    onChange={(color) =>
+                      state.draftBrandColor.setValue(color.slice(1))
+                    }
+                  />
+                  {state.draftBrandColor.value != null ? (
+                    <>
+                      <Button
+                        className={styles.button}
+                        label={
+                          state.draftBrandColor.updating ? "Updating" : "Update"
+                        }
+                        disabled={!!state.draftBrandColor.error}
+                        loading={state.draftBrandColor.updating}
+                        onClick={() => state.draftBrandColor.update()}
+                      />
+                      <Button
+                        className={styles.button}
+                        label="Cancel"
+                        onClick={() => state.draftBrandColor.setValue(null)}
+                      />
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "loading..."
+              )}
+            </div>
+            <div className={styles.configExplain}>
+              The brand color of your application as a hex string.
+            </div>
+          </div>
+        </div>
+        <div className={styles.gridItem}>
           <div className={styles.configName}>auth_signing_key</div>
           <div className={styles.configInputWrapper}>
             <div className={styles.configInput}>
@@ -682,81 +886,6 @@ const UIConfigForm = observer(function UIConfig({
             </div>
           </div>
 
-          <div className={styles.gridItem}>
-            <div className={styles.configName}>app_name</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <Input
-                  size={32}
-                  value={draft.getConfigValue("app_name")}
-                  onChange={(val) => draft.setConfigValue("app_name", val)}
-                />
-              </div>
-              <div className={styles.configExplain}>
-                The name of your application to be shown on the login screen.
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.gridItem}>
-            <div className={styles.configName}>logo_url</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <Input
-                  size={32}
-                  value={draft.getConfigValue("logo_url")}
-                  onChange={(val) => draft.setConfigValue("logo_url", val)}
-                />
-              </div>
-              <div className={styles.configExplain}>
-                A url to an image of your application's logo.
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.gridItem}>
-            <div className={styles.configName}>dark_logo_url</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <Input
-                  size={32}
-                  value={draft.getConfigValue("dark_logo_url")}
-                  onChange={(val) =>
-                    draft.setConfigValue("dark_logo_url", val)
-                  }
-                />
-              </div>
-              <div className={styles.configExplain}>
-                A url to an image of your application's logo to be used with
-                the dark theme.
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.gridItem}>
-            <div className={styles.configName}>brand_color</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <div className={styles.inputWrapper}>
-                  <ColorPickerInput
-                    color={draft.getConfigValue("brand_color")}
-                    onChange={(color) =>
-                      draft.setConfigValue("brand_color", color.slice(1))
-                    }
-                  />
-                </div>
-                <ColorPickerPopup
-                  color={draft.getConfigValue("brand_color")}
-                  onChange={(color) =>
-                    draft.setConfigValue("brand_color", color.slice(1))
-                  }
-                />
-              </div>
-              <div className={styles.configExplain}>
-                The brand color of your application as a hex string.
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className={styles.stickyBottomBar}>
@@ -815,7 +944,7 @@ const UIConfigForm = observer(function UIConfig({
           </div>
         </div>
         <LoginUIPreview
-          draft={draft}
+          authAdminState={state}
           providers={state.providers ?? []}
           darkTheme={draft.showDarkTheme ?? theme == Theme.dark}
         />
