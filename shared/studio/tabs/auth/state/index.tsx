@@ -49,9 +49,16 @@ export type LocalEmailPasswordProviderData = {
   _typename: "ext::auth::EmailPasswordProviderConfig";
   require_verification: boolean;
 };
+export type LocalWebAuthnProviderData = {
+  name: string;
+  _typename: "ext::auth::WebAuthnProviderConfig";
+  relying_party_origin: string;
+  require_verification: boolean;
+};
 export type AuthProviderData =
   | OAuthProviderData
-  | LocalEmailPasswordProviderData;
+  | LocalEmailPasswordProviderData
+  | LocalWebAuthnProviderData;
 
 export interface AuthUIConfigData {
   redirect_to: string;
@@ -123,6 +130,11 @@ export const _providersInfo: {
   "ext::auth::EmailPasswordProviderConfig": {
     kind: "Local",
     displayName: "Email + Password",
+    icon: <></>,
+  },
+  "ext::auth::WebAuthnProviderConfig": {
+    kind: "Local",
+    displayName: "WebAuthn",
     icon: <></>,
   },
 };
@@ -266,7 +278,11 @@ export class AuthAdminState extends Model({
             name,
             [is OAuthProviderConfig].client_id,
             [is OAuthProviderConfig].additional_scope,
-            [is EmailPasswordProviderConfig].require_verification,
+            require_verification := (
+              [is EmailPasswordProviderConfig].require_verification ??
+              [is WebAuthnProviderConfig].require_verification
+            ),
+            [is WebAuthnProviderConfig].relying_party_origin
           },
           ui: {
             redirect_to,
@@ -846,6 +862,8 @@ export class DraftProviderConfig extends Model({
   oauthSecret: prop("").withSetter(),
   additionalScope: prop("").withSetter(),
 
+  webauthnRelyingOrigin: prop("").withSetter(),
+
   requireEmailVerification: prop(true).withSetter(),
 }) {
   @computed
@@ -859,12 +877,22 @@ export class DraftProviderConfig extends Model({
   }
 
   @computed
+  get webauthnRelyingOriginError() {
+    return this.webauthnRelyingOrigin.trim() === ""
+      ? "Relying origin is required"
+      : null;
+  }
+
+  @computed
   get formValid(): boolean {
     switch (_providersInfo[this.selectedProviderType].kind) {
       case "OAuth":
         return !this.oauthClientIdError && !this.oauthSecretError;
       case "Local":
-        return true;
+        return this.selectedProviderType ===
+          "ext::auth::WebAuthnProviderConfig"
+          ? !this.webauthnRelyingOriginError
+          : true;
     }
   }
 
@@ -887,28 +915,40 @@ export class DraftProviderConfig extends Model({
     try {
       const provider = _providersInfo[this.selectedProviderType];
 
+      const queryFields: string[] = [];
+      if (provider.kind === "OAuth") {
+        queryFields.push(
+          `client_id := ${JSON.stringify(this.oauthClientId)}`,
+          `secret := ${JSON.stringify(this.oauthSecret)}`
+        );
+        if (this.additionalScope.trim()) {
+          queryFields.push(
+            `additional_scope := ${JSON.stringify(
+              this.additionalScope.trim()
+            )}`
+          );
+        }
+      } else if (provider.kind === "Local") {
+        if (
+          this.selectedProviderType === "ext::auth::WebAuthnProviderConfig"
+        ) {
+          queryFields.push(
+            `relying_party_origin := ${JSON.stringify(
+              this.webauthnRelyingOrigin
+            )}`
+          );
+        }
+        queryFields.push(
+          `require_verification := ${
+            this.requireEmailVerification ? "true" : "false"
+          }`
+        );
+      }
+
       await conn.execute(
         `configure current database
           insert ${this.selectedProviderType} {
-            ${
-              provider.kind === "OAuth"
-                ? `
-            client_id := ${JSON.stringify(this.oauthClientId)},
-            secret := ${JSON.stringify(this.oauthSecret)},
-            ${
-              this.additionalScope.trim()
-                ? `additional_scope := ${JSON.stringify(
-                    this.additionalScope.trim()
-                  )}`
-                : ""
-            }
-            `
-                : provider.kind === "Local"
-                ? `require_verification := ${
-                    this.requireEmailVerification ? "true" : "false"
-                  },`
-                : ""
-            }
+            ${queryFields.join(",\n")}
           }`
       );
       await state.refreshConfig();

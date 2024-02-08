@@ -32,6 +32,7 @@ import {
   DraftAppConfig,
   AbstractDraftConfig,
   _providersInfo,
+  LocalWebAuthnProviderData,
 } from "./state";
 
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -1002,6 +1003,29 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
           </>
         ) : providerKind === "Local" ? (
           <div className={styles.gridItem}>
+            {draftState.selectedProviderType ===
+            "ext::auth::WebAuthnProviderConfig" ? (
+              <div className={styles.gridItem}>
+                <div className={styles.configName}>relying_party_origin</div>
+                <div className={styles.configInputWrapper}>
+                  <div className={styles.configInput}>
+                    <Input
+                      size={32}
+                      value={draftState.webauthnRelyingOrigin}
+                      onChange={(val) =>
+                        draftState.setWebauthnRelyingOrigin(val)
+                      }
+                      error={draftState.webauthnRelyingOriginError}
+                    />
+                  </div>
+                  <div className={styles.configExplain}>
+                    The full origin of the sign-in page including protocol and
+                    port of the application. If using the built-in UI, this
+                    should be the origin of the EdgeDB server.
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className={styles.configName}>require_verification</div>
             <div className={styles.configInputWrapper}>
               <div className={styles.configInput}>
@@ -1106,12 +1130,27 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
             </>
           ) : kind === "Local" ? (
             <>
+              {provider.name === "builtin::local_webauthn" ? (
+                <>
+                  <div className={styles.providerConfigName}>
+                    relying_party_origin
+                  </div>
+                  <div className={styles.providerConfigValue}>
+                    {
+                      (provider as LocalWebAuthnProviderData)
+                        .relying_party_origin
+                    }
+                  </div>
+                </>
+              ) : null}
               <div className={styles.providerConfigName}>
                 require_verification
               </div>
               <div className={styles.providerConfigValue}>
                 {(
-                  provider as LocalEmailPasswordProviderData
+                  provider as
+                    | LocalEmailPasswordProviderData
+                    | LocalWebAuthnProviderData
                 ).require_verification.toString()}
               </div>
             </>
