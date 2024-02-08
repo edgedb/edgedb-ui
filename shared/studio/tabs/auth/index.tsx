@@ -31,6 +31,8 @@ import {
   LocalEmailPasswordProviderData,
   SMTPSecurity,
   smtpSecurity,
+  DraftAppConfig,
+  AbstractDraftConfig,
 } from "./state";
 
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -191,6 +193,8 @@ function CopyUrl({url}: {url: string}) {
 const ConfigPage = observer(function ConfigPage() {
   const state = useTabState(AuthAdminState);
 
+  const coreConfig = state.draftCoreConfig;
+
   return (
     <div className={styles.tabContent}>
       <div className={styles.docsNote}>
@@ -209,243 +213,17 @@ const ConfigPage = observer(function ConfigPage() {
 
       <div className={styles.header}>Auth Configuration</div>
       <div className={styles.configGrid}>
-        <div className={styles.gridItem}>
-          <div className={styles.configName}>app_name</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              {state.configData ? (
-                <>
-                  <Input
-                    size={32}
-                    value={
-                      state.draftAppName.value ??
-                      state.configData.app_name ??
-                      ""
-                    }
-                    onChange={(appName) =>
-                      state.draftAppName.setValue(
-                        appName.trim() === "" ? null : appName
-                      )
-                    }
-                    error={state.draftAppName.error}
-                  />
-                  {state.draftAppName.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftAppName.updating ? "Updating" : "Update"
-                        }
-                        disabled={!!state.draftAppName.error}
-                        loading={state.draftAppName.updating}
-                        onClick={() => state.draftAppName.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftAppName.setValue(null)}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                "loading..."
-              )}
-            </div>
-            <div className={styles.configExplain}>
-              The name of your application.
-            </div>
-          </div>
-        </div>
+        {state.newAppAuthSchema ? (
+          <AppConfigForm draft={coreConfig?.appConfig ?? null} />
+        ) : null}
 
-        <div className={styles.gridItem}>
-          <div className={styles.configName}>logo_url</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              {state.configData ? (
-                <>
-                  <Input
-                    size={32}
-                    value={
-                      state.draftLogoUrl.value ??
-                      state.configData.logo_url ??
-                      ""
-                    }
-                    onChange={(logoUrl) =>
-                      state.draftLogoUrl.setValue(
-                        logoUrl.trim() === "" ? null : logoUrl
-                      )
-                    }
-                    error={state.draftLogoUrl.error}
-                  />
-                  {state.draftLogoUrl.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftLogoUrl.updating ? "Updating" : "Update"
-                        }
-                        disabled={!!state.draftLogoUrl.error}
-                        loading={state.draftLogoUrl.updating}
-                        onClick={() => state.draftLogoUrl.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftLogoUrl.setValue(null)}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                "loading..."
-              )}
-            </div>
-            <div className={styles.configExplain}>
-              A url to an image of your application's logo.
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.gridItem}>
-          <div className={styles.configName}>dark_logo_url</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              {state.configData ? (
-                <>
-                  <Input
-                    size={32}
-                    value={
-                      state.draftDarkLogoUrl.value ??
-                      state.configData.dark_logo_url ??
-                      ""
-                    }
-                    onChange={(logoUrl) =>
-                      state.draftDarkLogoUrl.setValue(
-                        logoUrl.trim() === "" ? null : logoUrl
-                      )
-                    }
-                    error={state.draftDarkLogoUrl.error}
-                  />
-                  {state.draftDarkLogoUrl.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftDarkLogoUrl.updating ? "Updating" : "Update"
-                        }
-                        disabled={!!state.draftDarkLogoUrl.error}
-                        loading={state.draftDarkLogoUrl.updating}
-                        onClick={() => state.draftDarkLogoUrl.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftDarkLogoUrl.setValue(null)}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                "loading..."
-              )}
-            </div>
-            <div className={styles.configExplain}>
-              A url to an image of your application's logo to be used with
-              the dark theme.
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.gridItem}>
-          <div className={styles.configName}>brand_color</div>
-          <div className={styles.configInputWrapper}>
-            <div className={styles.configInput}>
-              {state.configData ? (
-                <>
-                  <div className={styles.inputWrapper}>
-                    <ColorPickerInput
-                      color={
-                        state.draftBrandColor.value ??
-                        state.configData.brand_color ??
-                        ""
-                      }
-                      onChange={(color) =>
-                        state.draftBrandColor.setValue(color.slice(1))
-                      }
-                    />
-                  </div>
-                  <ColorPickerPopup
-                    color={
-                      state.draftBrandColor.value ??
-                      state.configData.brand_color ??
-                      ""
-                    }
-                    onChange={(color) =>
-                      state.draftBrandColor.setValue(color.slice(1))
-                    }
-                  />
-                  {state.draftBrandColor.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftBrandColor.updating ? "Updating" : "Update"
-                        }
-                        disabled={!!state.draftBrandColor.error}
-                        loading={state.draftBrandColor.updating}
-                        onClick={() => state.draftBrandColor.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftBrandColor.setValue(null)}
-                      />
-                    </>
-                  ) : null}
-                </>
-              ) : (
-                "loading..."
-              )}
-            </div>
-            <div className={styles.configExplain}>
-              The brand color of your application as a hex string.
-            </div>
-          </div>
-        </div>
         <div className={styles.gridItem}>
           <div className={styles.configName}>auth_signing_key</div>
           <div className={styles.configInputWrapper}>
             <div className={styles.configInput}>
-              {state.configData ? (
-                state.draftSigningKey.value !== null ||
-                !state.configData.signing_key_exists ? (
-                  <>
-                    <Input
-                      value={state.draftSigningKey.value ?? ""}
-                      onChange={(key) => state.draftSigningKey.setValue(key)}
-                      error={state.draftSigningKey.error}
-                      size={32.5}
-                      showGenerateKey
-                    />
-                    <Button
-                      className={styles.button}
-                      label={
-                        state.draftSigningKey.updating ? "Updating" : "Update"
-                      }
-                      disabled={!!state.draftSigningKey.error}
-                      loading={state.draftSigningKey.updating}
-                      onClick={() => state.draftSigningKey.update()}
-                    />
-                    {state.configData.signing_key_exists ? (
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftSigningKey.setValue(null)}
-                      />
-                    ) : null}
-                  </>
-                ) : (
+              {coreConfig ? (
+                coreConfig._auth_signing_key == null &&
+                state.configData!.signing_key_exists ? (
                   <>
                     <div
                       className={cn(
@@ -459,9 +237,21 @@ const ConfigPage = observer(function ConfigPage() {
                     <Button
                       className={styles.button}
                       label="Change"
-                      onClick={() => state.draftSigningKey.setValue("")}
+                      onClick={() =>
+                        coreConfig.setConfigValue("auth_signing_key", "")
+                      }
                     />
                   </>
+                ) : (
+                  <Input
+                    value={coreConfig._auth_signing_key ?? ""}
+                    onChange={(key) =>
+                      coreConfig.setConfigValue("auth_signing_key", key)
+                    }
+                    error={coreConfig.signingKeyError}
+                    size={32.5}
+                    showGenerateKey
+                  />
                 )
               ) : (
                 "loading..."
@@ -478,38 +268,18 @@ const ConfigPage = observer(function ConfigPage() {
           <div className={styles.configName}>token_time_to_live</div>
           <div className={styles.configInputWrapper}>
             <div className={styles.configInput}>
-              {state.configData ? (
-                <>
-                  <Input
-                    size={16}
-                    value={
-                      state.draftTokenTime.value ??
-                      state.configData.token_time_to_live
-                    }
-                    onChange={(dur) =>
-                      state.draftTokenTime.setValue(dur.toUpperCase())
-                    }
-                    error={state.draftTokenTime.error}
-                  />
-                  {state.draftTokenTime.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftTokenTime.updating ? "Updating" : "Update"
-                        }
-                        disabled={!!state.draftTokenTime.error}
-                        loading={state.draftTokenTime.updating}
-                        onClick={() => state.draftTokenTime.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() => state.draftTokenTime.setValue(null)}
-                      />
-                    </>
-                  ) : null}
-                </>
+              {coreConfig ? (
+                <Input
+                  size={16}
+                  value={coreConfig.getConfigValue("token_time_to_live")}
+                  onChange={(dur) =>
+                    coreConfig.setConfigValue(
+                      "token_time_to_live",
+                      dur.toUpperCase()
+                    )
+                  }
+                  error={coreConfig.tokenTimeToLiveError}
+                />
               ) : (
                 "loading..."
               )}
@@ -525,41 +295,16 @@ const ConfigPage = observer(function ConfigPage() {
           <div className={styles.configName}>allowed_redirect_urls</div>
           <div className={styles.configInputWrapper}>
             <div className={styles.configInput}>
-              {state.configData ? (
+              {coreConfig ? (
                 <>
                   <TextArea
-                    value={
-                      state.draftAllowedRedirectUrls.value ??
-                      state.configData.allowed_redirect_urls
-                    }
+                    value={coreConfig.getConfigValue("allowed_redirect_urls")}
                     onChange={(urls) =>
-                      state.draftAllowedRedirectUrls.setValue(urls)
+                      coreConfig.setConfigValue("allowed_redirect_urls", urls)
                     }
-                    error={state.draftAllowedRedirectUrls.error}
+                    error={coreConfig.allowedRedirectUrlsError}
                     size={32.5}
                   />
-                  {state.draftAllowedRedirectUrls.value != null ? (
-                    <>
-                      <Button
-                        className={styles.button}
-                        label={
-                          state.draftAllowedRedirectUrls.updating
-                            ? "Updating"
-                            : "Update"
-                        }
-                        disabled={!!state.draftAllowedRedirectUrls.error}
-                        loading={state.draftAllowedRedirectUrls.updating}
-                        onClick={() => state.draftAllowedRedirectUrls.update()}
-                      />
-                      <Button
-                        className={styles.button}
-                        label="Cancel"
-                        onClick={() =>
-                          state.draftAllowedRedirectUrls.setValue(null)
-                        }
-                      />
-                    </>
-                  ) : null}
                 </>
               ) : (
                 "loading..."
@@ -575,7 +320,111 @@ const ConfigPage = observer(function ConfigPage() {
           </div>
         </div>
       </div>
+
+      {coreConfig ? <StickyBottomBar draft={coreConfig} /> : null}
     </div>
+  );
+});
+
+const AppConfigForm = observer(function AppConfigForm({
+  draft,
+}: {
+  draft: DraftAppConfig | null;
+}) {
+  return (
+    <>
+      <div className={styles.gridItem}>
+        <div className={styles.configName}>app_name</div>
+        <div className={styles.configInputWrapper}>
+          <div className={styles.configInput}>
+            {draft ? (
+              <Input
+                size={32}
+                value={draft.getConfigValue("app_name")}
+                onChange={(val) => draft.setConfigValue("app_name", val)}
+              />
+            ) : (
+              "loading..."
+            )}
+          </div>
+          <div className={styles.configExplain}>
+            The name of your application to be shown on the login screen.
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.gridItem}>
+        <div className={styles.configName}>logo_url</div>
+        <div className={styles.configInputWrapper}>
+          <div className={styles.configInput}>
+            {draft ? (
+              <Input
+                size={32}
+                value={draft.getConfigValue("logo_url")}
+                onChange={(val) => draft.setConfigValue("logo_url", val)}
+              />
+            ) : (
+              "loading..."
+            )}
+          </div>
+          <div className={styles.configExplain}>
+            A url to an image of your application's logo.
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.gridItem}>
+        <div className={styles.configName}>dark_logo_url</div>
+        <div className={styles.configInputWrapper}>
+          <div className={styles.configInput}>
+            {draft ? (
+              <Input
+                size={32}
+                value={draft.getConfigValue("dark_logo_url")}
+                onChange={(val) => draft.setConfigValue("dark_logo_url", val)}
+              />
+            ) : (
+              "loading..."
+            )}
+          </div>
+          <div className={styles.configExplain}>
+            A url to an image of your application's logo to be used with the
+            dark theme.
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.gridItem}>
+        <div className={styles.configName}>brand_color</div>
+        <div className={styles.configInputWrapper}>
+          <div className={styles.configInput}>
+            {draft ? (
+              <>
+                <div className={styles.inputWrapper}>
+                  <ColorPickerInput
+                    color={draft.getConfigValue("brand_color")}
+                    onChange={(color) =>
+                      draft.setConfigValue("brand_color", color.slice(1))
+                    }
+                  />
+                </div>
+                <ColorPickerPopup
+                  color={draft.getConfigValue("brand_color")}
+                  onChange={(color) =>
+                    draft.setConfigValue("brand_color", color.slice(1))
+                  }
+                />
+              </>
+            ) : (
+              "loading..."
+            )}
+          </div>
+          <div className={styles.configExplain}>
+            The brand color of your application as a hex string.
+          </div>
+        </div>
+      </div>
+    </>
   );
 });
 
@@ -622,6 +471,33 @@ const ProvidersPage = observer(function ProvidersPage() {
           onClick={() => state.enableUI()}
         />
       )}
+    </div>
+  );
+});
+
+const StickyBottomBar = observer(function StickyBottomBar({
+  draft,
+}: {
+  draft: AbstractDraftConfig;
+}) {
+  return (
+    <div className={styles.stickyBottomBar}>
+      <div className={styles.formButtons}>
+        <Button
+          className={styles.button}
+          label="Update"
+          onClick={() => draft.update()}
+          disabled={draft.formError || !draft.formChanged || draft.updating}
+          loading={draft.updating}
+        />
+        {draft.formChanged ? (
+          <Button
+            className={styles.button}
+            label="Clear Changes"
+            onClick={() => draft.clearForm()}
+          />
+        ) : null}
+      </div>
     </div>
   );
 });
@@ -814,24 +690,7 @@ const SMTPConfigPage = observer(function SMTPConfigPage() {
         </div>
       </div>
 
-      <div className={styles.stickyBottomBar}>
-        <div className={styles.formButtons}>
-          <Button
-            className={styles.button}
-            label="Update"
-            onClick={() => smtp.update()}
-            disabled={smtp.formError || !smtp.formChanged || smtp.updating}
-            loading={smtp.updating}
-          />
-          {smtp.formChanged ? (
-            <Button
-              className={styles.button}
-              label="Clear Changes"
-              onClick={() => smtp.clearForm()}
-            />
-          ) : null}
-        </div>
-      </div>
+      <StickyBottomBar draft={smtp} />
     </div>
   );
 });
@@ -886,6 +745,7 @@ const UIConfigForm = observer(function UIConfig({
             </div>
           </div>
 
+          {draft.appConfig ? <AppConfigForm draft={draft.appConfig} /> : null}
         </div>
 
         <div className={styles.stickyBottomBar}>
@@ -944,7 +804,11 @@ const UIConfigForm = observer(function UIConfig({
           </div>
         </div>
         <LoginUIPreview
-          authAdminState={state}
+          draft={
+            state.newAppAuthSchema
+              ? state.draftCoreConfig!.appConfig!
+              : draft.appConfig!
+          }
           providers={state.providers ?? []}
           darkTheme={draft.showDarkTheme ?? theme == Theme.dark}
         />
