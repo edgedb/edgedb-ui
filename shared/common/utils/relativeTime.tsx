@@ -8,13 +8,13 @@ import {
 } from "mobx";
 import {observer} from "mobx-react-lite";
 
-class CurrentTimestamp {
+export class CurrentTimestamp {
   @observable
   timestamp = Date.now();
 
   private _timer: number | null = null;
 
-  constructor() {
+  constructor(private _updateFrequency = 1000) {
     makeObservable(this);
 
     onBecomeObserved(this, "timestamp", this._updateTimestamp);
@@ -31,7 +31,10 @@ class CurrentTimestamp {
     if (this._timer) {
       clearTimeout(this._timer);
     }
-    this._timer = setTimeout(this._updateTimestamp, 1000) as unknown as number;
+    this._timer = setTimeout(
+      this._updateTimestamp,
+      this._updateFrequency
+    ) as unknown as number;
   }
 }
 
