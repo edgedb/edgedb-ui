@@ -2,11 +2,7 @@ import "@fontsource-variable/roboto-flex";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {
-  AuthProviderData,
-  DraftAppConfig,
-  providers as providersInfo,
-} from "./state";
+import {AuthProviderData, DraftAppConfig, _providersInfo} from "./state";
 
 import styles from "./loginuipreview.module.scss";
 import {getColourVariables, normaliseHexColor} from "./colourUtils";
@@ -32,12 +28,12 @@ export function LoginUIPreview({
   );
 
   const oauthButtons = providers
-    .filter((provider) => providersInfo[provider._typename].kind === "OAuth")
+    .filter((provider) => _providersInfo[provider._typename].kind === "OAuth")
     .map((provider) => (
       <a key={provider.name}>
-        {providersInfo[provider._typename].icon}
+        {_providersInfo[provider._typename].icon}
         <span>
-          Sign in with {providersInfo[provider._typename].displayName}
+          Sign in with {_providersInfo[provider._typename].displayName}
         </span>
       </a>
     ));
