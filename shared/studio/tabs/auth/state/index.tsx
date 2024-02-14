@@ -1,5 +1,6 @@
 import {action, computed, observable, runInAction} from "mobx";
 import {
+  findParent,
   getParent,
   Model,
   model,
@@ -11,7 +12,14 @@ import {parsers} from "../../../components/dataEditor/parsers";
 import {connCtx, dbCtx} from "../../../state";
 import {AppleIcon, AzureIcon, GithubIcon, GoogleIcon} from "../icons";
 
-export interface AuthConfigData {
+interface AuthAppData {
+  app_name: string | null;
+  logo_url: string | null;
+  dark_logo_url: string | null;
+  brand_color: string | null;
+}
+
+export interface AuthConfigData extends AuthAppData {
   signing_key_exists: boolean;
   token_time_to_live: string;
   allowed_redirect_urls: string;
@@ -39,10 +47,6 @@ export type AuthProviderData =
 export interface AuthUIConfigData {
   redirect_to: string;
   redirect_to_on_signup: string;
-  app_name: string | null;
-  logo_url: string | null;
-  dark_logo_url: string | null;
-  brand_color: string | null;
 }
 
 export const smtpSecurity = [
@@ -112,69 +116,7 @@ export const providerTypenames = Object.keys(providers) as ProviderTypename[];
 export class AuthAdminState extends Model({
   selectedTab: prop<"config" | "providers" | "smtp">("config").withSetter(),
 
-  draftSigningKey: createDraftAuthConfig(
-    "auth_signing_key",
-    "std::str",
-    (key) =>
-      (key ?? "") === ""
-        ? "Signing key is required"
-        : (key ?? "").length < 32
-        ? "Signing key too short"
-        : null
-  ),
-  draftTokenTime: createDraftAuthConfig(
-    "token_time_to_live",
-    "std::duration",
-    (dur) => {
-      if (dur === null) return null;
-      dur = dur.trim();
-      if (!dur.length) {
-        return `Duration is required`;
-      }
-      try {
-        if (/^\d+$/.test(dur)) return null;
-        parsers["std::duration"](dur, null);
-      } catch {
-        return `Invalid duration`;
-      }
-      return null;
-    }
-  ),
-  draftAllowedRedirectUrls: createDraftAuthConfig(
-    "allowed_redirect_urls",
-    "std::str",
-    (urls) => {
-      if (urls === null) return null;
-
-      const urlList = urls.split("\n").filter((str) => str.trim() !== "");
-      if (urlList.length > 128) {
-        return "Too many URLs, maximum supported number of URLs is 128.";
-      }
-
-      const invalidUrls = urlList.filter((u) => {
-        try {
-          new URL(u);
-          return false;
-        } catch (e) {
-          return true;
-        }
-      });
-
-      if (invalidUrls.length > 0) {
-        return `List contained the following invalid URLs:\n${invalidUrls.join(
-          ",\n"
-        )}`;
-      }
-
-      return null;
-    },
-    (urls) => {
-      if (urls === null) return "{}";
-      const urlList = urls.split("\n").filter((str) => str.trim() !== "");
-      return `{${urlList.map((u) => JSON.stringify(u)).join(", ")}}`;
-    }
-  ),
-
+  draftCoreConfig: prop<DraftCoreConfig | null>(null),
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
   draftSMTPConfig: prop(() => new DraftSMTPConfig({})),
@@ -185,6 +127,13 @@ export class AuthAdminState extends Model({
       dbCtx
         .get(this)!
         .schemaData?.extensions.some((ext) => ext.name === "auth") ?? null
+    );
+  }
+  @computed
+  get newAppAuthSchema() {
+    return (
+      dbCtx.get(this)!.schemaData?.objectsByName.get("ext::auth::AuthConfig")
+        ?.properties["app_name"] != null
     );
   }
 
@@ -213,9 +162,20 @@ export class AuthAdminState extends Model({
   }
 
   @modelAction
+  _createDraftCoreConfig() {
+    if (!this.draftCoreConfig) {
+      this.draftCoreConfig = new DraftCoreConfig({
+        appConfig: this.newAppAuthSchema ? new DraftAppConfig({}) : null,
+      });
+    }
+  }
+
+  @modelAction
   enableUI() {
     if (!this.draftUIConfig) {
-      this.draftUIConfig = new DraftUIConfig({});
+      this.draftUIConfig = new DraftUIConfig({
+        appConfig: !this.newAppAuthSchema ? new DraftAppConfig({}) : null,
+      });
     }
   }
 
@@ -248,6 +208,14 @@ export class AuthAdminState extends Model({
 
   async refreshConfig() {
     const conn = connCtx.get(this)!;
+    const {newAppAuthSchema} = this;
+
+    const appConfigQuery = `
+    app_name,
+    logo_url,
+    dark_logo_url,
+    brand_color,
+    `;
 
     const {result} = await conn.query(
       `with module ext::auth
@@ -255,6 +223,7 @@ export class AuthAdminState extends Model({
         auth := assert_single(cfg::Config.extensions[is AuthConfig] {
           signing_key_exists := signing_key_exists(),
           token_time_to_live_seconds := <str>duration_get(.token_time_to_live, 'totalseconds'),
+          ${newAppAuthSchema ? appConfigQuery : ""}
           allowed_redirect_urls,
           providers: {
             _typename := .__type__.name,
@@ -266,10 +235,7 @@ export class AuthAdminState extends Model({
           ui: {
             redirect_to,
             redirect_to_on_signup,
-            app_name,
-            logo_url,
-            dark_logo_url,
-            brand_color,
+            ${newAppAuthSchema ? "" : appConfigQuery}
           }
         }),
         smtp := assert_single(cfg::Config.extensions[is SMTPConfig] {
@@ -296,9 +262,14 @@ export class AuthAdminState extends Model({
         signing_key_exists: auth.signing_key_exists,
         token_time_to_live: auth.token_time_to_live_seconds,
         allowed_redirect_urls: auth.allowed_redirect_urls.join("\n"),
+        app_name: auth.app_name ?? auth.ui?.app_name ?? null,
+        logo_url: auth.logo_url ?? auth.ui?.logo_url ?? null,
+        dark_logo_url: auth.dark_logo_url ?? auth.ui?.dark_logo_url ?? null,
+        brand_color: auth.brand_color ?? auth.ui?.brand_color ?? null,
       };
       this.providers = auth.providers;
       this.uiConfig = auth.ui ?? false;
+      this._createDraftCoreConfig();
       if (auth.ui) {
         this.enableUI();
       }
@@ -312,14 +283,267 @@ export class AuthAdminState extends Model({
   }
 }
 
-@model("AdminDraftUIConfig")
-export class DraftUIConfig extends Model({
-  _redirect_to: prop<string | null>(null),
-  _redirect_to_on_signup: prop<string | null>(null),
+export interface AbstractDraftConfig {
+  updating: boolean;
+  formChanged: boolean;
+  formError: boolean;
+  update: () => void;
+  clearForm: () => void;
+}
+
+type AuthCoreConfigName =
+  | "auth_signing_key"
+  | "token_time_to_live"
+  | "allowed_redirect_urls";
+
+@model("AuthAdmin/DraftCoreConfig")
+export class DraftCoreConfig
+  extends Model({
+    _auth_signing_key: prop<string | null>(null),
+    _token_time_to_live: prop<string | null>(null),
+    _allowed_redirect_urls: prop<string | null>(null),
+    appConfig: prop<DraftAppConfig | null>(),
+  })
+  implements AbstractDraftConfig
+{
+  getConfigValue(name: Exclude<AuthCoreConfigName, "auth_signing_key">) {
+    return (
+      this[`_${name}`] ??
+      (getParent<AuthAdminState>(this)?.configData || null)?.[name] ??
+      ""
+    );
+  }
+
+  @modelAction
+  setConfigValue(name: AuthCoreConfigName, val: string) {
+    this[`_${name}`] = val;
+  }
+
+  @computed
+  get signingKeyError() {
+    if (
+      this._auth_signing_key === null &&
+      getParent<AuthAdminState>(this)?.configData?.signing_key_exists
+    ) {
+      return null;
+    }
+    const key = this._auth_signing_key ?? "";
+    return key === ""
+      ? "Signing key is required"
+      : key.length < 32
+      ? "Signing key too short"
+      : null;
+  }
+
+  @computed
+  get tokenTimeToLiveError() {
+    let dur = this._token_time_to_live;
+    if (dur === null) return null;
+    dur = dur.trim();
+    if (!dur.length) {
+      return `Duration is required`;
+    }
+    try {
+      if (/^\d+$/.test(dur)) return null;
+      parsers["std::duration"](dur, null);
+    } catch {
+      return `Invalid duration`;
+    }
+    return null;
+  }
+
+  @computed
+  get allowedRedirectUrlsError() {
+    const urls = this._allowed_redirect_urls;
+    if (urls === null) return null;
+
+    const urlList = urls.split("\n").filter((str) => str.trim() !== "");
+    if (urlList.length > 128) {
+      return "Too many URLs, maximum supported number of URLs is 128.";
+    }
+
+    const invalidUrls = urlList.filter((u) => {
+      try {
+        new URL(u);
+        return false;
+      } catch (e) {
+        return true;
+      }
+    });
+
+    if (invalidUrls.length > 0) {
+      return `List contained the following invalid URLs:\n${invalidUrls.join(
+        ",\n"
+      )}`;
+    }
+
+    return null;
+  }
+
+  @computed
+  get formError() {
+    return (
+      !!this.signingKeyError ||
+      !!this.tokenTimeToLiveError ||
+      !!this.allowedRedirectUrlsError
+    );
+  }
+
+  @computed
+  get formChanged() {
+    return (
+      this._auth_signing_key != null ||
+      this._token_time_to_live != null ||
+      this._allowed_redirect_urls != null ||
+      (this.appConfig?.changed ?? false)
+    );
+  }
+
+  @modelAction
+  clearForm() {
+    this._auth_signing_key = null;
+    this._token_time_to_live = null;
+    this._allowed_redirect_urls = null;
+    this.appConfig?.clear();
+  }
+
+  @observable
+  updating = false;
+
+  @observable
+  error: string | null = null;
+
+  @action
+  async update() {
+    if (this.formError || !this.formChanged) return;
+
+    const conn = connCtx.get(this)!;
+    const state = getParent<AuthAdminState>(this)!;
+
+    this.updating = true;
+    this.error = null;
+
+    const query = (
+      [
+        {name: "auth_signing_key", cast: null, transform: null},
+        {name: "token_time_to_live", cast: "std::duration", transform: null},
+        {
+          name: "allowed_redirect_urls",
+          cast: null,
+          transform: (urls: string) => {
+            const urlList = urls
+              .split("\n")
+              .filter((str) => str.trim() !== "");
+            return `{${urlList.map((u) => JSON.stringify(u)).join(", ")}}`;
+          },
+        },
+      ] as const
+    )
+      .map(({name, cast, transform}) => {
+        const val = this[`_${name}`];
+        if (val == null) return null;
+        if (val.trim() === "") {
+          return `configure current database reset ext::auth::AuthConfig::${name};`;
+        }
+        return `configure current database set ext::auth::AuthConfig::${name} := ${
+          cast ? `<${cast}>` : ""
+        }${(transform ?? JSON.stringify)(val)};`;
+      })
+      .filter((s) => s != null) as string[];
+
+    if (this.appConfig) {
+      query.push(...this.appConfig.getUpdateQuery(true));
+    }
+
+    try {
+      await conn.execute(query.join("\n"));
+      await state.refreshConfig();
+      this.clearForm();
+    } catch (e) {
+      console.log(e);
+      runInAction(
+        () => (this.error = e instanceof Error ? e.message : String(e))
+      );
+    } finally {
+      runInAction(() => (this.updating = false));
+    }
+  }
+}
+
+@model("AuthAdmin/DraftAppConfig")
+export class DraftAppConfig extends Model({
   _app_name: prop<string | null>(null),
   _logo_url: prop<string | null>(null),
   _dark_logo_url: prop<string | null>(null),
   _brand_color: prop<string | null>(null),
+}) {
+  getConfigValue(name: keyof AuthAppData) {
+    return (
+      this[`_${name}`] ??
+      (findParent<AuthAdminState>(
+        this,
+        (parent) => parent instanceof AuthAdminState
+      )?.configData || null)?.[name] ??
+      ""
+    );
+  }
+
+  @modelAction
+  setConfigValue<Name extends keyof AuthAppData>(
+    name: Name,
+    val: AuthAppData[Name]
+  ) {
+    (this as any)[`_${name}`] = val;
+  }
+
+  @computed
+  get changed() {
+    return (
+      this._app_name != null ||
+      this._logo_url != null ||
+      this._dark_logo_url != null ||
+      this._brand_color != null
+    );
+  }
+
+  @modelAction
+  clear() {
+    this._app_name = null;
+    this._logo_url = null;
+    this._dark_logo_url = null;
+    this._brand_color = null;
+  }
+
+  getUpdateQuery(newSchema: boolean) {
+    if (!this.changed) return [];
+
+    return (["app_name", "logo_url", "dark_logo_url", "brand_color"] as const)
+      .map(
+        newSchema
+          ? (name) => {
+              const val = this[`_${name}`];
+              if (val == null) return null;
+              if (typeof val === "string" && val.trim() === "") {
+                return `configure current database reset ext::auth::AuthConfig::${name};`;
+              }
+              return `configure current database set ext::auth::AuthConfig::${name} := ${JSON.stringify(
+                val
+              )};`;
+            }
+          : (name) => {
+              const val = this.getConfigValue(name);
+              return val ? `${name} := ${JSON.stringify(val)}` : null;
+            }
+      )
+      .filter((s) => s != null) as string[];
+  }
+}
+
+@model("AuthAdmin/DraftUIConfig")
+export class DraftUIConfig extends Model({
+  _redirect_to: prop<string | null>(null),
+  _redirect_to_on_signup: prop<string | null>(null),
+  appConfig: prop<DraftAppConfig | null>(),
 
   showDarkTheme: prop<boolean | null>(null).withSetter(),
 }) {
@@ -353,10 +577,7 @@ export class DraftUIConfig extends Model({
     return (
       this._redirect_to != null ||
       this._redirect_to_on_signup != null ||
-      this._app_name != null ||
-      this._logo_url != null ||
-      this._dark_logo_url != null ||
-      this._brand_color != null
+      (this.appConfig?.changed ?? false)
     );
   }
 
@@ -364,10 +585,7 @@ export class DraftUIConfig extends Model({
   clearForm() {
     this._redirect_to = null;
     this._redirect_to_on_signup = null;
-    this._app_name = null;
-    this._logo_url = null;
-    this._dark_logo_url = null;
-    this._brand_color = null;
+    this.appConfig?.clear();
   }
 
   @observable
@@ -394,21 +612,15 @@ export class DraftUIConfig extends Model({
             redirect_to := ${JSON.stringify(
               this.getConfigValue("redirect_to")
             )},
-            ${(
-              [
-                "redirect_to_on_signup",
-                "app_name",
-                "logo_url",
-                "dark_logo_url",
-                "brand_color",
-              ] as const
-            )
-              .map((name) => {
-                const val = this.getConfigValue(name);
-                return val ? `${name} := ${JSON.stringify(val)}` : null;
-              })
-              .filter((l) => l)
-              .join(",\n")}
+            ${[
+              ...(["redirect_to_on_signup"] as const)
+                .map((name) => {
+                  const val = this.getConfigValue(name);
+                  return val ? `${name} := ${JSON.stringify(val)}` : null;
+                })
+                .filter((l) => l),
+              ...(this.appConfig?.getUpdateQuery(false) ?? []),
+            ].join(",\n")}
           };`);
       await state.refreshConfig();
       this.clearForm();
@@ -422,18 +634,21 @@ export class DraftUIConfig extends Model({
   }
 }
 
-@model("AdminDraftSMTPConfig")
-export class DraftSMTPConfig extends Model({
-  _sender: prop<string | null>(null),
-  _host: prop<string | null>(null),
-  _port: prop<string | null>(null),
-  _username: prop<string | null>(null),
-  _password: prop<string | null>(null),
-  _security: prop<SMTPSecurity | null>(null),
-  _validate_certs: prop<boolean | null>(null),
-  _timeout_per_email: prop<string | null>(null),
-  _timeout_per_attempt: prop<string | null>(null),
-}) {
+@model("AuthAdmin/DraftSMTPConfig")
+export class DraftSMTPConfig
+  extends Model({
+    _sender: prop<string | null>(null),
+    _host: prop<string | null>(null),
+    _port: prop<string | null>(null),
+    _username: prop<string | null>(null),
+    _password: prop<string | null>(null),
+    _security: prop<SMTPSecurity | null>(null),
+    _validate_certs: prop<boolean | null>(null),
+    _timeout_per_email: prop<string | null>(null),
+    _timeout_per_attempt: prop<string | null>(null),
+  })
+  implements AbstractDraftConfig
+{
   getConfigValue(name: Exclude<keyof SMTPConfigData, "validate_certs">) {
     return (
       this[`_${name}`] ??
@@ -587,7 +802,7 @@ export class DraftSMTPConfig extends Model({
   }
 }
 
-@model("DraftProviderConfig")
+@model("AuthAdmin/DraftProviderConfig")
 export class DraftProviderConfig extends Model({
   selectedProviderType: prop<ProviderTypename>().withSetter(),
 
@@ -671,48 +886,4 @@ export class DraftProviderConfig extends Model({
       runInAction(() => (this.updating = false));
     }
   }
-}
-
-function createDraftAuthConfig(
-  name: string,
-  type: string,
-  validate: (val: string | null) => string | null,
-  transform: (val: string | null) => string = JSON.stringify
-) {
-  @model(`DraftAuthConfig/${name}`)
-  class DraftAuthConfig extends Model({
-    value: prop<string | null>(null).withSetter(),
-  }) {
-    @computed
-    get error() {
-      return validate(this.value);
-    }
-
-    @observable
-    updating = false;
-
-    @action
-    async update() {
-      if (this.value == null || this.error) return;
-
-      const conn = connCtx.get(this)!;
-      const state = getParent<AuthAdminState>(this)!;
-
-      this.updating = true;
-
-      try {
-        await conn.execute(
-          `
-    configure current database set
-      ext::auth::AuthConfig::${name} := <${type}>${transform(this.value)}`
-        );
-        await state.refreshConfig();
-        this.setValue(null);
-      } finally {
-        runInAction(() => (this.updating = false));
-      }
-    }
-  }
-
-  return prop(() => new DraftAuthConfig({}));
 }

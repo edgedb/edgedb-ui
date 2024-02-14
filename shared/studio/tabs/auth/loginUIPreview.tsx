@@ -4,7 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {
   AuthProviderData,
-  DraftUIConfig,
+  DraftAppConfig,
   providers as providersInfo,
 } from "./state";
 
@@ -16,7 +16,7 @@ export function LoginUIPreview({
   providers,
   darkTheme,
 }: {
-  draft: DraftUIConfig;
+  draft: DraftAppConfig;
   providers: AuthProviderData[];
   darkTheme: boolean;
 }) {
