@@ -14,6 +14,7 @@ import styles from "./customScrollbar.module.scss";
 export interface CustomScrollbarsProps {
   className?: string;
   scrollClass?: string;
+  verticalBarClass?: string;
   innerClass: string | Element | null;
   headerPadding?: number;
   reverse?: boolean;
@@ -27,6 +28,7 @@ export function CustomScrollbars({
   className,
   children,
   scrollClass,
+  verticalBarClass,
   innerClass,
   headerPadding = 0,
   reverse,
@@ -37,7 +39,8 @@ export function CustomScrollbars({
 
   const scrollSizes = useRef<[number, number]>(defaultScrollSizes);
   const [scrollOffsets, setScrollOffsets] = useState<[number, number]>(() => [
-    0, 0,
+    0,
+    0,
   ]);
   const _scrollOffsets = useRef(scrollOffsets);
   const [dragging, setDragging] = useState(false);
@@ -64,11 +67,9 @@ export function CustomScrollbars({
   );
 
   const onResize = useCallback(() => {
-    const scrollEl = (
-      scrollClass
-        ? ref.current?.querySelector(`.${scrollClass}`)
-        : ref.current!.firstChild
-    ) as HTMLElement;
+    const scrollEl = (scrollClass
+      ? ref.current?.querySelector(`.${scrollClass}`)
+      : ref.current!.firstChild) as HTMLElement;
     if (!scrollEl) return;
 
     const hasV = scrollEl.scrollHeight > scrollEl.clientHeight;
@@ -104,11 +105,9 @@ export function CustomScrollbars({
   useResize(innerRef, onResize);
 
   useEffect(() => {
-    const scrollEl = (
-      scrollClass
-        ? ref.current?.querySelector(`.${scrollClass}`)
-        : ref.current!.firstChild
-    ) as HTMLElement;
+    const scrollEl = (scrollClass
+      ? ref.current?.querySelector(`.${scrollClass}`)
+      : ref.current!.firstChild) as HTMLElement;
     if (scrollEl) {
       const listener = (e: Event) => onScroll(e.target as HTMLElement);
 
@@ -130,11 +129,9 @@ export function CustomScrollbars({
         e.stopPropagation();
         e.preventDefault();
 
-        const el = (
-          scrollClass
-            ? ref.current?.querySelector(`.${scrollClass}`)
-            : ref.current!.firstChild
-        ) as HTMLElement;
+        const el = (scrollClass
+          ? ref.current?.querySelector(`.${scrollClass}`)
+          : ref.current!.firstChild) as HTMLElement;
         const initial = vScroll ? e.clientY : e.clientX;
         const initialScroll = vScroll ? el.scrollTop : el.scrollLeft;
         const barSize = vScroll
@@ -211,7 +208,7 @@ export function CustomScrollbars({
       {children}
       {!hideVertical && scrollSizes.current[0] !== -1 ? (
         <div
-          className={styles.verticalBar}
+          className={cn(styles.verticalBar, verticalBarClass)}
           style={{
             top: headerPadding,
             bottom: scrollSizes.current[1] === -1 ? 0 : 6,
