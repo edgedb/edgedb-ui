@@ -33,6 +33,7 @@ import {
   AbstractDraftConfig,
   _providersInfo,
   LocalWebAuthnProviderData,
+  LocalMagicLinkProviderData,
 } from "./state";
 
 import {encodeB64} from "edgedb/dist/primitives/buffer";
@@ -1002,7 +1003,7 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
             </div>
           </>
         ) : providerKind === "Local" ? (
-          <div className={styles.gridItem}>
+          <>
             {draftState.selectedProviderType ===
             "ext::auth::WebAuthnProviderConfig" ? (
               <div className={styles.gridItem}>
@@ -1026,25 +1027,56 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
                 </div>
               </div>
             ) : null}
-            <div className={styles.configName}>require_verification</div>
-            <div className={styles.configInputWrapper}>
-              <div className={styles.configInput}>
-                <label className={styles.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={draftState.requireEmailVerification}
-                    onChange={(e) =>
-                      draftState.setRequireEmailVerification(e.target.checked)
-                    }
-                  />
-                </label>
+            {draftState.selectedProviderType ===
+              "ext::auth::EmailPasswordProviderConfig" ||
+            draftState.selectedProviderType ===
+              "ext::auth::WebAuthnProviderConfig" ? (
+              <div className={styles.gridItem}>
+                <div className={styles.configName}>require_verification</div>
+                <div className={styles.configInputWrapper}>
+                  <div className={styles.configInput}>
+                    <label className={styles.checkbox}>
+                      <input
+                        type="checkbox"
+                        checked={draftState.requireEmailVerification}
+                        onChange={(e) =>
+                          draftState.setRequireEmailVerification(
+                            e.target.checked
+                          )
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className={styles.configExplain}>
+                    Whether the email needs to be verified before the user is
+                    allowed to sign in.
+                  </div>
+                </div>
               </div>
-              <div className={styles.configExplain}>
-                Whether the email needs to be verified before the user is
-                allowed to sign in.
+            ) : null}
+            {draftState.selectedProviderType ===
+            "ext::auth::MagicLinkProviderConfig" ? (
+              <div className={styles.gridItem}>
+                <div className={styles.configName}>token_time_to_live</div>
+                <div className={styles.configInputWrapper}>
+                  <div className={styles.configInput}>
+                    <Input
+                      size={16}
+                      value={draftState.tokenTimeToLive}
+                      onChange={(val) =>
+                        draftState.setTokenTimeToLive(val.toUpperCase())
+                      }
+                      error={draftState.tokenTimeToLiveError}
+                    />
+                  </div>
+                  <div className={styles.configExplain}>
+                    The time after which a magic link token expires. Defaults
+                    to 10 minutes.
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            ) : null}
+          </>
         ) : null}
       </div>
 
@@ -1143,16 +1175,33 @@ function ProviderCard({provider}: {provider: AuthProviderData}) {
                   </div>
                 </>
               ) : null}
-              <div className={styles.providerConfigName}>
-                require_verification
-              </div>
-              <div className={styles.providerConfigValue}>
-                {(
-                  provider as
-                    | LocalEmailPasswordProviderData
-                    | LocalWebAuthnProviderData
-                ).require_verification.toString()}
-              </div>
+              {provider.name === "builtin::local_emailpassword" ||
+              provider.name === "builtin::local_webauthn" ? (
+                <>
+                  <div className={styles.providerConfigName}>
+                    require_verification
+                  </div>
+                  <div className={styles.providerConfigValue}>
+                    {(
+                      provider as
+                        | LocalEmailPasswordProviderData
+                        | LocalWebAuthnProviderData
+                    ).require_verification.toString()}
+                  </div>
+                </>
+              ) : null}
+              {provider.name === "builtin::local_magic_link" ? (
+                <>
+                  <div className={styles.providerConfigName}>time_to_live</div>
+                  <div className={styles.providerConfigValue}>
+                    {
+                      (provider as LocalMagicLinkProviderData)
+                        .token_time_to_live
+                    }
+                    s
+                  </div>
+                </>
+              ) : null}
             </>
           ) : null}
         </div>

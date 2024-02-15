@@ -55,10 +55,16 @@ export type LocalWebAuthnProviderData = {
   relying_party_origin: string;
   require_verification: boolean;
 };
+export type LocalMagicLinkProviderData = {
+  name: string;
+  _typename: "ext::auth::MagicLinkProviderConfig";
+  token_time_to_live: string;
+};
 export type AuthProviderData =
   | OAuthProviderData
   | LocalEmailPasswordProviderData
-  | LocalWebAuthnProviderData;
+  | LocalWebAuthnProviderData
+  | LocalMagicLinkProviderData;
 
 export interface AuthUIConfigData {
   redirect_to: string;
@@ -135,6 +141,11 @@ export const _providersInfo: {
   "ext::auth::WebAuthnProviderConfig": {
     kind: "Local",
     displayName: "WebAuthn",
+    icon: <></>,
+  },
+  "ext::auth::MagicLinkProviderConfig": {
+    kind: "Local",
+    displayName: "Magic link",
     icon: <></>,
   },
 };
@@ -267,6 +278,8 @@ export class AuthAdminState extends Model({
 
     const hasWebAuthn =
       !!this.providersInfo["ext::auth::WebAuthnProviderConfig"];
+    const hasMagicLink =
+      !!this.providersInfo["ext::auth::MagicLinkProviderConfig"];
 
     const {result} = await conn.query(
       `with module ext::auth
@@ -290,7 +303,12 @@ export class AuthAdminState extends Model({
             ),
             ${
               hasWebAuthn
-                ? `[is WebAuthnProviderConfig].relying_party_origin`
+                ? `[is WebAuthnProviderConfig].relying_party_origin,`
+                : ""
+            }
+            ${
+              hasMagicLink
+                ? `token_time_to_live_seconds := <str>duration_get([is MagicLinkProviderConfig].token_time_to_live, 'totalseconds'),`
                 : ""
             }
           },
@@ -329,7 +347,11 @@ export class AuthAdminState extends Model({
         dark_logo_url: auth.dark_logo_url ?? auth.ui?.dark_logo_url ?? null,
         brand_color: auth.brand_color ?? auth.ui?.brand_color ?? null,
       };
-      this.providers = auth.providers;
+      this.providers = auth.providers.map((p: any) =>
+        p._typename === "ext::auth::MagicLinkProviderConfig"
+          ? {...p, token_time_to_live: p.token_time_to_live_seconds}
+          : p
+      );
       this.uiConfig = auth.ui ?? false;
       this._createDraftCoreConfig();
       if (auth.ui) {
@@ -343,6 +365,20 @@ export class AuthAdminState extends Model({
       };
     });
   }
+}
+
+function validateDuration(dur: string, required: boolean) {
+  dur = dur.trim();
+  if (!dur.length) {
+    return required ? `Duration is required` : null;
+  }
+  try {
+    if (/^\d+$/.test(dur)) return null;
+    parsers["std::duration"](dur, null);
+  } catch {
+    return `Invalid duration`;
+  }
+  return null;
 }
 
 export interface AbstractDraftConfig {
@@ -401,17 +437,7 @@ export class DraftCoreConfig
   get tokenTimeToLiveError() {
     let dur = this._token_time_to_live;
     if (dur === null) return null;
-    dur = dur.trim();
-    if (!dur.length) {
-      return `Duration is required`;
-    }
-    try {
-      if (/^\d+$/.test(dur)) return null;
-      parsers["std::duration"](dur, null);
-    } catch {
-      return `Invalid duration`;
-    }
-    return null;
+    return validateDuration(dur, true);
   }
 
   @computed
@@ -875,6 +901,8 @@ export class DraftProviderConfig extends Model({
   webauthnRelyingOrigin: prop("").withSetter(),
 
   requireEmailVerification: prop(true).withSetter(),
+
+  tokenTimeToLive: prop("").withSetter(),
 }) {
   @computed
   get oauthClientIdError() {
@@ -894,6 +922,11 @@ export class DraftProviderConfig extends Model({
   }
 
   @computed
+  get tokenTimeToLiveError() {
+    return validateDuration(this.tokenTimeToLive, false);
+  }
+
+  @computed
   get formValid(): boolean {
     switch (_providersInfo[this.selectedProviderType].kind) {
       case "OAuth":
@@ -902,6 +935,8 @@ export class DraftProviderConfig extends Model({
         return this.selectedProviderType ===
           "ext::auth::WebAuthnProviderConfig"
           ? !this.webauthnRelyingOriginError
+          : this.selectedProviderType === "ext::auth::MagicLinkProviderConfig"
+          ? !this.tokenTimeToLiveError
           : true;
     }
   }
@@ -948,11 +983,27 @@ export class DraftProviderConfig extends Model({
             )}`
           );
         }
-        queryFields.push(
-          `require_verification := ${
-            this.requireEmailVerification ? "true" : "false"
-          }`
-        );
+        if (
+          this.selectedProviderType === "ext::auth::WebAuthnProviderConfig" ||
+          this.selectedProviderType ===
+            "ext::auth::EmailPasswordProviderConfig"
+        ) {
+          queryFields.push(
+            `require_verification := ${
+              this.requireEmailVerification ? "true" : "false"
+            }`
+          );
+        }
+        if (
+          this.selectedProviderType === "ext::auth::MagicLinkProviderConfig" &&
+          this.tokenTimeToLive.trim() !== ""
+        ) {
+          queryFields.push(
+            `token_time_to_live := <std::duration>${JSON.stringify(
+              this.tokenTimeToLive
+            )}`
+          );
+        }
       }
 
       await conn.execute(
