@@ -805,6 +805,7 @@ const UIConfigForm = observer(function UIConfig({
           </div>
         </div>
         <LoginUIPreview
+          key={state.providers?.length ?? 0}
           draft={
             state.newAppAuthSchema
               ? state.draftCoreConfig!.appConfig!
