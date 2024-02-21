@@ -14,7 +14,7 @@ import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 
 import {DBRouterProvider} from "@edgedb/studio/hooks/dbRoute";
 import {useModal} from "@edgedb/common/hooks/useModal";
-import CreateDatabaseModal from "@edgedb/studio/components/modals/createDatabase";
+import CreateBranchModal from "@edgedb/studio/components/modals/createBranch";
 
 import DatabasePageContent, {
   DatabaseTabSpec,
@@ -92,7 +92,7 @@ function HeaderNavMenu({
         closeDropdown={() => setDropdownOpen(false)}
         itemGroups={[
           {
-            header: "Databases",
+            header: "Branches",
             items:
               databases?.map((db) => ({
                 key: db,
@@ -105,10 +105,11 @@ function HeaderNavMenu({
           },
         ]}
         action={{
-          label: "Create New Database",
+          label: "Create New Branch",
           onClick: () =>
             openModal(
-              <CreateDatabaseModal
+              <CreateBranchModal
+                fromBranch={currentDB}
                 instanceState={instanceState}
                 navigateToDB={(dbName) => navigate(`/${dbName}`)}
               />

@@ -3,6 +3,10 @@
   --buttonTextColour: #fff;
 }
 
+.modalContent {
+  overflow: visible !important;
+}
+
 .modalBody {
   .errorText {
     max-width: 300px;
