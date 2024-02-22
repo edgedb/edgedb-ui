@@ -49,7 +49,9 @@ import {
   WarningIcon,
   BackIcon,
 } from "../../icons";
-import {DataEditor, PrimitiveType} from "../../components/dataEditor";
+import {PrimitiveType} from "../../components/dataEditor";
+import {DataEditor} from "../../components/dataEditor/editor";
+import {renderInvalidEditorValue} from "../../components/dataEditor/utils";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
@@ -371,10 +373,12 @@ const GridCell = observer(function GridCell({
     state.parentObject && edits.linkEdits.get(state.parentObject.linkId);
   const editedLinkChange = editedLink?.changes.get(data?.id);
 
-  const value =
+  const _value =
     cellEditState?.value !== undefined
-      ? cellEditState.value
+      ? cellEditState.value.value
       : data?.[rowData ? field.queryName : field.name] ?? null;
+
+  const value = insertedRow && _value ? _value.value : _value;
 
   const isEmptySubtype =
     field.subtypeName &&
@@ -385,28 +389,16 @@ const GridCell = observer(function GridCell({
     !isDeletedRow &&
     !isEmptySubtype &&
     field.type === ObjectFieldType.property &&
-    edits.activePropertyEditId === cellId
+    edits.activePropertyEdit?.cellId === cellId
   ) {
     return cellEditState?.value === undefined &&
       field.schemaType.name === "std::str" &&
-      value?.length === 100 &&
+      typeof value === "string" &&
+      value.length === 100 &&
       !state.fullyFetchedData.has(cellId) ? (
       <FetchingDataPlaceholder state={state} data={data} field={field} />
     ) : (
-      <DataEditor
-        type={field.schemaType as PrimitiveType}
-        isRequired={field.required}
-        isMulti={field.multi}
-        value={
-          cellEditState?.value === undefined
-            ? state.fullyFetchedData.get(cellId) ?? value
-            : value
-        }
-        onChange={(val) =>
-          edits.updateCellEdit(data?.id, data.__tname__, field.name, val)
-        }
-        onClose={() => edits.finishEditingCell()}
-      />
+      <DataEditor state={edits.activePropertyEdit} />
     );
   }
 
@@ -445,7 +437,17 @@ const GridCell = observer(function GridCell({
         if (codec) {
           content = (
             <>
-              {renderCellValue(cellEditState?.value ?? value, codec)}
+              {(cellEditState && !cellEditState.value.valid) ||
+              (insertedRow && _value && !_value.valid) ? (
+                <span className={styles.invalidValue}>
+                  {renderInvalidEditorValue(
+                    value,
+                    field.schemaType as PrimitiveType
+                  )}
+                </span>
+              ) : (
+                renderCellValue(value, codec)
+              )}
               {undoEdit}
             </>
           );
@@ -530,12 +532,14 @@ const GridCell = observer(function GridCell({
         [styles.hasEdits]:
           !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
         [styles.hasErrors]:
-          !rowData &&
-          isEditable &&
-          field.required &&
-          !field.hasDefault &&
-          value === null &&
-          !linkEditState,
+          (cellEditState && !cellEditState.value.valid) ||
+          (insertedRow && _value && !_value.valid) ||
+          (!rowData &&
+            isEditable &&
+            field.required &&
+            !field.hasDefault &&
+            value === null &&
+            !linkEditState),
       })}
       onClick={() => {
         if (field.type === ObjectFieldType.link && content !== null) {
@@ -551,7 +555,12 @@ const GridCell = observer(function GridCell({
       onDoubleClick={() => {
         if (isEditable) {
           if (field.type === ObjectFieldType.property) {
-            edits.startEditingCell(data.id, field.name);
+            edits.startEditingCell(
+              data.id,
+              data.__tname__,
+              field,
+              state.fullyFetchedData.get(cellId) ?? value
+            );
           } else {
             state.openNestedView(
               basePath,

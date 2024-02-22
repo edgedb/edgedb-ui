@@ -90,6 +90,17 @@
   }
 }
 
+.codeBlockParamInvalid {
+  display: inline-flex;
+  background: rgba(222, 83, 83, 0.1);
+  color: #de5353;
+  line-height: 22px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .greenButton {
   --buttonBg: var(--app-accent-green);
   --buttonTextColour: #fff;

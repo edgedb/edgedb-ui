@@ -239,3 +239,62 @@ export function isEditorValueValid(
     return false;
   }
 }
+
+export function renderInvalidEditorValue(
+  value: EditorValue,
+  type: PrimitiveType
+): string {
+  const schemaType = type.schemaType;
+  switch (schemaType) {
+    case "Scalar":
+      const typename = (type.knownBaseType ?? type).name;
+      if (typename === "std::str" || typename === "std::json") {
+        return `'${value}'`;
+      }
+      return `${value}`;
+    case "Array":
+      if (!Array.isArray(value)) {
+        throw new Error(`Expected array value for array type`);
+      }
+      return `[${value
+        .map((val) => renderInvalidEditorValue(val, type.elementType))
+        .join(", ")}]`;
+    case "Tuple":
+      if (!Array.isArray(value)) {
+        throw new Error(`Expected array value for tuple type`);
+      }
+      if (value.length !== type.elements.length) {
+        throw new Error(`Tuple elements length mismatch`);
+      }
+      return `(${type.elements
+        .map(
+          (el, i) =>
+            (el.name ? `${el.name} := ` : "") +
+            renderInvalidEditorValue(value[i], el.type)
+        )
+        .join(", ")})`;
+    case "Range": {
+      const keys = Object.keys(value);
+      if (!keys.includes("lower")) {
+        throw new Error(`Expected EditorRangeValue for range type`);
+      }
+      const val = value as EditorRangeValue;
+      if (val.empty) {
+        return "range(empty := true)";
+      }
+      return `range(${val.lower ?? "{}"}, ${
+        val.upper ?? "{}"
+      }, inc_lower := ${val.incLower.toString()}, inc_upper := ${val.incUpper.toString()})`;
+    }
+    case "Multirange": {
+      if (!Array.isArray(value)) {
+        throw new Error(`Expected array value for array type`);
+      }
+      return `multirange(${value
+        .map((val) => renderInvalidEditorValue(val, type.rangeType))
+        .join(", ")})`;
+    }
+    default:
+      assertNever(schemaType);
+  }
+}

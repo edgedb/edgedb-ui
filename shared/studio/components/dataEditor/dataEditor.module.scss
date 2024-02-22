@@ -196,7 +196,7 @@
     display: block;
   }
 
-  .dataEditor > & {
+  .dataEditor > &:not(:last-child) {
     input,
     textarea {
       border-radius: 4px 0 0 4px;

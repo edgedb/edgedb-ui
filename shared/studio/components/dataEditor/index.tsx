@@ -7,7 +7,6 @@ import {Select} from "@edgedb/common/ui/select";
 import {SchemaScalarType} from "@edgedb/common/schemaData";
 
 import styles from "./dataEditor.module.scss";
-import {EmptySetIcon, SubmitChangesIcon} from "../../icons";
 import {
   EditorArrayType,
   EditorMultirangeType,
@@ -15,11 +14,8 @@ import {
   EditorRangeValue,
   EditorTupleType,
   EditorValue,
-  isEditorValueValid,
   newPrimitiveValue,
-  parseEditorValue,
   PrimitiveType,
-  valueToEditorValue,
 } from "./utils";
 import {parsers} from "./parsers";
 import {DeleteIcon} from "./icons";
@@ -27,145 +23,6 @@ import {DeleteIcon} from "./icons";
 export {newPrimitiveValue, parseEditorValue} from "./utils";
 export type {PrimitiveType, EditorValue} from "./utils";
 export {parsers} from "./parsers";
-
-export interface DataEditorProps<T = any> {
-  type: PrimitiveType;
-  isRequired: boolean;
-  isMulti: boolean;
-  value: T;
-  onChange: (val: T) => void;
-  onClose: () => void;
-  style?: any;
-}
-
-export function DataEditor({
-  type,
-  isRequired,
-  isMulti,
-  value,
-  onChange,
-  onClose,
-  style,
-}: DataEditorProps) {
-  const inputRef = useRef<HTMLElement>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [val, setVal] = useState(() =>
-    value != null
-      ? isMulti
-        ? value.map((val: any) => valueToEditorValue(val, type))
-        : valueToEditorValue(value, type)
-      : isRequired
-      ? isMulti
-        ? []
-        : newPrimitiveValue(type)[0]
-      : null
-  );
-  const [hasError, setError] = useState(() => {
-    return val === null
-      ? true
-      : isMulti
-      ? val.every((v: any) => isEditorValueValid(v, type))
-      : isEditorValueValid(val, type);
-  });
-
-  const getParsedVal = () =>
-    val !== null
-      ? isMulti
-        ? isRequired && !val.length
-          ? null
-          : val.map((v: any) => parseEditorValue(v, type))
-        : parseEditorValue(val, type)
-      : null;
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus({preventScroll: true});
-    }
-    const listener = (e: MouseEvent) => {
-      if (!editorRef.current?.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    window.addEventListener("click", listener, {capture: true});
-
-    return () => {
-      window.removeEventListener("click", listener, {capture: true});
-    };
-  }, []);
-
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !hasError) {
-        onChange(getParsedVal());
-        onClose();
-        return;
-      }
-    };
-    editorRef.current?.addEventListener("keydown", listener, {capture: true});
-
-    return () => {
-      editorRef.current?.removeEventListener("keydown", listener, {
-        capture: true,
-      });
-    };
-  }, [val, hasError]);
-
-  const Input = isMulti ? ArrayEditor : getInputComponent(type, !isRequired);
-
-  return (
-    <div
-      ref={editorRef}
-      className={cn(styles.dataEditor, {
-        [styles.showBackground]:
-          val === null && !isMulti && type.schemaType !== "Scalar",
-      })}
-      style={style}
-    >
-      <Input
-        ref={inputRef}
-        type={type as any}
-        isMulti={isMulti}
-        depth={0}
-        value={val ?? (isMulti ? [] : null)}
-        onChange={(val: any, err: boolean) => {
-          setVal(val);
-          setError(err);
-        }}
-      />
-
-      <div className={styles.actions}>
-        {!isRequired ? (
-          <div
-            className={cn(styles.action, styles.emptySetAction)}
-            onClick={() => {
-              setVal(null);
-              setError(false);
-              onChange(null);
-              onClose();
-            }}
-          >
-            <EmptySetIcon />
-          </div>
-        ) : null}
-        <div
-          className={cn(styles.action, styles.submitChangesAction, {
-            [styles.actionDisabled]: hasError,
-          })}
-          onClick={() => {
-            onChange(getParsedVal());
-            onClose();
-          }}
-        >
-          <SubmitChangesIcon />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export type InputValidator = (value: any) => string | null;
 
@@ -180,6 +37,7 @@ export interface InputComponentProps<AllowNull extends boolean> {
   errorMessageAbove?: boolean;
   validator?: InputValidator;
   depth?: number;
+  allowEmptyPrimitive?: boolean;
 }
 
 export function getInputComponent<AllowNull extends boolean = false>(
@@ -577,6 +435,7 @@ const Textbox = forwardRef(function Textbox(
     errorMessageAbove,
     validator,
     depth,
+    allowEmptyPrimitive,
   }: {
     type: SchemaScalarType;
     value: string;
@@ -585,6 +444,7 @@ const Textbox = forwardRef(function Textbox(
     errorMessageAbove?: boolean;
     validator?: InputValidator;
     depth?: number;
+    allowEmptyPrimitive?: boolean;
   },
   ref
 ) {
@@ -594,7 +454,9 @@ const Textbox = forwardRef(function Textbox(
   useEffect(() => {
     // All types that use Textbox editor require non-empty string value
     // unless placeholder exists
-    if (!_placeholder) {
+    if (_placeholder || (allowEmptyPrimitive && value.trim() === "")) {
+      setErr(null);
+    } else {
       if (value.trim() === "") {
         setErr("Value is required");
         onChange(value, true);
@@ -613,8 +475,6 @@ const Textbox = forwardRef(function Textbox(
           onChange(value, true);
         }
       }
-    } else {
-      setErr(null);
     }
   }, [_placeholder]);
 
@@ -635,7 +495,9 @@ const Textbox = forwardRef(function Textbox(
           const newVal = e.target.value;
           let err: string | null = null;
           if (newVal.trim() === "") {
-            err = "Value is required";
+            if (!allowEmptyPrimitive) {
+              err = "Value is required";
+            }
           } else {
             try {
               const parsed = parsers[baseTypeName](

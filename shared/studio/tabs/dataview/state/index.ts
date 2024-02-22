@@ -216,7 +216,7 @@ export enum ObjectFieldType {
   link,
 }
 
-export type ObjectField = {
+interface _BaseObjectField {
   subtypeName?: string;
   escapedSubtypeName?: string;
   name: string;
@@ -231,17 +231,19 @@ export type ObjectField = {
   readonly: boolean;
   multi: boolean;
   secret: boolean;
-} & (
-  | {
-      type: ObjectFieldType.property;
-      default: string | null;
-      schemaType: SchemaType;
-    }
-  | {
-      type: ObjectFieldType.link;
-      targetHasSelectAccessPolicy: boolean;
-    }
-);
+}
+
+export interface ObjectPropertyField extends _BaseObjectField {
+  type: ObjectFieldType.property;
+  default: string | null;
+  schemaType: SchemaType;
+}
+export interface ObjectLinkField extends _BaseObjectField {
+  type: ObjectFieldType.link;
+  targetHasSelectAccessPolicy: boolean;
+}
+
+export type ObjectField = ObjectPropertyField | ObjectLinkField;
 
 interface SortBy {
   fieldIndex: number;
