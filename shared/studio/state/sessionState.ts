@@ -186,6 +186,7 @@ export class SessionState extends Model({
       .filter(
         (prop) =>
           prop.name !== "id" &&
+          prop.cardinality !== "Many" &&
           !prop.annotations.some(
             (anno) =>
               (anno.name === "cfg::system" || anno.name === "cfg::internal") &&
@@ -221,7 +222,8 @@ export class SessionState extends Model({
     }
 
     for (const configName of this.configNames) {
-      const type = configType.properties[configName].target!;
+      const configSchema = configType.properties[configName];
+      const type = configSchema.target!;
       const storedItem = sessionStateData?.config[configName];
       const newVal =
         storedItem?.value == null
@@ -229,7 +231,7 @@ export class SessionState extends Model({
           : null;
       draftState.config[configName] = {
         type: frozen(type, FrozenCheckMode.Off),
-        description: configType.properties[configName].annotations.find(
+        description: configSchema.annotations.find(
           (anno) => anno.name === "std::description"
         )?.["@value"],
         active: storedItem?.active ?? false,
