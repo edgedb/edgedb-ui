@@ -191,7 +191,10 @@ function renderParam({
       type.schemaType === "Range" || type.schemaType === "Multirange"
         ? type.elementType.name
         : undefined,
-      false
+      false,
+      undefined,
+      undefined,
+      50
     ).body;
   }
 }
