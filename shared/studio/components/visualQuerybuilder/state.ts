@@ -249,7 +249,9 @@ function renderQuery(query: QueryBuilderShape, indent: string): string {
     ...[...query.props].map(
       ([name, type]) =>
         (type ? `[is ${escapeName(type, true)}].` : "") +
-        escapeName(name, false)
+        (name.startsWith("@")
+          ? `@${escapeName(name.slice(1), false)}`
+          : escapeName(name, false))
     ),
     ...[...query.links].map(
       ([name, subQuery]) =>
