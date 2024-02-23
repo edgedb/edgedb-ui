@@ -1171,7 +1171,8 @@ export class DataInspector extends Model({
         .replace(/#.*/g, "")
         .trimStart()
         .replace(/^filter\s/i, "")
-        .trimEnd(),
+        .trimEnd()
+        .replace(/;+$/, ""),
       filter,
     ] as [string, string];
   }
