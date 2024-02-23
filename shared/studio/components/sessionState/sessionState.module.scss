@@ -616,12 +616,14 @@
     align-items: center;
     min-height: 32px;
     min-width: 0;
-    overflow-x: auto;
-
-    @include hideScrollbar;
 
     @include darkTheme {
       --select-option-color: #adadad;
+    }
+
+    &.noOverflow {
+      overflow-x: auto;
+      @include hideScrollbar;
     }
   }
 

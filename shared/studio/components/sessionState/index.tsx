@@ -487,7 +487,14 @@ function ListItem({
         ) : null}
       </div>
 
-      <div className={cn(styles.itemValue, {[styles.inactive]: !active})}>
+      <div
+        className={cn(styles.itemValue, {
+          [styles.inactive]: !active,
+          [styles.noOverflow]: !(
+            type.schemaType === "Scalar" && type.enum_values != null
+          ),
+        })}
+      >
         {active ? (
           <>
             <Input
