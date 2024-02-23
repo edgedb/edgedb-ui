@@ -70,7 +70,7 @@ export function renderValue(
   showTypeTag: boolean = true,
   overrideStyles: {[key: string]: string} = {},
   implicitLength?: number,
-  noMultiline: boolean = false
+  singleLineLimit?: boolean | number
 ): {body: JSX.Element; height?: number} {
   if (value == null) {
     return {body: <span className={styles.scalar_empty}>{"{}"}</span>};
@@ -155,9 +155,14 @@ export function renderValue(
 
     // @ts-ignore - Intentional fallthrough
     case "std::json":
-      value = noMultiline ? value : prettyPrintJSON(value);
+      value = singleLineLimit ? value : prettyPrintJSON(value);
     case "std::str": {
-      const str = noMultiline ? toSingleLineStr(value) : strToString(value);
+      const str = singleLineLimit
+        ? toSingleLineStr(
+            value,
+            singleLineLimit === true ? undefined : singleLineLimit
+          )
+        : strToString(value);
       return {
         body: (
           <span className={styles.scalar_string}>
@@ -165,7 +170,7 @@ export function renderValue(
             {implicitLength && value.length === implicitLength ? "…" : ""}
           </span>
         ),
-        height: noMultiline ? 1 : (str as string).split("\n").length,
+        height: singleLineLimit ? 1 : (str as string).split("\n").length,
       };
     }
   }
