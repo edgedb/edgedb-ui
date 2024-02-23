@@ -18,23 +18,28 @@ import {
   newPrimitiveValue,
   parseEditorValue,
   PrimitiveType,
+  valueToEditorValue,
 } from "../components/dataEditor/utils";
 import {fetchSessionState, storeSessionState} from "../idbStore";
 import {connCtx} from "./connection";
 import {dbCtx} from "./database";
 import {instanceCtx} from "./instance";
 
-type DraftStateItem = {
+interface DraftStateItem {
   active: boolean;
   type: Frozen<SchemaType>;
   description?: string;
-  value: Frozen<EditorValue | null>;
+  value: Frozen<EditorValue>;
   error: boolean;
-};
+}
+
+interface DraftStateGlobalItem extends Omit<DraftStateItem, "value"> {
+  value: Frozen<EditorValue | null>;
+}
 
 type DraftState = {
   globals: {
-    [key: string]: DraftStateItem;
+    [key: string]: DraftStateGlobalItem;
   };
   config: {
     [key: string]: DraftStateItem;
@@ -346,11 +351,18 @@ export class SessionState extends Model({
       const values = result.result![0];
       runInAction(() => (this.configValues = values));
       for (const configName of this.configNames) {
-        if (this.draftState?.config[configName].value === null) {
+        const config = this.draftState?.config[configName];
+        if (config?.active === false) {
+          let value = values[configName];
+          if (typeof value === "boolean") {
+            value = !value;
+          }
           objectActions.set(
-            this.draftState.config[configName],
+            this.draftState!.config[configName],
             "value",
-            values[configName].toString()
+            frozen(
+              valueToEditorValue(value, config.type.data as PrimitiveType)
+            )
           );
         }
       }
