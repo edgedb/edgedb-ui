@@ -727,8 +727,8 @@ function generateParamExpr(
   type: SchemaType,
   _data: EditValue,
   params: {[key: string]: {type: SchemaType; value: any}},
-  multi?: boolean
-): string {
+  multi: boolean
+) {
   if (!_data.valid) {
     const paramName = `p${Object.keys(params).length}`;
     params[paramName] = {type, value: _data.value};
@@ -737,14 +737,22 @@ function generateParamExpr(
 
   const data = _data.value;
 
-  if (data === null) {
-    return `<${getNameOfSchemaType(type)[1]}>{}`;
+  if (multi && data !== null && data.length) {
+    return `{${(data as any[])
+      .map((item) => _generateParamExpr(type, item, params))
+      .join(", ")}}`;
   }
 
-  if (multi) {
-    return `{${(data as any[])
-      .map((item) => generateParamExpr(type, item, params))
-      .join(", ")}}`;
+  return _generateParamExpr(type, data, params);
+}
+
+function _generateParamExpr(
+  type: SchemaType,
+  data: any,
+  params: {[key: string]: {type: SchemaType; value: any}}
+): string {
+  if (data === null) {
+    return `<${getNameOfSchemaType(type)[1]}>{}`;
   }
 
   if (
@@ -763,14 +771,14 @@ function generateParamExpr(
       return `<array<${type.elementType.name}>>$${paramName}`;
     } else {
       return `[${(data as any[])
-        .map((item) => generateParamExpr(type.elementType, item, params))
+        .map((item) => _generateParamExpr(type.elementType, item, params))
         .join(", ")}]`;
     }
   }
   if (type.schemaType === "Tuple") {
     return `(${type.elements
       .map((element, i) =>
-        generateParamExpr(element.type, data[element.name ?? i], params)
+        _generateParamExpr(element.type, data[element.name ?? i], params)
       )
       .join(", ")}${type.elements.length === 1 ? "," : ""})`;
   }
