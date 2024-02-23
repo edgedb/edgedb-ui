@@ -106,7 +106,7 @@ export class DataEditingManager extends Model({}) {
     objectId: string | number,
     objectTypeName: string,
     field: ObjectPropertyField,
-    value: any
+    valueGetter: () => any
   ) {
     const cellId = `${objectId}__${field.name}`;
 
@@ -117,7 +117,7 @@ export class DataEditingManager extends Model({}) {
       field.schemaType as PrimitiveType,
       field.required,
       field.multi,
-      editValue?.value ?? value,
+      editValue ? editValue.value : valueGetter(),
       editValue != null && !editValue.valid,
       (discard) => {
         if (!discard && state.isEdited) {

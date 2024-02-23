@@ -1,5 +1,5 @@
 import {useEffect, useRef} from "react";
-import {action, makeObservable, observable} from "mobx";
+import {action, makeObservable, observable, runInAction} from "mobx";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -33,40 +33,54 @@ export class DataEditorState {
   ) {
     makeObservable(this);
 
-    if (isEditorValue) {
-      this.value = value;
-    } else {
-      this.value =
-        value != null
-          ? isMulti
-            ? value.map((val: any) => valueToEditorValue(val, type))
-            : valueToEditorValue(value, type)
-          : isRequired
-          ? isMulti
-            ? []
-            : newPrimitiveValue(type)[0]
-          : null;
-    }
+    const _init = (_value: any) =>
+      runInAction(() => {
+        if (isEditorValue) {
+          this.value = _value;
+        } else {
+          this.value =
+            _value != null
+              ? isMulti
+                ? _value.map((val: any) => valueToEditorValue(val, type))
+                : valueToEditorValue(_value, type)
+              : isRequired
+              ? isMulti
+                ? []
+                : newPrimitiveValue(type)[0]
+              : null;
+        }
 
-    this.hasError =
-      this.value === null
-        ? false
-        : isMulti
-        ? (this.value as EditorValue[]).some(
-            (v: any) => !isEditorValueValid(v, type)
-          )
-        : !isEditorValueValid(this.value, type);
+        this.hasError =
+          this.value === null
+            ? false
+            : isMulti
+            ? (this.value as EditorValue[]).some(
+                (v: any) => !isEditorValueValid(v, type)
+              )
+            : !isEditorValueValid(this.value, type);
+
+        this.loaded = true;
+      });
+
+    if (value instanceof Promise) {
+      value.then((_value) => _init(_value));
+    } else {
+      _init(value);
+    }
   }
+
+  @observable
+  loaded = false;
 
   isEdited = false;
 
-  @observable.ref value: EditorValue | null;
+  @observable.ref value: EditorValue | null = null;
   @action setValue(val: EditorValue | null) {
     this.value = val;
     this.isEdited = true;
   }
 
-  @observable hasError: boolean;
+  @observable hasError: boolean = false;
   @action setError(err: boolean) {
     this.hasError = err;
   }
