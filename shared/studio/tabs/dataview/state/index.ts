@@ -496,7 +496,9 @@ export class DataInspector extends Model({
       });
 
     this.allFields = {
-      fields: [...baseFields, ...subtypeFields],
+      fields: [...baseFields, ...subtypeFields].sort((a, b) =>
+        a.name === "id" ? -1 : b.name === "id" ? 1 : 0
+      ),
       subtypeIndex: baseFields.length,
     };
     this.fieldWidths = Array(this.allFields.fields.length).fill(180);
