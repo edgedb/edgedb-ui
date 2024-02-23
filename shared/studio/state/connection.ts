@@ -63,6 +63,7 @@ type QueryOpts = {
   newCodec?: boolean;
   ignoreSessionConfig?: boolean;
   implicitLimit?: bigint;
+  ignoreForceDatabaseError?: boolean;
 };
 
 type PendingQuery = {
@@ -213,6 +214,9 @@ export class Connection extends Model({
 
       if (opts.ignoreSessionConfig) {
         state = Session.defaults().withGlobals(state.globals);
+      }
+      if (opts.ignoreForceDatabaseError) {
+        state = state.withConfig({force_database_error: "false"});
       }
 
       if (kind === "execute") {
