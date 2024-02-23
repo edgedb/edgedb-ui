@@ -788,16 +788,44 @@ export class DataInspector extends Model({
   @observable.shallow
   fullyFetchedData = new Map<string, any>();
 
-  async fetchFullCellData(dataId: string, field: ObjectField) {
+  fetchFullCellData(
+    dataId: string | number,
+    value: any,
+    field: ObjectPropertyField
+  ) {
+    if (typeof dataId !== "string") {
+      return value;
+    }
+
+    const cellId = `${dataId}__${field.name}`;
+
+    if (this.fullyFetchedData.has(cellId)) {
+      return this.fullyFetchedData.get(cellId);
+    }
+
+    const isTruncated =
+      field.schemaType.name === "std::str" &&
+      (field.multi
+        ? Array.isArray(value) &&
+          typeof value[0] === "string" &&
+          value.some((val) => val.length === 100)
+        : typeof value === "string" && value.length === 100);
+
+    if (!isTruncated) {
+      return value;
+    }
+
     const query = `select (select ${
       field.escapedSubtypeName ?? this._getObjectTypeQuery
     } filter .id = <uuid>$id).${field.escapedName}`;
+
     const conn = connCtx.get(this)!;
-
-    const val = (await conn.query(query, {id: dataId})).result![0];
-
-    runInAction(() => {
-      this.fullyFetchedData.set(`${dataId}__${field.name}`, val);
+    return conn.query(query, {id: dataId}).then(({result}) => {
+      const val = field.multi ? result! : result![0];
+      runInAction(() => {
+        this.fullyFetchedData.set(cellId, val);
+      });
+      return val;
     });
   }
 

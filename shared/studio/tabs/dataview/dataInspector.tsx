@@ -391,12 +391,8 @@ const GridCell = observer(function GridCell({
     field.type === ObjectFieldType.property &&
     edits.activePropertyEdit?.cellId === cellId
   ) {
-    return cellEditState?.value === undefined &&
-      field.schemaType.name === "std::str" &&
-      typeof value === "string" &&
-      value.length === 100 &&
-      !state.fullyFetchedData.has(cellId) ? (
-      <FetchingDataPlaceholder state={state} data={data} field={field} />
+    return !edits.activePropertyEdit.loaded ? (
+      <div className={styles.fetchingDataPlaceholder}>loading...</div>
     ) : (
       <DataEditor state={edits.activePropertyEdit} />
     );
@@ -532,14 +528,15 @@ const GridCell = observer(function GridCell({
         [styles.hasEdits]:
           !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
         [styles.hasErrors]:
-          (cellEditState && !cellEditState.value.valid) ||
-          (insertedRow && _value && !_value.valid) ||
-          (!rowData &&
-            isEditable &&
-            field.required &&
-            !field.hasDefault &&
-            value === null &&
-            !linkEditState),
+          isEditable &&
+          ((cellEditState && !cellEditState.value.valid) ||
+            (insertedRow && _value && !_value.valid) ||
+            (!rowData &&
+              isEditable &&
+              field.required &&
+              !field.hasDefault &&
+              value === null &&
+              !linkEditState)),
       })}
       onClick={() => {
         if (field.type === ObjectFieldType.link && content !== null) {
@@ -555,11 +552,8 @@ const GridCell = observer(function GridCell({
       onDoubleClick={() => {
         if (isEditable) {
           if (field.type === ObjectFieldType.property) {
-            edits.startEditingCell(
-              data.id,
-              data.__tname__,
-              field,
-              state.fullyFetchedData.get(cellId) ?? value
+            edits.startEditingCell(data.id, data.__tname__, field, () =>
+              state.fetchFullCellData(data.id, value, field)
             );
           } else {
             state.openNestedView(
@@ -578,22 +572,6 @@ const GridCell = observer(function GridCell({
     </div>
   );
 });
-
-function FetchingDataPlaceholder({
-  state,
-  data,
-  field,
-}: {
-  state: DataInspectorState;
-  data: any;
-  field: ObjectField;
-}) {
-  useEffect(() => {
-    state.fetchFullCellData(data.id, field);
-  }, []);
-
-  return <div className={styles.fetchingDataPlaceholder}>loading...</div>;
-}
 
 const FieldHeaders = observer(function FieldHeaders() {
   const {state} = useDataInspectorState();
