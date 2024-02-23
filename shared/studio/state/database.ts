@@ -164,7 +164,11 @@ export class DatabaseState extends Model({
   }
 
   async updateObjectCount() {
-    const {result} = await this.connection.query(`select count(std::Object)`);
+    const {result} = await this.connection.query(
+      `select count(std::Object)`,
+      undefined,
+      {ignoreSessionConfig: true, ignoreForceDatabaseError: true}
+    );
     if (result) {
       runInAction(() => {
         this.objectCount = Number(result[0]);
@@ -195,7 +199,9 @@ export class DatabaseState extends Model({
                   } FILTER NOT EXISTS .children).id
                 ),
                 version := sys::get_version(),
-              }`
+              }`,
+              undefined,
+              {ignoreSessionConfig: true, ignoreForceDatabaseError: true}
             )
             .then(({result}) => ({
               migrationId: (result![0].migrationId[0] ?? null) as
@@ -235,7 +241,10 @@ export class DatabaseState extends Model({
         try {
           rawData = yield* _await(
             conn
-              .query(getIntrospectionQuery(edgedbVersion))
+              .query(getIntrospectionQuery(edgedbVersion), undefined, {
+                ignoreSessionConfig: true,
+                ignoreForceDatabaseError: true,
+              })
               .then(({result}) => {
                 return result![0] as RawIntrospectionResult;
               })
