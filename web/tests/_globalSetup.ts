@@ -34,15 +34,23 @@ function checkEdgeDBServerAlive() {
   });
 }
 
-async function waitUntilAlive(check: () => Promise<boolean>, event: Event) {
+async function waitUntilAlive(
+  check: () => Promise<boolean>,
+  errMessage: string,
+  event?: Event
+) {
   for (let i = 0; i < STARTUP_TIMEOUT / 1000; i++) {
     if (await check()) {
-      event.set();
+      event?.set();
       return;
     }
     await sleep(1000);
   }
-  event.setError("EdgeDB server startup timed out");
+  if (event) {
+    event.setError(errMessage);
+  } else {
+    throw new Error(errMessage);
+  }
 }
 
 async function checkUIServerAlive() {
@@ -61,14 +69,31 @@ async function checkUIServerAlive() {
   });
 }
 
+async function checkConfigApplied() {
+  try {
+    const res = await fetch("http://localhost:5656/server-info");
+    if (res.ok) {
+      const info = await res.json();
+      if (info.instance_config.cors_allow_origins.length > 0) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export default async function globalSetup() {
   console.log("\n");
 
   let edbServerProc: ChildProcess | null = null;
   const edbServerAlive = new Event();
+  let usingExistingDevServer = false;
 
   if (await checkEdgeDBServerAlive()) {
     console.log("Re-using EdgeDB server already running on 5656");
+    usingExistingDevServer = true;
     edbServerAlive.set();
   } else {
     console.log("Starting EdgeDB server...");
@@ -84,9 +109,7 @@ export default async function globalSetup() {
         ]
       : ["--devmode"];
 
-    edbServerProc = spawn(srvcmd, args, {
-      env: {...process.env, EDGEDB_DEBUG_HTTP_INJECT_CORS: "1"},
-    }) as ChildProcess;
+    edbServerProc = spawn(srvcmd, args) as ChildProcess;
     edbServerProc.once("close", (code) => {
       if (!edbServerAlive.done) {
         edbServerAlive.setError(
@@ -94,7 +117,11 @@ export default async function globalSetup() {
         );
       }
     });
-    waitUntilAlive(checkEdgeDBServerAlive, edbServerAlive);
+    waitUntilAlive(
+      checkEdgeDBServerAlive,
+      "EdgeDB server startup timed out",
+      edbServerAlive
+    );
   }
 
   let uiServerProc: ChildProcess | null = null;
@@ -116,7 +143,11 @@ export default async function globalSetup() {
         );
       }
     });
-    waitUntilAlive(checkUIServerAlive, uiServerAlive);
+    waitUntilAlive(
+      checkUIServerAlive,
+      "UI server startup timed out",
+      uiServerAlive
+    );
   }
 
   await Promise.all([
@@ -146,6 +177,12 @@ export default async function globalSetup() {
 
     try {
       await testClient.execute(schemaScript);
+      if (!usingExistingDevServer) {
+        await testClient.execute(
+          `configure instance set cors_allow_origins := {'*'}`
+        );
+        await waitUntilAlive(checkConfigApplied, "Config apply timed out");
+      }
       break;
     } catch (err) {
       if (!(err instanceof AccessError)) {
