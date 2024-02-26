@@ -1,4 +1,4 @@
-import {forwardRef, RefObject, useEffect, useRef, useState} from "react";
+import {forwardRef, RefObject, useEffect, useState} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 

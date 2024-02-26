@@ -12,7 +12,7 @@ import {
   valueToEditorValue,
 } from "./utils";
 import {ArrayEditor, getInputComponent} from ".";
-import {EmptySetIcon, SubmitChangesIcon} from "../../icons";
+import {EmptySetIcon} from "../../icons";
 
 import styles from "./dataEditor.module.scss";
 import {observer} from "mobx-react-lite";

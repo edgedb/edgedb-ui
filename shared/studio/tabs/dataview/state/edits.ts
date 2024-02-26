@@ -15,7 +15,6 @@ import {PrimitiveType} from "../../../components/dataEditor";
 
 import {connCtx, dbCtx} from "../../../state";
 import {ObjectPropertyField} from ".";
-import {renderInvalidEditorValue} from "../../../components/dataEditor/utils";
 
 enum EditKind {
   UpdateProperty,
