@@ -325,14 +325,14 @@ const ReplInput = observer(function ReplInput() {
       {
         key: "Mod-ArrowUp",
         run: () => {
-          replState.navigateHistory(-1);
+          replState.navigateHistory(1);
           return true;
         },
       },
       {
         key: "Mod-ArrowDown",
         run: () => {
-          replState.navigateHistory(1);
+          replState.navigateHistory(-1);
           return true;
         },
       },
