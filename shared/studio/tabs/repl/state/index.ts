@@ -89,7 +89,7 @@ export class ReplHistoryItem extends Model({
   }
 
   @modelAction
-  setResult(status: string, hasResult: boolean, implicitLimit: number) {
+  setResult(status: string, hasResult: boolean, implicitLimit: number | null) {
     this.hasResult = hasResult;
     this.status = status;
     this.implicitLimit = implicitLimit;
@@ -363,7 +363,7 @@ export class Repl extends Model({
       if (isCommandQuery) {
         yield* _await(handleSlashCommand(query, this, historyItem));
       } else {
-        const implicitLimit = sessionStateCtx
+        const implicitLimitConfig = sessionStateCtx
           .get(this)!
           .activeState.options.find(
             (opt) => opt.name === "Implicit Limit"
@@ -376,8 +376,8 @@ export class Repl extends Model({
               undefined,
               {
                 implicitLimit:
-                  implicitLimit != null
-                    ? implicitLimit + BigInt(1)
+                  implicitLimitConfig != null
+                    ? implicitLimitConfig + BigInt(1)
                     : undefined,
               },
               (this._runningQuery as AbortController).signal
@@ -386,7 +386,9 @@ export class Repl extends Model({
 
         dbState.refreshCaches(capabilities, status ? [status] : []);
 
-        historyItem.setResult(status, !!result, Number(implicitLimit));
+        const implicitLimit =
+          implicitLimitConfig != null ? Number(implicitLimitConfig) : null;
+        historyItem.setResult(status, !!result, implicitLimit);
         if (result) {
           if (
             status === ExplainStateType.explain ||
@@ -399,7 +401,7 @@ export class Repl extends Model({
           } else {
             this.resultInspectorCache.set(
               historyItem.$modelId,
-              createInspector(result, Number(implicitLimit), (item) =>
+              createInspector(result, implicitLimit, (item) =>
                 this.setExtendedViewerItem(item)
               )
             );
