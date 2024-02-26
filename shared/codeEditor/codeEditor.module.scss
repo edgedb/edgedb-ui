@@ -4,6 +4,10 @@
 .codeEditor {
   display: contents;
 
+  :global(.cm-content) {
+    user-select: text;
+  }
+
   &.terminalCursor {
     :global {
       .cm-cursorLayer {
