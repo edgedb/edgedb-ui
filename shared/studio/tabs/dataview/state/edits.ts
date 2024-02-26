@@ -14,7 +14,7 @@ import {
 import {PrimitiveType} from "../../../components/dataEditor";
 
 import {connCtx, dbCtx} from "../../../state";
-import {ObjectPropertyField} from ".";
+import {ObjectPropertyField, DataInspector} from ".";
 
 enum EditKind {
   UpdateProperty,
@@ -179,7 +179,7 @@ export class DataEditingManager extends Model({}) {
   }
 
   @action
-  createNewRow(objectTypeName: string) {
+  createNewRow(objectTypeName: string, dataInspState: DataInspector) {
     const insertId = insertEditId++;
     this.insertEdits.set(insertId, {
       kind: EditKind.InsertObject,
@@ -191,6 +191,18 @@ export class DataEditingManager extends Model({}) {
         __tname__: objectTypeName,
       },
     });
+
+    const parentObject = dataInspState.parentObject;
+    if (parentObject?.editMode) {
+      this.toggleLinkInsert(
+        parentObject.id,
+        parentObject.subtypeName ?? parentObject.objectTypeName,
+        parentObject.fieldName,
+        dataInspState.objectType!,
+        this.insertEdits.get(insertId)!,
+        !parentObject.isMultiLink
+      );
+    }
   }
 
   @action
