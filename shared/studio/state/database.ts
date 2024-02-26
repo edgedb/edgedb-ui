@@ -96,7 +96,10 @@ export class DatabaseState extends Model({
     if (capabilities & Capabilities.DDL) {
       if (
         statuses.includes("CREATE DATABASE") ||
-        statuses.includes("DROP DATABASE")
+        statuses.includes("DROP DATABASE") ||
+        statuses.includes("CREATE BRANCH") ||
+        statuses.includes("DROP BRANCH") ||
+        statuses.includes("ALTER BRANCH")
       ) {
         instanceCtx.get(this)!.fetchInstanceInfo();
       } else {

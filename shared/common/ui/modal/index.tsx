@@ -7,6 +7,7 @@ import {
 
 import cn from "@edgedb/common/utils/classNames";
 
+import {Select, SelectProps} from "../select";
 import {CloseIcon} from "../icons";
 
 import styles from "./modal.module.scss";
@@ -111,33 +112,43 @@ export const ModalTextField = forwardRef(function ModalTextField(
   );
 });
 
-interface ModalSelectFieldProps<T> {
+type ModalSelectFieldProps<T = any> = SelectProps<T> & {
   label: string;
-  value: T;
-  onChange: (value: T) => void;
-  options: {id: string; value: T; label?: string}[];
-}
+};
+
 export function ModalSelectField<T>({
   label,
-  value,
-  onChange,
-  options,
+  ...selectProps
 }: ModalSelectFieldProps<T>) {
   return (
     <label className={styles.modalField}>
       <span>{label}</span>
-      <select
-        value={options.find((opt) => opt.value === value)?.id}
-        onChange={(e) =>
-          onChange(options.find((opt) => opt.id === e.target.value)!.value)
-        }
-      >
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label ?? option.id}
-          </option>
-        ))}
-      </select>
+      <Select className={styles.select} {...selectProps} />
     </label>
   );
 }
+
+interface ModalCheckboxFieldProps {
+  label: string;
+}
+export const ModalCheckboxField = forwardRef(function ModalCheckboxField(
+  {
+    label,
+    className,
+    disabled,
+    ...props
+  }: ModalCheckboxFieldProps &
+    Omit<InputHTMLAttributes<HTMLInputElement>, "type">,
+  ref
+) {
+  return (
+    <label
+      className={cn(styles.modalField, styles.checkboxField, className, {
+        [styles.disabled]: !!disabled,
+      })}
+    >
+      <input type="checkbox" ref={ref as any} disabled={disabled} {...props} />
+      <span>{label}</span>
+    </label>
+  );
+});

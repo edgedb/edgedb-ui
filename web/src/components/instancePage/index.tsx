@@ -3,7 +3,7 @@ import {useNavigate, Link} from "react-router-dom";
 
 import {useModal} from "@edgedb/common/hooks/useModal";
 import Button from "@edgedb/common/ui/button";
-import CreateDatabaseModal from "@edgedb/studio/components/modals/createDatabase";
+import CreateBranchModal from "@edgedb/studio/components/modals/createBranch";
 import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 import {fetchExampleSchema} from "@edgedb/studio/tabs/dashboard";
 
@@ -37,8 +37,8 @@ export default observer(function InstancePage() {
               className={styles.cardButton}
               label={
                 instanceState.creatingExampleDB
-                  ? "Creating example database..."
-                  : "Create example database"
+                  ? "Creating example branch..."
+                  : "Create example branch"
               }
               loading={instanceState.creatingExampleDB}
               disabled={instanceState.creatingExampleDB}
@@ -53,19 +53,19 @@ export default observer(function InstancePage() {
         ) : null}
 
         <div
-          className={styles.newDatabaseCard}
+          className={styles.newBranchCard}
           onClick={() => {
             openModal(
-              <CreateDatabaseModal
+              <CreateBranchModal
                 instanceState={instanceState}
-                navigateToDB={(dbName) => {
-                  navigate(`/${dbName}`);
+                navigateToDB={(branchName) => {
+                  navigate(`/${branchName}`);
                 }}
               />
             );
           }}
         >
-          <span>Create new database</span>
+          <span>Create new branch</span>
         </div>
       </div>
     </div>

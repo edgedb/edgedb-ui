@@ -183,18 +183,18 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
           <div className={styles.importData}>
             <h3>First time using EdgeDB?</h3>
             <p>
-              {exampleDBExists ? "Switch to the" : "Create an"} example
-              database with our "movies" schema and data set, and play with the
-              web UI right away.
+              {exampleDBExists ? "Switch to the" : "Create an"} example branch
+              with our "movies" schema and data set, and play with the web UI
+              right away.
             </p>
             <div>
               <Button
                 label={
                   instanceState.creatingExampleDB
-                    ? "Creating example database..."
+                    ? "Creating example branch..."
                     : exampleDBExists
-                    ? "Switch to example database"
-                    : "Create example database"
+                    ? "Switch to example branch"
+                    : "Create example branch"
                 }
                 loading={instanceState.creatingExampleDB}
                 disabled={instanceState.creatingExampleDB}
