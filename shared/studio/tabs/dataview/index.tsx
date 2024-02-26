@@ -181,7 +181,10 @@ const DataInspectorView = observer(function DataInspectorView({
         {!isMobile && (
           <div className={styles.rowCount}>
             {inspectorState.rowCount !== null ? (
-              <>{inspectorState.rowCount} Items</>
+              <>
+                {inspectorState.rowCount} Item
+                {inspectorState.rowCount === 1 ? "" : "s"}
+              </>
             ) : (
               <span>loading...</span>
             )}
