@@ -202,28 +202,52 @@ export class Repl extends Model({
 
   initialScrollPos = 0;
 
+  // -1 is draft, then counts how many history items back from most recent
   historyCursor = -1;
   draftQuery = Text.empty;
 
+  dedupedQueryHistory: ReplHistoryItem[] = [];
+
+  _addDedupedHistoryQueries(history: ReplHistoryItem[]) {
+    let lastQuery =
+      this.dedupedQueryHistory[this.dedupedQueryHistory.length - 1]?.query;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const item = history[i];
+      if (item.query !== lastQuery) {
+        this.dedupedQueryHistory.push(item);
+        lastQuery = item.query;
+      }
+    }
+  }
+
   @action
   navigateHistory(direction: 1 | -1) {
-    let cursor =
-      (this.historyCursor === -1
-        ? this.queryHistory.length
-        : this.historyCursor) + direction;
+    // 1 => backwards, -1 => forwards
+    if (this._fetchingHistory) {
+      return;
+    }
+    let cursor = this.historyCursor + direction;
 
-    if (cursor === this.queryHistory.length) {
+    if (
+      cursor < -1 ||
+      (cursor >= this.dedupedQueryHistory.length && !this._hasUnfetchedHistory)
+    ) {
+      return;
+    }
+    if (cursor === -1) {
       this.currentQuery = this.draftQuery;
       this.historyCursor = -1;
     } else {
-      const historyItem = this.queryHistory[cursor];
-      if (historyItem) {
-        if (this.historyCursor === -1) {
-          this.draftQuery = this.currentQuery;
-        }
-        this.currentQuery = Text.of(historyItem.query.split("\n"));
-        this.historyCursor = cursor;
+      if (cursor >= this.dedupedQueryHistory.length) {
+        this.fetchReplHistory().then(() => this.navigateHistory(1));
+        return;
       }
+      const historyItem = this.dedupedQueryHistory[cursor];
+      if (this.historyCursor === -1) {
+        this.draftQuery = this.currentQuery;
+      }
+      this.currentQuery = Text.of(historyItem.query.split("\n"));
+      this.historyCursor = cursor;
     }
   }
 
@@ -293,6 +317,7 @@ export class Repl extends Model({
     this.itemHeights.addHistoryItems(
       Array(history.length).fill(defaultItemHeight)
     );
+    this._addDedupedHistoryQueries(historyItems);
 
     this._fetchingHistory = false;
   });
