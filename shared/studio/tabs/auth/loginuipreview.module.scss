@@ -162,7 +162,7 @@
   .sliderContainer {
     width: calc(100% + 48px);
     display: flex;
-    align-items: start;
+    align-items: flex-start;
     margin: 0 -24px;
     transition: transform 0.3s, height 0.3s;
   }
