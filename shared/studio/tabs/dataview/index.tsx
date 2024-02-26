@@ -225,7 +225,8 @@ const DataInspectorView = observer(function DataInspectorView({
                 items={null}
                 actions={inspectorState.insertTypeNames.map((name) => ({
                   label: name,
-                  action: () => dataviewState.edits.createNewRow(name),
+                  action: () =>
+                    dataviewState.edits.createNewRow(name, inspectorState),
                 }))}
                 rightAlign
               />
@@ -234,7 +235,8 @@ const DataInspectorView = observer(function DataInspectorView({
                 className={styles.headerButton}
                 onClick={() =>
                   dataviewState.edits.createNewRow(
-                    inspectorState.insertTypeNames[0]
+                    inspectorState.insertTypeNames[0],
+                    inspectorState
                   )
                 }
               >
