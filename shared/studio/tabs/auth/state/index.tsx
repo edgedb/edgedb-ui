@@ -916,9 +916,29 @@ export class DraftProviderConfig extends Model({
 
   @computed
   get webauthnRelyingOriginError() {
-    return this.webauthnRelyingOrigin.trim() === ""
-      ? "Relying origin is required"
-      : null;
+    const origin = this.webauthnRelyingOrigin.trim();
+    if (origin === "") {
+      return "Relying origin is required";
+    }
+    let url: URL;
+    try {
+      url = new URL(origin);
+    } catch {
+      return "Invalid origin";
+    }
+    if (!url.protocol || !url.host) {
+      return "Relying origin must contain a protocol and host";
+    }
+    if (
+      url.username ||
+      url.password ||
+      !(url.pathname === "" || url.pathname === "/") ||
+      url.search ||
+      url.hash
+    ) {
+      return "Relying origin can only contain protocol, hostname and port";
+    }
+    return null;
   }
 
   @computed
