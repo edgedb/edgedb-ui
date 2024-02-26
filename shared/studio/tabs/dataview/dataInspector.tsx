@@ -545,7 +545,8 @@ const GridCell = observer(function GridCell({
             navigate,
             data.id,
             data.__tname__,
-            field
+            field,
+            typeof data.id === "number"
           );
         }
       }}
