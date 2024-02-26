@@ -310,11 +310,11 @@ const ConfigPage = observer(function ConfigPage() {
               )}
             </div>
             <div className={styles.configExplain}>
-              New line-separated list of URLs that will be checked against this
-              list to ensure they are going to a trusted domain controlled by
-              the application. URLs are matched based on checking if the
-              candidate redirect URL is a match or a subdirectory of any of
-              these allowed URLs.
+              Newline-separated list of URLs that will be checked against to
+              ensure redirects are going to a trusted domain controlled by the
+              application. URLs are matched based on checking if the candidate
+              redirect URL is a match or a subdirectory of any of these allowed
+              URLs.
             </div>
           </div>
         </div>
