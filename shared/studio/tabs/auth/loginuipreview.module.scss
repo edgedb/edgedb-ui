@@ -39,8 +39,11 @@
     max-height: 100px;
   }
 
-  form {
+  .wrapper {
     grid-row: 2;
+  }
+
+  form {
     background: #fff;
     padding: 24px;
     padding-bottom: 16px;
@@ -50,6 +53,7 @@
       0px 7px 7px rgba(3, 7, 18, 0.03), 0px 16px 16px rgba(3, 7, 18, 0.05);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   form h1 {
@@ -98,20 +102,128 @@
     border: none;
     color: var(--accent-bg-text-color);
     font-family: inherit;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 550;
     cursor: pointer;
     margin: 8px 0;
+
+    span {
+      grid-column: 2;
+      margin: 0 12px;
+    }
+
+    svg {
+      margin-left: 8px;
+      justify-self: end;
+    }
+
+    &:hover {
+      background: var(--accent-bg-hover-color);
+    }
+
+    &.secondary {
+      background: none;
+      border: 1px solid #ced4da;
+      color: #6c757d;
+      font-weight: 500;
+
+      svg {
+        color: #adb5bd;
+      }
+
+      &:hover {
+        background: #f5f6f8;
+      }
+    }
+
+    &.iconOnly {
+      display: flex;
+      width: 46px;
+      padding: 0;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+
+      svg {
+        margin-left: 0;
+        transform: scaleX(-1);
+      }
+    }
   }
-  form button span {
-    grid-column: 2;
+
+  .buttonGroup {
+    display: flex;
+
+    button:not(.iconOnly) {
+      flex-grow: 1;
+    }
   }
-  form button svg {
-    margin-left: 8px;
-    justify-self: end;
+
+  .sliderContainer {
+    width: calc(100% + 48px);
+    display: flex;
+    align-items: flex-start;
+    margin: 0 -24px;
+    transition: transform 0.3s, height 0.3s;
   }
-  form button:hover {
-    background: var(--accent-bg-hover-color);
+
+  .sliderSection {
+    width: calc(100% - 48px);
+    margin: 0 24px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    height: 0;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.15s 0s linear, visibility 0s 0.3s linear;
+
+    & > * {
+      flex-shrink: 0;
+    }
+
+    &.active {
+      height: auto;
+      visibility: visible;
+      opacity: 1;
+      transition-delay: 0s;
+    }
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .tab {
+    position: relative;
+    display: flex;
+    height: 38px;
+    align-items: center;
+    padding: 0 12px;
+    color: #6c757d;
+    font-size: 15px;
+    font-weight: 550;
+    cursor: pointer;
+
+    svg {
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      fill: var(--accent-text-color);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    &.active {
+      color: #495057;
+
+      svg {
+        opacity: 1;
+      }
+    }
   }
 
   .fieldHeader {
@@ -133,25 +245,44 @@
     flex-direction: column;
     gap: 16px;
     margin-bottom: 8px;
-  }
-  .oauthButtons a {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    height: 46px;
-    padding: 0 12px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    text-decoration: none;
-    color: #495057;
-    font-size: 16px;
-    font-weight: 450;
-  }
-  .oauthButtons a:hover {
-    background: #f5f6f8;
-  }
-  .oauthButtons a span {
-    margin-left: 12px;
+
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      height: 46px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      text-decoration: none;
+      color: #495057;
+      font-size: 16px;
+      font-weight: 450;
+
+      &:hover {
+        background: #f5f6f8;
+      }
+
+      span {
+        margin-left: 12px;
+      }
+    }
+
+    &.collapsed {
+      flex-direction: row;
+      flex-wrap: wrap;
+
+      a {
+        padding: 0;
+        width: 46px;
+        justify-content: center;
+        flex-shrink: 0;
+
+        span {
+          display: none;
+        }
+      }
+    }
   }
 
   .divider {
@@ -192,9 +323,22 @@
 
     form {
       background: #2a2f34;
-    }
-    form h1 {
-      color: #dee2e6;
+
+      h1 {
+        color: #dee2e6;
+      }
+
+      button.secondary {
+        border-color: #495057;
+        color: #ced4da;
+
+        svg {
+          color: #6c757d;
+        }
+        &:hover {
+          background: #363c42;
+        }
+      }
     }
 
     form textarea,
@@ -229,6 +373,14 @@
     .divider:before,
     .divider:after {
       border-bottom-color: #495057;
+    }
+
+    .tab {
+      color: #adb5bd;
+
+      &.active {
+        color: #dee2e6;
+      }
     }
 
     .bottomNote {
