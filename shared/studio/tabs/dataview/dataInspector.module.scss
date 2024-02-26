@@ -358,11 +358,21 @@
   }
 }
 
-.hasErrors:before {
-  border-color: #d78d87;
+.hasErrors {
+  .invalidValue {
+    color: #c44f45;
+  }
+  &:before {
+    border-color: #d78d87;
+  }
 
   @include darkTheme {
-    border-color: #af6963;
+    .invalidValue {
+      color: #e6776e;
+    }
+    &:before {
+      border-color: #af6963;
+    }
   }
 }
 

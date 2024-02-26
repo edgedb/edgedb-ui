@@ -7,8 +7,14 @@ import {
   escapeName,
   SchemaObjectType,
 } from "@edgedb/common/schemaData";
+import {
+  EditValue,
+  DataEditorState,
+} from "../../../components/dataEditor/editor";
+import {PrimitiveType} from "../../../components/dataEditor";
 
 import {connCtx, dbCtx} from "../../../state";
+import {ObjectPropertyField} from ".";
 
 enum EditKind {
   UpdateProperty,
@@ -23,7 +29,7 @@ interface UpdatePropertyEdit {
   objectTypeName: string;
   escapedObjectTypeName: string;
   fieldName: string;
-  value: any;
+  value: EditValue;
 }
 
 export enum UpdateLinkChangeKind {
@@ -56,7 +62,7 @@ interface InsertObjectEdit {
   id: number;
   objectTypeName: string;
   escapedObjectTypeName: string;
-  data: {[fieldName: string]: any};
+  data: {[fieldName: string]: string | number | EditValue | undefined};
 }
 
 interface DeleteObjectEdit {
@@ -74,7 +80,7 @@ export class DataEditingManager extends Model({}) {
   propertyEdits: Map<string, UpdatePropertyEdit> = new Map();
 
   @observable.ref
-  activePropertyEditId: string | null = null;
+  activePropertyEdit: DataEditorState | null = null;
 
   @observable
   linkEdits: Map<string, UpdateLinkEdit> = new Map();
@@ -96,18 +102,44 @@ export class DataEditingManager extends Model({}) {
   }
 
   @action
-  startEditingCell(objectId: string | number, fieldName: string) {
-    const cellId = `${objectId}__${fieldName}`;
+  startEditingCell(
+    objectId: string | number,
+    objectTypeName: string,
+    field: ObjectPropertyField,
+    value: any
+  ) {
+    const cellId = `${objectId}__${field.name}`;
 
-    this.activePropertyEditId = cellId;
+    const editValue = this.propertyEdits.get(cellId)?.value;
+
+    const state = new DataEditorState(
+      cellId,
+      field.schemaType as PrimitiveType,
+      field.required,
+      field.multi,
+      editValue?.value ?? value,
+      editValue != null && !editValue.valid,
+      (discard) => {
+        if (!discard && state.isEdited) {
+          this._updateCellEdit(
+            objectId,
+            objectTypeName,
+            field.name,
+            state.getEditValue()
+          );
+        }
+        this._finishEditingCell();
+      }
+    );
+    this.activePropertyEdit = state;
   }
 
   @action
-  updateCellEdit(
+  _updateCellEdit(
     objectId: string | number,
     objectTypeName: string,
     fieldName: string,
-    value: any
+    value: EditValue
   ) {
     if (typeof objectId === "string") {
       const cellId = `${objectId}__${fieldName}`;
@@ -129,15 +161,15 @@ export class DataEditingManager extends Model({}) {
   }
 
   @action
-  finishEditingCell() {
-    this.activePropertyEditId = null;
+  _finishEditingCell() {
+    this.activePropertyEdit = null;
   }
 
   @action
   clearPropertyEdit(objectId: string | number, fieldName: string) {
     const cellId = `${objectId}__${fieldName}`;
-    if (this.activePropertyEditId === cellId) {
-      this.activePropertyEditId = null;
+    if (this.activePropertyEdit?.cellId === cellId) {
+      this.activePropertyEdit = null;
     }
     if (typeof objectId === "string") {
       this.propertyEdits.delete(cellId);
@@ -326,7 +358,7 @@ export class DataEditingManager extends Model({}) {
   @action
   clearAllPendingEdits() {
     this.propertyEdits.clear();
-    this.activePropertyEditId = null;
+    this.activePropertyEdit = null;
     this.linkEdits.clear();
     this.insertEdits.clear();
     this.deleteEdits.clear();
@@ -369,7 +401,7 @@ export class DataEditingManager extends Model({}) {
     function generatePropUpdate(
       objectTypeName: string,
       propName: string,
-      val: any
+      val: EditValue
     ) {
       const type =
         schemaData.objectsByName.get(objectTypeName)?.properties[propName];
@@ -427,12 +459,18 @@ export class DataEditingManager extends Model({}) {
     for (const insertEdit of this.insertEdits.values()) {
       const fields: string[] = [];
       const deps: number[] = [];
+      let invalidFields: string[] = [];
 
       const type = schemaData.objectsByName.get(insertEdit.objectTypeName)!;
 
       for (const [key, val] of Object.entries(insertEdit.data)) {
         if (key === "id" || key === "__tname__") continue;
-        fields.push(generatePropUpdate(insertEdit.objectTypeName, key, val));
+        fields.push(
+          generatePropUpdate(insertEdit.objectTypeName, key, val as EditValue)
+        );
+        if ((val as EditValue).valid === false) {
+          invalidFields.push(key);
+        }
       }
 
       const linkEdits = insertLinkEdits.get(insertEdit.id) ?? [];
@@ -479,6 +517,8 @@ export class DataEditingManager extends Model({}) {
           ? `Values are missing for required fields: ${missingFields
               .map((field) => `'${field.name}'`)
               .join(", ")}`
+          : invalidFields.length
+          ? `Invalid input in fields: ${invalidFields.join(", ")}`
           : undefined,
       });
     }
@@ -493,6 +533,7 @@ export class DataEditingManager extends Model({}) {
     let updateCount = 1;
     for (const [objectId, edits] of updateEdits) {
       const editLines: string[] = [];
+      const invalidFields: string[] = [];
 
       const type = schemaData.objectsByName.get(edits.objectTypeName)!;
 
@@ -504,6 +545,9 @@ export class DataEditingManager extends Model({}) {
             propEdit.value
           )
         );
+        if (propEdit.value.valid === false) {
+          invalidFields.push(propEdit.fieldName);
+        }
       }
       for (const linkEdit of edits.links) {
         const linkUpdate = generateLinkUpdate(
@@ -525,6 +569,9 @@ filter .id = <uuid>'${objectId}'
 set {
   ${editLines.join(",\n  ")}
 }`,
+          error: invalidFields.length
+            ? `Invalid input in fields: ${invalidFields.join(", ")}`
+            : undefined,
         });
       }
     }
@@ -544,7 +591,7 @@ set {
   async commitPendingEdits() {
     const conn = connCtx.get(this)!;
 
-    this.activePropertyEditId = null;
+    this.activePropertyEdit = null;
 
     const {statements, params} = this.generateStatements();
     const query = generateQueryFromStatements(statements);
@@ -677,18 +724,34 @@ function generateLinkUpdate(
 
 function generateParamExpr(
   type: SchemaType,
-  data: any,
+  _data: EditValue,
   params: {[key: string]: {type: SchemaType; value: any}},
-  multi?: boolean
+  multi: boolean
+) {
+  if (!_data.valid) {
+    const paramName = `p${Object.keys(params).length}`;
+    params[paramName] = {type, value: _data.value};
+    return `<_invalid>$${paramName}`;
+  }
+
+  const data = _data.value;
+
+  if (multi && data !== null && data.length) {
+    return `{${(data as any[])
+      .map((item) => _generateParamExpr(type, item, params))
+      .join(", ")}}`;
+  }
+
+  return _generateParamExpr(type, data, params);
+}
+
+function _generateParamExpr(
+  type: SchemaType,
+  data: any,
+  params: {[key: string]: {type: SchemaType; value: any}}
 ): string {
   if (data === null) {
     return `<${getNameOfSchemaType(type)[1]}>{}`;
-  }
-
-  if (multi) {
-    return `{${(data as any[])
-      .map((item) => generateParamExpr(type, item, params))
-      .join(", ")}}`;
   }
 
   if (
@@ -707,14 +770,14 @@ function generateParamExpr(
       return `<array<${type.elementType.name}>>$${paramName}`;
     } else {
       return `[${(data as any[])
-        .map((item) => generateParamExpr(type.elementType, item, params))
+        .map((item) => _generateParamExpr(type.elementType, item, params))
         .join(", ")}]`;
     }
   }
   if (type.schemaType === "Tuple") {
     return `(${type.elements
       .map((element, i) =>
-        generateParamExpr(element.type, data[element.name ?? i], params)
+        _generateParamExpr(element.type, data[element.name ?? i], params)
       )
       .join(", ")}${type.elements.length === 1 ? "," : ""})`;
   }

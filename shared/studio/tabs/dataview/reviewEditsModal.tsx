@@ -17,6 +17,11 @@ import {
   extractErrorDetails,
 } from "../../utils/extractErrorDetails";
 
+import {
+  PrimitiveType,
+  renderInvalidEditorValue,
+} from "../../components/dataEditor/utils";
+
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
@@ -88,11 +93,23 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
                     (node) => ({
                       range: [node.from, node.to],
                       renderer: (_, content) => {
-                        const paramName = code
+                        const [paramCast, paramName] = code
                           .slice(node.from, node.to)
-                          .split("$")[1];
+                          .split("$");
                         const param = params[paramName];
 
+                        if (paramCast === "<_invalid>") {
+                          return (
+                            <span className={styles.codeBlockParamInvalid}>
+                              {renderInvalidEditorValue(
+                                param.value,
+                                param.type as PrimitiveType
+                              )}
+                            </span>
+                          );
+                        }
+
+                        content.props.children.pop();
                         return (
                           <span className={styles.codeBlockParam}>
                             {content}
