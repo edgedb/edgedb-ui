@@ -220,6 +220,13 @@ export class Repl extends Model({
     }
   }
 
+  _addDedupedHistoryLatestQuery(item: ReplHistoryItem) {
+    let previousQuery = this.dedupedQueryHistory[0]?.query;
+    if (item.query !== previousQuery) {
+      this.dedupedQueryHistory.unshift(item);
+    }
+  }
+
   @action
   navigateHistory(direction: 1 | -1) {
     // 1 => backwards, -1 => forwards
@@ -372,6 +379,7 @@ export class Repl extends Model({
 
     this.queryHistory.push(historyItem);
     this.itemHeights.addItem(defaultItemHeight);
+    this._addDedupedHistoryLatestQuery(historyItem);
     if (queryStr !== null) {
       this.currentQuery = Text.empty;
     }
