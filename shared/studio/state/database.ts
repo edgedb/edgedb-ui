@@ -49,7 +49,7 @@ const SCHEMA_DATA_VERSION = 8;
 
 export interface StoredSchemaData {
   version: number;
-  migrationId: string | null;
+  schemaId: string | null;
   data: RawIntrospectionResult;
 }
 
@@ -107,7 +107,7 @@ export class DatabaseState extends Model({
   }
 
   @observable
-  migrationId: string | null | undefined = undefined;
+  schemaId: string | null = null;
   @observable.ref
   schemaData: SchemaData | null = null;
   @observable
@@ -199,14 +199,15 @@ export class DatabaseState extends Model({
                   } FILTER NOT EXISTS .children).id
                 ),
                 version := sys::get_version(),
+                versionStr := sys::get_version_as_str(),
               }`,
               undefined,
               {ignoreSessionConfig: true, ignoreForceDatabaseError: true}
             )
             .then(({result}) => ({
-              migrationId: (result![0].migrationId[0] ?? null) as
-                | string
-                | null,
+              schemaId: `${result![0].versionStr}__${
+                result![0].migrationId[0] ?? "empty"
+              }`,
               version: result![0].version as {
                 major: number;
                 minor: number;
@@ -219,7 +220,7 @@ export class DatabaseState extends Model({
         ])
       );
 
-      if (this.migrationId === schemaInfo.migrationId) {
+      if (this.schemaId === schemaInfo.schemaId) {
         return;
       }
 
@@ -232,7 +233,7 @@ export class DatabaseState extends Model({
 
       let rawData: RawIntrospectionResult;
       if (
-        storedSchemaData?.migrationId !== schemaInfo.migrationId ||
+        storedSchemaData?.schemaId !== schemaInfo.schemaId ||
         storedSchemaData.version !== SCHEMA_DATA_VERSION
       ) {
         // Directly set loading tab by model name to avoid cyclic dependency
@@ -254,7 +255,7 @@ export class DatabaseState extends Model({
         }
         storeSchemaData(this.name, instanceState.instanceId!, {
           version: SCHEMA_DATA_VERSION,
-          migrationId: schemaInfo.migrationId,
+          schemaId: schemaInfo.schemaId,
           data: rawData,
         });
       } else {
@@ -317,7 +318,7 @@ export class DatabaseState extends Model({
         }, new Map<string, Set<string>>()),
       };
 
-      this.migrationId = schemaInfo.migrationId;
+      this.schemaId = schemaInfo.schemaId;
       this.schemaData = schemaData;
     } finally {
       this.fetchingSchemaData = false;
