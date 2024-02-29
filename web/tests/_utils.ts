@@ -4,7 +4,7 @@ import type {Locator, WebElement} from "selenium-webdriver";
 export const client = createClient({port: 5656, tlsSecurity: "insecure"});
 
 export function goToPage(url: string) {
-  return driver.get(`http://localhost:3000/ui/${url}`);
+  return driver.get(`http://localhost:3002/ui/${url}`);
 }
 
 export function uiClass(className: string) {
