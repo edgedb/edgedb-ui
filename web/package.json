@@ -29,12 +29,10 @@
   },
   "homepage": "./ui",
   "scripts": {
-    "start": "BROWSER=none craco start",
+    "start": "PORT=3002 BROWSER=none craco start",
     "build": "craco build",
     "test": "jest --runInBand",
     "eject": "react-scripts eject",
-    "dev-server": "env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server",
-    "open-browser": "node openBrowser.js",
     "lint": "tsc --noEmit"
   },
   "eslintConfig": {
