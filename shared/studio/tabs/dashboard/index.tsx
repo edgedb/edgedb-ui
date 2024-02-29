@@ -35,16 +35,16 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
     navigate(`${currentPath[0]}/${tabPath}`);
 
   useEffect(() => {
-    if (dbState.migrationId != undefined) {
+    if (dbState.schemaId != null) {
       dbState.updateObjectCount();
     }
-  }, [dbState.migrationId]);
+  }, [dbState.schemaId]);
 
-  if (dbState.migrationId === undefined) {
+  if (dbState.schemaId == null) {
     return <div className={styles.dashboard} />;
   }
 
-  if (dbState.migrationId === null) {
+  if (dbState.schemaId.endsWith("__empty")) {
     return <FirstRunDashboard />;
   }
 
