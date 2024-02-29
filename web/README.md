@@ -14,17 +14,17 @@ To start the UI dev server:
 yarn start
 ```
 
-The app is served at `http://localhost:3000/ui`.
+The app is served at `http://localhost:3002/ui`.
 
-The EdgeDB server needs to be run separately with CORS and
-admin UI enabled, e.g.:
+The EdgeDB server needs to be run separately with `cors_allow_origins`
+configured to allow the UI's `localhost:3002` origin:
 
 ```sh
-# Using dev server:
-env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edb server --admin-ui=enabled
+edb server
 
-# or with a nightly instance:
-env EDGEDB_DEBUG_HTTP_INJECT_CORS=1 edgedb instance start --foreground <instance-name>
+# Only needs to be run once:
+edb cli configure set cors_allow_origins '*'
+
 ```
 
 To customize the EdgeDB server address (if it's not running at the

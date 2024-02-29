@@ -19,7 +19,7 @@ class SeleniumEnvironment extends NodeEnvironment {
       .build();
 
     try {
-      await driver.get("http://localhost:3000/ui?authToken=test");
+      await driver.get("http://localhost:3002/ui?authToken=test");
     } catch (err) {
       driver.quit();
       throw err;

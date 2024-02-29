@@ -55,7 +55,7 @@ async function waitUntilAlive(
 
 async function checkUIServerAlive() {
   return new Promise<boolean>((resolve) => {
-    const req = http.get("http://127.0.0.1:3000/", (res) => {
+    const req = http.get("http://127.0.0.1:3002/", (res) => {
       if (res.statusCode === 200) {
         resolve(true);
       } else {
@@ -128,7 +128,7 @@ export default async function globalSetup() {
   const uiServerAlive = new Event();
 
   if (await checkUIServerAlive()) {
-    console.log("Re-using UI server already running on 3000");
+    console.log("Re-using UI server already running on 3002");
     uiServerAlive.set();
   } else {
     console.log("Starting UI server...");
