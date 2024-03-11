@@ -27,11 +27,13 @@
 .scroller {
   width: 6px;
   height: 6px;
-  background: rgba(0, 0, 0, 0.1);
+  // background: rgba(0, 0, 0, 0.1);
+  background: var(--grey85);
   border-radius: 4px;
 
   @include darkTheme {
-    background: rgba(255, 255, 255, 0.1);
+    // background: rgba(255, 255, 255, 0.1);
+    background: var(--grey20);
   }
 }
 
