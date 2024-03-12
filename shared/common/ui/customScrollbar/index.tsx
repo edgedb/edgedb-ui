@@ -17,6 +17,8 @@ export interface CustomScrollbarsProps {
   verticalBarClass?: string;
   innerClass: string | Element | null;
   headerPadding?: number;
+  scrollIgnoreLength?: number;
+  bottomScrollBarOffset?: number;
   reverse?: boolean;
   hideVertical?: boolean;
   hideHorizontal?: boolean;
@@ -31,6 +33,8 @@ export function CustomScrollbars({
   verticalBarClass,
   innerClass,
   headerPadding = 0,
+  scrollIgnoreLength = 0,
+  bottomScrollBarOffset = 8,
   reverse,
   hideVertical,
   hideHorizontal,
@@ -38,23 +42,30 @@ export function CustomScrollbars({
   const ref = useRef<HTMLDivElement>(null);
 
   const scrollSizes = useRef<[number, number]>(defaultScrollSizes);
+  const [rawScrollOffset, setRawScrollOffset] = useState(0);
   const [scrollOffsets, setScrollOffsets] = useState<[number, number]>(() => [
-    0,
-    0,
+    0, 0,
   ]);
   const _scrollOffsets = useRef(scrollOffsets);
   const [dragging, setDragging] = useState(false);
 
+  const scrollBarTopOffset =
+    rawScrollOffset < scrollIgnoreLength
+      ? rawScrollOffset
+      : scrollIgnoreLength;
+
   const onScroll = useCallback(
     (el: HTMLElement) => {
+      const scrollTop =
+        Math.max(0, el.scrollTop - scrollIgnoreLength) /
+        (el.scrollHeight - scrollIgnoreLength - el.clientHeight);
+
       _scrollOffsets.current = [
-        ((reverse
-          ? el.scrollHeight + el.scrollTop - el.clientHeight
-          : el.scrollTop) /
-          (el.scrollHeight - el.clientHeight)) *
+        scrollTop *
           (el.clientHeight -
-            scrollSizes.current[0] -
-            (scrollSizes.current[1] === -1 ? 8 : 14) -
+            scrollSizes.current[0] +
+            scrollBarTopOffset -
+            (scrollSizes.current[1] === -1 ? bottomScrollBarOffset : 14) -
             headerPadding),
         (el.scrollLeft / (el.scrollWidth - el.clientWidth)) *
           (el.clientWidth -
@@ -62,14 +73,17 @@ export function CustomScrollbars({
             (scrollSizes.current[0] === -1 ? 8 : 14)),
       ];
       setScrollOffsets(_scrollOffsets.current);
+      setRawScrollOffset(el.scrollTop);
     },
-    [headerPadding, reverse]
+    [headerPadding, reverse, scrollBarTopOffset]
   );
 
   const onResize = useCallback(() => {
-    const scrollEl = (scrollClass
-      ? ref.current?.querySelector(`.${scrollClass}`)
-      : ref.current!.firstChild) as HTMLElement;
+    const scrollEl = (
+      scrollClass
+        ? ref.current?.querySelector(`.${scrollClass}`)
+        : ref.current!.firstChild
+    ) as HTMLElement;
     if (!scrollEl) return;
 
     const hasV = scrollEl.scrollHeight > scrollEl.clientHeight;
@@ -79,7 +93,8 @@ export function CustomScrollbars({
         ? Math.max(
             28,
             (scrollEl.clientHeight / scrollEl.scrollHeight) *
-              (scrollEl.clientHeight - (hasH ? 14 : 8) - headerPadding)
+              (scrollEl.clientHeight - (hasH ? 14 : 8)) -
+              headerPadding
           )
         : -1,
       hasH
@@ -105,9 +120,11 @@ export function CustomScrollbars({
   useResize(innerRef, onResize);
 
   useEffect(() => {
-    const scrollEl = (scrollClass
-      ? ref.current?.querySelector(`.${scrollClass}`)
-      : ref.current!.firstChild) as HTMLElement;
+    const scrollEl = (
+      scrollClass
+        ? ref.current?.querySelector(`.${scrollClass}`)
+        : ref.current!.firstChild
+    ) as HTMLElement;
     if (scrollEl) {
       const listener = (e: Event) => onScroll(e.target as HTMLElement);
 
@@ -129,9 +146,11 @@ export function CustomScrollbars({
         e.stopPropagation();
         e.preventDefault();
 
-        const el = (scrollClass
-          ? ref.current?.querySelector(`.${scrollClass}`)
-          : ref.current!.firstChild) as HTMLElement;
+        const el = (
+          scrollClass
+            ? ref.current?.querySelector(`.${scrollClass}`)
+            : ref.current!.firstChild
+        ) as HTMLElement;
         const initial = vScroll ? e.clientY : e.clientX;
         const initialScroll = vScroll ? el.scrollTop : el.scrollLeft;
         const barSize = vScroll
@@ -210,14 +229,14 @@ export function CustomScrollbars({
         <div
           className={cn(styles.verticalBar, verticalBarClass)}
           style={{
-            top: headerPadding,
-            bottom: scrollSizes.current[1] === -1 ? 0 : 6,
+            top: headerPadding - scrollBarTopOffset,
+            bottom: scrollSizes.current[1] === -1 ? bottomScrollBarOffset : 6,
           }}
         >
           <div
             className={styles.scroller}
             style={{
-              height: scrollSizes.current[0],
+              height: scrollSizes.current[0] + scrollBarTopOffset,
               transform: `translateY(${scrollOffsets[0]}px)`,
             }}
           />
