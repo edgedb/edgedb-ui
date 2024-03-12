@@ -57,7 +57,12 @@ export function CustomScrollbars({
   const onScroll = useCallback(
     (el: HTMLElement) => {
       const scrollTop =
-        Math.max(0, el.scrollTop - scrollIgnoreLength) /
+        Math.max(
+          0,
+          reverse
+            ? el.scrollHeight + el.scrollTop - el.clientHeight
+            : el.scrollTop - scrollIgnoreLength
+        ) /
         (el.scrollHeight - scrollIgnoreLength - el.clientHeight);
 
       _scrollOffsets.current = [
