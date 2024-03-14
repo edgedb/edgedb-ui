@@ -31,6 +31,10 @@
     }
   }
 
+  .placeholder {
+    opacity: 0.8;
+  }
+
   @include darkTheme {
     --hoverBg: var(--app-bg-gray);
   }

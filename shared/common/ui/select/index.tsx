@@ -34,13 +34,16 @@ export type SelectProps<T = any> = {
   disabled?: boolean;
 } & (
   | {
+      placeholder?: undefined;
       items: null;
     }
-  | {
+  | ((
+      | {placeholder?: undefined; selectedItemId: T}
+      | {placeholder: string; selectedItemId: T | null}
+    ) & {
       items: SelectItems<T> | SelectItem<T>[];
-      selectedItemId: T;
       onChange: (item: SelectItem<T>) => void;
-    }
+    })
 );
 
 type FlattenedItem = {type: "item"; item: SelectItem; depth: number};
@@ -62,6 +65,7 @@ export function Select<T extends any>({
   actions,
   searchable,
   disabled,
+  placeholder,
   ...dropdown
 }: SelectProps<T>) {
   const selectRef = useRef<HTMLDivElement>(null);
@@ -178,7 +182,9 @@ export function Select<T extends any>({
       onClick={!disabled ? () => setDropdownOpen(true) : undefined}
       data-disabled={disabled}
     >
-      {title ?? selectedItem?.fullLabel ?? selectedItem?.label}
+      {title ?? selectedItem?.fullLabel ?? selectedItem?.label ?? (
+        <span className={styles.placeholder}>{placeholder}</span>
+      )}
       {hasDropdown ? (
         <>
           <div className={styles.tabDropdownButton}>
