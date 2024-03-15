@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import {useEffect, useMemo} from "react";
 import {observer} from "mobx-react-lite";
 
 import styles from "./databaseDashboard.module.scss";
@@ -166,6 +166,12 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
   const {navigate} = useDBRouter();
 
   const exampleDBExists = instanceState.databases?.includes("_example");
+  const dbOrBranch = useMemo(() => {
+    for (const func of dbState.schemaData?.functions.values() ?? []) {
+      if (func.name === "sys::get_current_branch") return "branch";
+    }
+    return "database";
+  }, [dbState.schemaData]);
 
   return (
     <CustomScrollbars
@@ -178,23 +184,25 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
             <HeaderDatabaseIcon />
             <span>{dbState.name}</span>
           </div>
-          <div className={styles.congrats}>Your new database is ready!</div>
+          <div className={styles.congrats}>
+            Your new {dbOrBranch} is ready!
+          </div>
 
           <div className={styles.importData}>
             <h3>First time using EdgeDB?</h3>
             <p>
-              {exampleDBExists ? "Switch to the" : "Create an"} example branch
-              with our "movies" schema and data set, and play with the web UI
-              right away.
+              {exampleDBExists ? "Switch to the" : "Create an"} example{" "}
+              {dbOrBranch} with our "movies" schema and data set, and play with
+              the web UI right away.
             </p>
             <div>
               <Button
                 label={
                   instanceState.creatingExampleDB
-                    ? "Creating example branch..."
+                    ? `Creating example ${dbOrBranch}...`
                     : exampleDBExists
-                    ? "Switch to example branch"
-                    : "Create example branch"
+                    ? `Switch to example ${dbOrBranch}`
+                    : `Create example ${dbOrBranch}`
                 }
                 loading={instanceState.creatingExampleDB}
                 disabled={instanceState.creatingExampleDB}
