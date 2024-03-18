@@ -60,7 +60,7 @@ export function CustomScrollbars({
       );
 
       setScrollBarTopOffset(
-        el.scrollTop < verScrollIgnoreLength
+        !reverse && el.scrollTop < verScrollIgnoreLength
           ? el.scrollTop
           : verScrollIgnoreLength
       );
@@ -132,7 +132,7 @@ export function CustomScrollbars({
     onScroll(el);
   }, [headerPadding, scrollBarHeight]);
 
-  useResize(ref, onResize, [headerPadding, scrollBarHeight]);
+  useResize(ref, onResize, [onResize]);
 
   const innerRef = useMemo(
     () =>
@@ -142,7 +142,7 @@ export function CustomScrollbars({
     [ref.current, innerClass]
   );
 
-  useResize(innerRef, onResize, [headerPadding, scrollBarHeight]);
+  useResize(innerRef, onResize, [onResize]);
 
   useEffect(() => {
     const el = (
