@@ -321,9 +321,17 @@ const ResultInspector = observer(function ResultInspector({
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
+  const [innerClass, setInnerClass] = useState<Element | null>(null);
+
+  useEffect(() => {
+    setInnerClass(
+      ref.current!.querySelector(`.${inspectorStyles.innerWrapper}`)
+    );
+  }, [height]);
+
   return (
     <div ref={ref} style={{height: "100%", minWidth: 0, width: "100%"}}>
-      <CustomScrollbars innerClass={inspectorStyles.innerWrapper}>
+      <CustomScrollbars innerClass={innerClass}>
         <Inspector
           className={styles.inspector}
           state={state}
