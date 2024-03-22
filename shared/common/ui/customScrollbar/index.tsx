@@ -107,9 +107,12 @@ export function CustomScrollbars({
     const hasV = el.scrollHeight > el.clientHeight;
     const hasH = el.scrollWidth > el.clientWidth;
 
-    if (scrollBarHeight === 0 && el.clientHeight < el.scrollHeight) {
+    if (hasV) {
       setScrollBarHeight(
-        el.clientHeight - (hasH ? 8 : verScrollBarBottomOffset) - headerPadding
+        el.clientHeight -
+          (hasH ? 8 : verScrollBarBottomOffset) -
+          headerPadding +
+          scrollBarTopOffset
       );
     }
 
@@ -117,8 +120,10 @@ export function CustomScrollbars({
       hasV
         ? Math.max(
             28,
-            ((el.clientHeight + verScrollIgnoreLength) * scrollBarHeight) /
-              el.scrollHeight
+            el.clientHeight < el.scrollHeight - verScrollIgnoreLength
+              ? ((el.clientHeight + verScrollIgnoreLength) * scrollBarHeight) /
+                  el.scrollHeight
+              : scrollBarHeight
           )
         : -1,
       hasH
