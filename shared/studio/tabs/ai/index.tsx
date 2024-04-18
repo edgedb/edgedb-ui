@@ -81,12 +81,15 @@ function AIAdminLayout() {
 
   const activePath = currentPath.slice(2).join("/");
 
-  useLayoutEffect(() => {
-    const basePath = currentPath.slice(0, 2).join("/");
-    if (currentPath.length == 2 && state.lastSelectedTab) {
-      navigate(`${basePath}/${state.lastSelectedTab}`, true);
-    }
+  useEffect(() => {
+    state.setLastSelectedTab(currentPath.slice(2).join("/"));
   }, [currentPath]);
+
+  useLayoutEffect(() => {
+    if (currentPath.length == 2 && state.lastSelectedTab) {
+      navigate(`${currentPath.join("/")}/${state.lastSelectedTab}`, true);
+    }
+  }, []);
 
   return (
     <div className={styles.mainLayout}>
