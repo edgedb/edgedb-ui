@@ -1,18 +1,21 @@
 import {useEffect, useLayoutEffect} from "react";
 import {observer} from "mobx-react-lite";
-import {DatabaseTabSpec} from "../../components/databasePage";
-import {TabAIIcon} from "../../icons";
-import {AIAdminState} from "./state";
-import {useTabState} from "../../state";
+import "@fontsource-variable/roboto-flex";
+
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 
-import styles from "./aiAdmin.module.scss";
+import {useTabState} from "../../state";
 import {useDBRouter} from "../../hooks/dbRoute";
-import "@fontsource-variable/roboto-flex";
+import {DatabaseTabSpec} from "../../components/databasePage";
+import {TabAIIcon} from "../../icons";
+
+import {AIAdminState} from "./state";
 import {ProvidersTab} from "./providers";
 import {PlaygroundTab} from "./playground";
 import {PromptsTab} from "./prompts";
+
+import styles from "./aiAdmin.module.scss";
 
 const AIAdminPage = observer(function AIAdminPage() {
   const state = useTabState(AIAdminState);

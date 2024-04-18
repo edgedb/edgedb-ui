@@ -1,22 +1,19 @@
+import {useState} from "react";
 import {observer} from "mobx-react-lite";
-import styles from "./aiAdmin.module.scss";
-import {useTabState} from "../../state";
-import {
-  AIAdminState,
-  AIPromptDraft,
-  Prompt,
-  PromptChatParticipantRole,
-  PromptMessage,
-} from "./state";
+
+import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChevronDownIcon,
   Select,
   TextInput,
 } from "@edgedb/common/newui";
-import cn from "@edgedb/common/utils/classNames";
-import {useState} from "react";
+
+import {useTabState} from "../../state";
+import {AIAdminState, AIPromptDraft, PromptChatParticipantRole} from "./state";
+
 import textStyles from "@edgedb/common/newui/textInput/textInput.module.scss";
+import styles from "./aiAdmin.module.scss";
 
 export const PromptsTab = observer(function PromptTab() {
   const state = useTabState(AIAdminState);

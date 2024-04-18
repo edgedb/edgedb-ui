@@ -40,7 +40,7 @@ export const TextInput = forwardRef(function TextInput(
       <div
         className={cn(styles.inputWrapper, {[styles.hasError]: error != null})}
       >
-        <Input ref={ref} type={type ?? "text"} {...props} />
+        <Input ref={ref as any} type={type ?? "text"} {...props} />
         {error != null ? (
           <div className={styles.error}>
             <InfoIcon />

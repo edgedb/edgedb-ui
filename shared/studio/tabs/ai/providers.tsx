@@ -1,5 +1,7 @@
+import {useState} from "react";
 import {observer} from "mobx-react-lite";
-import styles from "./aiAdmin.module.scss";
+
+import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChevronDownIcon,
@@ -7,6 +9,7 @@ import {
   TextInput,
   WarningIcon,
 } from "@edgedb/common/newui";
+
 import {useTabState} from "../../state";
 import {
   AIAdminState,
@@ -15,8 +18,8 @@ import {
   ProviderInfo,
 } from "./state";
 import {AILogosByName} from "./logos";
-import {useState} from "react";
-import cn from "@edgedb/common/utils/classNames";
+
+import styles from "./aiAdmin.module.scss";
 
 export const ProvidersTab = observer(function ProvidersTab() {
   const state = useTabState(AIAdminState);

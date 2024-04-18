@@ -1,5 +1,7 @@
+import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
-import styles from "./aiAdmin.module.scss";
+
+import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChatSendIcon,
@@ -7,15 +9,17 @@ import {
   Select,
   SettingsIcon,
 } from "@edgedb/common/newui";
-import {useTabState} from "../../state";
-import {AIAdminState, AIPlaygroundChatItem} from "./state";
+import Spinner from "@edgedb/common/ui/spinner";
+import {RelativeTime} from "@edgedb/common/utils/relativeTime";
+import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+
 import {CodeEditor} from "@edgedb/code-editor";
 import {Text} from "@codemirror/state";
-import cn from "@edgedb/common/utils/classNames";
-import {RelativeTime} from "@edgedb/common/utils/relativeTime";
-import {useEffect, useState} from "react";
-import Spinner from "@edgedb/common/ui/spinner";
-import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+
+import {useTabState} from "../../state";
+import {AIAdminState, AIPlaygroundChatItem} from "./state";
+
+import styles from "./aiAdmin.module.scss";
 
 const isMac =
   typeof navigator !== "undefined"
