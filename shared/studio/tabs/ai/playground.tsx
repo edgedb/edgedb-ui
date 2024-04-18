@@ -46,19 +46,17 @@ export const PlaygroundTab = observer(function PlaygroundTab() {
             <Select<string>
               items={{
                 items: [],
-                groups: Object.entries(state.textGenerationModels)
-                  .filter(([providerName]) =>
-                    state.providers.some((p) => p.name === providerName)
-                  )
-                  .map(([providerName, models]) => ({
-                    label: state.providers.find(
+                groups: state.availableGenerationModels?.map(
+                  ([providerName, models]) => ({
+                    label: state.providers!.find(
                       (p) => p.name === providerName
                     )!.display_name,
                     items: models.map((model) => ({
                       id: model.modelName,
                       label: model.modelName,
                     })),
-                  })),
+                  })
+                ),
               }}
               placeholder="Choose model..."
               rightAlign
@@ -69,10 +67,12 @@ export const PlaygroundTab = observer(function PlaygroundTab() {
 
           <div className={styles.header}>Prompt</div>
           <Select
-            items={state.prompts.map((prompt) => ({
-              id: prompt.name,
-              label: prompt.name,
-            }))}
+            items={
+              state.prompts?.map((prompt) => ({
+                id: prompt.name,
+                label: prompt.name,
+              })) ?? []
+            }
             placeholder="Choose prompt..."
             rightAlign
             selectedItemId={state.selectedPlaygroundPrompt}

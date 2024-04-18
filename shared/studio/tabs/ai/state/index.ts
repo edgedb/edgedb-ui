@@ -1,4 +1,4 @@
-import {action, computed, observable, runInAction} from "mobx";
+import {action, computed, observable, reaction, runInAction} from "mobx";
 import {
   Model,
   _async,
@@ -85,6 +85,75 @@ export class AIAdminState extends Model({
         .get(this)!
         .schemaData?.extensions.some((ext) => ext.name === "ai") ?? null
     );
+  }
+
+  onAttachedToRootStore() {
+    const configJSON = localStorage.getItem("edgedbAIPlaygroundConfig");
+    if (configJSON) {
+      try {
+        const config = JSON.parse(configJSON);
+        if (typeof config.model === "string") {
+          this.setSelectedPlaygroundModel(config.model);
+        }
+        if (typeof config.prompt === "string") {
+          this.setSelectedPlaygroundPrompt(config.prompt);
+        }
+        if (typeof config.contextQuery === "string") {
+          this.setPlaygroundContextQuery(Text.of([config.contextQuery]));
+        }
+      } catch {
+        // ignore error
+      }
+    }
+
+    const disposers = [
+      reaction(
+        () => this.availableGenerationModels,
+        (availableModels) => {
+          if (!availableModels) return;
+          const modelNames = availableModels.flatMap(([_, models]) =>
+            models.map((m) => m.modelName)
+          );
+          if (
+            this.selectedPlaygroundModel == null ||
+            !modelNames.includes(this.selectedPlaygroundModel)
+          ) {
+            this.setSelectedPlaygroundModel(modelNames[0] ?? null);
+          }
+        }
+      ),
+      reaction(
+        () => this.prompts,
+        (prompts) => {
+          if (!prompts) return;
+          if (
+            this.selectedPlaygroundPrompt == null ||
+            !prompts.some((p) => p.name === this.selectedPlaygroundPrompt)
+          ) {
+            this.setSelectedPlaygroundPrompt(prompts[0]?.name ?? null);
+          }
+        }
+      ),
+      reaction(
+        () => ({
+          model: this.selectedPlaygroundModel,
+          prompt: this.selectedPlaygroundPrompt,
+          contextQuery: this.playgroundContextQuery.toString(),
+        }),
+        (config) => {
+          localStorage.setItem(
+            "edgedbAIPlaygroundConfig",
+            JSON.stringify(config)
+          );
+        }
+      ),
+    ];
+
+    return () => {
+      for (const disposer of disposers) {
+        disposer();
+      }
+    };
   }
 
   // providers
@@ -175,6 +244,15 @@ export class AIAdminState extends Model({
   }
 
   @computed
+  get availableGenerationModels() {
+    return this.textGenerationModels && this.providers
+      ? Object.entries(this.textGenerationModels).filter(([providerName]) =>
+          this.providers!.some((p) => p.name === providerName)
+        )
+      : null;
+  }
+
+  @computed
   get indexedObjectTypes() {
     const objectTypes = [
       ...(dbCtx.get(this)!.schemaData?.objects.values() ?? []),
@@ -209,14 +287,14 @@ export class AIAdminState extends Model({
   }
 
   @observable
-  providers: ProviderInfo[] = [];
+  providers: ProviderInfo[] | null = null;
 
   @observable
-  prompts: Prompt[] = [];
+  prompts: Prompt[] | null = null;
 
   @computed
   get existingProviderNames() {
-    return new Set(this.providers.map((p) => p.name));
+    return new Set(this.providers?.map((p) => p.name));
   }
 
   async refreshConfig() {
@@ -636,9 +714,7 @@ export class AIProviderDraft extends Model({
   get nameError() {
     if (this.name === null) return null;
     if (this.name.trim() === "") return "Provider name is required";
-    return getParent<AIAdminState>(this)!.providers.some(
-      (p) => p.name === this.name
-    )
+    return getParent<AIAdminState>(this)!.existingProviderNames.has(this.name)
       ? "Provider name already exists"
       : null;
   }
@@ -744,7 +820,7 @@ export class AIPromptDraft extends Model({
 
   @computed
   get _prompt() {
-    return this._getState().prompts.find((p) => p.id === this.id);
+    return this._getState().prompts!.find((p) => p.id === this.id);
   }
 
   @observable

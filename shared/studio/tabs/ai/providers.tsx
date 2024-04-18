@@ -62,7 +62,7 @@ export const ProvidersTab = observer(function ProvidersTab() {
           </div>
         ) : null}
         <div className={styles.providerList}>
-          {state.providers.map((provider) => (
+          {state.providers?.map((provider) => (
             <ProviderCard key={provider.name} provider={provider} />
           ))}
         </div>

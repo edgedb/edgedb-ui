@@ -23,7 +23,7 @@ export const PromptsTab = observer(function PromptTab() {
       <div className={styles.contentWrapper}>
         <h2>Prompts</h2>
         <div className={styles.promptsList}>
-          {state.prompts.map((prompt) => (
+          {state.prompts?.map((prompt) => (
             <PromptCard key={prompt.id} promptId={prompt.id} />
           ))}
           {state.newPromptDraft ? (
@@ -49,7 +49,9 @@ const PromptCard = observer(function PromptCard({
   const state = useTabState(AIAdminState);
   const [updating, setUpdating] = useState(false);
 
-  const prompt = promptId ? state.prompts.find((p) => p.id == promptId) : null;
+  const prompt = promptId
+    ? state.prompts?.find((p) => p.id == promptId)
+    : null;
   const draft = promptId
     ? state.promptDrafts.get(promptId)
     : state.newPromptDraft!;
