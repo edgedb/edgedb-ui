@@ -100,7 +100,7 @@
 }
 
 .tabs {
-  justify-self: end;
+  justify-self: flex-end;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -456,7 +456,7 @@
   .chatSendButton {
     display: flex;
     padding: 12px;
-    align-items: end;
+    align-items: flex-end;
     color: #a565cd;
     cursor: pointer;
 
@@ -544,7 +544,7 @@
 
     .toggleConfigButton {
       margin: 8px;
-      align-self: end;
+      align-self: flex-end;
 
       svg {
         transform: rotate(-90deg);
@@ -730,7 +730,7 @@
   }
 
   .buttons {
-    justify-content: end;
+    justify-content: flex-end;
     margin-top: 16px;
     flex-direction: row;
   }
@@ -868,7 +868,7 @@
     }
 
     .buttons {
-      justify-content: end;
+      justify-content: flex-end;
       margin-top: 16px;
       flex-direction: row;
     }
