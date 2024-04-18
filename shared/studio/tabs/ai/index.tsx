@@ -5,6 +5,7 @@ import {TabAIIcon} from "../../icons";
 import {AIAdminState} from "./state";
 import {useTabState} from "../../state";
 import cn from "@edgedb/common/utils/classNames";
+import CodeBlock from "@edgedb/common/ui/codeBlock";
 
 import styles from "./aiAdmin.module.scss";
 import {useDBRouter} from "../../hooks/dbRoute";
@@ -25,11 +26,22 @@ const AIAdminPage = observer(function AIAdminPage() {
   return (
     <div className={styles.aiAdmin}>
       {state.extEnabled === null ? (
-        <div>loading...</div>
+        <div className={styles.loadingSchema}>Loading schema...</div>
       ) : state.extEnabled ? (
         <AIAdminLayout />
       ) : (
-        <div>ai ext not enabled</div>
+        <div className={styles.extDisabled}>
+          <h2>The AI extension is not enabled</h2>
+          <p>To enable it add the following to your schema:</p>
+          <CodeBlock code="using extension ai;" />
+          <p>
+            For more information check out the{" "}
+            <a href="https://www.edgedb.com/p/ai-ext-docs" target="_blank">
+              AI extension docs
+            </a>
+            .
+          </p>
+        </div>
       )}
     </div>
   );

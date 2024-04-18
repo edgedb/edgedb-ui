@@ -36,6 +36,46 @@
   }
 }
 
+.loadingSchema {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: italic;
+}
+
+.extDisabled {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  p {
+    margin: 8px 0;
+  }
+
+  pre {
+    background: #eee;
+    margin: 12px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    user-select: text;
+
+    @include darkTheme {
+      background: #383838;
+    }
+  }
+
+  a {
+    color: #b044c2;
+
+    @include darkTheme {
+      color: #ac86f6;
+    }
+  }
+}
+
 .mainLayout {
   flex-grow: 1;
   display: grid;
