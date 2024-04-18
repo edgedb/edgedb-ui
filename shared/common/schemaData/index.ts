@@ -289,7 +289,7 @@ export interface SchemaRewrite {
 
 const knownTypes = new Set<string>(KnownScalarTypes);
 
-function splitName(typeName: string) {
+export function splitName(typeName: string) {
   const parts = typeName.split("::");
   return {
     module: parts.slice(0, -1).join("::"),

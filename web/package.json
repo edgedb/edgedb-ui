@@ -29,6 +29,7 @@
   },
   "homepage": "./ui",
   "scripts": {
+    "localdev-config": "edb cli query \"configure instance set cors_allow_origins := {'*'}\"",
     "start": "PORT=3002 BROWSER=none craco start",
     "build": "craco build",
     "test": "jest --runInBand",

@@ -1,0 +1,118 @@
+@import "@edgedb/common/mixins.scss";
+
+.textField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #4d4d4d;
+
+  .fieldHeader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    padding: 0 4px;
+  }
+
+  .optional {
+    opacity: 0.5;
+    margin-left: 6px;
+    font-weight: 450;
+  }
+
+  .inputWrapper {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hasError {
+    input,
+    textarea {
+      outline: 1px solid #df594c;
+      border-color: #df594c !important;
+      padding-right: 36px;
+    }
+  }
+
+  input,
+  textarea {
+    height: 40px;
+    align-self: stretch;
+    border-radius: 6px;
+    border: 1px solid var(--Grey90, #e6e6e6);
+    background: #fff;
+    padding: 0 12px;
+    font-family: "Roboto Mono Variable", monospace;
+    font-size: 14px;
+    font-weight: 400;
+    color: inherit;
+    outline: 0;
+
+    &:read-only {
+      background: #f7f7f7;
+      outline: none;
+    }
+  }
+
+  .error {
+    position: absolute;
+    height: 100%;
+    width: 38px;
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+    right: 0;
+    top: 0;
+    color: #df594c;
+
+    div {
+      position: absolute;
+      pointer-events: none;
+      top: 36px;
+      right: 6px;
+      width: max-content;
+      max-width: 300px;
+      color: #bb3225;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(223, 89, 76, 0.3);
+      opacity: 0;
+      transition: opacity 0.1s;
+      z-index: 1;
+    }
+
+    &:hover div {
+      opacity: 1;
+    }
+  }
+
+  @include darkTheme {
+    color: #ccc;
+
+    input,
+    textarea {
+      border: 1px solid #4d4d4d;
+      background: #363636;
+
+      &:read-only {
+        background: #464646;
+      }
+    }
+
+    .error {
+      div {
+        background: rgba(50, 50, 50, 0.85);
+        color: #df594c;
+      }
+    }
+  }
+}

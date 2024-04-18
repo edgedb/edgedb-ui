@@ -1,3 +1,4 @@
+@use "@sass-fairy/url";
 @import "./hooks/useTheme/mixin.scss";
 
 @mixin hideScrollbar {
@@ -23,6 +24,17 @@
     border: 3px solid transparent;
     background-clip: padding-box;
   }
+}
+
+@function dashedBorderBg($stroke, $width: 1, $radius: 8, $dash-array: "4,4") {
+  @return url.svg(
+    '<svg width="100%" height="100%">' '<defs><clipPath id="dashedBorder">'
+      '<rect width="100%" height="100%" rx="#{$radius}" ry="#{$radius}" />'
+      "</clipPath></defs>"
+      '<rect width="100%" height="100%" fill="none" rx="#{$radius}" ry="#{$radius}" '
+      'stroke="#{$stroke}" stroke-width="#{$width * 2}" stroke-dasharray="#{$dash-array}" '
+      'clip-path="url(#dashedBorder)" ' "/>" "</svg>"
+  );
 }
 
 $breakpoints: (

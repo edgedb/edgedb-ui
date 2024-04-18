@@ -1,0 +1,1080 @@
+@import "@edgedb/common/mixins.scss";
+
+.aiAdmin {
+  position: relative;
+  flex-grow: 1;
+  border-radius: 12px;
+  background: #fbfbfb;
+  color: #4d4d4d;
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.04),
+    0px 0px 4px 0px rgba(0, 0, 0, 0.06);
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  min-width: 0;
+  min-height: 0;
+  font-family: "Roboto Flex Variable", sans-serif;
+
+  h2 {
+    color: inherit;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 26px;
+    margin: 0;
+  }
+
+  @include darkTheme {
+    color: #ccc;
+    background: var(--Grey14, #242424);
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  @include isMobile {
+    border-radius: 0;
+  }
+}
+
+.mainLayout {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 700px) 1fr;
+  min-width: 0;
+  min-height: 0;
+
+  @include isMobile {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+}
+
+.tabContent {
+  grid-column: 2 / span 2;
+  min-height: 0;
+  min-width: 0;
+
+  @include isMobile {
+    grid-column: 1;
+  }
+}
+
+.tabs {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 48px 24px;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.04), 2px 0 3px rgba(0, 0, 0, 0.03);
+
+  .tab {
+    position: relative;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 450;
+    color: var(--grey50);
+    font-size: 14px;
+    min-width: 80px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--grey95);
+    }
+
+    &.active {
+      font-weight: 500;
+      color: var(--grey30);
+
+      &:after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        bottom: 4px;
+        width: 3px;
+        border-radius: 3px;
+        background: #a565cd;
+      }
+    }
+  }
+
+  @include darkTheme {
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1), 2px 0 3px rgba(0, 0, 0, 0.25);
+
+    .tab {
+      color: var(--grey70);
+
+      &:hover {
+        background: var(--grey20);
+      }
+
+      &.active {
+        color: var(--grey85);
+      }
+    }
+  }
+
+  @include isMobile {
+    justify-self: stretch;
+    flex-direction: row;
+    justify-content: center;
+    padding: 4px 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 2px 3px rgba(0, 0, 0, 0.03);
+
+    .tab {
+      display: flex;
+      justify-content: center;
+      min-width: 60px;
+
+      &:hover {
+        background: none;
+      }
+
+      &.active:after {
+        top: auto;
+        right: 4px;
+        width: auto;
+        height: 2px;
+        bottom: -4px;
+      }
+    }
+
+    @include darkTheme {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1), 0 2px 3px rgba(0, 0, 0, 0.25);
+    }
+  }
+}
+
+.playgroundLayout {
+  display: grid;
+  grid-template-areas:
+    "chathistory config"
+    "chatinput config";
+  grid-template-columns: minmax(auto, 700px) 1fr;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+
+  @include isMobile {
+    grid-template-areas: "chathistory" "chatinput";
+    grid-template-columns: 1fr;
+  }
+}
+
+.toggleConfigButton {
+  display: none;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #808080;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  @media (max-width: 1024px) {
+    display: flex;
+  }
+
+  @include darkTheme {
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+}
+
+.chatHistory {
+  grid-area: chathistory;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  mask-image: linear-gradient(#000 calc(100% - 12px), transparent);
+
+  .chatHistoryWrapper {
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+    gap: 16px;
+    padding: 24px 40px;
+  }
+
+  .chatHistoryLoading {
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0.7;
+  }
+
+  @include isMobile {
+    .chatHistoryWrapper {
+      padding: 24px 32px;
+    }
+  }
+}
+
+.waitingForReply {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  padding-top: 8px;
+
+  > span {
+    border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    background: #aeaeae;
+    animation-fill-mode: both;
+    animation: dotsFadeInOut 1.8s infinite ease-in-out;
+  }
+  > span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  > span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes dotsFadeInOut {
+    0%,
+    80%,
+    100% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(0);
+    }
+  }
+
+  button {
+    margin-left: 16px;
+    padding: 6px 4px;
+    height: auto;
+
+    span {
+      font-size: 13px;
+      line-height: 16px;
+      font-weight: 450;
+    }
+  }
+
+  @include darkTheme {
+    > span {
+      background: #505050;
+    }
+  }
+}
+
+.chatHistoryItem {
+  align-self: flex-start;
+  max-width: calc(100% - 48px);
+  min-width: 240px;
+
+  &.userRole {
+    align-self: flex-end;
+
+    .details {
+      flex-direction: row-reverse;
+    }
+  }
+
+  .details {
+    display: flex;
+    padding: 4px 8px;
+    color: #737373;
+    gap: 12px;
+    align-items: baseline;
+
+    .role {
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 550;
+    }
+
+    .timestamp {
+      font-size: 13px;
+      font-weight: 450;
+    }
+  }
+}
+
+.chatMessageContent {
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  padding: 16px 20px;
+  user-select: text;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .userRole & {
+    background: #f6ebfd;
+    border-color: #cdb1df;
+
+    @include darkTheme {
+      background: #43384a;
+      border-color: #765d86;
+    }
+  }
+
+  .block {
+    white-space: pre-wrap;
+  }
+
+  .queryCancelled {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 13px;
+    user-select: none;
+  }
+
+  .errorMessage {
+    > span:first-child {
+      font-weight: 450;
+    }
+  }
+
+  &.hasError {
+    background: #ffe7e7;
+    border-color: #df594c;
+    color: #bb3225;
+  }
+
+  @include darkTheme {
+    border: 1px solid #404040;
+    background: #2f2f2f;
+
+    &.hasError {
+      background: #392727;
+      border-color: #84413a;
+      color: #ec7d72;
+    }
+  }
+}
+
+.chatInputRow {
+  grid-area: chatinput;
+  margin: 0 32px 24px 32px;
+  display: flex;
+  gap: 8px;
+
+  @media (max-width: 1024px) {
+    margin-right: 16px;
+  }
+
+  @include isMobile {
+    margin: 0 16px 24px 24px;
+  }
+}
+
+.chatInput {
+  flex-grow: 1;
+  display: flex;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+
+  .chatInputWrapper {
+    display: grid;
+    flex-grow: 1;
+
+    textarea,
+    .overlay {
+      grid-area: 1 / 1;
+      padding: 13px 16px;
+      font-size: 14px;
+      font-weight: 450;
+      line-height: 22px;
+    }
+
+    textarea {
+      background: none;
+      border: 0;
+      outline: 0;
+      margin: 0;
+      resize: none;
+      overflow: hidden;
+      height: 0;
+      min-height: 100%;
+      box-sizing: border-box;
+      font-family: inherit;
+      color: inherit;
+    }
+
+    .overlay {
+      visibility: hidden;
+      white-space: pre-wrap;
+      pointer-events: none;
+    }
+  }
+
+  .chatSendButton {
+    display: flex;
+    padding: 12px;
+    align-items: end;
+    color: #a565cd;
+    cursor: pointer;
+
+    &.disabled {
+      color: inherit;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
+
+  @include darkTheme {
+    border: 1px solid #4d4d4d;
+    background: #363636;
+
+    .chatSendButton {
+      color: #9e6bbd;
+
+      &.disabled {
+        color: #6f6f6f;
+      }
+    }
+  }
+}
+
+.playgroundConfig {
+  grid-area: config;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.04), -2px 0 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+
+  .contentWrapper {
+    width: 280px;
+    padding: 48px 24px;
+    overflow: auto;
+  }
+
+  .header {
+    font-weight: 500;
+    margin-bottom: 4px;
+
+    &:not(:first-child) {
+      margin-top: 24px;
+    }
+  }
+
+  @include darkTheme {
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1), -2px 0 3px rgba(0, 0, 0, 0.25);
+  }
+
+  .contextQuery {
+    --code-editor-bg: #fff;
+
+    & > * {
+      border-radius: 6px;
+      border: 1px solid var(--Grey90, #e6e6e6);
+      overflow: hidden;
+      padding: 6px 0;
+    }
+
+    @include darkTheme {
+      --code-editor-bg: #363636;
+
+      & > * {
+        border: 1px solid #4d4d4d;
+      }
+    }
+  }
+
+  @media (max-width: 1024px) {
+    grid-area: auto;
+    position: absolute;
+    background: #fff;
+    top: 8px;
+    bottom: 8px;
+    right: 8px;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(calc(100% + 32px));
+    transition: transform 0.3s;
+
+    .contentWrapper {
+      flex-grow: 1;
+    }
+
+    .toggleConfigButton {
+      margin: 8px;
+      align-self: end;
+
+      svg {
+        transform: rotate(-90deg);
+        width: 32px;
+        height: 32px;
+      }
+    }
+
+    &.showConfig {
+      transform: none;
+    }
+
+    @include darkTheme {
+      background: #2f2f2f;
+    }
+  }
+}
+
+.contextQuerySuggestion {
+  position: relative;
+  padding: 4px;
+  margin-top: 2px;
+  display: inline-block;
+  cursor: pointer;
+
+  > span {
+    color: var(--grey40);
+    text-decoration: underline dashed;
+    text-underline-offset: 3px;
+  }
+
+  .popup {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--Grey90, #e6e6e6);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    padding: 6px;
+    cursor: default;
+    font-family: "Roboto Mono", monospace;
+
+    > div {
+      display: flex;
+      line-height: 24px;
+      padding: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--grey95);
+      }
+
+      svg {
+        transform: rotate(-90deg);
+      }
+    }
+
+    &:before,
+    &:after {
+      position: absolute;
+      top: -16px;
+      right: 48px;
+      content: "";
+      width: 0;
+      height: 0;
+      border: 8px solid transparent;
+      border-bottom-color: #fff;
+    }
+
+    &:before {
+      top: -17px;
+      border-bottom-color: var(--Grey90, #e6e6e6);
+    }
+  }
+
+  @include darkTheme {
+    > span {
+      color: var(--grey60);
+    }
+
+    .popup {
+      background: #2f2f2f;
+      border: 1px solid #404040;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+
+      > div:hover {
+        background: var(--grey25);
+      }
+
+      &:before,
+      &:after {
+        border-bottom-color: #2f2f2f;
+      }
+
+      &:before {
+        border-bottom-color: #404040;
+      }
+    }
+  }
+}
+
+.providersLayout,
+.promptsLayout {
+  overflow: auto;
+  height: 100%;
+
+  .contentWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 700px;
+    padding: 48px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  @include isMobile {
+    .contentWrapper {
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+  }
+}
+
+.promptsLayout {
+  .contentWrapper {
+    width: 800px;
+  }
+}
+
+.addProvider,
+.addNewPrompt,
+.addPromptMessage {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background-image: dashedBorderBg(#d9d9d9);
+
+  @include darkTheme {
+    background-image: dashedBorderBg(#666);
+  }
+}
+
+.addProvider {
+  margin-top: 20px;
+}
+
+.addNewPrompt,
+.addPromptMessage {
+  margin-bottom: 24px;
+}
+
+.draftProviderForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  .formRow {
+    display: flex;
+    gap: 16px;
+
+    &.fullWidth > * {
+      flex-grow: 1;
+    }
+
+    @include isMobile {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+
+  .apiStyleSelect {
+    max-width: 120px;
+  }
+
+  .buttons {
+    justify-content: end;
+    margin-top: 16px;
+    flex-direction: row;
+  }
+
+  .providerSelectItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+      color: #000;
+
+      @include darkTheme {
+        color: #fff;
+      }
+    }
+  }
+}
+
+.providerList,
+.promptsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.providerCard,
+.promptCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  position: relative;
+
+  .cardMain {
+    display: flex;
+    padding: 12px 16px 12px 22px;
+    align-items: center;
+    gap: 16px;
+
+    svg {
+      flex-shrink: 0;
+      color: #000;
+
+      @include darkTheme {
+        color: #fff;
+      }
+    }
+  }
+
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .expandButton {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: #eee;
+    }
+
+    svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    &.expanded svg {
+      transform: rotate(180deg);
+    }
+  }
+
+  @include darkTheme {
+    border: 1px solid #404040;
+    background: #2f2f2f;
+
+    .expandButton {
+      &:hover {
+        background: #404040;
+      }
+    }
+  }
+}
+
+.providerCard {
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .displayName {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .name {
+      font-size: 13px;
+      color: #8c8c8c;
+      font-family: "Roboto Mono", monospace;
+    }
+  }
+
+  .expandedConfig {
+    padding: 18px;
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .formRow {
+      display: flex;
+      gap: 16px;
+
+      &.fullWidth > * {
+        flex-grow: 1;
+      }
+
+      @include isMobile {
+        flex-direction: column;
+        gap: 8px;
+      }
+    }
+
+    .apiStyle {
+      max-width: 110px;
+    }
+
+    .buttons {
+      justify-content: end;
+      margin-top: 16px;
+      flex-direction: row;
+    }
+  }
+}
+
+.indexesWarning {
+  position: relative;
+  padding: 16px 20px;
+  padding-left: 48px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  font-weight: 450;
+  margin-top: 16px;
+
+  & > svg {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+  }
+
+  & > span {
+    font-weight: 500;
+  }
+
+  .addMissingProviderLinks {
+    margin-top: 8px;
+
+    span {
+      display: inline-block;
+      border-bottom: 1px dashed currentColor;
+      cursor: pointer;
+    }
+  }
+}
+
+.promptCardHeaderWrapper {
+  position: sticky;
+  top: 16px;
+  z-index: 1;
+
+  &:before {
+    content: "";
+    position: absolute;
+    background: #fbfbfb;
+    top: -16px;
+    left: -1px;
+    right: -1px;
+    height: 24px;
+
+    @include darkTheme {
+      background: #242424;
+    }
+  }
+}
+
+.promptCard {
+  z-index: 1;
+
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .name {
+      font-size: 14px;
+      font-weight: 500;
+      font-family: "Roboto Mono", monospace;
+    }
+
+    .messageCount {
+      font-size: 13px;
+      color: #8c8c8c;
+    }
+  }
+
+  .buttons {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    gap: 16px;
+  }
+
+  .promptNameInput {
+    flex-grow: 1;
+  }
+}
+
+.promptMessageList {
+  display: flex;
+  flex-direction: column;
+  padding-left: 42px;
+  padding-top: 20px;
+  gap: 12px;
+}
+
+.addPromptMessage {
+  position: relative;
+
+  .connectingLine {
+    position: absolute;
+    width: 42px;
+    height: 100px;
+    fill: none;
+    stroke: #d9d9d9;
+    stroke-width: 1px;
+    left: -41px;
+    top: -64px;
+    stroke-dasharray: 4, 4;
+
+    @include darkTheme {
+      stroke: #666;
+    }
+  }
+}
+
+.promptMessageCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  gap: 8px;
+
+  &.newDraft {
+    background: dashedBorderBg(#d9d9d9);
+    border: 0;
+
+    .connectingLine,
+    .expandingConnectingLine {
+      left: -41px;
+      stroke-dasharray: 4, 4;
+    }
+  }
+
+  .participant,
+  .buttons {
+    display: flex;
+    gap: 16px;
+  }
+
+  .buttons {
+    margin: 4px 0;
+  }
+
+  .promptRole {
+    width: 120px;
+  }
+  .promptMessageName {
+    flex-grow: 1;
+  }
+
+  .spacer {
+    flex-grow: 1;
+  }
+
+  .connectingLine,
+  .expandingConnectingLine {
+    position: absolute;
+    width: 42px;
+    height: 100px;
+    fill: none;
+    stroke: #d9d9d9;
+    stroke-width: 1px;
+    left: -42px;
+    top: -64px;
+  }
+
+  .expandingConnectingLine {
+    top: 0;
+    height: calc(100% - 55px);
+  }
+
+  &:nth-last-child(2) {
+    .expandingConnectingLine {
+      stroke-dasharray: 4, 4;
+    }
+  }
+
+  .promptMessageContentWrapper {
+    display: grid;
+    border-radius: 6px;
+    border: 1px solid var(--Grey90, #e6e6e6);
+    background: #fff;
+
+    textarea,
+    .overlay {
+      grid-area: 1 / 1;
+      padding: 12px;
+      font-family: "Roboto Mono", monospace;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+    }
+
+    textarea {
+      resize: none;
+      overflow: hidden;
+      height: 100%;
+      border: 0 !important;
+      outline: 0;
+      margin: 0;
+      box-sizing: border-box;
+      background: none !important;
+    }
+
+    .overlay {
+      color: transparent;
+      white-space: pre-wrap;
+      pointer-events: none;
+
+      span {
+        display: inline-block;
+        background: #dfd4ff;
+        border-radius: 4px;
+        padding: 2px;
+        margin: -2px;
+      }
+    }
+  }
+
+  @include darkTheme {
+    border: 1px solid #404040;
+    background: #2f2f2f;
+
+    &.newDraft {
+      background: dashedBorderBg(#666);
+      border: 0;
+    }
+
+    .connectingLine,
+    .expandingConnectingLine {
+      stroke: #666;
+    }
+
+    .promptMessageContentWrapper {
+      border-color: #4d4d4d;
+      background: #363636;
+
+      .overlay span {
+        background: #503e86;
+      }
+    }
+  }
+}

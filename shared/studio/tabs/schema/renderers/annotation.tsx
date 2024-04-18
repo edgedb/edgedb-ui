@@ -3,6 +3,7 @@ import {observer} from "mobx-react-lite";
 import {
   SchemaAbstractAnnotation,
   SchemaAnnotation,
+  splitName,
 } from "@edgedb/common/schemaData";
 
 import {
@@ -26,7 +27,7 @@ export function AnnotationRenderer({
 }: {
   annotation: SchemaAnnotation;
 }) {
-  const [module, shortName] = annotation.name.split("::");
+  const {module, shortName} = splitName(annotation.name);
 
   return (
     <Copyable>
