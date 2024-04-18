@@ -529,10 +529,19 @@ export class AIAdminState extends Model({
           });
         }
       } else {
+        let errMessage = err instanceof Error ? err.message : String(err);
+        try {
+          const errData = JSON.parse(errMessage);
+          if (typeof errData.message === "string") {
+            errMessage = errData.message;
+          }
+        } catch {
+          // ignore error
+        }
         errorMessageItem = new AIPlaygroundChatItem({
           role: null,
           timestamp: Date.now(),
-          error: err instanceof Error ? err.message : String(err),
+          error: errMessage,
         });
       }
       if (this._currentMessage) {
