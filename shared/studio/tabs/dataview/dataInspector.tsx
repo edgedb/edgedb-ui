@@ -500,6 +500,7 @@ const GridCell = observer(function GridCell({
   }
 
   const isEditable =
+    !isMobile &&
     !isEmptySubtype &&
     !field.computedExpr &&
     !state.objectType?.readonly &&
