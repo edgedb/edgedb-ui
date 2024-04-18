@@ -70,6 +70,8 @@ export async function runRAGQuery(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        Authorization: `Bearer ${connectConfig.authToken}`,
+        "X-EdgeDB-User": connectConfig.user,
       },
       body: JSON.stringify({...request, stream: true}),
       signal: abortController.signal,
