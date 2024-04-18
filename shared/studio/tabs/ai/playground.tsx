@@ -232,7 +232,20 @@ const PlaygroundChatMessage = observer(function PlaygroundChatMessage({
 const ContextQuerySuggestionPopup = observer(
   function ContextQuerySuggestionPopup() {
     const state = useTabState(AIAdminState);
+    const ref = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+      const listener = (e: MouseEvent) => {
+        if (!ref.current?.contains(e.target as Node)) {
+          setOpen(false);
+        }
+      };
+      window.addEventListener("click", listener, {capture: true});
+      return () => {
+        window.removeEventListener("click", listener, {capture: true});
+      };
+    }, [open]);
 
     return (
       <div
@@ -242,7 +255,11 @@ const ContextQuerySuggestionPopup = observer(
         <span>Try a suggested Context Query?</span>
 
         {open ? (
-          <div className={styles.popup} onClick={(e) => e.stopPropagation()}>
+          <div
+            ref={ref}
+            className={styles.popup}
+            onClick={(e) => e.stopPropagation()}
+          >
             {state.suggestedContextQueries.map((query) => (
               <div
                 key={query}
