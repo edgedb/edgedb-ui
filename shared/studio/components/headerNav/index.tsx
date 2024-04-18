@@ -1,5 +1,6 @@
 import {
   createContext,
+  Fragment,
   PropsWithChildren,
   useContext,
   useEffect,
@@ -65,7 +66,7 @@ export const HeaderTabs = observer(function HeaderTabs({
       if (tabs.length) {
         tabs.push(<TabSep key={tabs.length} />);
       }
-      tabs.push(el);
+      tabs.push(<Fragment key={key}>{el}</Fragment>);
     } else {
       break;
     }

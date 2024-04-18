@@ -1,0 +1,63 @@
+@import "@edgedb/common/mixins.scss";
+
+.button,
+.linkButton {
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+  outline: 0;
+  font-family: inherit;
+  cursor: pointer;
+
+  & > span {
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.1pt;
+    padding: 0 6px;
+  }
+
+  &.primary {
+    // background: linear-gradient(180deg, #a565cd 0%, #9c56b4 100%);
+    background: #a565cd;
+    box-shadow: 0px 2px 4px 0px rgba(165, 100, 203, 0.25);
+    border: 0;
+    color: #fffffffa;
+  }
+
+  &:disabled,
+  &.disabled {
+    opacity: 0.65;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  @include darkTheme {
+    border: 1px solid #4d4d4d;
+    background: #363636;
+    color: #ccc;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+
+    &.primary {
+      background: #6c4186;
+      box-shadow: 0px 2px 4px 0px rgba(73, 20, 104, 0.5);
+      border: 0;
+      color: #ffffffdb;
+    }
+  }
+}
+
+.linkButton {
+  text-decoration: none;
+  color: inherit;
+}

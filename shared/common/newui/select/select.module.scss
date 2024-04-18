@@ -1,0 +1,40 @@
+@import "@edgedb/common/mixins.scss";
+
+.select {
+  line-height: 24px;
+  border: 1px solid #e1e1e1;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  padding: 8px 16px;
+  border-radius: 6px !important;
+  font-weight: 450;
+  font-size: 14px;
+
+  @include darkTheme {
+    border: 1px solid #4d4d4d;
+    background: #363636;
+    color: #ccc;
+  }
+}
+
+.selectField {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #4d4d4d;
+
+  .fieldHeader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    padding: 0 4px;
+  }
+
+  @include darkTheme {
+    color: #ccc;
+  }
+}

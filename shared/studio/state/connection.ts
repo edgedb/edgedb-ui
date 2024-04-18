@@ -36,7 +36,7 @@ export interface QueryDuration {
 
 export const connCtx = createContext<Connection>();
 
-interface ConnectConfig {
+export interface ConnectConfig {
   serverUrl: string;
   authToken: string;
   database: string;

@@ -20,6 +20,13 @@ export interface SessionStateData {
   data: StoredSessionStateData;
 }
 
+export interface AIPlaygroundChatItem {
+  instanceId: string;
+  dbName: string;
+  timestamp: number;
+  data: any;
+}
+
 interface IDBStore extends DBSchema {
   sessionState: {
     key: [string, string];
@@ -50,9 +57,16 @@ interface IDBStore extends DBSchema {
       byInstanceId: string;
     };
   };
+  aiPlaygroundChatHistory: {
+    key: [string, string, number];
+    value: AIPlaygroundChatItem;
+    indexes: {
+      byInstanceId: string;
+    };
+  };
 }
 
-const db = openDB<IDBStore>("EdgeDBStudio", 3, {
+const db = openDB<IDBStore>("EdgeDBStudio", 4, {
   upgrade(db, oldVersion) {
     switch (oldVersion) {
       // @ts-ignore fallthrough
@@ -78,6 +92,12 @@ const db = openDB<IDBStore>("EdgeDBStudio", 3, {
         db.createObjectStore("sessionState", {
           keyPath: ["instanceId", "dbName"],
         });
+      }
+      // @ts-ignore fallthrough
+      case 3: {
+        db.createObjectStore("aiPlaygroundChatHistory", {
+          keyPath: ["instanceId", "dbName", "timestamp"],
+        }).createIndex("byInstanceId", "instanceId");
       }
     }
   },
@@ -223,4 +243,36 @@ export async function cleanupOldSchemaDataForInstance(
       .map((dbKey) => tx.store.delete(dbKey)),
     tx.done,
   ]);
+}
+
+// ai playground chat
+
+export async function storeAIPlaygroundChatItem(item: AIPlaygroundChatItem) {
+  await (await db).add("aiPlaygroundChatHistory", item);
+}
+
+export async function fetchAIPlaygroundChatHistory(
+  instanceId: string,
+  dbName: string,
+  fromTimestamp: number,
+  count = 50
+) {
+  const tx = (await db).transaction("aiPlaygroundChatHistory", "readonly");
+  let cursor = await tx.store.openCursor(
+    IDBKeyRange.bound(
+      [instanceId, dbName, -Infinity],
+      [instanceId, dbName, fromTimestamp],
+      true,
+      true
+    ),
+    "prev"
+  );
+  const items: AIPlaygroundChatItem[] = [];
+  let i = 0;
+  while (cursor && i < count) {
+    items.push(cursor.value);
+    i++;
+    cursor = await cursor.continue();
+  }
+  return items;
 }
