@@ -54,7 +54,7 @@ export interface PromptMessage {
   id: string;
   participant_role: PromptChatParticipantRole;
   participant_name: string | null;
-  content: string;
+  content: string | null;
 }
 
 export type PromptChatParticipantRole =
@@ -88,7 +88,10 @@ export class AIAdminState extends Model({
   }
 
   onAttachedToRootStore() {
-    const configJSON = localStorage.getItem("edgedbAIPlaygroundConfig");
+    const configKey = `edgedbAIPlaygroundConfig-${instanceCtx.get(this)!
+      .instanceId!}/${dbCtx.get(this)!.name}`;
+
+    const configJSON = localStorage.getItem(configKey);
     if (configJSON) {
       try {
         const config = JSON.parse(configJSON);
@@ -141,10 +144,7 @@ export class AIAdminState extends Model({
           contextQuery: this.playgroundContextQuery.toString(),
         }),
         (config) => {
-          localStorage.setItem(
-            "edgedbAIPlaygroundConfig",
-            JSON.stringify(config)
-          );
+          localStorage.setItem(configKey, JSON.stringify(config));
         }
       ),
     ];
@@ -196,7 +196,11 @@ export class AIAdminState extends Model({
             this.providerConfigTypesByName.get(providerName) ??
             this.providerConfigTypesByName.get(null)!
           ).typename,
-      name: providerName,
+      name: providerName
+        ? this.providerConfigTypesByName.has(providerName)
+          ? null
+          : providerName
+        : null,
     });
   }
 
@@ -281,9 +285,11 @@ export class AIAdminState extends Model({
 
   @computed
   get indexesWithoutProviders() {
-    return Object.keys(this.indexedObjectTypes).filter(
-      (providerName) => !this.existingProviderNames.has(providerName)
-    );
+    return this.providers
+      ? Object.keys(this.indexedObjectTypes).filter(
+          (providerName) => !this.existingProviderNames.has(providerName)
+        )
+      : null;
   }
 
   @observable
@@ -446,11 +452,18 @@ export class AIAdminState extends Model({
   }
 
   @computed
+  get playgroundContextConfigured() {
+    return (
+      this.selectedPlaygroundModel != null &&
+      this.selectedPlaygroundPrompt != null &&
+      this.playgroundContextQuery.toString().trim() != ""
+    );
+  }
+
+  @computed
   get canSendPlaygroundQuery() {
     return (
-      this.playgroundQuery.trim() !== "" &&
-      this.selectedPlaygroundModel != null &&
-      this.playgroundContextQuery.toString().trim() != ""
+      this.playgroundQuery.trim() !== "" && this.playgroundContextConfigured
     );
   }
 
@@ -833,11 +846,11 @@ export class AIPromptDraft extends Model({
   }
 
   @observable
-  _name: string = "";
+  _name: string | null = null;
 
   @computed
   get name() {
-    return this._prompt?.name ?? this._name;
+    return this._prompt?.name ?? this._name ?? "";
   }
 
   @action
@@ -871,7 +884,7 @@ export class AIPromptDraft extends Model({
       id,
       participant_role: "System",
       participant_name: "",
-      content: "",
+      content: null,
     };
   }
 
@@ -906,15 +919,33 @@ export class AIPromptDraft extends Model({
     this._messages[id].content = content;
   }
 
-  isMessageValid(id: string) {
-    return this._messages[id].content.trim() !== "";
+  getMessageError(id: string) {
+    const messageContent = this._messages[id]?.content;
+    if (messageContent == null) return null;
+    return messageContent.trim() === ""
+      ? "Prompt message content is required"
+      : null;
+  }
+
+  @computed
+  get nameError() {
+    if (this._name === null) return null;
+    if (this._name.trim() === "") return "Prompt name is required";
+    return getParent<AIAdminState>(this)!.prompts?.some(
+      (p) => p.name === this._name
+    )
+      ? "Prompt name already exists"
+      : null;
   }
 
   @computed
   get isPromptValid() {
     return (
-      this._name.trim() !== "" &&
-      Object.values(this._messages).every((m) => m.content.trim() !== "")
+      this._name != null &&
+      this.nameError === null &&
+      Object.values(this._messages).every(
+        (m) => m.content != null && m.content.trim() !== ""
+      )
     );
   }
 

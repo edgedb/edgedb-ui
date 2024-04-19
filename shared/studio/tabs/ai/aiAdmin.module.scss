@@ -109,6 +109,9 @@
 
   .tab {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
     padding: 12px 24px;
     border-radius: 8px;
     font-weight: 450;
@@ -116,6 +119,13 @@
     font-size: 14px;
     min-width: 80px;
     cursor: pointer;
+
+    svg {
+      margin: -2px -12px -2px auto;
+      width: 20px;
+      height: 20px;
+      color: #bf8a0c;
+    }
 
     &:hover {
       background: var(--grey95);
@@ -362,7 +372,82 @@
   }
 
   .block {
-    white-space: pre-wrap;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    * {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 22px;
+    }
+
+    h2 {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 20px;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 18px;
+    }
+
+    p {
+      line-height: 18px;
+    }
+
+    strong {
+      font-weight: 550;
+    }
+
+    pre {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 8px 12px;
+      font-family: "Roboto Mono", monospace;
+      border-radius: 4px;
+      font-size: 13px;
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    a {
+      color: inherit;
+    }
+
+    blockquote {
+      border-left: 2px solid rgba(0, 0, 0, 0.3);
+      padding: 4px 8px;
+
+      @include darkTheme {
+        border-left-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+
+    ol,
+    ul {
+      padding-left: 18px;
+
+      li {
+        margin: 4px 0;
+      }
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid currentColor;
+      opacity: 0.5;
+      margin: 6px 0;
+    }
   }
 
   .queryCancelled {
@@ -481,6 +566,43 @@
   }
 }
 
+.notConfiguredMessage {
+  position: relative;
+  padding: 16px 20px;
+  padding-left: 48px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  font-weight: 450;
+  line-height: 20px;
+
+  & > svg {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+  }
+
+  a {
+    display: inline-block;
+    border-bottom: 1px dashed currentColor;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  em {
+    font-style: normal;
+    font-weight: 550;
+  }
+
+  @include darkTheme {
+    background: #534a36;
+    border: 1px solid #7d6c43;
+    color: #f7e4b8;
+  }
+}
+
 .playgroundConfig {
   grid-area: config;
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.04), -2px 0 3px rgba(0, 0, 0, 0.03);
@@ -495,10 +617,17 @@
   .header {
     font-weight: 500;
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 
     &:not(:first-child) {
       margin-top: 24px;
     }
+  }
+
+  .configTooltip > div {
+    width: 32ch;
   }
 
   @include darkTheme {
@@ -596,6 +725,7 @@
       display: flex;
       line-height: 24px;
       padding: 4px;
+      padding-left: 10px;
       border-radius: 6px;
       cursor: pointer;
 
@@ -605,6 +735,7 @@
 
       svg {
         transform: rotate(-90deg);
+        margin-left: auto;
       }
     }
 
@@ -719,9 +850,19 @@
       flex-grow: 1;
     }
 
+    &.evenWidth {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+    }
+
     @include isMobile {
       flex-direction: column;
       gap: 8px;
+
+      &.evenWidth {
+        display: flex;
+      }
     }
   }
 
@@ -775,7 +916,7 @@
     align-items: center;
     gap: 16px;
 
-    svg {
+    > svg {
       flex-shrink: 0;
       color: #000;
 
@@ -842,6 +983,20 @@
     }
   }
 
+  .usedBy {
+    padding: 6px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 450;
+    background: #f7f7f7;
+    border: 1px solid #d7d7d7;
+
+    @include darkTheme {
+      background: #3c3c3c;
+      border: 1px solid #4d4d4d;
+    }
+  }
+
   .expandedConfig {
     padding: 18px;
     padding-top: 8px;
@@ -904,6 +1059,12 @@
       border-bottom: 1px dashed currentColor;
       cursor: pointer;
     }
+  }
+
+  @include darkTheme {
+    background: #534a36;
+    border: 1px solid #7d6c43;
+    color: #f7e4b8;
   }
 }
 
@@ -1053,6 +1214,7 @@
   }
 
   .promptMessageContentWrapper {
+    position: relative;
     display: grid;
     border-radius: 6px;
     border: 1px solid var(--Grey90, #e6e6e6);
@@ -1091,6 +1253,11 @@
         padding: 2px;
         margin: -2px;
       }
+    }
+
+    &.hasError {
+      outline: 1px solid #df594c;
+      border-color: #df594c !important;
     }
   }
 

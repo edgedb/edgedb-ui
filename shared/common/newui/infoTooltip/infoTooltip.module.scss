@@ -1,0 +1,63 @@
+@import "@edgedb/common/mixins.scss";
+
+.infoTooltip {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  margin: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: #808080;
+  }
+
+  .tooltip {
+    bottom: 100%;
+    left: -64px;
+    position: absolute;
+    background: rgba(255, 255, 255, 0.65);
+    width: max-content;
+    max-width: 45ch;
+    pointer-events: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 18px;
+    font-weight: 450;
+    backdrop-filter: blur(8px);
+    box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
+      0px 4px 20px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    z-index: 1;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s;
+
+    code {
+      font-size: 12px;
+      font-weight: 500;
+      background: #0000000d;
+      font-family: "Roboto Mono", monospace;
+      padding: 2px;
+      border-radius: 3px;
+    }
+
+    @include darkTheme {
+      background: rgba(50, 50, 50, 0.8);
+      box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.3),
+        0px 4px 20px rgba(0, 0, 0, 0.4);
+
+      code {
+        background: #ffffff14;
+      }
+    }
+  }
+
+  &:hover .tooltip {
+    opacity: 1;
+    transform: none;
+  }
+}

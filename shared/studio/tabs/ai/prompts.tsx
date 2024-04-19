@@ -5,6 +5,8 @@ import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChevronDownIcon,
+  InfoIcon,
+  InfoTooltip,
   Select,
   TextInput,
 } from "@edgedb/common/newui";
@@ -14,6 +16,7 @@ import {AIAdminState, AIPromptDraft, PromptChatParticipantRole} from "./state";
 
 import textStyles from "@edgedb/common/newui/textInput/textInput.module.scss";
 import styles from "./aiAdmin.module.scss";
+import {ConfirmButton} from ".";
 
 export const PromptsTab = observer(function PromptTab() {
   const state = useTabState(AIAdminState);
@@ -73,7 +76,7 @@ const PromptCard = observer(function PromptCard({
                 </div>
                 <div className={styles.buttons}>
                   {expanded ? (
-                    <Button
+                    <ConfirmButton
                       onClick={async () => {
                         try {
                           setUpdating(true);
@@ -85,7 +88,7 @@ const PromptCard = observer(function PromptCard({
                       disabled={updating}
                     >
                       {updating ? "Deleting..." : "Delete"}
-                    </Button>
+                    </ConfirmButton>
                   ) : null}
                   <div
                     className={cn(styles.expandButton, {
@@ -108,6 +111,7 @@ const PromptCard = observer(function PromptCard({
                   placeholder="Prompt Name"
                   value={draft!.name}
                   onChange={(e) => draft!.setName(e.target.value)}
+                  error={draft!.nameError}
                 />
                 <div className={styles.buttons}>
                   <Button
@@ -173,6 +177,10 @@ const PromptMessageCard = observer(function PromptMessageCard({
 
   const isNew = messageId.startsWith("_");
 
+  const contentError = draft.getMessageError(messageId);
+  const contentIsValid =
+    message.content != null && message.content.trim() !== "";
+
   return (
     <div className={cn(styles.promptMessageCard, {[styles.newDraft]: isNew})}>
       <div className={styles.participant}>
@@ -202,24 +210,49 @@ const PromptMessageCard = observer(function PromptMessageCard({
         />
       </div>
       <label className={cn(textStyles.textField)}>
-        <div className={textStyles.fieldHeader}>Content</div>
-        <div className={styles.promptMessageContentWrapper}>
+        <div className={textStyles.fieldHeader}>
+          Content{" "}
+          <InfoTooltip
+            message={
+              <>
+                Use the <code>{"{context}"}</code> and <code>{"{query}"}</code>{" "}
+                placeholders to inject the matched context information and the
+                user query into the prompt respectively.
+              </>
+            }
+          />
+        </div>
+        <div
+          className={cn(styles.promptMessageContentWrapper, {
+            [styles.hasError]: contentError != null,
+          })}
+        >
           <div className={styles.overlay}>
-            {replaceMessageContent(message.content, ["{query}", "{context}"])}
+            {replaceMessageContent(message.content ?? "", [
+              "{query}",
+              "{context}",
+            ])}
             {"\u200b"}
           </div>
           <textarea
-            value={message.content}
+            value={message.content ?? ""}
             onChange={(e) =>
               draft.setMessageContent(messageId, e.target.value)
             }
           />
+          {contentError != null ? (
+            <div className={textStyles.error}>
+              <InfoIcon />
+              <div>{contentError}</div>
+            </div>
+          ) : null}
         </div>
       </label>
       <div className={styles.buttons}>
-        {draft.allMessages.length > 1 ? (
+        {(isNew ? draft.allMessages : draft._prompt?.messages ?? []).length >
+        1 ? (
           !isNew ? (
-            <Button
+            <ConfirmButton
               onClick={async () => {
                 try {
                   setUpdating(true);
@@ -231,7 +264,7 @@ const PromptMessageCard = observer(function PromptMessageCard({
               disabled={updating}
             >
               {updating ? "Deleting..." : "Delete"}
-            </Button>
+            </ConfirmButton>
           ) : (
             <Button onClick={() => draft.removeDraftMessage(messageId)}>
               Remove
@@ -258,7 +291,7 @@ const PromptMessageCard = observer(function PromptMessageCard({
                     setUpdating(false);
                   }
                 }}
-                disabled={updating || !draft.isMessageValid(messageId)}
+                disabled={updating || !contentIsValid}
               >
                 {updating ? "Saving..." : "Save"}
               </Button>
@@ -272,7 +305,7 @@ const PromptMessageCard = observer(function PromptMessageCard({
                     setUpdating(false);
                   }
                 }}
-                disabled={updating || !draft.isMessageValid(messageId)}
+                disabled={updating || !contentIsValid}
               >
                 {updating ? "Updating..." : "Update"}
               </Button>

@@ -1,16 +1,18 @@
-import {useState} from "react";
+import {Fragment, useState} from "react";
 import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChevronDownIcon,
+  InfoTooltip,
   Select,
   TextInput,
   WarningIcon,
 } from "@edgedb/common/newui";
 
 import {useTabState} from "../../state";
+import {ConfirmButton} from ".";
 import {
   AIAdminState,
   AIProviderAPIStyle,
@@ -28,7 +30,7 @@ export const ProvidersTab = observer(function ProvidersTab() {
     <div className={styles.providersLayout}>
       <div className={styles.contentWrapper}>
         <h2>Providers</h2>
-        {state.indexesWithoutProviders.length ? (
+        {state.indexesWithoutProviders?.length ? (
           <div className={styles.indexesWarning}>
             <WarningIcon />
             <span>Warning:</span> There are indexes in your schema using
@@ -47,14 +49,14 @@ export const ProvidersTab = observer(function ProvidersTab() {
                   </span>
                 );
                 return (
-                  <>
+                  <Fragment key={providerName}>
                     {link}
                     {i < arr.length - 2
                       ? ", "
                       : i == arr.length - 2
                       ? ", and "
                       : ""}
-                  </>
+                  </Fragment>
                 );
               })}{" "}
               provider{state.indexesWithoutProviders.length > 1 ? "s" : ""}.
@@ -136,13 +138,13 @@ function ProviderCard({provider}: {provider: ProviderInfo}) {
             />
           </div>
           <div className={cn(styles.formRow, styles.buttons)}>
-            <Button
+            <ConfirmButton
               onClick={() =>
                 state.removeProvider(provider._typename, provider.name)
               }
             >
               Remove
-            </Button>
+            </ConfirmButton>
           </div>
         </div>
       ) : null}
@@ -178,9 +180,22 @@ const ProviderDraftForm = observer(function ProviderDraftForm({
       </div>
       {draft.providerConfigType.name == null ? (
         <>
-          <div className={cn(styles.formRow, styles.fullWidth)}>
+          <div className={cn(styles.formRow, styles.evenWidth)}>
             <TextInput
-              label={"Provider Name"}
+              label={
+                <>
+                  Provider Name{" "}
+                  <InfoTooltip
+                    message={
+                      <>
+                        The unique identifier referenced by{" "}
+                        <code>model_provider</code> in your custom{" "}
+                        <code>ext::ai::Model</code> types.
+                      </>
+                    }
+                  />
+                </>
+              }
               value={draft.name ?? ""}
               onChange={(e) => draft.setName(e.target.value)}
               error={draft.nameError}
@@ -208,11 +223,12 @@ const ProviderDraftForm = observer(function ProviderDraftForm({
               label={"API URL"}
               value={draft.apiUrl ?? ""}
               onChange={(e) => draft.setApiUrl(e.target.value)}
+              error={draft.apiUrlError}
             />
           </div>
         </>
       ) : null}
-      <div className={cn(styles.formRow, styles.fullWidth)}>
+      <div className={cn(styles.formRow, styles.evenWidth)}>
         <TextInput
           label={"Client ID"}
           optional
@@ -223,6 +239,7 @@ const ProviderDraftForm = observer(function ProviderDraftForm({
           label={"Secret"}
           value={draft.secret ?? ""}
           onChange={(e) => draft.setSecret(e.target.value)}
+          error={draft.secretError}
         />
       </div>
       <div className={cn(styles.formRow, styles.buttons)}>

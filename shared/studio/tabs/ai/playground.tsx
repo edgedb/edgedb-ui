@@ -1,11 +1,15 @@
-import {useEffect, useRef, useState} from "react";
+import {Fragment, useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
+import Markdown from "react-markdown";
+import {Link} from "react-router-dom";
 
 import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
   ChatSendIcon,
   ChevronDownIcon,
+  InfoIcon,
+  InfoTooltip,
   Select,
   SettingsIcon,
 } from "@edgedb/common/newui";
@@ -79,7 +83,15 @@ export const PlaygroundTab = observer(function PlaygroundTab() {
             onChange={({id}) => state.setSelectedPlaygroundPrompt(id)}
           />
 
-          <div className={styles.header}>Context Query</div>
+          <div className={styles.header}>
+            Context Query{" "}
+            <InfoTooltip
+              className={styles.configTooltip}
+              message={
+                "An EdgeQL expression returning a set of objects with AI indexes."
+              }
+            />
+          </div>
           <CodeEditor
             className={styles.contextQuery}
             code={state.playgroundContextQuery}
@@ -150,34 +162,75 @@ const PlaygroundChatInput = observer(function PlaygroundChatInput() {
 
   return (
     <div className={styles.chatInputRow}>
-      <div className={styles.chatInput}>
-        <div className={styles.chatInputWrapper}>
-          <div className={styles.overlay}>
-            {state.playgroundQuery}
-            {"\u200b"}
+      {state.playgroundContextConfigured ? (
+        <div className={styles.chatInput}>
+          <div className={styles.chatInputWrapper}>
+            <div className={styles.overlay}>
+              {state.playgroundQuery}
+              {"\u200b"}
+            </div>
+            <textarea
+              placeholder="Start Chatting..."
+              value={state.playgroundQuery}
+              onChange={(e) => state.setPlaygroundQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (isMac ? e.metaKey : e.ctrlKey)) {
+                  e.preventDefault();
+                  state.sendPlaygroundQuery();
+                }
+              }}
+            />
           </div>
-          <textarea
-            placeholder="Start Chatting..."
-            value={state.playgroundQuery}
-            onChange={(e) => state.setPlaygroundQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (isMac ? e.metaKey : e.ctrlKey)) {
-                e.preventDefault();
-                state.sendPlaygroundQuery();
-              }
-            }}
-          />
-        </div>
 
-        <div
-          className={cn(styles.chatSendButton, {
-            [styles.disabled]: !state.canSendPlaygroundQuery,
-          })}
-          onClick={() => state.sendPlaygroundQuery()}
-        >
-          <ChatSendIcon />
+          <div
+            className={cn(styles.chatSendButton, {
+              [styles.disabled]: !state.canSendPlaygroundQuery,
+            })}
+            onClick={() => state.sendPlaygroundQuery()}
+          >
+            <ChatSendIcon />
+          </div>
         </div>
-      </div>
+      ) : state.providers ? (
+        <div className={styles.notConfiguredMessage}>
+          <InfoIcon />
+          Before you can start chatting with the AI model, you first need to{" "}
+          {[
+            state.providers.length == 0 ? (
+              <Link key="configProvider" to="ai/providers">
+                configure a provider
+              </Link>
+            ) : state.selectedPlaygroundModel == null ? (
+              <Fragment key="chooseProvider">
+                choose a <em>Model</em>
+              </Fragment>
+            ) : null,
+            state.prompts?.length == 0 ? (
+              <Link key="createPrompt" to="ai/prompts">
+                create a prompt
+              </Link>
+            ) : state.selectedPlaygroundPrompt == null ? (
+              <Fragment key="choosePrompt">
+                choose a <em>Prompt</em>
+              </Fragment>
+            ) : null,
+            state.playgroundContextQuery.toString().trim() == "" ? (
+              <Fragment key="setContext">
+                set the <em>Context Query</em>
+              </Fragment>
+            ) : null,
+          ]
+            .filter((step) => step != null)
+            .flatMap((step, i, arr) => {
+              return i < arr.length - 2
+                ? [step, ", "]
+                : i < arr.length - 1
+                ? [step, " and "]
+                : [step];
+            })}
+          .
+        </div>
+      ) : null}
       <div
         className={styles.toggleConfigButton}
         onClick={() => state.setShowConfigPanel(true)}
@@ -221,7 +274,7 @@ const PlaygroundChatMessage = observer(function PlaygroundChatMessage({
         ) : (
           message.blocks.map((block, i) => (
             <div className={styles.block} key={i}>
-              {block.message}
+              <Markdown>{block.message}</Markdown>
             </div>
           ))
         )}
@@ -272,7 +325,7 @@ const ContextQuerySuggestionPopup = observer(
                   state.setPlaygroundContextQuery(Text.of([query]));
                 }}
               >
-                <ChevronDownIcon /> {query}
+                {query} <ChevronDownIcon />
               </div>
             ))}
           </div>

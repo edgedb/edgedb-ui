@@ -1,5 +1,5 @@
-import {useEffect, useLayoutEffect} from "react";
-import {observer} from "mobx-react-lite";
+import {useEffect, useLayoutEffect, useState} from "react";
+import {Observer, observer} from "mobx-react-lite";
 import "@fontsource-variable/roboto-flex";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -16,6 +16,7 @@ import {PlaygroundTab} from "./playground";
 import {PromptsTab} from "./prompts";
 
 import styles from "./aiAdmin.module.scss";
+import {Button, ButtonProps, WarningIcon} from "@edgedb/common/newui";
 
 const AIAdminPage = observer(function AIAdminPage() {
   const state = useTabState(AIAdminState);
@@ -75,6 +76,16 @@ const aiAdminTabs = [
     path: "providers",
     label: "Providers",
     element: <ProvidersTab />,
+    warning: (
+      <Observer
+        render={() => {
+          const state = useTabState(AIAdminState);
+          return state.indexesWithoutProviders?.length ? (
+            <WarningIcon />
+          ) : null;
+        }}
+      />
+    ),
   },
 ];
 
@@ -112,6 +123,7 @@ function AIAdminLayout() {
             }}
           >
             {tab.label}
+            {tab.warning}
           </div>
         ))}
       </div>
@@ -120,5 +132,33 @@ function AIAdminLayout() {
         {aiAdminTabs.find((tab) => tab.path === activePath)?.element}
       </div>
     </div>
+  );
+}
+
+export function ConfirmButton({onClick, children, ...props}: ButtonProps) {
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (confirming) {
+      const timer = setTimeout(() => setConfirming(false), 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [confirming]);
+
+  return (
+    <Button
+      onClick={() => {
+        if (confirming) {
+          setConfirming(false);
+          onClick?.();
+        } else {
+          setConfirming(true);
+        }
+      }}
+      {...props}
+    >
+      {confirming ? "Confirm?" : children}
+    </Button>
   );
 }
