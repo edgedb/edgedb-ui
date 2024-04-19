@@ -1,5 +1,6 @@
 import {observer} from "mobx-react";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {BrowserRouter, Route, Routes as _Routes} from "react-router-dom";
+import * as Sentry from "@sentry/react";
 
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
@@ -16,6 +17,11 @@ import {GlobalTooltipsProvider} from "@edgedb/common/hooks/useTooltips";
 import Header from "src/components/header";
 import Main from "src/components/main";
 import LoginPage from "src/components/loginPage";
+
+const Routes =
+  process.env.REACT_APP_SENTRY_DSN != null
+    ? Sentry.withSentryReactRouterV6Routing(_Routes)
+    : _Routes;
 
 function App() {
   return (
