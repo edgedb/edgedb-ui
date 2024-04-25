@@ -25,6 +25,7 @@ export type SelectItems<T = any> = {
 
 export type SelectProps<T = any> = {
   className?: string;
+  dropdownClassName?: string;
   fullScreen?: boolean;
   fullScreenTitle?: string;
   title?: string | JSX.Element;
@@ -58,6 +59,7 @@ type FlattenedItems = (
 
 export function Select<T extends any>({
   className,
+  dropdownClassName,
   fullScreen,
   fullScreenTitle,
   title,
@@ -193,7 +195,7 @@ export function Select<T extends any>({
 
           <div
             ref={dropdownRef}
-            className={cn(styles.tabDropdown, {
+            className={cn(styles.tabDropdown, dropdownClassName, {
               [styles.tabDropdownOpen]: dropdownOpen,
               [styles.rightAlign]: !!rightAlign,
               [styles.fullScreen]: isFullscreenMobile,

@@ -11,6 +11,7 @@
 
   svg {
     color: var(--svg-color, --select-option-color, #6b6b6b);
+    flex-shrink: 0;
   }
 
   &:hover {
