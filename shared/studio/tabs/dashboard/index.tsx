@@ -17,6 +17,7 @@ import {
 
 import Button from "@edgedb/common/ui/button";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import Spinner from "@edgedb/common/ui/spinner";
 
 import {
   HeaderDatabaseIcon,
@@ -41,7 +42,12 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
   }, [dbState.schemaId]);
 
   if (dbState.schemaId == null) {
-    return <div className={styles.dashboard} />;
+    return (
+      <div className={styles.dashboard}>
+        <Spinner size={20} />
+        Loading schema...
+      </div>
+    );
   }
 
   if (dbState.schemaId.endsWith("__empty")) {

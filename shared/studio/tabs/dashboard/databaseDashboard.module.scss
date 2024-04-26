@@ -19,6 +19,19 @@
   }
 }
 
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+
+  @include darkTheme {
+    color: #aaa;
+  }
+}
+
 .dashboardLayout,
 .firstDashboardLayout {
   display: flex;
