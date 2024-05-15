@@ -53,7 +53,12 @@ export const DataView = observer(function DataView() {
     } else if (dbState.schemaData) {
       const updatedPath = state.updateFromPath(path ?? "");
       if (updatedPath !== null) {
-        navigate(`${basePath}/${updatedPath}`, true);
+        navigate(
+          `${basePath}/${updatedPath
+            .map((part) => encodeURIComponent(part).replace(/%3A/g, ":"))
+            .join("/")}`,
+          true
+        );
       }
     }
   }, [currentPath, dbState.schemaData]);

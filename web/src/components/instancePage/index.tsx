@@ -21,7 +21,11 @@ export default observer(function InstancePage() {
       <div className={styles.instanceName}>{instanceState.instanceName}</div>
       <div className={styles.databases}>
         {instanceState.databases?.map((db) => (
-          <Link key={db} className={styles.databaseCard} to={db}>
+          <Link
+            key={db}
+            className={styles.databaseCard}
+            to={encodeURIComponent(db)}
+          >
             <HeaderDatabaseIcon />
             <span>{db}</span>
           </Link>
@@ -59,7 +63,7 @@ export default observer(function InstancePage() {
               <CreateBranchModal
                 instanceState={instanceState}
                 navigateToDB={(branchName) => {
-                  navigate(`/${branchName}`);
+                  navigate(`/${encodeURIComponent(branchName)}`);
                 }}
               />
             );

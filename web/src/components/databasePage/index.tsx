@@ -101,7 +101,7 @@ function HeaderNavMenu({
                 label: db,
                 selected: selectedDB === db,
                 checked: currentDB === db,
-                linkProps: {to: `/${db}`},
+                linkProps: {to: `/${encodeURIComponent(db)}`},
                 onHover: () => setSelectedDB(db),
               })) ?? null,
           },
@@ -113,7 +113,9 @@ function HeaderNavMenu({
               <CreateBranchModal
                 fromBranch={currentDB}
                 instanceState={instanceState}
-                navigateToDB={(dbName) => navigate(`/${dbName}`)}
+                navigateToDB={(dbName) =>
+                  navigate(`/${encodeURIComponent(dbName)}`)
+                }
               />
             ),
         }}

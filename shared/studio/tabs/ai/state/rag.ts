@@ -64,7 +64,9 @@ export async function runRAGQuery(
   abortController: AbortController
 ): Promise<SSEStream> {
   const response = await fetch(
-    `${connectConfig.serverUrl}/branch/${connectConfig.database}/ext/ai/rag`,
+    `${connectConfig.serverUrl}/branch/${encodeURIComponent(
+      connectConfig.database
+    )}/ext/ai/rag`,
     {
       method: "POST",
       headers: {

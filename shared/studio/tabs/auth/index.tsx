@@ -142,7 +142,7 @@ const AuthUrls = observer(function AuthUrls({
   const databaseState = useDatabaseState();
 
   const url = new URL(instanceState.serverUrl);
-  url.pathname = `db/${databaseState.name}/ext/auth`;
+  url.pathname = `db/${encodeURIComponent(databaseState.name)}/ext/auth`;
 
   const baseUrl = url.toString();
 
