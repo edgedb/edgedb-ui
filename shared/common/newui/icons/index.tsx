@@ -103,3 +103,108 @@ export function SettingsIcon() {
     </svg>
   );
 }
+
+export function CopyIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M7.1 14.1H6.4C6.0287 14.1 5.6726 13.9525 5.41005 13.6899C5.1475 13.4274 5 13.0713 5 12.7V6.4C5 6.0287 5.1475 5.6726 5.41005 5.41005C5.6726 5.1475 6.0287 5 6.4 5H12.7C13.0713 5 13.4274 5.1475 13.6899 5.41005C13.9525 5.6726 14.1 6.0287 14.1 6.4V7.1M11.3 9.9H17.6C18.3732 9.9 19 10.5268 19 11.3V17.6C19 18.3732 18.3732 19 17.6 19H11.3C10.5268 19 9.9 18.3732 9.9 17.6V11.3C9.9 10.5268 10.5268 9.9 11.3 9.9Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CheckIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M18.1634 7.4004L9.91336 15.6504L6.16336 11.9004"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function CrossIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M7 7L17 17M17 7L7 17"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M12 6L18 12L12 18M6 12H18"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M11.0556 12.9444L19 5M14.6667 5H19V9.33333M16.8333 12.2222V16.5556C16.8333 16.9386 16.6812 17.306 16.4103 17.5769C16.1394 17.8478 15.772 18 15.3889 18H7.44444C7.06135 18 6.69395 17.8478 6.42307 17.5769C6.15218 17.306 6 16.9386 6 16.5556V8.61111C6 8.22802 6.15218 7.86062 6.42307 7.58973C6.69395 7.31885 7.06135 7.16667 7.44444 7.16667H11.7778"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

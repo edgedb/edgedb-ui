@@ -23,11 +23,16 @@
     font-weight: 450;
   }
 
+  .headerNote {
+    color: var(--Grey50, #808080);
+    font-weight: 400;
+    margin-left: auto;
+  }
+
   .inputWrapper {
     position: relative;
     align-self: stretch;
     display: flex;
-    flex-direction: column;
   }
 
   .hasError {
@@ -37,6 +42,17 @@
       border-color: #df594c !important;
       padding-right: 36px;
     }
+  }
+
+  .prefix {
+    position: absolute;
+    line-height: 40px;
+    top: 1px;
+    left: 12px;
+    font-family: "Roboto Mono Variable", monospace;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--Grey50, #808080);
   }
 
   input,
@@ -52,6 +68,7 @@
     font-weight: 400;
     color: inherit;
     outline: 0;
+    min-width: 0;
 
     &:read-only {
       background: #f7f7f7;

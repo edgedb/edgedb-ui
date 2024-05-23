@@ -4,7 +4,7 @@ import styles from "./button.module.scss";
 
 interface _BaseButtonProps {
   className?: string;
-  kind?: "primary" | "secondary";
+  kind?: "primary" | "secondary" | "outline";
   children?: React.ReactNode;
   leftIcon?: JSX.Element;
   rightIcon?: JSX.Element;
@@ -28,7 +28,10 @@ export function Button({
       type="button"
       className={cn(
         styles.button,
-        { [styles.primary]: kind === "primary" },
+        {
+          [styles.primary]: kind === "primary",
+          [styles.outline]: kind === "outline",
+        },
         className
       )}
       {...props}
@@ -57,6 +60,7 @@ export function LinkButton({
     <a
       className={cn(styles.linkButton, {
         [styles.primary]: kind === "primary",
+        [styles.outline]: kind === "outline",
         [styles.disabled]: !!disabled,
       })}
       {...props}

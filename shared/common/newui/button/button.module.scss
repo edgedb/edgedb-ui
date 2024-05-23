@@ -16,6 +16,7 @@
   box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
   outline: 0;
   font-family: inherit;
+  color: inherit;
   cursor: pointer;
 
   & > span {
@@ -27,12 +28,23 @@
     padding: 0 6px;
   }
 
+  & > svg {
+    flex-shrink: 0;
+  }
+
   &.primary {
     // background: linear-gradient(180deg, #a565cd 0%, #9c56b4 100%);
     background: #a565cd;
     box-shadow: 0px 2px 4px 0px rgba(165, 100, 203, 0.25);
     border: 0;
     color: #fffffffa;
+  }
+
+  &.outline {
+    background: none;
+    border: 1px solid var(--Grey85, #d9d9d9);
+    box-shadow: none;
+    color: var(--secondary_text_color, #666);
   }
 
   &:disabled,

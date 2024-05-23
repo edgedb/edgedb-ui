@@ -11,6 +11,8 @@ export interface TextInputProps {
   label?: string | JSX.Element;
   optional?: boolean;
   error?: string | null;
+  prefix?: string;
+  headerNote?: string;
 }
 
 export const TextInput = forwardRef(function TextInput(
@@ -20,6 +22,8 @@ export const TextInput = forwardRef(function TextInput(
     label,
     optional,
     error,
+    prefix,
+    headerNote,
     ...props
   }: TextInputProps &
     Omit<InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, "type">,
@@ -35,12 +39,25 @@ export const TextInput = forwardRef(function TextInput(
           {optional ? (
             <span className={styles.optional}>(optional)</span>
           ) : null}
+          {headerNote ? (
+            <span className={styles.headerNote}>{headerNote}</span>
+          ) : null}
         </div>
       ) : null}
       <div
         className={cn(styles.inputWrapper, {[styles.hasError]: error != null})}
       >
-        <Input ref={ref as any} type={type ?? "text"} {...props} />
+        {prefix ? <span className={styles.prefix}>{prefix}</span> : null}
+        <Input
+          ref={ref as any}
+          type={type ?? "text"}
+          {...props}
+          style={{
+            paddingLeft: prefix
+              ? `calc(${prefix.length}ch + 12px)`
+              : undefined,
+          }}
+        />
         {error != null ? (
           <div className={styles.error}>
             <InfoIcon />
