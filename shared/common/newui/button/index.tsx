@@ -1,6 +1,7 @@
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./button.module.scss";
+import Spinner from "../../ui/spinner";
 
 interface _BaseButtonProps {
   className?: string;
@@ -9,6 +10,7 @@ interface _BaseButtonProps {
   leftIcon?: JSX.Element;
   rightIcon?: JSX.Element;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 export interface ButtonProps extends _BaseButtonProps {
@@ -21,6 +23,8 @@ export function Button({
   children,
   leftIcon,
   rightIcon,
+  disabled,
+  loading,
   ...props
 }: ButtonProps) {
   return (
@@ -34,9 +38,10 @@ export function Button({
         },
         className
       )}
+      disabled={disabled || loading}
       {...props}
     >
-      {leftIcon}
+      {loading ? <Spinner size={16} strokeWidth={1.5} /> : leftIcon}
       <span>{children}</span>
       {rightIcon}
     </button>

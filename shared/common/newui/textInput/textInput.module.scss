@@ -69,6 +69,7 @@
     color: inherit;
     outline: 0;
     min-width: 0;
+    flex-grow: 1;
 
     &:read-only {
       background: #f7f7f7;
