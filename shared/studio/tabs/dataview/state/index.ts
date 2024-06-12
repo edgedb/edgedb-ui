@@ -118,9 +118,11 @@ export class DataView extends Model({
   }
 
   @modelAction
-  updateFromPath(path: string): string | null {
+  updateFromPath(path: string): string[] | null {
     this.lastSelectedPath = path;
-    const [rootObjectTypeName, ...nestedParts] = path.split("/");
+    const [rootObjectTypeName, ...nestedParts] = path
+      .split("/")
+      .map(decodeURIComponent);
     if (rootObjectTypeName !== this.inspectorStack[0]?.objectType?.name) {
       const objTypeId = this.objectTypes.find(
         (obj) => obj.name === rootObjectTypeName
@@ -129,7 +131,7 @@ export class DataView extends Model({
         this.selectObject(objTypeId);
       } else {
         this.selectObject(this.objectTypes[0]?.id);
-        return this.objectTypes[0]?.name ?? "";
+        return [this.objectTypes[0]?.name ?? ""];
       }
     }
     let i = 0;
@@ -162,7 +164,7 @@ export class DataView extends Model({
         (typeof objId === "number" && !this.edits.insertEdits.has(objId))
       ) {
         this.inspectorStack = this.inspectorStack.slice(0, i + 1);
-        return [rootObjectTypeName, ...nestedParts.slice(0, i * 2)].join("/");
+        return [rootObjectTypeName, ...nestedParts.slice(0, i * 2)];
       } else {
         if (
           objId !== stackItem?.parentObject!.id ||

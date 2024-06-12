@@ -91,7 +91,7 @@ export class Connection extends Model({
   conn = AdminUIFetchConnection.create(
     {
       address: this.config.serverUrl,
-      database: this.config.database,
+      database: encodeURIComponent(this.config.database),
       user: this.config.user,
       token: this.config.authToken,
     },
