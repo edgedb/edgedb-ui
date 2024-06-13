@@ -208,3 +208,44 @@ export function ExternalLinkIcon({className}: {className?: string}) {
     </svg>
   );
 }
+
+export function AddIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M6 12H18M12 6V18"
+        stroke="#808080"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function SyncIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M6.59727 9.81668C6.92002 8.90463 7.46854 8.08921 8.19166 7.44649C8.91478 6.80377 9.78893 6.35471 10.7325 6.1412C11.6762 5.9277 12.6585 5.95671 13.5878 6.22553C14.5172 6.49435 15.3633 6.99422 16.0473 7.67849L19 10.453M5 12.9985L7.95273 15.773C8.63666 16.4573 9.48278 16.9572 10.4122 17.226C11.3415 17.4948 12.3238 17.5238 13.2675 17.3103C14.2111 17.0968 15.0852 16.6478 15.8083 16.005C16.5315 15.3623 17.08 14.5469 17.4027 13.6349M19 6.63486V10.453H15.1818M5 16.8167V12.9985H8.81818"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
