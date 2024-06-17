@@ -1,0 +1,79 @@
+import {PropsWithChildren, useEffect, useRef, useState} from "react";
+
+import cn from "@edgedb/common/utils/classNames";
+import {ChevronDownIcon} from "@edgedb/common/newui";
+
+import styles from "./horizontalCardList.module.scss";
+
+interface HorizontalCardListProps {
+  className?: string;
+  scrollBy?: number;
+}
+
+export function HorizontalCardList({
+  className,
+  scrollBy = 120,
+  children,
+}: PropsWithChildren<HorizontalCardListProps>) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflowLeft, setOverflowLeft] = useState(false);
+  const [overflowRight, setOverflowRight] = useState(false);
+
+  useEffect(() => {
+    if (ref.current) {
+      const listener = () => {
+        if (!ref.current) return;
+        if (ref.current.scrollLeft > 0 !== overflowLeft) {
+          setOverflowLeft(!overflowLeft);
+        }
+        if (
+          ref.current.scrollLeft + ref.current.clientWidth <
+            ref.current.scrollWidth !==
+          overflowRight
+        ) {
+          setOverflowRight(!overflowRight);
+        }
+      };
+      listener();
+      ref.current.addEventListener("scroll", listener);
+
+      return () => {
+        ref.current?.removeEventListener("scroll", listener);
+      };
+    }
+  }, [overflowLeft, overflowRight]);
+
+  return (
+    <div
+      className={cn(styles.horizontalCardList, className, {
+        [styles.overflowLeft]: overflowLeft,
+        [styles.overflowRight]: overflowRight,
+      })}
+    >
+      <div
+        className={styles.scrollLeftButton}
+        onClick={() => {
+          ref.current?.scrollBy({left: -scrollBy, behavior: "smooth"});
+        }}
+      >
+        <div>
+          <ChevronDownIcon />
+        </div>
+      </div>
+
+      <div ref={ref} className={styles.scrollWrapper}>
+        {children}
+      </div>
+      <div
+        className={styles.scrollRightButton}
+        onClick={() => {
+          ref.current?.scrollBy({left: scrollBy, behavior: "smooth"});
+        }}
+      >
+        <div>
+          <ChevronDownIcon />
+        </div>
+      </div>
+    </div>
+  );
+}

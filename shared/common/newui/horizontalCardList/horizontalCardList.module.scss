@@ -1,0 +1,112 @@
+@import "@edgedb/common/mixins.scss";
+
+.horizontalCardList {
+  position: relative;
+  --overflowLeft: -64px;
+  --overflowRight: 64px;
+
+  .scrollWrapper {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    @include hideScrollbar;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 64px;
+    overscroll-behavior-x: contain;
+    mask-image: linear-gradient(
+        90deg,
+        transparent,
+        #000 64px,
+        #000 calc(100% - 64px),
+        transparent calc(100% - 64px)
+      ),
+      linear-gradient(
+        90deg,
+        transparent 64px,
+        #000 64px,
+        #000 calc(100% - 64px),
+        transparent
+      ),
+      linear-gradient(
+        90deg,
+        transparent 62px,
+        #000 62px,
+        #000 calc(100% - 62px),
+        transparent calc(100% - 62px)
+      );
+    mask-repeat: no-repeat, no-repeat, no-repeat;
+    mask-position: var(--overflowLeft), var(--overflowRight), 0px;
+    transition: mask-position 0.2s linear;
+  }
+
+  &.overflowLeft {
+    --overflowLeft: 0px;
+  }
+  &.overflowRight {
+    --overflowRight: 0px;
+  }
+}
+
+.scrollLeftButton,
+.scrollRightButton {
+  position: absolute;
+  display: flex;
+  top: 0;
+  width: 32px;
+  height: var(--scrollButtonHeight, 100%);
+  align-items: center;
+  cursor: pointer;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-32px);
+  transition: opacity 0.2s, transform 0.2s;
+
+  > div {
+    display: flex;
+    width: 30px;
+    height: 30px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    border: 1px solid var(--Grey93, #ededed);
+    background: #fff;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+
+    svg {
+      transform: rotate(90deg);
+      color: var(--Grey50, #808080);
+    }
+  }
+
+  @include darkTheme {
+    > div {
+      border-color: #4d4d4d;
+      background: #363636;
+      box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+.scrollLeftButton {
+  left: 0;
+
+  .overflowLeft & {
+    opacity: 1;
+    transform: none;
+    pointer-events: all;
+  }
+}
+.scrollRightButton {
+  right: 0;
+  transform: translateX(32px);
+
+  > div svg {
+    transform: rotate(-90deg);
+  }
+
+  .overflowRight & {
+    opacity: 1;
+    transform: none;
+    pointer-events: all;
+  }
+}

@@ -1,0 +1,236 @@
+@import "@edgedb/common/mixins.scss";
+
+.branchGraph {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--Grey90, #e6e6e6);
+  background: var(--Grey97, #f7f7f7);
+  height: 220px;
+  min-width: 0;
+  font-family: "Roboto Flex Variable", sans-serif;
+  overflow: hidden;
+}
+
+.scrollWrapper {
+  overflow: auto;
+  height: 100%;
+  @include hideScrollbar;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 8px 8px var(--Grey97, #f7f7f7);
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+.floatingButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--Grey90, #e6e6e6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #f7f7f7;
+  color: #999999;
+  cursor: pointer;
+  z-index: 1;
+  box-shadow: 0px 0px 16px 8px var(--Grey97, #f7f7f7);
+
+  &.refreshing {
+    pointer-events: none;
+    svg {
+      animation: spin var(--rotationPeriod, 1s) infinite linear;
+    }
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.nodeGrid {
+  display: grid;
+  grid-auto-rows: 64px;
+  grid-auto-columns: auto;
+  row-gap: 32px;
+  justify-items: start;
+  align-items: start;
+  width: min-content;
+  padding: 34px 0;
+  padding-right: 64px;
+
+  .connector {
+    height: 100%;
+    box-sizing: border-box;
+    padding: 5px 0;
+
+    svg {
+      stroke-width: 1px;
+      stroke: var(--Grey80, #ccc);
+      fill: none;
+      width: 31px;
+      height: 31px;
+    }
+
+    &.line {
+      min-width: 16px;
+      justify-self: stretch;
+
+      svg {
+        width: 100%;
+      }
+    }
+
+    &.curved {
+      width: 31px;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 28px;
+
+      svg:nth-child(2) {
+        flex-grow: 1;
+      }
+    }
+  }
+}
+
+.branchNode,
+.migrationNode {
+  position: relative;
+
+  .migrationId {
+    position: absolute;
+    color: var(--Grey50, #808080);
+    font-family: "Roboto Mono Variable";
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 450;
+    line-height: 16px;
+  }
+}
+
+.branchNode {
+  &.rootBranch {
+    margin-left: 32px;
+  }
+
+  .migrationId {
+    left: 10px;
+    top: -20px;
+  }
+
+  .duplicateBranchConnector {
+    position: absolute;
+    top: -64px;
+    left: 28px;
+    stroke-width: 1px;
+    stroke: var(--Grey80, #ccc);
+    stroke-dasharray: 4 4;
+  }
+}
+
+.migrationNode {
+  min-width: 64px;
+  justify-self: stretch;
+  display: flex;
+  justify-content: center;
+
+  .migrationId {
+    top: -4px;
+  }
+
+  .line,
+  .dot {
+    position: absolute;
+    stroke-width: 1px;
+    stroke: var(--Grey80, #ccc);
+    fill: var(--Grey97, #f7f7f7);
+    width: 100%;
+    height: 31px;
+    top: 5px;
+  }
+}
+
+.branchButton {
+  position: relative;
+  display: flex;
+  padding: 7px;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 6px;
+  border: 1px solid var(--Grey90, #e6e6e6);
+  background: #fff;
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+  text-decoration: none;
+  z-index: 1;
+
+  .branchName {
+    display: flex;
+    padding: 0px 2px 0px 8px;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--main_text_color, #4d4d4d);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    white-space: nowrap;
+
+    svg {
+      margin-left: 8px;
+    }
+  }
+
+  .githubDetails {
+    display: flex;
+    padding: 2px 4px;
+    align-items: center;
+    border-radius: 4px;
+    background: var(--Grey97, #f7f7f7);
+    color: var(--Grey50, #808080);
+    font-size: 12px;
+    font-weight: 450;
+    line-height: 18px;
+
+    svg {
+      width: 16px;
+      height: 16px;
+
+      &:first-child path {
+        vector-effect: non-scaling-stroke;
+      }
+    }
+
+    &.up-to-date svg {
+      color: #70b53a;
+    }
+    &.error svg {
+      color: #e55e5e;
+    }
+    &.updating svg {
+      color: #3b8be8;
+    }
+
+    > span {
+      margin-left: 6px;
+      margin-right: 8px;
+    }
+
+    .githubIcon {
+      color: var(--Grey30, #4d4d4d) !important;
+      margin-left: auto;
+    }
+  }
+}
