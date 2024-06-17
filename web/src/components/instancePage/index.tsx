@@ -1,11 +1,13 @@
 import {observer} from "mobx-react";
-import {useNavigate, Link} from "react-router-dom";
+import {Link} from "react-router-dom";
 
-import {useModal} from "@edgedb/common/hooks/useModal";
-import Button from "@edgedb/common/ui/button";
-import CreateBranchModal from "@edgedb/studio/components/modals/createBranch";
-import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
-import {fetchExampleSchema} from "@edgedb/studio/tabs/dashboard";
+import {BranchGraph} from "@edgedb/common/branchGraph";
+import {InfoCards} from "@edgedb/common/components/infoCards";
+
+// import {useModal} from "@edgedb/common/hooks/useModal";
+// import Button from "@edgedb/common/ui/button";
+// import CreateBranchModal from "@edgedb/studio/components/modals/createBranch";
+// import {fetchExampleSchema} from "@edgedb/studio/tabs/dashboard";
 
 import {useAppState} from "src/state/providers";
 
@@ -13,23 +15,28 @@ import styles from "./instancePage.module.scss";
 
 export default observer(function InstancePage() {
   const instanceState = useAppState().instanceState;
-  const navigate = useNavigate();
-  const {openModal} = useModal();
+  // const navigate = useNavigate();
+  // const {openModal} = useModal();
 
   return (
     <div className={styles.instancePage}>
-      <div className={styles.instanceName}>{instanceState.instanceName}</div>
-      <div className={styles.databases}>
-        {instanceState.databases?.map((db) => (
-          <Link
-            key={db}
-            className={styles.databaseCard}
-            to={encodeURIComponent(db)}
-          >
-            <HeaderDatabaseIcon />
-            <span>{db}</span>
-          </Link>
-        ))}
+      <div className={styles.pageWrapper}>
+        <div className={styles.header}>Branches</div>
+        {instanceState.databases ? (
+          <BranchGraph
+            className={styles.branchGraph}
+            instanceId={instanceState.instanceId!}
+            instanceState={instanceState}
+            BranchLink={({branchName, ...props}) => (
+              <Link to={encodeURIComponent(branchName)} {...props} />
+            )}
+          />
+        ) : null}
+
+        <div className={styles.header}>Tips and Updates</div>
+        <InfoCards currentVersion={instanceState.serverVersion} />
+      </div>
+      {/* <div className={styles.databases}>
 
         {instanceState.databases &&
         !instanceState.databases.includes("_example") ? (
@@ -71,7 +78,7 @@ export default observer(function InstancePage() {
         >
           <span>Create new branch</span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 });

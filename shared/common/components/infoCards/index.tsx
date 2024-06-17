@@ -5,7 +5,7 @@ import {ExternalLinkIcon} from "@edgedb/common/newui";
 
 import {HorizontalCardList} from "@edgedb/common/newui/horizontalCardList";
 
-import styles from "./InfoCards.module.scss";
+import styles from "./infoCards.module.scss";
 import {LatestInfo, useLatestInfo} from "./getLatestInfo";
 
 export interface InfoCardDef {
@@ -15,8 +15,10 @@ export interface InfoCardDef {
 
 export function InfoCards({
   extraCards,
+  currentVersion,
 }: {
   extraCards?: (InfoCardDef | null)[];
+  currentVersion?: {major: number; minor: number; stage: string} | null;
 }) {
   const data = useLatestInfo();
 
@@ -43,6 +45,24 @@ export function InfoCards({
             >
               {data.latestUpdate.title} <br />
               <u>Read more...</u>
+            </InfoCard>
+          ),
+        }
+      : null,
+    data?.latestEdgeDBVersion &&
+    currentVersion &&
+    (data.latestEdgeDBVersion.major > currentVersion.major ||
+      (data.latestEdgeDBVersion.major === currentVersion.major &&
+        data.latestEdgeDBVersion.minor > currentVersion.minor))
+      ? {
+          priority: 3,
+          card: (
+            <InfoCard
+              title={`EdgeDB ${data.latestEdgeDBVersion.major}.${data.latestEdgeDBVersion.minor} is available`}
+              link={`https://docs.edgedb.com/changelog/${data.latestEdgeDBVersion.major}_x`}
+            >
+              This instance is ready to update to the latest version of EdgeDB.{" "}
+              <u>Find out what's new in the changelog.</u>
             </InfoCard>
           ),
         }

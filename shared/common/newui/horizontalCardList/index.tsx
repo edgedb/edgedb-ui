@@ -36,12 +36,15 @@ export function HorizontalCardList({
       };
       listener();
       ref.current.addEventListener("scroll", listener);
+      const observer = new ResizeObserver(listener);
+      observer.observe(ref.current);
 
       return () => {
         ref.current?.removeEventListener("scroll", listener);
+        observer.disconnect();
       };
     }
-  }, [overflowLeft, overflowRight]);
+  }, [overflowLeft, overflowRight, children]);
 
   return (
     <div

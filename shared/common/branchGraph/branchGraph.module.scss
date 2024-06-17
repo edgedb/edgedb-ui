@@ -14,6 +14,7 @@
 .scrollWrapper {
   overflow: auto;
   height: 100%;
+  display: flex;
   @include hideScrollbar;
 
   &::after {
@@ -70,6 +71,7 @@
   width: min-content;
   padding: 34px 0;
   padding-right: 64px;
+  margin: auto;
 
   .connector {
     height: 100%;

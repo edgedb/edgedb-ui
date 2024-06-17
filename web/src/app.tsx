@@ -4,6 +4,9 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
 
+import "@fontsource-variable/roboto-flex";
+import "@fontsource-variable/roboto-mono";
+
 import appState from "./state/store";
 import {appContext} from "./state/providers";
 

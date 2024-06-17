@@ -106,6 +106,9 @@ export async function getBranchGraphData(
     );
     _storeBranchGraphDataInCache(instanceId, migrationsData);
   }
+
+  migrationsData.sort((a, b) => a.branch.localeCompare(b.branch));
+
   console.log(migrationsData);
 
   const graphRoots = new Set<GraphItem>();

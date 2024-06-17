@@ -38,6 +38,14 @@ export async function createInstanceState(
   return instance;
 }
 
+export interface ServerVersion {
+  major: number;
+  minor: number;
+  stage: string;
+  stage_no: number;
+  local: string[];
+}
+
 @model("InstanceState")
 export class InstanceState extends Model({
   _instanceId: prop<string | null>(null),
@@ -48,6 +56,7 @@ export class InstanceState extends Model({
   databasePageStates: prop(() => objectMap<DatabaseState>()),
 }) {
   @observable instanceName: string | null = null;
+  @observable serverVersion: ServerVersion | null = null;
   @observable databases: string[] | null = null;
   @observable roles: string[] | null = null;
 
@@ -75,6 +84,7 @@ export class InstanceState extends Model({
         `
       select {
         instanceName := sys::get_instance_name(),
+        version := sys::get_version(),
         databases := sys::Database.name,
         roles := sys::Role.name,
       }`,
@@ -86,7 +96,7 @@ export class InstanceState extends Model({
 
       runInAction(() => {
         this.instanceName = data.instanceName ?? "_localdev";
-        this.databases = data.databases;
+        (this.serverVersion = data.version), (this.databases = data.databases);
         this.roles = data.roles;
       });
 

@@ -1,26 +1,59 @@
+@import "@edgedb/common/mixins.scss";
+
 .instancePage {
-  background: var(--app-panel-bg);
   flex-grow: 1;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 16px 16px;
-  border-radius: 8px;
+  padding: 24px;
+  padding-top: 16px;
+  margin: 0 8px 8px;
+  border-radius: 12px;
+  background: #fafafa;
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.04),
+    0px 0px 4px 0px rgba(0, 0, 0, 0.06);
+
+  @include darkTheme {
+    background: var(--Grey14, #242424);
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  @include isMobile {
+    margin: 0;
+    border-radius: 0;
+    padding: 16px;
+    padding-top: 8px;
+  }
 }
 
-.instanceName {
-  font-size: 28px;
-  margin-top: 54px;
-  font-family: Roboto Mono;
-  font-weight: bold;
-}
-
-.databases {
+.pageWrapper {
+  width: 100%;
+  max-width: 1054px;
+  flex-grow: 1;
   display: flex;
-  margin-top: 54px;
-  flex-flow: row wrap;
-  justify-content: center;
+  flex-direction: column;
+}
+
+.header {
+  color: var(--secondary_text_color, #666);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+  margin: 0;
+  margin-bottom: 8px;
+  margin-top: 16px;
+  padding: 0 4px;
+
+  @include darkTheme {
+    color: #b3b3b3;
+  }
+}
+
+.branchGraph {
+  flex-grow: 1;
 }
 
 .databaseCard,
