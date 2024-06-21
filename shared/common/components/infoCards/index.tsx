@@ -1,7 +1,12 @@
 import {Fragment, PropsWithChildren} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
-import {ExternalLinkIcon} from "@edgedb/common/newui";
+import {
+  DocsIcon,
+  ExternalLinkIcon,
+  NewUpdatesIcon,
+  UpgradeIcon,
+} from "@edgedb/common/newui";
 
 import {HorizontalCardList} from "@edgedb/common/newui/horizontalCardList";
 
@@ -14,9 +19,13 @@ export interface InfoCardDef {
 }
 
 export function InfoCards({
+  className,
+  listClassName,
   extraCards,
   currentVersion,
 }: {
+  className?: string;
+  listClassName?: string;
   extraCards?: (InfoCardDef | null)[];
   currentVersion?: {major: number; minor: number; stage: string} | null;
 }) {
@@ -26,7 +35,11 @@ export function InfoCards({
     {
       priority: 0,
       card: (
-        <InfoCard title="Learn EdgeDB" link="https://docs.edgedb.com">
+        <InfoCard
+          title="Learn EdgeDB"
+          icon={<DocsIcon />}
+          link="https://docs.edgedb.com"
+        >
           Check out our docs for to learn everything you need to know about
           EdgeDB, from helpful guides to full API reference docs.
         </InfoCard>
@@ -41,6 +54,7 @@ export function InfoCards({
           card: (
             <InfoCard
               title="What's New in EdgeDB"
+              icon={<NewUpdatesIcon />}
               link={data.latestUpdate.url}
             >
               {data.latestUpdate.title} <br />
@@ -59,6 +73,7 @@ export function InfoCards({
           card: (
             <InfoCard
               title={`EdgeDB ${data.latestEdgeDBVersion.major}.${data.latestEdgeDBVersion.minor} is available`}
+              icon={<UpgradeIcon />}
               link={`https://docs.edgedb.com/changelog/${data.latestEdgeDBVersion.major}_x`}
             >
               This instance is ready to update to the latest version of EdgeDB.{" "}
@@ -71,7 +86,10 @@ export function InfoCards({
   ];
 
   return (
-    <HorizontalCardList className={styles.infoCardsList}>
+    <HorizontalCardList
+      className={cn(styles.infoCardsList, className)}
+      listClassName={listClassName}
+    >
       {cards
         .filter((c) => c != null)
         .sort((a, b) => b!.priority - a!.priority)
@@ -84,6 +102,7 @@ export function InfoCards({
 
 export type InfoCardProps = {
   title: string;
+  icon?: JSX.Element;
   link:
     | string
     | ((props: PropsWithChildren<{className?: string}>) => JSX.Element);
@@ -91,12 +110,16 @@ export type InfoCardProps = {
 
 export function InfoCard({
   title,
+  icon,
   link,
   children,
 }: PropsWithChildren<InfoCardProps>) {
   const content = (
     <>
-      <div className={styles.title}>{title}</div>
+      <div className={styles.title}>
+        {icon}
+        {title}
+      </div>
       <div className={styles.content}>{children}</div>
     </>
   );

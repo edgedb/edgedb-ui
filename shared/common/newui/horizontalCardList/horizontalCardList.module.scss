@@ -89,15 +89,21 @@
 }
 .scrollLeftButton {
   left: 0;
+  padding-right: 24px;
 
   .overflowLeft & {
     opacity: 1;
     transform: none;
     pointer-events: all;
   }
+
+  @include isMobile {
+    padding-left: 16px;
+  }
 }
 .scrollRightButton {
   right: 0;
+  padding-left: 24px;
   transform: translateX(32px);
 
   > div svg {
@@ -108,5 +114,9 @@
     opacity: 1;
     transform: none;
     pointer-events: all;
+  }
+
+  @include isMobile {
+    padding-right: 16px;
   }
 }

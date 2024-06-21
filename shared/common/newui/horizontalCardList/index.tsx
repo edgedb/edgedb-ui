@@ -7,11 +7,13 @@ import styles from "./horizontalCardList.module.scss";
 
 interface HorizontalCardListProps {
   className?: string;
+  listClassName?: string;
   scrollBy?: number;
 }
 
 export function HorizontalCardList({
   className,
+  listClassName,
   scrollBy = 120,
   children,
 }: PropsWithChildren<HorizontalCardListProps>) {
@@ -64,7 +66,7 @@ export function HorizontalCardList({
         </div>
       </div>
 
-      <div ref={ref} className={styles.scrollWrapper}>
+      <div ref={ref} className={cn(styles.scrollWrapper, listClassName)}>
         {children}
       </div>
       <div

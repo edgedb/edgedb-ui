@@ -24,10 +24,21 @@
   scroll-snap-align: start;
 
   .title {
+    display: flex;
+    align-items: center;
+    height: 18px;
     font-size: 15px;
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+
+    > svg {
+      width: 20px;
+      height: 20px;
+      margin-right: 6px;
+      margin-left: -4px;
+      color: var(--Grey60, #999);
+    }
   }
 
   .content {
