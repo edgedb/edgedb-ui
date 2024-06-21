@@ -112,6 +112,10 @@
     background-position: center;
     z-index: 0;
     filter: blur(16px) saturate(40%) brightness(var(--brightness, 100%));
+
+    @include darkTheme {
+      opacity: 0.7;
+    }
   }
 
   &.darkCard {
@@ -132,6 +136,10 @@
 
     .blogImage {
       filter: blur(16px) saturate(60%) brightness(var(--brightness, 100%));
+
+      @include darkTheme {
+        opacity: 1;
+      }
     }
   }
 }

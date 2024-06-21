@@ -46,7 +46,10 @@ export function InfoCards({
       ),
     },
     data?.latestBlogPost
-      ? {priority: 1, card: <BlogCard data={data.latestBlogPost[0]} />}
+      ? {
+          priority: 1,
+          card: <BlogCard data={data.latestBlogPost} />,
+        }
       : null,
     data?.latestUpdate
       ? {
@@ -137,7 +140,7 @@ export function InfoCard({
   return <Link className={styles.infoCard}>{content}</Link>;
 }
 
-function BlogCard({data}: {data: LatestInfo["latestBlogPost"][number]}) {
+function BlogCard({data}: {data: LatestInfo["latestBlogPost"]}) {
   return (
     <a
       href={data.url}

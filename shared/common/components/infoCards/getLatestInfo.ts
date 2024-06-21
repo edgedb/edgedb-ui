@@ -7,15 +7,13 @@ const latestInfoUrl =
   "https://www.edgedb.com/latestInfo.json";
 
 const latestInfoType = z.object({
-  latestBlogPost: z.array(
-    z.object({
-      title: z.string(),
-      url: z.string(),
-      publishedTimestamp: z.number(),
-      imageUrl: z.string(),
-      imageBrightness: z.number(),
-    })
-  ),
+  latestBlogPost: z.object({
+    title: z.string(),
+    url: z.string(),
+    publishedTimestamp: z.number(),
+    imageUrl: z.string(),
+    imageBrightness: z.number(),
+  }),
   latestUpdate: z.object({
     title: z.string(),
     url: z.string(),
