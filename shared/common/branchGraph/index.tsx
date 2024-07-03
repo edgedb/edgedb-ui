@@ -365,7 +365,10 @@ function BranchGraphNode({
   const [hovered, setHovered] = useState(false);
   let connector: JSX.Element | null = null;
 
-  if (node.parentNode) {
+  if (
+    node.parentNode &&
+    (node.branchIndex == null || node.branchIndex === 0)
+  ) {
     const straightLine = node.parentNode.row === node.row;
 
     connector = (
@@ -440,6 +443,17 @@ function BranchGraphNode({
               setActiveMigration={setActiveMigrationItem}
               getMigrationIdRef={getMigrationIdRef}
             />
+          ) : null}
+
+          {node.branchIndex === 0 && item.children.length ? (
+            <svg
+              className={styles.line}
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 31 31"
+              preserveAspectRatio="none"
+            >
+              <path d="M 0 15.5 H 31" />
+            </svg>
           ) : null}
 
           {node.branchIndex > 0 ? (

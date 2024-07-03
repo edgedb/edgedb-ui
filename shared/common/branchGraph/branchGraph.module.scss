@@ -228,6 +228,9 @@
 }
 
 .branchNode {
+  justify-self: stretch;
+  display: flex;
+
   &.rootBranch {
     margin-left: 32px;
   }
@@ -247,18 +250,8 @@
   }
 }
 
+.branchNode,
 .migrationNode {
-  min-width: max(64px, 100%);
-  width: max-content;
-  justify-self: stretch;
-  display: flex;
-  justify-content: center;
-
-  .migrationId {
-    position: relative;
-    top: -8px;
-  }
-
   .line,
   .dot {
     position: absolute;
@@ -269,6 +262,19 @@
     height: 31px;
     top: 5px;
     pointer-events: none;
+  }
+}
+
+.migrationNode {
+  min-width: max(64px, 100%);
+  width: max-content;
+  justify-self: stretch;
+  display: flex;
+  justify-content: center;
+
+  .migrationId {
+    position: relative;
+    top: -8px;
   }
 
   .line.root {
