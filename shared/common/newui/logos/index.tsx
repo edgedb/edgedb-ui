@@ -17,3 +17,18 @@ export function GithubLogo({className}: {className?: string}) {
     </svg>
   );
 }
+
+export function VercelLogo({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path d="M12.8302 4L22.6604 21H3L12.8302 4Z" fill="currentColor" />
+    </svg>
+  );
+}

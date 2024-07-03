@@ -84,7 +84,7 @@ export interface HeaderNavColProps<LinkProps> {
   showCursor?: boolean;
   closeDropdown: () => void;
   itemGroups:
-    | {
+    | ({
         header: string;
         items:
           | {
@@ -100,7 +100,7 @@ export interface HeaderNavColProps<LinkProps> {
           | null
           | string;
         emptyMessage?: string;
-      }[];
+      } | null)[];
   currentOrgSlug?: string;
   currentInstanceName?: string;
   currentDatabaseName?: string;
@@ -129,52 +129,55 @@ export function HeaderNavCol<LinkProps>({
         [styles.showCursor]: showCursor,
       })}
     >
-      {itemGroups.map((group) =>
-        !group.items ? (
-          <Fragment key={group.header}>
-            <div className={styles.header}>{group.header}</div>
-            <Spinner className={styles.dbSpinner} size={20} />
-          </Fragment>
-        ) : typeof group.items === "string" ? (
-          <Fragment key={group.header}>
-            <div className={styles.header}>{group.header}</div>
-            <div className={styles.dbFetchError}>{group.items}</div>
-          </Fragment>
-        ) : group.items.length || group.emptyMessage ? (
-          <Fragment key={group.header}>
-            <div className={styles.header}>{group.header}</div>
-            {group.items.length ? (
-              group.items.map((item) => (
-                <Link
-                  key={item.key}
-                  className={cn(styles.item, {
-                    [styles.selected]: item.selected,
-                  })}
-                  {...item.linkProps}
-                  onMouseEnter={item.onHover}
-                  onClick={() => {
-                    closeDropdown();
-                    item.onClick?.();
-                  }}
-                >
-                  {item.avatarUrl ? (
-                    <div
-                      className={styles.avatar}
-                      style={{
-                        backgroundImage: `url(${item.avatarUrl})`,
-                      }}
-                    />
-                  ) : null}
-                  <span>{item.label}</span>
-                  {!!item.checked && <CheckIcon />}
-                </Link>
-              ))
-            ) : (
-              <div className={styles.noItems}>{group.emptyMessage}</div>
-            )}
-          </Fragment>
-        ) : null
-      )}
+      {itemGroups
+        .filter((group) => group != null)
+        .map((_group) => {
+          const group = _group!;
+          return !group.items ? (
+            <Fragment key={group.header}>
+              <div className={styles.header}>{group.header}</div>
+              <Spinner className={styles.dbSpinner} size={20} />
+            </Fragment>
+          ) : typeof group.items === "string" ? (
+            <Fragment key={group.header}>
+              <div className={styles.header}>{group.header}</div>
+              <div className={styles.dbFetchError}>{group.items}</div>
+            </Fragment>
+          ) : group.items.length || group.emptyMessage ? (
+            <Fragment key={group.header}>
+              <div className={styles.header}>{group.header}</div>
+              {group.items.length ? (
+                group.items.map((item) => (
+                  <Link
+                    key={item.key}
+                    className={cn(styles.item, {
+                      [styles.selected]: item.selected,
+                    })}
+                    {...item.linkProps}
+                    onMouseEnter={item.onHover}
+                    onClick={() => {
+                      closeDropdown();
+                      item.onClick?.();
+                    }}
+                  >
+                    {item.avatarUrl ? (
+                      <div
+                        className={styles.avatar}
+                        style={{
+                          backgroundImage: `url(${item.avatarUrl})`,
+                        }}
+                      />
+                    ) : null}
+                    <span>{item.label}</span>
+                    {!!item.checked && <CheckIcon />}
+                  </Link>
+                ))
+              ) : (
+                <div className={styles.noItems}>{group.emptyMessage}</div>
+              )}
+            </Fragment>
+          ) : null;
+        })}
 
       <div className={styles.actions}>
         {action ? (
