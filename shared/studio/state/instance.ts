@@ -1,5 +1,5 @@
 import {createContext, useContext} from "react";
-import {computed, observable, runInAction, when} from "mobx";
+import {computed, observable, reaction, runInAction, when} from "mobx";
 import {
   Model,
   model,
@@ -129,6 +129,28 @@ export class InstanceState extends Model({
         });
       }
     );
+
+    return reaction(
+      () => [this.serverUrl, this.authToken, this.authUsername, this.roles],
+      () => (this._connections = new Map())
+    );
+  }
+
+  @observable.ref _connections = new Map<string, Connection>();
+  getConnection(dbName: string) {
+    let conn = this._connections.get(dbName);
+    if (!conn) {
+      conn = new Connection({
+        config: {
+          serverUrl: this.serverUrl,
+          authToken: this.authToken!,
+          database: dbName,
+          user: this.authUsername ?? this.roles![0],
+        },
+      });
+      this._connections.set(dbName, conn);
+    }
+    return conn;
   }
 
   @modelAction

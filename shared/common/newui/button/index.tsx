@@ -54,6 +54,7 @@ export interface LinkButtonProps extends _BaseButtonProps {
 }
 
 export function LinkButton({
+  className,
   kind,
   children,
   leftIcon,
@@ -63,11 +64,15 @@ export function LinkButton({
 }: LinkButtonProps) {
   return (
     <a
-      className={cn(styles.linkButton, {
-        [styles.primary]: kind === "primary",
-        [styles.outline]: kind === "outline",
-        [styles.disabled]: !!disabled,
-      })}
+      className={cn(
+        styles.linkButton,
+        {
+          [styles.primary]: kind === "primary",
+          [styles.outline]: kind === "outline",
+          [styles.disabled]: !!disabled,
+        },
+        className
+      )}
       {...props}
     >
       {leftIcon}

@@ -58,7 +58,7 @@ function sortMigrations(migrations: Migration[]): Migration[] {
   return sorted;
 }
 
-interface GraphItem {
+export interface GraphItem {
   name: string;
   parent: GraphItem | null;
   children: GraphItem[];
@@ -78,17 +78,7 @@ export async function getBranchGraphData(
   if (!migrationsData) {
     migrationsData = await Promise.all(
       instanceState.databases.map(async (dbName) => {
-        const conn = new Connection({
-          config: {
-            authToken: instanceState.authToken!,
-            user:
-              instanceState.authUsername ??
-              instanceState.roles?.[0] ??
-              "edgedb",
-            serverUrl: instanceState.serverUrl,
-            database: dbName,
-          },
-        });
+        const conn = instanceState.getConnection(dbName);
         return {
           branch: dbName,
           migrations: sortMigrations(
@@ -108,8 +98,6 @@ export async function getBranchGraphData(
   }
 
   migrationsData.sort((a, b) => a.branch.localeCompare(b.branch));
-
-  console.log(migrationsData);
 
   const graphRoots = new Set<GraphItem>();
   const emptyBranches: string[] = [];
@@ -155,6 +143,19 @@ export async function getBranchGraphData(
   }
 
   return {graphRoots, emptyBranches};
+}
+
+export function findGraphItemBranch(item: GraphItem) {
+  let currentItem = item;
+  const stack: GraphItem[] = [];
+  while (!currentItem.branches || currentItem.branches.length === 0) {
+    stack.push(...currentItem.children);
+    if (!stack.length) {
+      throw new Error("could not find branch for graph item");
+    }
+    currentItem = stack.shift()!;
+  }
+  return currentItem.branches[0];
 }
 
 export interface LayoutNode {

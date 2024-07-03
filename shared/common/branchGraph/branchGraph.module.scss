@@ -3,27 +3,58 @@
 .branchGraph {
   position: relative;
   border-radius: 12px;
-  border: 1px solid var(--Grey90, #e6e6e6);
-  background: var(--Grey97, #f7f7f7);
+  background: var(--branchGraphBg);
+  border: 1px solid var(--branchGraphBorder);
   height: 220px;
   min-width: 0;
   font-family: "Roboto Flex Variable", sans-serif;
-  overflow: hidden;
+
+  --branchGraphBg: var(--Grey95, #f2f2f2);
+  --branchGraphBorder: var(--Grey85, #d9d9d9);
+  --branchGraphLine: var(--Grey80, #ccc);
+
+  @include darkTheme {
+    --branchGraphBg: var(--Grey10, #1a1a1a);
+    --branchGraphBorder: var(--Grey22, #363636);
+    --branchGraphLine: var(--Grey30, #4d4d4d);
+  }
 }
 
 .scrollWrapper {
   overflow: auto;
   height: 100%;
   display: flex;
+  border-radius: 11px;
   @include hideScrollbar;
 
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    box-shadow: inset 0 0 8px 8px var(--Grey97, #f7f7f7);
+    border-radius: 11px;
+    box-shadow: inset 0 0 8px 8px var(--branchGraphBg);
     pointer-events: none;
     z-index: 1;
+  }
+
+  &.migrationPopupOpen {
+    overflow: hidden;
+  }
+}
+
+.centerWrapper {
+  display: flex;
+  width: max-content;
+  height: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  align-items: center;
+  padding: var(--extraPadding, 0px);
+  transition: padding-right 0.2s linear, padding-bottom 0.2s linear,
+    padding-top 0.2s 0.2s linear, padding-left 0.2s 0.2s linear;
+
+  .migrationPopupOpen & {
+    transition: none;
   }
 }
 
@@ -32,17 +63,17 @@
   top: 12px;
   right: 12px;
   border-radius: 6px;
-  border: 1px solid var(--Grey90, #e6e6e6);
+  border: 1px solid var(--branchGraphBorder);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: #f7f7f7;
+  background: var(--branchGraphBg);
   color: #999999;
   cursor: pointer;
   z-index: 1;
-  box-shadow: 0px 0px 16px 8px var(--Grey97, #f7f7f7);
+  box-shadow: 0px 0px 16px 8px var(--branchGraphBg);
 
   &.refreshing {
     pointer-events: none;
@@ -50,6 +81,11 @@
       animation: spin var(--rotationPeriod, 1s) infinite linear;
     }
   }
+}
+
+.bottomButton {
+  top: auto;
+  bottom: 12px;
 }
 
 @keyframes spin {
@@ -61,6 +97,11 @@
   }
 }
 
+.popupWrapper {
+  position: absolute;
+  z-index: 2;
+}
+
 .nodeGrid {
   display: grid;
   grid-auto-rows: 64px;
@@ -69,7 +110,7 @@
   justify-items: start;
   align-items: start;
   width: min-content;
-  padding: 34px 0;
+  padding: 34px;
   padding-right: 64px;
   margin: auto;
 
@@ -80,7 +121,7 @@
 
     svg {
       stroke-width: 1px;
-      stroke: var(--Grey80, #ccc);
+      stroke: var(--branchGraphLine);
       fill: none;
       width: 31px;
       height: 31px;
@@ -106,6 +147,11 @@
       }
     }
   }
+
+  .migrationPopupOpen & {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 .branchNode,
@@ -114,12 +160,47 @@
 
   .migrationId {
     position: absolute;
+    display: flex;
+    padding: 2px 4px 2px 8px;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
     color: var(--Grey50, #808080);
     font-family: "Roboto Mono Variable";
     font-size: 11px;
     font-style: normal;
     font-weight: 450;
     line-height: 16px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+      color: var(--Grey75, #bfbfbf);
+    }
+
+    &.active {
+      color: #000;
+    }
+
+    @include darkTheme {
+      &:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      svg {
+        color: var(--Grey30, #4d4d4d);
+      }
+
+      &.active {
+        color: #fff;
+      }
+    }
   }
 }
 
@@ -129,8 +210,8 @@
   }
 
   .migrationId {
-    left: 10px;
-    top: -20px;
+    left: 0px;
+    top: -24px;
   }
 
   .duplicateBranchConnector {
@@ -138,49 +219,80 @@
     top: -64px;
     left: 28px;
     stroke-width: 1px;
-    stroke: var(--Grey80, #ccc);
+    stroke: var(--branchGraphLine);
     stroke-dasharray: 4 4;
   }
 }
 
 .migrationNode {
-  min-width: 64px;
+  min-width: max(64px, 100%);
+  width: max-content;
   justify-self: stretch;
   display: flex;
   justify-content: center;
 
   .migrationId {
-    top: -4px;
+    position: relative;
+    top: -8px;
   }
 
   .line,
   .dot {
     position: absolute;
     stroke-width: 1px;
-    stroke: var(--Grey80, #ccc);
-    fill: var(--Grey97, #f7f7f7);
+    stroke: var(--branchGraphLine);
+    fill: var(--branchGraphBg);
     width: 100%;
     height: 31px;
     top: 5px;
+    pointer-events: none;
+  }
+
+  .line.root {
+    width: 50%;
+    left: 50%;
   }
 }
 
 .branchButton {
   position: relative;
   display: flex;
-  padding: 7px;
   flex-direction: column;
-  gap: 4px;
+  max-width: 300px;
   border-radius: 6px;
-  border: 1px solid var(--Grey90, #e6e6e6);
+  border: 1px solid var(--Grey85, #d9d9d9);
   background: #fff;
   box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
-  text-decoration: none;
   z-index: 1;
+
+  &.hovered {
+    background: #fafafa;
+
+    .branchName svg {
+      transform: translateX(2px);
+    }
+    .githubDetails {
+      background: var(--Grey95, #f2f2f2);
+    }
+  }
+
+  @include darkTheme {
+    border: 1px solid var(--panel_border, #4d4d4d);
+    background: var(--panel_background, #363636);
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+
+    &.hovered {
+      background: #404040;
+
+      .githubDetails {
+        background: var(--Grey20, #333);
+      }
+    }
+  }
 
   .branchName {
     display: flex;
-    padding: 0px 2px 0px 8px;
+    padding: 8px 6px 8px 14px;
     justify-content: space-between;
     align-items: center;
     color: var(--main_text_color, #4d4d4d);
@@ -189,22 +301,48 @@
     font-weight: 500;
     line-height: 24px;
     white-space: nowrap;
+    text-decoration: none;
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      direction: rtl;
+    }
 
     svg {
       margin-left: 8px;
+      flex-shrink: 0;
+      color: var(--Grey50, #808080);
+      transition: transform 0.2s;
+    }
+
+    @include darkTheme {
+      --main_text_color: #ccc;
+
+      svg {
+        color: var(--Grey60, #999999);
+      }
     }
   }
 
   .githubDetails {
+    position: relative;
     display: flex;
-    padding: 2px 4px;
+    padding: 3px 4px;
+    margin: 4px;
+    margin-top: -3px;
     align-items: center;
-    border-radius: 4px;
+    border-radius: 3px;
     background: var(--Grey97, #f7f7f7);
-    color: var(--Grey50, #808080);
+    color: var(--tertiary_text_color, #808080);
     font-size: 12px;
     font-weight: 450;
     line-height: 18px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--Grey95, #f2f2f2);
+    }
 
     svg {
       width: 16px;
@@ -233,6 +371,240 @@
     .githubIcon {
       color: var(--Grey30, #4d4d4d) !important;
       margin-left: auto;
+    }
+
+    @include darkTheme {
+      background: var(--Grey16, #292929);
+      --tertiary_text_color: #999;
+
+      &:hover {
+        background: var(--Grey18, #2e2e2e);
+      }
+
+      .githubIcon {
+        color: var(--Grey80, #ccc) !important;
+      }
+    }
+  }
+}
+
+.githubBranchPopup,
+.migrationPopup {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 8px;
+  background: var(--panel_background, #fff);
+  filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.15))
+    drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.08));
+
+  .arrow {
+    position: absolute;
+    top: -13px;
+    left: calc(50% - 16px);
+    color: var(--panel_background, #fff);
+  }
+
+  @include darkTheme {
+    --panel_background: #363636;
+
+    filter: drop-shadow(0px 2px 8px rgba(0, 0, 0, 0.5))
+      drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.3));
+  }
+}
+
+.githubBranchPopup {
+  display: flex;
+  padding: 6px 6px 6px 12px;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--secondary_text_color, #666);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 450;
+  line-height: 18px;
+  white-space: nowrap;
+
+  a {
+    display: flex;
+    padding: 2px 4px;
+    align-items: center;
+    border-radius: 4px;
+    background: var(--Grey97, #f7f7f7);
+    color: var(--main_text_color, #4d4d4d);
+    font-family: "Roboto Mono Variable", monospace;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 450;
+    line-height: 16px;
+    text-decoration: none;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      color: var(--Grey50, #808080);
+    }
+  }
+
+  @include darkTheme {
+    --secondary_text_color: #b3b3b3;
+    --main_text_color: #ccc;
+
+    a {
+      background: var(--Grey16, #292929);
+    }
+  }
+}
+
+.migrationPopup {
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 12px;
+  width: 420px;
+  max-height: 400px;
+
+  .name {
+    color: var(--tertiary_text_color, #808080);
+    font-family: "Roboto Mono Variable";
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 450;
+    line-height: 16px;
+    padding: 0 8px;
+    align-self: center;
+    user-select: text;
+  }
+
+  .script {
+    display: flex;
+    position: relative;
+    border-radius: 8px;
+    background: var(--app_panel_background, #f7f7f7);
+    overflow: hidden;
+
+    .codeWrapper {
+      overflow: auto;
+    }
+
+    pre {
+      padding: 14px 18px;
+      padding-right: 44px;
+      margin: 0;
+      color: var(--main_text_color, #4d4d4d);
+      font-family: "Roboto Mono Variable";
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 450;
+      line-height: 22px;
+      width: max-content;
+      user-select: text;
+    }
+
+    .copyButton {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      cursor: pointer;
+      color: var(--Grey70, #b3b3b3);
+      background: var(--app_panel_background, #f7f7f7);
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px 4px var(--app_panel_background, #f7f7f7);
+
+      &:hover {
+        color: var(--Grey55, #8c8c8c);
+      }
+
+      &.copied {
+        color: #70b53a !important;
+      }
+
+      @include darkTheme {
+        color: var(--Grey30, #4d4d4d);
+
+        &:hover {
+          color: var(--Grey40, #666);
+        }
+      }
+    }
+  }
+
+  .loading {
+    color: var(--Grey65, #a6a6a6);
+    padding: 20px;
+    margin: auto;
+  }
+
+  .prevItems,
+  .nextItems {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    top: 0;
+  }
+
+  .prevItems {
+    right: calc(100% + 8px);
+
+    .itemButton {
+      padding-left: 8px;
+      padding-right: 12px;
+
+      svg {
+        transform: rotate(90deg);
+      }
+    }
+  }
+  .nextItems {
+    left: calc(100% + 8px);
+  }
+
+  .itemButton {
+    display: flex;
+    padding: 8px;
+    padding-left: 12px;
+    align-items: center;
+    border-radius: 8px;
+    background: var(--panel_background, #fff);
+    color: var(--tertiary_text_color, #808080);
+    font-family: "Roboto Mono Variable", monospace;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 450;
+    line-height: 22px;
+    cursor: pointer;
+
+    svg {
+      color: var(--Grey50, #808080);
+      transform: rotate(-90deg);
+    }
+  }
+
+  @include darkTheme {
+    --main_text_color: #ccc;
+    --tertiary_text_color: #999;
+    --app_panel_background: #242424;
+  }
+
+  @include isMobile {
+    .prevItems,
+    .nextItems {
+      top: calc(100% + 8px);
+    }
+
+    .prevItems {
+      left: 0;
+      right: auto;
+    }
+    .nextItems {
+      right: 0;
+      left: auto;
     }
   }
 }
