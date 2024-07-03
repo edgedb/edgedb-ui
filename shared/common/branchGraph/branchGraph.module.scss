@@ -56,6 +56,29 @@
   .migrationPopupOpen & {
     transition: none;
   }
+
+  .loading {
+    margin: auto;
+    color: var(--Grey60, #999);
+
+    @include darkTheme {
+      color: var(--Grey40, #666);
+    }
+  }
+
+  .error {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin: auto;
+    padding: 48px;
+    font-weight: 450;
+    color: #b84444;
+
+    @include darkTheme {
+      color: #e26f6f;
+    }
+  }
 }
 
 .floatingButton {

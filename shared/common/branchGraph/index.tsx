@@ -1,5 +1,4 @@
 import {
-  AnchorHTMLAttributes,
   PropsWithChildren,
   createContext,
   useCallback,
@@ -28,6 +27,7 @@ import {
   MigrationsListIcon,
   CopyIcon,
   ChevronDownIcon,
+  WarningIcon,
 } from "@edgedb/common/newui";
 import {PopupArrow} from "../newui/icons/other";
 
@@ -72,8 +72,8 @@ type BranchLink = (
 
 export interface BranchGraphProps {
   className?: string;
-  instanceId: string;
-  instanceState: InstanceState;
+  instanceId?: string;
+  instanceState: InstanceState | Error | null;
   BranchLink: BranchLink;
   githubDetails?: BranchGraphGithubDetails;
   BottomButton?: (props: {className?: string}) => JSX.Element;
@@ -114,7 +114,13 @@ export const BranchGraph = observer(function BranchGraph({
   useResize(ref, ({width, height}) => setContainerSize({width, height}));
 
   useEffect(() => {
-    if (!refreshing) return;
+    if (
+      !refreshing ||
+      !instanceId ||
+      !(instanceState instanceof InstanceState)
+    ) {
+      return;
+    }
     getBranchGraphData(instanceId, instanceState).then((data) => {
       if (!data) return;
       const allNodes: LayoutNode[] = [];
@@ -137,7 +143,7 @@ export const BranchGraph = observer(function BranchGraph({
       setLayoutNodes(allNodes);
       setRefreshing(false);
     });
-  }, [refreshing]);
+  }, [refreshing, instanceId, instanceState]);
 
   const setActivePopup = useCallback(
     (el: HTMLElement, popup: JSX.Element) => {
@@ -251,7 +257,7 @@ export const BranchGraph = observer(function BranchGraph({
   }, [activeMigrationItem]);
 
   return (
-    <InstanceStateContext.Provider value={instanceState}>
+    <InstanceStateContext.Provider value={instanceState as InstanceState}>
       <CustomScrollbars
         className={cn(styles.branchGraph, className)}
         innerClass={styles.nodeGrid}
@@ -272,7 +278,12 @@ export const BranchGraph = observer(function BranchGraph({
           }
         >
           <div className={styles.centerWrapper}>
-            {layoutNodes ? (
+            {instanceState instanceof Error ? (
+              <div className={styles.error}>
+                <WarningIcon />
+                Error connecting to instance
+              </div>
+            ) : layoutNodes ? (
               <div className={styles.nodeGrid}>
                 {layoutNodes.map((node) => (
                   <BranchGraphNode
@@ -292,35 +303,42 @@ export const BranchGraph = observer(function BranchGraph({
                 ))}
               </div>
             ) : (
-              <div>loading...</div>
+              <div className={styles.loading}>
+                <Spinner size={20} />
+              </div>
             )}
           </div>
         </div>
-        <button
-          className={cn(styles.floatingButton, {
-            [styles.refreshing]: refreshing,
-          })}
-          onClick={() => {
-            localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
-            setRefreshing(true);
-          }}
-        >
-          <SyncIcon />
-        </button>
-        {BottomButton ? (
-          <BottomButton
-            className={cn(styles.floatingButton, styles.bottomButton)}
-          />
-        ) : null}
 
-        {activePopup ? (
-          <div
-            ref={popupRef}
-            className={styles.popupWrapper}
-            style={activePopup.pos}
-          >
-            {activePopup.el}
-          </div>
+        {layoutNodes ? (
+          <>
+            <button
+              className={cn(styles.floatingButton, {
+                [styles.refreshing]: refreshing,
+              })}
+              onClick={() => {
+                localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
+                setRefreshing(true);
+              }}
+            >
+              <SyncIcon />
+            </button>
+            {BottomButton ? (
+              <BottomButton
+                className={cn(styles.floatingButton, styles.bottomButton)}
+              />
+            ) : null}
+
+            {activePopup ? (
+              <div
+                ref={popupRef}
+                className={styles.popupWrapper}
+                style={activePopup.pos}
+              >
+                {activePopup.el}
+              </div>
+            ) : null}
+          </>
         ) : null}
       </CustomScrollbars>
     </InstanceStateContext.Provider>

@@ -1,4 +1,3 @@
-import {Connection} from "@edgedb/studio/state/connection";
 import {InstanceState} from "@edgedb/studio/state/instance";
 
 interface Migration {
