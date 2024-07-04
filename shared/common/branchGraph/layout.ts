@@ -72,9 +72,15 @@ export async function getBranchGraphData(
     return null;
   }
 
+  const databases = new Set(instanceState.databases);
+
   let migrationsData = _getBranchGraphDataFromCache(instanceId);
 
-  if (!migrationsData) {
+  if (
+    !migrationsData ||
+    migrationsData.length != databases.size ||
+    !migrationsData.every(({branch}) => databases.has(branch))
+  ) {
     migrationsData = await Promise.all(
       instanceState.databases.map(async (dbName) => {
         const conn = instanceState.getConnection(dbName);

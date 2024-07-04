@@ -478,7 +478,11 @@ function BranchGraphNode({
               onMouseEnter={() => setHovered(true)}
               onMouseLeave={() => setHovered(false)}
             >
-              <span title={branchName}>{branchName}&lrm;</span>
+              <span>
+                <bdo dir="ltr" title={branchName}>
+                  {branchName}
+                </bdo>
+              </span>
               <ArrowRightIcon />
             </BranchLink>
             {githubBranch ? (

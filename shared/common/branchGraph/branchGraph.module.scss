@@ -332,7 +332,7 @@
     white-space: nowrap;
     text-decoration: none;
 
-    span {
+    > span {
       overflow: hidden;
       text-overflow: ellipsis;
       direction: rtl;
