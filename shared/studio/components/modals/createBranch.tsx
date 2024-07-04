@@ -93,11 +93,17 @@ export default function CreateBranchModal({
             {...register("branchName", {
               required: "Database name is required",
               pattern: {
-                value: /^[A-Za-z]\w*$/,
+                value: /^[^@].*$/,
                 message: legacy
                   ? "Invalid database name"
                   : "Invalid branch name",
               },
+              validate: (v) =>
+                v.startsWith("__") && v.endsWith("__")
+                  ? legacy
+                    ? "Invalid database name"
+                    : "Invalid branch name"
+                  : true,
             })}
             error={formState.errors.branchName?.message}
           />
