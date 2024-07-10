@@ -9,7 +9,7 @@ export function ChevronDownIcon() {
     >
       <path
         d="M8.5 11L12 14.5L15.5 11"
-        stroke="#808080"
+        stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
