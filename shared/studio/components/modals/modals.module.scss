@@ -1,15 +1,4 @@
-.greenButton {
-  --buttonBg: var(--app-accent-green);
-  --buttonTextColour: #fff;
-}
-
 .modalContent {
-  overflow: visible !important;
-}
-
-.modalBody {
-  .errorText {
-    max-width: 300px;
-    color: #db5246;
-  }
+  width: 280px;
+  overflow: visible;
 }

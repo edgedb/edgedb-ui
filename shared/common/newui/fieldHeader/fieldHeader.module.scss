@@ -1,0 +1,22 @@
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  padding: 0 4px;
+}
+
+.optional {
+  opacity: 0.5;
+  margin-left: 6px;
+  font-weight: 450;
+}
+
+.headerNote {
+  color: var(--Grey50, #808080);
+  font-weight: 400;
+  margin-left: auto;
+}

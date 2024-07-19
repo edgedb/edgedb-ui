@@ -17,19 +17,20 @@ export interface ButtonProps extends _BaseButtonProps {
   onClick?: () => void;
 }
 
-export function Button({
+function _Button({
   className,
   kind,
+  type,
   children,
   leftIcon,
   rightIcon,
   disabled,
   loading,
   ...props
-}: ButtonProps) {
+}: ButtonProps & {type: "button" | "submit"}) {
   return (
     <button
-      type="button"
+      type={type}
       className={cn(
         styles.button,
         {
@@ -47,6 +48,14 @@ export function Button({
     </button>
   );
 }
+
+export const Button = (props: ButtonProps) => (
+  <_Button {...props} type="button" />
+);
+
+export const SubmitButton = (props: Omit<ButtonProps, "onClick">) => (
+  <_Button {...props} type="submit" />
+);
 
 export interface LinkButtonProps extends _BaseButtonProps {
   href: string;

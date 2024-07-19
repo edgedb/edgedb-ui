@@ -38,6 +38,11 @@
     }
   }
 
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
   @include darkTheme {
     color: #ccc;
 

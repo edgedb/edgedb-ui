@@ -11,6 +11,7 @@ import {createPortal} from "react-dom";
 const modalContext = createContext<{
   modal: JSX.Element | null;
   openModal: (modal: JSX.Element | null, transition?: boolean) => () => void;
+  _modalOpen: boolean;
 }>(null!);
 
 export function ModalProvider({children}: PropsWithChildren<{}>) {
@@ -66,7 +67,11 @@ export function ModalProvider({children}: PropsWithChildren<{}>) {
 
   return (
     <modalContext.Provider
-      value={{modal: transitionState === false ? null : modal, openModal}}
+      value={{
+        modal: modal,
+        openModal,
+        _modalOpen: !!modal && transitionState !== false,
+      }}
     >
       {children}
       <div
@@ -87,25 +92,42 @@ export function ModalProvider({children}: PropsWithChildren<{}>) {
   );
 }
 
-export function useModal() {
-  return useContext(modalContext);
+const modalPlaceholder = <></>;
+
+export function useModal(): {
+  modal: JSX.Element | null;
+  openModal: (modal: JSX.Element | null, transition?: boolean) => () => void;
+};
+export function useModal(modal: JSX.Element): {
+  modal: JSX.Element | null;
+  openModal: (transition?: boolean) => () => void;
+};
+export function useModal(modal?: JSX.Element): {
+  modal: JSX.Element | null;
+  openModal:
+    | ((modal: JSX.Element | null, transition?: boolean) => () => void)
+    | ((transition?: boolean) => () => void);
+} {
+  const ctx = useContext(modalContext);
+
+  if (!modal) {
+    return {
+      modal: ctx._modalOpen ? ctx.modal : null,
+      openModal: ctx.openModal,
+    };
+  }
+
+  return {
+    modal:
+      ctx.modal === modalPlaceholder
+        ? createPortal(modal, document.getElementById("modal_target")!)
+        : null,
+    openModal: (transition?: boolean) =>
+      ctx.openModal(modalPlaceholder, transition),
+  };
 }
 
 export function useCloseModal() {
   const {openModal} = useContext(modalContext);
-  return () => openModal(null);
-}
-
-const modalPlaceholder = <></>;
-
-export function useModal_v2(modal: JSX.Element) {
-  const {modal: placeholder, openModal} = useContext(modalContext);
-
-  return {
-    modal:
-      placeholder === modalPlaceholder
-        ? createPortal(modal, document.getElementById("modal_target")!)
-        : null,
-    openModal: () => openModal(modalPlaceholder),
-  };
+  return (transition?: boolean) => openModal(null, transition);
 }

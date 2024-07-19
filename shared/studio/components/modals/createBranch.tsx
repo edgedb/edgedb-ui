@@ -3,13 +3,13 @@ import {useForm} from "react-hook-form";
 
 import {useModal} from "@edgedb/common/hooks/useModal";
 import {
-  ModalOverlay,
+  Checkbox,
   Modal,
-  ModalTextField,
-  ModalSelectField,
-  ModalCheckboxField,
-} from "@edgedb/common/ui/modal";
-import Button from "@edgedb/common/ui/button";
+  ModalContent,
+  Select,
+  SubmitButton,
+  TextInput,
+} from "@edgedb/common/newui";
 
 import {InstanceState} from "../../state/instance";
 
@@ -71,69 +71,66 @@ export default function CreateBranchModal({
   });
 
   return (
-    <ModalOverlay onOverlayClick={() => openModal(null)}>
-      <Modal
-        title={legacy ? "New Database" : "New Branch"}
-        close={() => openModal(null)}
-        contentClass={styles.modalContent}
-        actions={
-          <Button
-            className={styles.greenButton}
-            loading={formState.isSubmitting}
-            disabled={!formState.isValid || formState.isSubmitting}
-            size="large"
-            label={legacy ? "Create database" : "Create branch"}
-            onClick={onSubmit}
-          />
-        }
-      >
-        <form className={styles.modalBody} onSubmit={onSubmit}>
-          <ModalTextField
-            label={legacy ? "Database Name" : "Branch Name"}
-            {...register("branchName", {
-              required: "Database name is required",
-              pattern: {
-                value: /^[^@].*$/,
-                message: legacy
+    <Modal
+      title={legacy ? "New Database" : "New Branch"}
+      onClose={() => openModal(null, true)}
+      onSubmit={onSubmit}
+      formError={error}
+      footerButtons={
+        <SubmitButton
+          kind="primary"
+          loading={formState.isSubmitting}
+          disabled={!formState.isValid}
+        >
+          {legacy ? "Create database" : "Create branch"}
+        </SubmitButton>
+      }
+    >
+      <ModalContent className={styles.modalContent}>
+        <TextInput
+          label={legacy ? "Database name" : "Branch name"}
+          {...register("branchName", {
+            required: "Database name is required",
+            pattern: {
+              value: /^[^@].*$/,
+              message: legacy
+                ? "Invalid database name"
+                : "Invalid branch name",
+            },
+            validate: (v) =>
+              v.startsWith("__") && v.endsWith("__")
+                ? legacy
                   ? "Invalid database name"
-                  : "Invalid branch name",
-              },
-              validate: (v) =>
-                v.startsWith("__") && v.endsWith("__")
-                  ? legacy
-                    ? "Invalid database name"
-                    : "Invalid branch name"
-                  : true,
-            })}
-            error={formState.errors.branchName?.message}
-          />
-          {!legacy ? (
-            <>
-              <ModalSelectField
-                label="From branch"
-                items={[
-                  {id: null, label: <i>Empty</i>},
-                  ...(instanceState.databases ?? []).map((db) => ({
-                    id: db,
-                    label: db,
-                  })),
-                ]}
-                selectedItemId={watch("fromBranch")}
-                onChange={({id}) => setValue("fromBranch", id)}
-              />
+                  : "Invalid branch name"
+                : true,
+          })}
+          error={formState.errors.branchName?.message}
+        />
 
-              <ModalCheckboxField
-                label="Copy data"
-                {...register("copyData", {
-                  disabled: watch("fromBranch") == null,
-                })}
-              />
-            </>
-          ) : null}
+        {!legacy ? (
+          <>
+            <Select
+              label="From branch"
+              items={[
+                {id: null, label: <i>Empty</i>},
+                ...(instanceState.databases ?? []).map((db) => ({
+                  id: db,
+                  label: db,
+                })),
+              ]}
+              selectedItemId={watch("fromBranch")}
+              onChange={({id}) => setValue("fromBranch", id)}
+            />
 
-          <div className={styles.errorText}>{error}</div>
-        </form>
-      </Modal>
-    </ModalOverlay>
+            <Checkbox
+              label="Copy data"
+              checked={watch("copyData")}
+              onChange={(checked) => setValue("copyData", checked)}
+              disabled={watch("fromBranch") == null}
+            />
+          </>
+        ) : null}
+      </ModalContent>
+    </Modal>
   );
 }

@@ -6,29 +6,6 @@
   gap: 2px;
   color: #4d4d4d;
 
-  .fieldHeader {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 14px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 24px;
-    padding: 0 4px;
-  }
-
-  .optional {
-    opacity: 0.5;
-    margin-left: 6px;
-    font-weight: 450;
-  }
-
-  .headerNote {
-    color: var(--Grey50, #808080);
-    font-weight: 400;
-    margin-left: auto;
-  }
-
   .inputWrapper {
     position: relative;
     align-self: stretch;
@@ -53,19 +30,20 @@
     font-size: 14px;
     font-weight: 400;
     color: var(--Grey50, #808080);
+    white-space: preserve;
   }
 
   input,
   textarea {
-    height: 40px;
     align-self: stretch;
     border-radius: 6px;
     border: 1px solid var(--Grey90, #e6e6e6);
     background: #fff;
-    padding: 0 12px;
+    padding: 9px 12px;
     font-family: "Roboto Mono Variable", monospace;
     font-size: 14px;
     font-weight: 400;
+    line-height: 22px;
     color: inherit;
     outline: 0;
     min-width: 0;
@@ -74,6 +52,10 @@
     &:read-only {
       background: #f7f7f7;
       outline: none;
+    }
+
+    &:focus + .error div {
+      opacity: 1;
     }
   }
 

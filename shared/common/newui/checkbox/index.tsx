@@ -7,6 +7,7 @@ export interface CheckboxProps {
   label?: string | JSX.Element;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
 export function Checkbox({
@@ -14,13 +15,19 @@ export function Checkbox({
   label,
   checked,
   onChange,
+  disabled,
 }: CheckboxProps) {
   return (
-    <label className={cn(styles.checkbox, className)}>
+    <label
+      className={cn(styles.checkbox, className, {
+        [styles.disabled]: !!disabled,
+      })}
+    >
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
+        disabled={disabled}
       />
       <div className={styles.check} />
       {label}
