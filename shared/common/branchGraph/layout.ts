@@ -64,10 +64,10 @@ export interface GraphItem {
   branches: string[] | null;
 }
 
-export async function getBranchGraphData(
+export async function fetchMigrationsData(
   instanceId: string,
   instanceState: InstanceState
-) {
+): Promise<MigrationsData[] | null> {
   if (instanceState.databases === null) {
     return null;
   }
@@ -89,11 +89,11 @@ export async function getBranchGraphData(
           migrations: sortMigrations(
             ((
               await conn.query(`
-            select schema::Migration {
-              id,
-              name,
-              parentId := assert_single(.parents.id)
-            }`)
+              select schema::Migration {
+                id,
+                name,
+                parentId := assert_single(.parents.id)
+              }`)
             ).result as Migration[]) ?? []
           ),
         };
@@ -102,6 +102,15 @@ export async function getBranchGraphData(
     _storeBranchGraphDataInCache(instanceId, migrationsData);
   }
 
+  return migrationsData;
+}
+
+export interface GraphData {
+  graphRoots: Set<GraphItem>;
+  emptyBranches: string[];
+}
+
+export function buildBranchGraph(migrationsData: MigrationsData[]): GraphData {
   migrationsData.sort((a, b) => a.branch.localeCompare(b.branch));
 
   const graphRoots = new Set<GraphItem>();
@@ -178,7 +187,15 @@ interface StackNode {
   parentNode: LayoutNode | null;
 }
 
-export function layoutBranchGraph(graphRoot: GraphItem, initialCol = 0) {
+export interface LayoutData {
+  nodes: LayoutNode[];
+  maxCol: number;
+}
+
+export function layoutBranchGraph(
+  graphRoot: GraphItem,
+  initialCol = 0
+): LayoutData {
   const nodes: LayoutNode[] = [];
   const stack: StackNode[] = [
     {col: initialCol, row: 0, item: graphRoot, parentNode: null},
@@ -272,4 +289,25 @@ export function layoutBranchGraph(graphRoot: GraphItem, initialCol = 0) {
   }
 
   return {nodes, maxCol};
+}
+
+export function joinGraphLayouts(data: GraphData): LayoutNode[] {
+  const allNodes: LayoutNode[] = [];
+  let startCol = 0;
+  for (const graphRoot of data.graphRoots) {
+    const {nodes, maxCol} = layoutBranchGraph(graphRoot, startCol);
+    allNodes.push(...nodes);
+    startCol = maxCol + 1;
+  }
+  for (const branch of data.emptyBranches) {
+    allNodes.push({
+      row: 0,
+      col: startCol,
+      items: [{name: "", parent: null, children: [], branches: [branch]}],
+      branchIndex: 0,
+      parentNode: null,
+    });
+    startCol += 1;
+  }
+  return allNodes;
 }

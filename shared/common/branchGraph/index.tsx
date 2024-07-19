@@ -34,9 +34,10 @@ import {PopupArrow} from "../newui/icons/other";
 import {
   GraphItem,
   LayoutNode,
+  buildBranchGraph,
+  fetchMigrationsData,
   findGraphItemBranch,
-  getBranchGraphData,
-  layoutBranchGraph,
+  joinGraphLayouts,
 } from "./layout";
 
 import styles from "./branchGraph.module.scss";
@@ -79,7 +80,9 @@ export interface BranchGraphProps {
   BottomButton?: (props: {className?: string}) => JSX.Element;
 }
 
-const InstanceStateContext = createContext<InstanceState>(null!);
+export const BranchGraphContext = createContext<{
+  fetchMigration: (graphItem: GraphItem) => Promise<string>;
+}>(null!);
 
 type SetActivePopup = (el: HTMLElement, popup: JSX.Element) => void;
 type GetMigrationIdRef = (
@@ -88,18 +91,98 @@ type GetMigrationIdRef = (
 type SetActiveMigrationItem = (item: GraphItem) => void;
 
 export const BranchGraph = observer(function BranchGraph({
-  className,
   instanceId,
   instanceState,
-  BranchLink,
-  githubDetails,
-  BottomButton,
+  ...props
 }: BranchGraphProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
-
   const [refreshing, setRefreshing] = useState(true);
   const [layoutNodes, setLayoutNodes] = useState<LayoutNode[] | null>(null);
+
+  useEffect(() => {
+    if (
+      !refreshing ||
+      !instanceId ||
+      !(instanceState instanceof InstanceState)
+    ) {
+      return;
+    }
+    fetchMigrationsData(instanceId, instanceState).then((data) => {
+      if (!data) return;
+
+      const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
+      setLayoutNodes(layoutNodes);
+      setRefreshing(false);
+    });
+  }, [refreshing, instanceId, instanceState]);
+
+  const fetchMigration =
+    instanceState instanceof Error
+      ? () => {
+          throw new Error(`Error connecting to instance`);
+        }
+      : async (graphItem: GraphItem) => {
+          const conn = instanceState!.getConnection(
+            findGraphItemBranch(graphItem)
+          );
+          const result = await conn.query(
+            `select (
+        select schema::Migration
+        filter .name = <str>$name
+      ).script`,
+            {name: graphItem.name}
+          );
+          const script = result.result?.[0];
+          if (script == null) {
+            throw new Error(`No migration found for ${graphItem.name}`);
+          }
+          return script;
+        };
+
+  return (
+    <BranchGraphContext.Provider
+      value={{
+        fetchMigration,
+      }}
+    >
+      <_BranchGraphRenderer
+        layoutNodes={
+          instanceState instanceof Error ? instanceState : layoutNodes
+        }
+        {...props}
+        TopButton={({className}) => (
+          <button
+            className={cn(className, {
+              [styles.refreshing]: refreshing,
+            })}
+            onClick={() => {
+              localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
+              setRefreshing(true);
+            }}
+          >
+            <SyncIcon />
+          </button>
+        )}
+      />
+    </BranchGraphContext.Provider>
+  );
+});
+
+export function _BranchGraphRenderer({
+  className,
+  BranchLink,
+  TopButton,
+  BottomButton,
+  layoutNodes,
+  githubDetails,
+}: Pick<
+  BranchGraphProps,
+  "className" | "BranchLink" | "BottomButton" | "githubDetails"
+> & {
+  layoutNodes: LayoutNode[] | null | Error;
+  TopButton?: (props: {className?: string}) => JSX.Element;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   const migrationIdRefs = useRef(new Map<GraphItem, HTMLElement>());
   const [activeMigrationItem, _setActiveMigrationItem] =
@@ -112,38 +195,6 @@ export const BranchGraph = observer(function BranchGraph({
   const [containerSize, setContainerSize] = useState({width: 0, height: 0});
 
   useResize(ref, ({width, height}) => setContainerSize({width, height}));
-
-  useEffect(() => {
-    if (
-      !refreshing ||
-      !instanceId ||
-      !(instanceState instanceof InstanceState)
-    ) {
-      return;
-    }
-    getBranchGraphData(instanceId, instanceState).then((data) => {
-      if (!data) return;
-      const allNodes: LayoutNode[] = [];
-      let startCol = 0;
-      for (const graphRoot of data.graphRoots) {
-        const {nodes, maxCol} = layoutBranchGraph(graphRoot, startCol);
-        allNodes.push(...nodes);
-        startCol = maxCol + 1;
-      }
-      for (const branch of data.emptyBranches) {
-        allNodes.push({
-          row: 0,
-          col: startCol,
-          items: [{name: "", parent: null, children: [], branches: [branch]}],
-          branchIndex: 0,
-          parentNode: null,
-        });
-        startCol += 1;
-      }
-      setLayoutNodes(allNodes);
-      setRefreshing(false);
-    });
-  }, [refreshing, instanceId, instanceState]);
 
   const setActivePopup = useCallback(
     (el: HTMLElement, popup: JSX.Element) => {
@@ -257,93 +308,81 @@ export const BranchGraph = observer(function BranchGraph({
   }, [activeMigrationItem]);
 
   return (
-    <InstanceStateContext.Provider value={instanceState as InstanceState}>
-      <CustomScrollbars
-        className={cn(styles.branchGraph, className)}
-        innerClass={styles.nodeGrid}
+    <CustomScrollbars
+      className={cn(styles.branchGraph, className)}
+      innerClass={styles.nodeGrid}
+    >
+      <div
+        ref={ref}
+        className={cn(styles.scrollWrapper, {
+          [styles.migrationPopupOpen]: activeMigrationItem != null,
+        })}
+        style={
+          activeMigrationItem
+            ? ({
+                "--extraPadding": `${
+                  Math.max(containerSize.width, containerSize.height) / 2
+                }px`,
+              } as any)
+            : undefined
+        }
       >
-        <div
-          ref={ref}
-          className={cn(styles.scrollWrapper, {
-            [styles.migrationPopupOpen]: activeMigrationItem != null,
-          })}
-          style={
-            activeMigrationItem
-              ? ({
-                  "--extraPadding": `${
-                    Math.max(containerSize.width, containerSize.height) / 2
-                  }px`,
-                } as any)
-              : undefined
-          }
-        >
-          <div className={styles.centerWrapper}>
-            {instanceState instanceof Error ? (
-              <div className={styles.error}>
-                <WarningIcon />
-                Error connecting to instance
-              </div>
-            ) : layoutNodes ? (
-              <div className={styles.nodeGrid}>
-                {layoutNodes.map((node) => (
-                  <BranchGraphNode
-                    key={
-                      node.items[0].name
-                        ? node.items[0].name + node.branchIndex
-                        : node.items[0].branches![0]
-                    }
-                    node={node}
-                    BranchLink={BranchLink}
-                    githubDetails={githubDetails}
-                    setActivePopup={setActivePopup}
-                    activeMigrationItem={activeMigrationItem}
-                    setActiveMigrationItem={setActiveMigrationItem}
-                    getMigrationIdRef={getMigrationIdRef}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.loading}>
-                <Spinner size={20} />
-              </div>
-            )}
-          </div>
+        <div className={styles.centerWrapper}>
+          {layoutNodes instanceof Error ? (
+            <div className={styles.error}>
+              <WarningIcon />
+              Error connecting to instance
+            </div>
+          ) : layoutNodes ? (
+            <div className={styles.nodeGrid}>
+              {layoutNodes.map((node) => (
+                <BranchGraphNode
+                  key={
+                    node.items[0].name
+                      ? node.items[0].name + node.branchIndex
+                      : node.items[0].branches![0]
+                  }
+                  node={node}
+                  BranchLink={BranchLink}
+                  githubDetails={githubDetails}
+                  setActivePopup={setActivePopup}
+                  activeMigrationItem={activeMigrationItem}
+                  setActiveMigrationItem={setActiveMigrationItem}
+                  getMigrationIdRef={getMigrationIdRef}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.loading}>
+              <Spinner size={20} />
+            </div>
+          )}
         </div>
+      </div>
 
-        {layoutNodes ? (
-          <>
-            <button
-              className={cn(styles.floatingButton, {
-                [styles.refreshing]: refreshing,
-              })}
-              onClick={() => {
-                localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
-                setRefreshing(true);
-              }}
+      {layoutNodes ? (
+        <>
+          {TopButton ? <TopButton className={styles.floatingButton} /> : null}
+          {BottomButton ? (
+            <BottomButton
+              className={cn(styles.floatingButton, styles.bottomButton)}
+            />
+          ) : null}
+
+          {activePopup ? (
+            <div
+              ref={popupRef}
+              className={styles.popupWrapper}
+              style={activePopup.pos}
             >
-              <SyncIcon />
-            </button>
-            {BottomButton ? (
-              <BottomButton
-                className={cn(styles.floatingButton, styles.bottomButton)}
-              />
-            ) : null}
-
-            {activePopup ? (
-              <div
-                ref={popupRef}
-                className={styles.popupWrapper}
-                style={activePopup.pos}
-              >
-                {activePopup.el}
-              </div>
-            ) : null}
-          </>
-        ) : null}
-      </CustomScrollbars>
-    </InstanceStateContext.Provider>
+              {activePopup.el}
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </CustomScrollbars>
   );
-});
+}
 
 function BranchGraphNode({
   node,
@@ -644,7 +683,7 @@ function MigrationPopup({
   graphItem: GraphItem;
   setActiveMigrationItem: SetActiveMigrationItem;
 }) {
-  const instanceState = useContext(InstanceStateContext);
+  const {fetchMigration} = useContext(BranchGraphContext);
   const [migrationScript, setMigrationScript] = useState(
     _migrationCache.get(graphItem.name)
   );
@@ -653,20 +692,8 @@ function MigrationPopup({
   useEffect(() => {
     if (!migrationScript && !fetching.current) {
       fetching.current = true;
-      const conn = instanceState.getConnection(findGraphItemBranch(graphItem));
-      conn
-        .query(
-          `select (
-        select schema::Migration
-        filter .name = <str>$name
-      ).script`,
-          {name: graphItem.name}
-        )
-        .then((result) => {
-          const script = result.result?.[0];
-          if (script == null) {
-            throw new Error(`No migration found for ${graphItem.name}`);
-          }
+      fetchMigration(graphItem)
+        .then((script) => {
           _migrationCache.set(graphItem.name, script);
           setMigrationScript(script);
         })
