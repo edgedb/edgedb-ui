@@ -25,10 +25,10 @@ import {
   GitCommitIcon,
   GitPullRequestIcon,
   MigrationsListIcon,
-  CopyIcon,
   ChevronDownIcon,
   WarningIcon,
 } from "@edgedb/common/newui";
+import {CopyButton} from "../newui/copyButton";
 import {PopupArrow} from "../newui/icons/other";
 
 import {
@@ -66,8 +66,6 @@ type BranchLink = (
   props: PropsWithChildren<{
     className?: string;
     branchName: string;
-    onMouseEnter?: () => void;
-    onMouseLeave?: () => void;
   }>
 ) => JSX.Element;
 
@@ -401,7 +399,30 @@ function BranchGraphNode({
   setActiveMigrationItem: SetActiveMigrationItem;
   getMigrationIdRef: GetMigrationIdRef;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const positionStyle = {
+    gridColumn: node.col * 2 + 1,
+    gridRow: node.row + 1,
+  };
+  const item = node.items[0];
+
+  if ((node.branchIndex != null && node.branchIndex > 0) || !item.name) {
+    return (
+      <div className={styles.branchNode} style={positionStyle}>
+        <BranchGraphButton
+          branchName={
+            node.branchIndex
+              ? item.branches![node.branchIndex]
+              : item.branches![0]
+          }
+          BranchLink={BranchLink}
+          githubDetails={githubDetails}
+          setActivePopup={setActivePopup}
+          branchLine={node.branchIndex ? node.branchIndex + 1 : undefined}
+        />
+      </div>
+    );
+  }
+
   let connector: JSX.Element | null = null;
 
   if (
@@ -419,7 +440,7 @@ function BranchGraphNode({
         style={{
           gridColumn: node.col * 2,
           gridRowStart: node.parentNode.row + 1,
-          gridRowEnd: node.row + 2,
+          gridRowEnd: node.row + 1,
         }}
       >
         {straightLine ? (
@@ -451,168 +472,154 @@ function BranchGraphNode({
     );
   }
 
-  const positionStyle = {
-    gridColumn: node.col * 2 + 1,
-    gridRow: node.row + 1,
-  };
-
-  if (node.branchIndex != null) {
-    const item = node.items[0];
-    const branchName = item.branches![node.branchIndex];
-
-    const githubBranch = githubDetails?.branches.find(
-      (b) => b.db_branch_name === branchName
-    );
-
-    return (
-      <>
-        {connector}
-        <div
-          className={cn(styles.branchNode, {
-            [styles.rootBranch]: item.name === "" || !node.parentNode,
-          })}
-          style={positionStyle}
-        >
-          {item.name && node.branchIndex === 0 ? (
+  return (
+    <>
+      {connector}
+      <div className={styles.migrationNode} style={positionStyle}>
+        {item.name ? (
+          <>
             <MigrationID
-              items={[item]}
+              items={node.items}
               isActive={
                 activeMigrationItem && node.items.includes(activeMigrationItem)
               }
               setActiveMigration={setActiveMigrationItem}
               getMigrationIdRef={getMigrationIdRef}
             />
-          ) : null}
-
-          {node.branchIndex === 0 && item.children.length ? (
             <svg
-              className={styles.line}
+              className={cn(styles.line, {
+                [styles.root]: !connector,
+                [styles.leaf]: !item.children.length,
+              })}
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 31 31"
               preserveAspectRatio="none"
             >
               <path d="M 0 15.5 H 31" />
             </svg>
-          ) : null}
-
-          {node.branchIndex > 0 ? (
-            <svg
-              className={styles.duplicateBranchConnector}
-              xmlns="http://www.w3.org/2000/svg"
-              width="8"
-              height="64"
-              viewBox="0 0 8 64"
-              fill="none"
-            >
-              <path d="M 4 0 V 64" />
-            </svg>
-          ) : null}
-
-          <div
-            className={cn(styles.branchButton, {[styles.hovered]: hovered})}
-          >
-            <BranchLink
-              className={styles.branchName}
-              branchName={branchName}
-              onMouseEnter={() => setHovered(true)}
-              onMouseLeave={() => setHovered(false)}
-            >
-              <span>
-                <bdo dir="ltr" title={branchName}>
-                  {branchName}
-                </bdo>
-              </span>
-              <ArrowRightIcon />
-            </BranchLink>
-            {githubBranch ? (
-              <div
-                className={cn(
-                  styles.githubDetails,
-                  styles[githubBranch.status]
-                )}
-                onClick={(e) =>
-                  setActivePopup(
-                    e.currentTarget,
-                    <GithubBranchPopup
-                      githubSlug={githubDetails!.githubSlug}
-                      repoName={githubDetails!.repoName}
-                      githubBranch={githubBranch}
-                    />
-                  )
-                }
+            {node.items.length > 1 ? (
+              <svg
+                className={styles.multidot}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 31 31"
               >
-                {githubBranch.status === "updating" ? (
-                  <>
-                    <SyncIcon />
-                    <span>Syncing</span>
-                  </>
-                ) : (
-                  <>
-                    {githubBranch.status === "up-to-date" ? (
-                      <CheckIcon />
-                    ) : (
-                      <CrossIcon />
-                    )}
-                    <span>
-                      <RelativeTime time={githubBranch.last_updated_at!} />
-                    </span>
-                  </>
-                )}
-                <GithubLogo className={styles.githubIcon} />
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      {connector}
-      <div className={styles.migrationNode} style={positionStyle}>
-        <MigrationID
-          items={node.items}
-          isActive={
-            activeMigrationItem && node.items.includes(activeMigrationItem)
-          }
-          setActiveMigration={setActiveMigrationItem}
-          getMigrationIdRef={getMigrationIdRef}
-        />
-        <svg
-          className={cn(styles.line, {[styles.root]: !connector})}
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 31 31"
-          preserveAspectRatio="none"
-        >
-          <path d="M 0 15.5 H 31" />
-        </svg>
-        {node.items.length > 1 ? (
-          <svg
-            className={styles.dot}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 31 31"
-          >
-            <path d="M 10.5 10.5 H 20.5 A 5 5 0 0 1 20.5 20.5 H 10.5 A 5 5 0 0 1 10.5 10.5" />
-          </svg>
-        ) : (
-          <svg
-            className={styles.dot}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 31 31"
-          >
-            <circle cx="15.5" cy="15.5" r="5" />
-          </svg>
-        )}
+                <path d="M 10.5 10.5 H 20.5 A 5 5 0 0 1 20.5 20.5 H 10.5 A 5 5 0 0 1 10.5 10.5" />
+              </svg>
+            ) : (
+              <svg
+                className={styles.dot}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 31 31"
+              >
+                <circle cx="15.5" cy="15.5" r="5" />
+              </svg>
+            )}
+          </>
+        ) : null}
+        {node.branchIndex != null ? (
+          <BranchGraphButton
+            branchName={item.branches![node.branchIndex]}
+            BranchLink={BranchLink}
+            githubDetails={githubDetails}
+            setActivePopup={setActivePopup}
+            branchLine={item.branches!.length > 1 ? node.branchIndex + 1 : 0}
+          />
+        ) : null}
       </div>
     </>
+  );
+}
+
+function BranchGraphButton({
+  branchName,
+  setActivePopup,
+  BranchLink,
+  githubDetails,
+  branchLine,
+}: {
+  branchName: string;
+  BranchLink: BranchLink;
+  setActivePopup: SetActivePopup;
+  githubDetails?: BranchGraphGithubDetails;
+  branchLine?: number;
+}) {
+  const githubBranch = githubDetails?.branches.find(
+    (b) => b.db_branch_name === branchName
+  );
+
+  const statusIcon = githubBranch ? (
+    githubBranch.status === "updating" ? (
+      <SyncIcon />
+    ) : githubBranch.status === "up-to-date" ? (
+      <CheckIcon />
+    ) : (
+      <CrossIcon />
+    )
+  ) : null;
+
+  return (
+    <div
+      className={cn(styles.branchButtonWrapper, {
+        [styles.indented]: branchLine != null && branchLine > 0,
+        [styles.firstBranch]: branchLine != null && branchLine <= 1,
+      })}
+    >
+      {branchLine != null ? (
+        <svg
+          className={styles.branchLine}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0 -${branchLine > 1 ? 56 : 20} 31 ${
+            branchLine > 1 ? 87 : 51
+          }`}
+          style={
+            branchLine > 1 ? {top: -51, height: 87} : {top: -11, height: 51}
+          }
+        >
+          <path d="M 15.5 -56 L 15.5 0 a 16 16 0 0 0 15.5 15.5" />
+        </svg>
+      ) : null}
+      <div className={styles.branchButton}>
+        {githubBranch ? (
+          <div
+            className={styles.githubDetails}
+            onClick={(e) =>
+              setActivePopup(
+                e.currentTarget,
+                <GithubBranchPopup
+                  githubSlug={githubDetails!.githubSlug}
+                  repoName={githubDetails!.repoName}
+                  githubBranch={githubBranch}
+                />
+              )
+            }
+          >
+            <GithubLogo className={styles.githubIcon} />
+            <div
+              className={cn(styles.githubStatus, styles[githubBranch.status])}
+            >
+              {statusIcon}
+              {statusIcon}
+            </div>
+          </div>
+        ) : null}
+
+        <BranchLink className={styles.branchLink} branchName={branchName}>
+          <span>
+            <bdo dir="ltr" title={branchName}>
+              {branchName}
+            </bdo>
+          </span>
+          <ArrowRightIcon />
+        </BranchLink>
+      </div>
+    </div>
   );
 }
 
 function GithubBranchPopup({
   githubSlug,
   repoName,
-  githubBranch: {status, latest_commit_sha, pr_issue_number},
+  githubBranch: {status, latest_commit_sha, pr_issue_number, last_updated_at},
 }: {
   githubSlug: string;
   repoName: string;
@@ -622,11 +629,17 @@ function GithubBranchPopup({
     <div className={styles.githubBranchPopup}>
       <PopupArrow className={styles.arrow} />
       <span>
-        {status === "up-to-date"
-          ? "Up to date with"
-          : status === "updating"
-          ? "Syncing from"
-          : "Failed to sync from"}
+        {status === "up-to-date" ? (
+          <>
+            Last synced <RelativeTime time={last_updated_at!} /> from
+          </>
+        ) : status === "updating" ? (
+          "Syncing from"
+        ) : (
+          <>
+            Failed to sync <RelativeTime time={last_updated_at!} /> from
+          </>
+        )}
       </span>
       <a
         href={`https://github.com/${githubSlug}/${repoName}/commit/${latest_commit_sha}`}
@@ -711,7 +724,11 @@ function MigrationPopup({
             <div className={styles.codeWrapper}>
               <CodeBlock code={migrationScript} />
             </div>
-            <CopyButton code={migrationScript} />
+            <CopyButton
+              className={styles.copyButton}
+              content={migrationScript}
+              mini
+            />
           </>
         ) : (
           <Spinner className={styles.loading} size={20} />
@@ -743,31 +760,6 @@ function MigrationPopup({
           ))}
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function CopyButton({code}: {code: string}) {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (copied) {
-      const timer = setTimeout(() => setCopied(false), 1000);
-      return () => {
-        clearTimeout(timer);
-      };
-    }
-  }, [copied]);
-
-  return (
-    <div
-      className={cn(styles.copyButton, {[styles.copied]: copied})}
-      onClick={() => {
-        navigator.clipboard?.writeText(code);
-        setCopied(true);
-      }}
-    >
-      {copied ? <CheckIcon /> : <CopyIcon />}
     </div>
   );
 }

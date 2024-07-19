@@ -50,8 +50,11 @@
   min-height: 100%;
   align-items: center;
   padding: var(--extraPadding, 0px);
-  transition: padding-right 0.2s linear, padding-bottom 0.2s linear,
-    padding-top 0.2s 0.2s linear, padding-left 0.2s 0.2s linear;
+  transition:
+    padding-right 0.2s linear,
+    padding-bottom 0.2s linear,
+    padding-top 0.2s 0.2s linear,
+    padding-left 0.2s 0.2s linear;
 
   .migrationPopupOpen & {
     transition: none;
@@ -127,9 +130,9 @@
 
 .nodeGrid {
   display: grid;
-  grid-auto-rows: 64px;
+  grid-auto-rows: auto;
   grid-auto-columns: auto;
-  row-gap: 32px;
+  row-gap: 16px;
   justify-items: start;
   align-items: start;
   width: min-content;
@@ -140,7 +143,7 @@
   .connector {
     height: 100%;
     box-sizing: border-box;
-    padding: 5px 0;
+    padding-top: 14px;
 
     svg {
       stroke-width: 1px;
@@ -163,7 +166,8 @@
       width: 31px;
       display: flex;
       flex-direction: column;
-      padding-bottom: 28px;
+      padding-bottom: 0;
+      height: calc(100% + 61px);
 
       svg:nth-child(2) {
         flex-grow: 1;
@@ -177,153 +181,145 @@
   }
 }
 
-.branchNode,
-.migrationNode {
-  position: relative;
+.migrationId {
+  display: flex;
+  height: 22px;
+  padding: 0 4px 0 8px;
+  margin-bottom: -8px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  color: var(--Grey50, #808080);
+  font-family: "Roboto Mono Variable";
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 450;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
 
-  .migrationId {
-    position: absolute;
-    display: flex;
-    padding: 2px 4px 2px 8px;
-    align-items: center;
-    gap: 4px;
-    border-radius: 4px;
-    color: var(--Grey50, #808080);
-    font-family: "Roboto Mono Variable";
-    font-size: 11px;
-    font-style: normal;
-    font-weight: 450;
-    line-height: 16px;
-    white-space: nowrap;
-    cursor: pointer;
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
 
+  svg {
+    width: 18px;
+    height: 18px;
+    color: var(--Grey75, #bfbfbf);
+  }
+
+  &.active {
+    color: #000;
+  }
+
+  @include darkTheme {
     &:hover {
-      background: rgba(0, 0, 0, 0.04);
+      background: rgba(255, 255, 255, 0.06);
     }
 
     svg {
-      width: 18px;
-      height: 18px;
-      color: var(--Grey75, #bfbfbf);
+      color: var(--Grey30, #4d4d4d);
     }
 
     &.active {
-      color: #000;
-    }
-
-    @include darkTheme {
-      &:hover {
-        background: rgba(255, 255, 255, 0.06);
-      }
-
-      svg {
-        color: var(--Grey30, #4d4d4d);
-      }
-
-      &.active {
-        color: #fff;
-      }
+      color: #fff;
     }
   }
 }
 
-.branchNode {
-  justify-self: stretch;
-  display: flex;
-
-  &.rootBranch {
-    margin-left: 32px;
-  }
-
-  .migrationId {
-    left: 0px;
-    top: -24px;
-  }
-
-  .duplicateBranchConnector {
-    position: absolute;
-    top: -64px;
-    left: 28px;
-    stroke-width: 1px;
-    stroke: var(--branchGraphLine);
-    stroke-dasharray: 4 4;
-  }
-}
-
-.branchNode,
 .migrationNode {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: max(64px, 100%);
+  width: max-content;
+
   .line,
-  .dot {
-    position: absolute;
+  .dot,
+  .multidot {
     stroke-width: 1px;
     stroke: var(--branchGraphLine);
     fill: var(--branchGraphBg);
     width: 100%;
     height: 31px;
-    top: 5px;
-    pointer-events: none;
+    // pointer-events: none;
+  }
+
+  .line {
+    margin-bottom: -31px;
+
+    &.root {
+      margin-left: 44px;
+      width: calc(100% - 44px);
+    }
+    &.leaf {
+      width: 44px;
+    }
+  }
+
+  .dot {
+    width: 87px;
   }
 }
 
-.migrationNode {
-  min-width: max(64px, 100%);
-  width: max-content;
-  justify-self: stretch;
-  display: flex;
-  justify-content: center;
+.branchButtonWrapper {
+  position: relative;
+  padding-left: 24px;
 
-  .migrationId {
-    position: relative;
-    top: -8px;
+  &.indented {
+    padding-left: 59px;
   }
 
-  .line.root {
-    width: 50%;
-    left: 50%;
+  &.firstBranch {
+    padding-top: 4px;
+  }
+
+  .branchLine {
+    position: absolute;
+    left: 28px;
+    stroke-width: 1px;
+    stroke: var(--branchGraphLine);
+    stroke-dasharray: 3 3;
+    fill: none;
+    width: 31px;
   }
 }
 
 .branchButton {
   position: relative;
   display: flex;
-  flex-direction: column;
-  max-width: 300px;
+  max-width: 320px;
+  height: 40px;
   border-radius: 6px;
   border: 1px solid var(--Grey85, #d9d9d9);
-  background: #fff;
+  background: var(--branchButtonBg);
   box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
   z-index: 1;
 
-  &.hovered {
-    background: #fafafa;
+  --branchButtonBg: #fff;
 
-    .branchName svg {
-      transform: translateX(2px);
-    }
-    .githubDetails {
-      background: var(--Grey95, #f2f2f2);
-    }
+  > *:hover {
+    --branchButtonBg: #fafafa;
   }
 
   @include darkTheme {
     border: 1px solid var(--panel_border, #4d4d4d);
-    background: var(--panel_background, #363636);
+    --branchButtonBg: var(--panel_background, #363636);
     box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.2);
 
-    &.hovered {
-      background: #404040;
-
-      .githubDetails {
-        background: var(--Grey20, #333);
-      }
+    > *:hover {
+      --branchButtonBg: #404040;
     }
   }
 
-  .branchName {
+  .branchLink {
     display: flex;
-    padding: 8px 6px 8px 14px;
+    padding: 0 6px 0 14px;
+    min-width: 0;
     justify-content: space-between;
     align-items: center;
+    background: var(--branchButtonBg);
     color: var(--main_text_color, #4d4d4d);
     font-size: 14px;
     font-style: normal;
@@ -344,6 +340,11 @@
       color: var(--Grey50, #808080);
       transition: transform 0.2s;
     }
+    &:hover {
+      svg {
+        transform: translateX(2px);
+      }
+    }
 
     @include darkTheme {
       --main_text_color: #ccc;
@@ -355,60 +356,56 @@
   }
 
   .githubDetails {
+    flex-shrink: 0;
     position: relative;
     display: flex;
-    padding: 3px 4px;
-    margin: 4px;
-    margin-top: -3px;
     align-items: center;
-    border-radius: 3px;
-    background: var(--Grey97, #f7f7f7);
-    color: var(--tertiary_text_color, #808080);
-    font-size: 12px;
-    font-weight: 450;
-    line-height: 18px;
+    justify-content: center;
+    width: 39px;
+    border-right: 1px solid var(--Grey90, #e6e6e6);
+    background: var(--branchButtonBg);
     cursor: pointer;
 
-    &:hover {
-      background: var(--Grey95, #f2f2f2);
-    }
+    .githubStatus {
+      position: absolute;
+      display: flex;
+      bottom: 1px;
+      right: 1px;
 
-    svg {
-      width: 16px;
-      height: 16px;
+      svg {
+        width: 20px;
+        height: 20px;
+      }
 
-      &:first-child path {
+      path {
         vector-effect: non-scaling-stroke;
       }
-    }
 
-    &.up-to-date svg {
-      color: #70b53a;
-    }
-    &.error svg {
-      color: #e55e5e;
-    }
-    &.updating svg {
-      color: #3b8be8;
-    }
+      &.up-to-date {
+        color: #70b53a;
+      }
+      &.error {
+        color: #e55e5e;
+      }
+      &.updating {
+        color: #3b8be8;
+      }
 
-    > span {
-      margin-left: 6px;
-      margin-right: 8px;
+      svg:first-child {
+        margin-right: -20px;
+        color: var(--branchButtonBg);
+        --strokeWidth: 7px;
+      }
     }
 
     .githubIcon {
+      width: 20px;
+      height: 20px;
       color: var(--Grey30, #4d4d4d) !important;
-      margin-left: auto;
     }
 
     @include darkTheme {
-      background: var(--Grey16, #292929);
-      --tertiary_text_color: #999;
-
-      &:hover {
-        background: var(--Grey18, #2e2e2e);
-      }
+      border-right-color: var(--Grey30, #4d4d4d);
 
       .githubIcon {
         color: var(--Grey80, #ccc) !important;
@@ -537,29 +534,8 @@
       position: absolute;
       top: 0;
       right: 0;
-      display: flex;
-      cursor: pointer;
-      color: var(--Grey70, #b3b3b3);
       background: var(--app_panel_background, #f7f7f7);
-      padding: 8px;
-      border-radius: 8px;
       box-shadow: 0 0 6px 4px var(--app_panel_background, #f7f7f7);
-
-      &:hover {
-        color: var(--Grey55, #8c8c8c);
-      }
-
-      &.copied {
-        color: #70b53a !important;
-      }
-
-      @include darkTheme {
-        color: var(--Grey30, #4d4d4d);
-
-        &:hover {
-          color: var(--Grey40, #666);
-        }
-      }
     }
   }
 

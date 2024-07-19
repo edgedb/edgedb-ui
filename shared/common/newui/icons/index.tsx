@@ -138,7 +138,7 @@ export function CheckIcon({className}: {className?: string}) {
       <path
         d="M18.1634 7.4004L9.91336 15.6504L6.16336 11.9004"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="var(--strokeWidth, 1.5)"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -159,7 +159,7 @@ export function CrossIcon({className}: {className?: string}) {
       <path
         d="M7 7L17 17M17 7L7 17"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="var(--strokeWidth, 1.5)"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -242,7 +242,7 @@ export function SyncIcon() {
       <path
         d="M6.59727 9.81668C6.92002 8.90463 7.46854 8.08921 8.19166 7.44649C8.91478 6.80377 9.78893 6.35471 10.7325 6.1412C11.6762 5.9277 12.6585 5.95671 13.5878 6.22553C14.5172 6.49435 15.3633 6.99422 16.0473 7.67849L19 10.453M5 12.9985L7.95273 15.773C8.63666 16.4573 9.48278 16.9572 10.4122 17.226C11.3415 17.4948 12.3238 17.5238 13.2675 17.3103C14.2111 17.0968 15.0852 16.6478 15.8083 16.005C16.5315 15.3623 17.08 14.5469 17.4027 13.6349M19 6.63486V10.453H15.1818M5 16.8167V12.9985H8.81818"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="var(--strokeWidth, 1.5)"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

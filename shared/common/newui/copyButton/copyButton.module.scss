@@ -1,0 +1,41 @@
+@import "@edgedb/common/mixins.scss";
+
+.copyButton {
+  svg {
+    color: var(--Grey50, #808080);
+  }
+
+  &.copied svg {
+    color: #70b53a !important;
+  }
+
+  @include darkTheme {
+    svg {
+      color: var(--Grey60, #999999);
+    }
+  }
+}
+
+.miniCopyButton {
+  display: flex;
+  cursor: pointer;
+  color: var(--Grey70, #b3b3b3);
+  padding: 8px;
+  border-radius: 8px;
+
+  &:hover {
+    color: var(--Grey55, #8c8c8c);
+  }
+
+  &.copied {
+    color: #70b53a !important;
+  }
+
+  @include darkTheme {
+    color: var(--Grey30, #4d4d4d);
+
+    &:hover {
+      color: var(--Grey40, #666);
+    }
+  }
+}
