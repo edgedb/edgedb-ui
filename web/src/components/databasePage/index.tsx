@@ -116,7 +116,8 @@ function HeaderNavMenu({
                 navigateToDB={(dbName) =>
                   navigate(`/${encodeURIComponent(dbName)}`)
                 }
-              />
+              />,
+              true
             ),
         }}
       />

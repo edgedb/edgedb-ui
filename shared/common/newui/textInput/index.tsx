@@ -2,17 +2,16 @@ import {ForwardedRef, InputHTMLAttributes, forwardRef} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import styles from "./textInput.module.scss";
 import {InfoIcon} from "../icons";
+import {FieldHeader, FieldHeaderProps} from "../fieldHeader";
 
-export interface TextInputProps {
+import styles from "./textInput.module.scss";
+
+export interface TextInputProps extends FieldHeaderProps {
   className?: string;
   type?: "text" | "password" | "textarea";
-  label?: string | JSX.Element;
-  optional?: boolean;
   error?: string | null;
   prefix?: string;
-  headerNote?: string;
 }
 
 export const TextInput = forwardRef(function TextInput(
@@ -21,9 +20,9 @@ export const TextInput = forwardRef(function TextInput(
     type,
     label,
     optional,
+    headerNote,
     error,
     prefix,
-    headerNote,
     ...props
   }: TextInputProps &
     Omit<InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, "type">,
@@ -34,15 +33,11 @@ export const TextInput = forwardRef(function TextInput(
   return (
     <label className={cn(styles.textField, className)}>
       {label ? (
-        <div className={styles.fieldHeader}>
-          {label}
-          {optional ? (
-            <span className={styles.optional}>(optional)</span>
-          ) : null}
-          {headerNote ? (
-            <span className={styles.headerNote}>{headerNote}</span>
-          ) : null}
-        </div>
+        <FieldHeader
+          label={label}
+          optional={optional}
+          headerNote={headerNote}
+        />
       ) : null}
       <div
         className={cn(styles.inputWrapper, {[styles.hasError]: error != null})}

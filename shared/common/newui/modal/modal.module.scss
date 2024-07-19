@@ -1,0 +1,204 @@
+@import "@edgedb/common/mixins.scss";
+
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 300;
+  user-select: none;
+  transition: pointer-events 0.3s;
+
+  &:before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s;
+  }
+
+  :global(.MODAL_TRANSITION) & {
+    pointer-events: none;
+
+    &:before {
+      opacity: 0;
+    }
+  }
+
+  @include darkTheme {
+    &:before {
+      background: rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  @include isMobile {
+    justify-content: flex-end;
+    padding: 0;
+    padding-top: 48px;
+  }
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: min-content;
+  border-radius: 12px;
+  border: 1px solid var(--Grey80, #ccc);
+  background: var(--app_panel_background, #f7f7f7);
+  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.16),
+    0px 2px 4px 0px rgba(0, 0, 0, 0.08);
+  z-index: 1;
+  color: var(--main_text_color, #4d4d4d);
+  font-family: "Roboto Flex Variable";
+  transition: transform 0.3s, opacity 0.3s;
+
+  :global(.MODAL_TRANSITION) & {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+
+  @include darkTheme {
+    --app_panel_background: var(--Grey14, #242424);
+    border-color: var(--Grey22, #363636);
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
+      0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+    --main_text_color: #ccc;
+    --secondary_text_color: #b3b3b3;
+    --tertiary_text_colour: #999;
+  }
+
+  @include isMobile {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+  }
+}
+
+.header {
+  display: flex;
+  padding: 18px 18px 18px 24px;
+  gap: 6px;
+  border-bottom: 1px solid var(--Grey90, #e6e6e6);
+  background: var(--Grey99, #fcfcfc);
+  border-radius: 12px 12px 0 0;
+
+  .headings {
+    display: flex;
+    padding: 4px 16px 0px 0px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    flex: 1 0 0;
+  }
+
+  .title {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 16px;
+  }
+
+  .subheading {
+    color: var(--tertiary_text_color, #808080);
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 18px;
+  }
+
+  @include darkTheme {
+    border-bottom-color: var(--Grey25, #404040);
+    background: var(--Grey18, #2e2e2e);
+  }
+}
+
+.content {
+  min-height: 0;
+  max-width: calc(100% - 48px);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px 24px 24px;
+  gap: 16px;
+  overflow: auto;
+
+  @include isMobile {
+    margin: 0 auto;
+  }
+}
+
+.closeButton {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  margin: -4px;
+  color: var(--Grey50, #808080);
+  cursor: pointer;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border-top: 1px solid var(--Grey90, #e6e6e6);
+  background: var(--Grey99, #fcfcfc);
+  border-radius: 0 0 12px 12px;
+
+  .footerMain {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .footerDetails {
+    flex-grow: 1;
+  }
+
+  @include darkTheme {
+    border-top-color: var(--Grey25, #404040);
+    background: var(--Grey18, #2e2e2e);
+  }
+}
+
+.formError {
+  display: flex;
+  padding: 12px 16px;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #e55e5e;
+  border-bottom: 1px solid #e55e5e;
+  background: #fce3e3;
+  margin-bottom: -1px;
+  z-index: 1;
+  color: #e55e5e;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 450;
+  line-height: 16px;
+
+  > div {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  @include darkTheme {
+    border-color: #b24c4c;
+    background: #4c2323;
+    color: #e06b6b;
+  }
+}
