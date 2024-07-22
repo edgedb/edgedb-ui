@@ -586,3 +586,23 @@ export function CircledQuestionIcon() {
     </svg>
   );
 }
+
+export function TransferIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M20 16H10M20 16L16.5 12.5M20 16L16.5 19.5M4 7.99999L14 8M4 7.99999L7.5 11.5M4 7.99999L7.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
