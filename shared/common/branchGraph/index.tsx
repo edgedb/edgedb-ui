@@ -1,4 +1,5 @@
 import {
+  Fragment,
   PropsWithChildren,
   createContext,
   useCallback,
@@ -79,14 +80,14 @@ export interface BranchGraphProps {
 }
 
 export const BranchGraphContext = createContext<{
-  fetchMigration: (graphItem: GraphItem) => Promise<string>;
+  fetchMigrations: (graphItems: GraphItem[]) => Promise<string[]>;
 }>(null!);
 
 type SetActivePopup = (el: HTMLElement, popup: JSX.Element) => void;
 type GetMigrationIdRef = (
-  items: GraphItem[]
+  node: LayoutNode
 ) => (el: HTMLElement | null) => void;
-type SetActiveMigrationItem = (item: GraphItem) => void;
+type SetActiveMigrationNode = (node: LayoutNode) => void;
 
 export const BranchGraph = observer(function BranchGraph({
   instanceId,
@@ -102,6 +103,7 @@ export const BranchGraph = observer(function BranchGraph({
       !instanceId ||
       !(instanceState instanceof InstanceState)
     ) {
+      setRefreshing(false);
       return;
     }
     fetchMigrationsData(instanceId, instanceState).then((data) => {
@@ -113,33 +115,35 @@ export const BranchGraph = observer(function BranchGraph({
     });
   }, [refreshing, instanceId, instanceState]);
 
-  const fetchMigration =
+  const fetchMigrations =
     instanceState instanceof Error
       ? () => {
           throw new Error(`Error connecting to instance`);
         }
-      : async (graphItem: GraphItem) => {
+      : async (graphItems: GraphItem[]) => {
           const conn = instanceState!.getConnection(
-            findGraphItemBranch(graphItem)
+            findGraphItemBranch(graphItems[graphItems.length - 1])
           );
           const result = await conn.query(
             `select (
         select schema::Migration
-        filter .name = <str>$name
+        filter .name in array_unpack(<array<str>>$names)
       ).script`,
-            {name: graphItem.name}
+            {names: graphItems.map((item) => item.name)}
           );
-          const script = result.result?.[0];
-          if (script == null) {
-            throw new Error(`No migration found for ${graphItem.name}`);
+          const scripts = result.result;
+          if (scripts == null || scripts.length != graphItems.length) {
+            throw new Error(
+              `Migrations not found for ${graphItems.map((item) => item.name).join(", ")}`
+            );
           }
-          return script;
+          return scripts as string[];
         };
 
   return (
     <BranchGraphContext.Provider
       value={{
-        fetchMigration,
+        fetchMigrations,
       }}
     >
       <_BranchGraphRenderer
@@ -182,9 +186,9 @@ export function _BranchGraphRenderer({
   const ref = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  const migrationIdRefs = useRef(new Map<GraphItem, HTMLElement>());
-  const [activeMigrationItem, _setActiveMigrationItem] =
-    useState<GraphItem | null>(null);
+  const migrationIdRefs = useRef(new Map<LayoutNode, HTMLElement>());
+  const [activeMigrationNode, _setActiveMigrationNode] =
+    useState<LayoutNode | null>(null);
   const [activePopup, _setActivePopup] = useState<{
     pos: {top: number; left: number; width: number; height: number};
     el: JSX.Element;
@@ -208,33 +212,31 @@ export function _BranchGraphRenderer({
           height: elRect.height,
         },
       });
-      _setActiveMigrationItem(null);
+      _setActiveMigrationNode(null);
     },
-    [_setActivePopup, _setActiveMigrationItem]
+    [_setActivePopup, _setActiveMigrationNode]
   );
 
   const getMigrationIdRef = useCallback(
-    (items: GraphItem[]) => (el: HTMLElement | null) => {
-      for (const item of items) {
-        if (el) migrationIdRefs.current.set(item, el);
-        else migrationIdRefs.current.delete(item);
-      }
+    (node: LayoutNode) => (el: HTMLElement | null) => {
+      if (el) migrationIdRefs.current.set(node, el);
+      else migrationIdRefs.current.delete(node);
     },
     [migrationIdRefs.current]
   );
 
-  const setActiveMigrationItem = useCallback(
-    (item: GraphItem) => {
-      const el = migrationIdRefs.current.get(item)!;
+  const setActiveMigrationNode = useCallback(
+    (node: LayoutNode) => {
+      const el = migrationIdRefs.current.get(node)!;
       const refRect = ref.current!.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
 
       _setActivePopup({
         el: (
           <MigrationPopup
-            key={item.name}
-            graphItem={item}
-            setActiveMigrationItem={setActiveMigrationItem}
+            key={`${node.items[0].name}-${node.items[node.items.length - 1].name}`}
+            node={node}
+            setActiveMigrationNode={setActiveMigrationNode}
           />
         ),
         pos: {
@@ -244,31 +246,31 @@ export function _BranchGraphRenderer({
           height: elRect.height,
         },
       });
-      _setActiveMigrationItem(item);
+      _setActiveMigrationNode(node);
     },
-    [setActivePopup, _setActiveMigrationItem]
+    [setActivePopup, _setActiveMigrationNode]
   );
 
   useEffect(() => {
     if (activePopup && ref.current) {
       const scrollListener = () => {
         _setActivePopup(null);
-        _setActiveMigrationItem(null);
+        _setActiveMigrationNode(null);
       };
-      if (!activeMigrationItem) {
+      if (!activeMigrationNode) {
         ref.current.addEventListener("scroll", scrollListener);
       }
 
       const clickListener = (e: MouseEvent) => {
         if (!popupRef.current?.contains(e.target as HTMLElement)) {
           _setActivePopup(null);
-          _setActiveMigrationItem(null);
+          _setActiveMigrationNode(null);
         }
       };
       window.addEventListener("mousedown", clickListener, {capture: true});
 
       return () => {
-        if (!activeMigrationItem) {
+        if (!activeMigrationNode) {
           ref.current?.removeEventListener("scroll", scrollListener);
         }
 
@@ -277,19 +279,19 @@ export function _BranchGraphRenderer({
         });
       };
     }
-  }, [activePopup, activeMigrationItem]);
+  }, [activePopup, activeMigrationNode]);
 
   useLayoutEffect(() => {
-    if (!!activeMigrationItem && ref.current) {
+    if (!!activeMigrationNode && ref.current) {
       const padding = Math.max(containerSize.height, containerSize.width) / 2;
       ref.current.scrollTop += padding;
       ref.current.scrollLeft += padding;
     }
-  }, [!!activeMigrationItem]);
+  }, [!!activeMigrationNode]);
 
   useEffect(() => {
-    if (activeMigrationItem && ref.current) {
-      const el = migrationIdRefs.current.get(activeMigrationItem)!;
+    if (activeMigrationNode && ref.current) {
+      const el = migrationIdRefs.current.get(activeMigrationNode)!;
       const refRect = ref.current!.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
 
@@ -303,7 +305,7 @@ export function _BranchGraphRenderer({
         behavior: "smooth",
       });
     }
-  }, [activeMigrationItem]);
+  }, [activeMigrationNode]);
 
   return (
     <CustomScrollbars
@@ -313,10 +315,10 @@ export function _BranchGraphRenderer({
       <div
         ref={ref}
         className={cn(styles.scrollWrapper, {
-          [styles.migrationPopupOpen]: activeMigrationItem != null,
+          [styles.migrationPopupOpen]: activeMigrationNode != null,
         })}
         style={
-          activeMigrationItem
+          activeMigrationNode
             ? ({
                 "--extraPadding": `${
                   Math.max(containerSize.width, containerSize.height) / 2
@@ -344,8 +346,8 @@ export function _BranchGraphRenderer({
                   BranchLink={BranchLink}
                   githubDetails={githubDetails}
                   setActivePopup={setActivePopup}
-                  activeMigrationItem={activeMigrationItem}
-                  setActiveMigrationItem={setActiveMigrationItem}
+                  activeMigrationNode={activeMigrationNode}
+                  setActiveMigrationNode={setActiveMigrationNode}
                   getMigrationIdRef={getMigrationIdRef}
                 />
               ))}
@@ -387,16 +389,16 @@ function BranchGraphNode({
   BranchLink,
   githubDetails,
   setActivePopup,
-  activeMigrationItem,
-  setActiveMigrationItem,
+  activeMigrationNode,
+  setActiveMigrationNode,
   getMigrationIdRef,
 }: {
   node: LayoutNode;
   BranchLink: BranchLink;
   githubDetails?: BranchGraphGithubDetails;
   setActivePopup: SetActivePopup;
-  activeMigrationItem: GraphItem | null;
-  setActiveMigrationItem: SetActiveMigrationItem;
+  activeMigrationNode: LayoutNode | null;
+  setActiveMigrationNode: SetActiveMigrationNode;
   getMigrationIdRef: GetMigrationIdRef;
 }) {
   const positionStyle = {
@@ -479,11 +481,9 @@ function BranchGraphNode({
         {item.name ? (
           <>
             <MigrationID
-              items={node.items}
-              isActive={
-                activeMigrationItem && node.items.includes(activeMigrationItem)
-              }
-              setActiveMigration={setActiveMigrationItem}
+              node={node}
+              isActive={activeMigrationNode === node}
+              setActiveMigration={setActiveMigrationNode}
               getMigrationIdRef={getMigrationIdRef}
             />
             <svg
@@ -661,27 +661,30 @@ function GithubBranchPopup({
 }
 
 function MigrationID({
-  items,
+  node,
   isActive,
   setActiveMigration,
   getMigrationIdRef,
 }: {
-  items: GraphItem[];
+  node: LayoutNode;
   isActive: boolean | null;
-  setActiveMigration: SetActiveMigrationItem;
+  setActiveMigration: SetActiveMigrationNode;
   getMigrationIdRef: GetMigrationIdRef;
 }) {
   return (
     <div
-      ref={getMigrationIdRef(items)}
-      className={cn(styles.migrationId, {[styles.active]: !!isActive})}
-      onClick={() => setActiveMigration(items[0])}
+      ref={getMigrationIdRef(node)}
+      className={cn(styles.migrationId, {
+        [styles.multi]: node.items.length > 1,
+        [styles.active]: !!isActive,
+      })}
+      onClick={() => setActiveMigration(node)}
     >
-      {items.length > 1
-        ? `${items[0].name.slice(2, 10)} - ${items[
-            items.length - 1
+      {node.items.length > 1
+        ? `${node.items[0].name.slice(2, 10)} - ${node.items[
+            node.items.length - 1
           ].name.slice(2, 10)}`
-        : items[0].name.slice(2, 10)}
+        : node.items[0].name.slice(2, 10)}
       <MigrationsListIcon />
     </div>
   );
@@ -690,74 +693,94 @@ function MigrationID({
 const _migrationCache = new Map<string, string>();
 
 function MigrationPopup({
-  graphItem,
-  setActiveMigrationItem,
+  node,
+  setActiveMigrationNode,
 }: {
-  graphItem: GraphItem;
-  setActiveMigrationItem: SetActiveMigrationItem;
+  node: LayoutNode;
+  setActiveMigrationNode: SetActiveMigrationNode;
 }) {
-  const {fetchMigration} = useContext(BranchGraphContext);
-  const [migrationScript, setMigrationScript] = useState(
-    _migrationCache.get(graphItem.name)
+  const {fetchMigrations} = useContext(BranchGraphContext);
+  const [migrationScripts, setMigrationScripts] = useState(() =>
+    node.items.map((item) => _migrationCache.get(item.name) ?? null)
   );
   const fetching = useRef(false);
 
   useEffect(() => {
-    if (!migrationScript && !fetching.current) {
+    const missingItems = node.items.filter(
+      (_, i) => migrationScripts[i] == null
+    );
+    if (missingItems.length && !fetching.current) {
       fetching.current = true;
-      fetchMigration(graphItem)
-        .then((script) => {
-          _migrationCache.set(graphItem.name, script);
-          setMigrationScript(script);
+      fetchMigrations(missingItems)
+        .then((scripts) => {
+          for (let i = 0; i < scripts.length; i++) {
+            _migrationCache.set(missingItems[i].name, scripts[i]);
+          }
+          setMigrationScripts(
+            node.items.map((item) => _migrationCache.get(item.name) ?? null)
+          );
         })
         .finally(() => (fetching.current = false));
     }
-  }, [migrationScript]);
+  }, [migrationScripts]);
 
   return (
     <div className={styles.migrationPopup}>
       <PopupArrow className={styles.arrow} />
-      <div className={styles.name}>{graphItem.name}</div>
-      <div className={styles.script}>
-        {migrationScript != null ? (
-          <>
-            <div className={styles.codeWrapper}>
-              <CodeBlock code={migrationScript} />
+
+      <div className={styles.popupScrollWrapper}>
+        {[...node.items].map((item, i) => (
+          <Fragment key={item.name}>
+            <div className={styles.name}>{item.name}</div>
+            <div className={styles.script}>
+              {migrationScripts[i] != null ? (
+                <>
+                  <div className={styles.codeWrapper}>
+                    <CodeBlock code={migrationScripts[i]!} />
+                  </div>
+                  <CopyButton
+                    className={styles.copyButton}
+                    content={migrationScripts[i]!}
+                    mini
+                  />
+                </>
+              ) : (
+                <Spinner className={styles.loading} size={20} />
+              )}
             </div>
-            <CopyButton
-              className={styles.copyButton}
-              content={migrationScript}
-              mini
-            />
-          </>
-        ) : (
-          <Spinner className={styles.loading} size={20} />
-        )}
+          </Fragment>
+        ))}
       </div>
 
-      {graphItem.parent ? (
+      {node.parentNode ? (
         <div className={styles.prevItems}>
           <div
             className={styles.itemButton}
-            onClick={() => setActiveMigrationItem(graphItem.parent!)}
+            onClick={() => setActiveMigrationNode(node.parentNode!)}
           >
             <ChevronDownIcon />
-            {graphItem.parent.name.slice(2, 10)}
+            {node.parentNode.items[
+              node.parentNode.items.length - 1
+            ].name.slice(2, 10)}
           </div>
         </div>
       ) : null}
-      {graphItem.children.length ? (
+      {node.childrenNodes.length ? (
         <div className={styles.nextItems}>
-          {graphItem.children.map((child) => (
-            <div
-              key={child.name}
-              className={styles.itemButton}
-              onClick={() => setActiveMigrationItem(child)}
-            >
-              {child.name.slice(2, 10)}
-              <ChevronDownIcon />
-            </div>
-          ))}
+          {node.childrenNodes
+            .filter(
+              (node) => node.branchIndex == null || node.branchIndex === 0
+            )
+            .map((child) => (
+              <div
+                key={child.items[0].name}
+                className={styles.itemButton}
+                onClick={() => setActiveMigrationNode(child)}
+              >
+                {child.items[0].name.slice(2, 10)}
+                <ChevronDownIcon />
+              </div>
+            ))}
         </div>
       ) : null}
     </div>

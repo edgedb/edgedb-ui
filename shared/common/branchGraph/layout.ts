@@ -178,6 +178,7 @@ export interface LayoutNode {
   items: GraphItem[];
   branchIndex?: number;
   parentNode: LayoutNode | null;
+  childrenNodes: LayoutNode[];
 }
 
 interface StackNode {
@@ -206,6 +207,9 @@ export function layoutBranchGraph(
 
   function addNode(node: LayoutNode): LayoutNode {
     nodes.push(node);
+    if (node.parentNode) {
+      node.parentNode.childrenNodes.push(node);
+    }
     usedPoints.add(`${node.col}/${node.row}`);
     maxCol = node.col > maxCol ? node.col : maxCol;
     return node;
@@ -235,6 +239,7 @@ export function layoutBranchGraph(
           items: [item],
           branchIndex: i,
           parentNode,
+          childrenNodes: [],
         });
         if (i === 0) {
           parent = node;
@@ -250,6 +255,7 @@ export function layoutBranchGraph(
           row: row,
           items: [item],
           parentNode,
+          childrenNodes: [],
         });
         lastStackableNode = null;
       } else {
@@ -268,6 +274,7 @@ export function layoutBranchGraph(
               row: row,
               items: [item],
               parentNode,
+              childrenNodes: [],
             };
             parent = addNode(lastStackableNode);
           }
@@ -306,6 +313,7 @@ export function joinGraphLayouts(data: GraphData): LayoutNode[] {
       items: [{name: "", parent: null, children: [], branches: [branch]}],
       branchIndex: 0,
       parentNode: null,
+      childrenNodes: [],
     });
     startCol += 1;
   }

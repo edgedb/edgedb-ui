@@ -208,6 +208,10 @@
     color: var(--Grey75, #bfbfbf);
   }
 
+  &.multi {
+    align-self: center;
+  }
+
   &.active {
     color: #000;
   }
@@ -242,7 +246,7 @@
     fill: var(--branchGraphBg);
     width: 100%;
     height: 31px;
-    // pointer-events: none;
+    pointer-events: none;
   }
 
   .line {
@@ -486,12 +490,18 @@
 
 .migrationPopup {
   display: flex;
-  padding: 12px;
   flex-direction: column;
-  gap: 8px;
   border-radius: 12px;
-  width: 420px;
-  max-height: 400px;
+  width: 460px;
+  max-height: 420px;
+
+  .popupScrollWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    overflow: auto;
+  }
 
   .name {
     color: var(--tertiary_text_color, #808080);
@@ -510,10 +520,10 @@
     position: relative;
     border-radius: 8px;
     background: var(--app_panel_background, #f7f7f7);
-    overflow: hidden;
 
     .codeWrapper {
       overflow: auto;
+      width: 100%;
     }
 
     pre {
