@@ -1,11 +1,9 @@
 import {
-  Fragment,
   PropsWithChildren,
   createContext,
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -204,9 +202,9 @@ export function _BranchGraphRenderer({
     el: JSX.Element;
   } | null>(null);
 
-  const [containerSize, setContainerSize] = useState({width: 0, height: 0});
-
-  useResize(ref, ({width, height}) => setContainerSize({width, height}));
+  useResize(ref, () => {
+    _setActivePopup(null);
+  });
 
   const setActivePopup = useCallback(
     (el: HTMLElement, popup: JSX.Element) => {
