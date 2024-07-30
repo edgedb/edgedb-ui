@@ -319,3 +319,44 @@ export function joinGraphLayouts(data: GraphData): LayoutNode[] {
   }
   return allNodes;
 }
+
+export interface MigrationHistoryData {
+  items: GraphItem[];
+  children: {item: GraphItem; branches: string[]}[];
+}
+
+export function getMigrationHistoryFromItem(
+  item: GraphItem
+): MigrationHistoryData {
+  let currentItem = item;
+  const items: GraphItem[] = [currentItem];
+  while (currentItem.parent) {
+    items.push(currentItem.parent);
+    currentItem = currentItem.parent;
+  }
+  currentItem = items[0];
+  while (currentItem.children.length === 1) {
+    items.unshift(currentItem.children[0]);
+    currentItem = currentItem.children[0];
+  }
+  return {
+    items,
+    children: items[0].children.map((child) => ({
+      item: child,
+      branches: getDescendantBranches(child),
+    })),
+  };
+}
+
+function getDescendantBranches(item: GraphItem): string[] {
+  const branches: string[] = [];
+  const stack: GraphItem[] = [item];
+  while (stack.length) {
+    const item = stack.pop()!;
+    if (item.branches) {
+      branches.push(...item.branches);
+    }
+    stack.push(...item.children);
+  }
+  return branches;
+}

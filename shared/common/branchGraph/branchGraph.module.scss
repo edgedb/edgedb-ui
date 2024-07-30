@@ -7,6 +7,8 @@
   border: 1px solid var(--branchGraphBorder);
   height: 220px;
   min-width: 0;
+  display: flex;
+  overflow: hidden;
   font-family: "Roboto Flex Variable", sans-serif;
 
   --branchGraphBg: var(--Grey95, #f2f2f2);
@@ -18,6 +20,47 @@
     --branchGraphBorder: var(--Grey22, #363636);
     --branchGraphLine: var(--Grey30, #4d4d4d);
   }
+}
+
+.migrationsPanelWrapper {
+  position: relative;
+  width: 0px;
+  flex-shrink: 0;
+  z-index: 2;
+  transition: width 0.25s;
+
+  --panel_background: #fff;
+
+  &.panelOpen {
+    width: 460px;
+  }
+
+  &:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 12px;
+    height: 16px;
+    bottom: 0;
+    background: linear-gradient(transparent, var(--panel_background));
+  }
+
+  .closePanelButton {
+    right: -48px;
+
+    svg {
+      transform: rotate(90deg);
+    }
+  }
+
+  @include darkTheme {
+    --panel_background: #363636;
+  }
+}
+
+.outerScrollContainer {
+  min-width: 0;
+  flex-grow: 1;
 }
 
 .scrollWrapper {
@@ -49,12 +92,8 @@
   min-width: 100%;
   min-height: 100%;
   align-items: center;
-  padding: var(--extraPadding, 0px);
-  transition:
-    padding-right 0.2s linear,
-    padding-bottom 0.2s linear,
-    padding-top 0.2s 0.2s linear,
-    padding-left 0.2s 0.2s linear;
+  transition: padding-right 0.2s linear, padding-bottom 0.2s linear,
+    padding-top 0.2s 0.2s linear, padding-left 0.2s 0.2s linear;
 
   .migrationPopupOpen & {
     transition: none;
@@ -136,8 +175,8 @@
   justify-items: start;
   align-items: start;
   width: min-content;
-  padding: 34px;
-  padding-right: 64px;
+  padding: 64px;
+  padding-right: 96px;
   margin: auto;
 
   .connector {
@@ -173,6 +212,14 @@
         flex-grow: 1;
       }
     }
+
+    &.faded {
+      --branchGraphLine: #dedede;
+
+      @include darkTheme {
+        --branchGraphLine: #343434;
+      }
+    }
   }
 
   .migrationPopupOpen & {
@@ -198,7 +245,8 @@
   white-space: nowrap;
   cursor: pointer;
 
-  &:hover {
+  &:hover,
+  &.highlighted {
     background: rgba(0, 0, 0, 0.04);
   }
 
@@ -212,22 +260,21 @@
     align-self: center;
   }
 
-  &.active {
-    color: #000;
-  }
-
   @include darkTheme {
-    &:hover {
+    &:hover,
+    &.highlighted {
       background: rgba(255, 255, 255, 0.06);
     }
 
     svg {
       color: var(--Grey30, #4d4d4d);
     }
+  }
+}
 
-    &.active {
-      color: #fff;
-    }
+.branchNode {
+  &.faded {
+    opacity: 0.5;
   }
 }
 
@@ -263,6 +310,10 @@
 
   .dot {
     width: 87px;
+  }
+
+  &.faded {
+    opacity: 0.5;
   }
 }
 
@@ -488,19 +539,109 @@
   }
 }
 
-.migrationPopup {
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
+.migrationsPanel {
+  position: absolute;
   width: 460px;
-  max-height: 420px;
+  right: 0px;
+  height: 100%;
+  border-radius: 0px 12px 12px 0px;
+  background: var(--panel_background);
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.12), 0px 0px 2px rgba(0, 0, 0, 0.06);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 2;
 
-  .popupScrollWrapper {
+  .panelScrollWrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-    overflow: auto;
+    padding: 6px 0;
+  }
+
+  .migrationItem {
+    position: relative;
+    padding: 0 12px 8px 32px;
+
+    &:last-child {
+      min-height: 100%;
+    }
+
+    .dot,
+    .line,
+    .dashedLine {
+      position: absolute;
+      width: 31px;
+      top: 0;
+      left: 0;
+      stroke-width: 1px;
+      stroke: var(--branchGraphLine);
+      fill: var(--panel_background);
+    }
+
+    .line {
+      height: 100%;
+    }
+
+    .dashedLine {
+      top: 24px;
+      height: calc(100% - 48px);
+      stroke-dasharray: 4 4;
+    }
+
+    &.leafItem {
+      .header {
+        background: linear-gradient(
+          var(--panel_background),
+          var(--panel_background) 24px,
+          transparent 24px,
+          transparent
+        );
+      }
+    }
+
+    &.rootItem {
+      .line {
+        height: 24px;
+      }
+    }
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    margin-left: -32px;
+    padding-left: 32px;
+    z-index: 1;
+
+    .dot {
+      top: 8px;
+    }
+
+    &:before,
+    &:after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(
+        circle at 100% 100%,
+        transparent,
+        transparent 8px,
+        var(--panel_background) 8.1px,
+        var(--panel_background)
+      );
+    }
+
+    &:after {
+      right: 0;
+      background: radial-gradient(
+        circle at 0% 100%,
+        transparent,
+        transparent 8px,
+        var(--panel_background) 8.1px,
+        var(--panel_background)
+      );
+    }
   }
 
   .name {
@@ -509,10 +650,12 @@
     font-size: 12px;
     font-style: normal;
     font-weight: 450;
-    line-height: 16px;
-    padding: 0 8px;
+    line-height: 26px;
+    height: 32px;
+    padding: 8px 8px 0 8px;
     align-self: center;
     user-select: text;
+    background: var(--panel_background);
   }
 
   .script {
@@ -539,14 +682,24 @@
       width: max-content;
       user-select: text;
     }
+  }
 
-    .copyButton {
-      position: absolute;
-      top: 0;
-      right: 0;
-      background: var(--app_panel_background, #f7f7f7);
-      box-shadow: 0 0 6px 4px var(--app_panel_background, #f7f7f7);
+  .copyButtonWrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+
+    .copyButtonClip {
+      position: sticky;
+      overflow: hidden;
+      top: 40px;
+      padding: 0 0 16px 16px;
     }
+  }
+  .copyButton {
+    background: var(--app_panel_background, #f7f7f7);
+    box-shadow: 0 0 6px 4px var(--app_panel_background, #f7f7f7);
   }
 
   .loading {
@@ -555,71 +708,90 @@
     margin: auto;
   }
 
-  .prevItems,
-  .nextItems {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .emptySchemaItem {
+    position: relative;
     top: 0;
-  }
+    margin-left: -32px;
+    padding-left: 32px;
 
-  .prevItems {
-    right: calc(100% + 8px);
+    .name {
+      font-family: "Roboto Flex Variable";
+      font-size: 13px;
+      font-style: italic;
+      line-height: 30px;
+      padding-top: 16px;
+      opacity: 0.7;
+    }
 
-    .itemButton {
-      padding-left: 8px;
-      padding-right: 12px;
-
-      svg {
-        transform: rotate(90deg);
-      }
+    .dot {
+      top: 16px;
     }
   }
-  .nextItems {
-    left: calc(100% + 8px);
-  }
 
-  .itemButton {
-    display: flex;
-    padding: 8px;
-    padding-left: 12px;
-    align-items: center;
+  .childItem {
+    position: relative;
+    margin: 0 12px 6px 38px;
+    padding: 8px 12px 8px 18px;
     border-radius: 8px;
-    background: var(--panel_background, #fff);
-    color: var(--tertiary_text_color, #808080);
-    font-family: "Roboto Mono Variable", monospace;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 450;
-    line-height: 22px;
     cursor: pointer;
 
-    svg {
-      color: var(--Grey50, #808080);
-      transform: rotate(-90deg);
+    &:hover {
+      background: var(--app_panel_background, #f7f7f7);
+    }
+
+    .body {
+      overflow: hidden;
+      mask-image: linear-gradient(-90deg, transparent, #000 16px, #000);
+    }
+
+    .name {
+      line-height: 18px;
+      height: 26px;
+      background: none;
+      padding: 0;
+    }
+
+    .branches {
+      display: flex;
+      gap: 8px;
+    }
+
+    .branch {
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.03);
+      font-size: 13px;
+      font-weight: 450;
+      color: var(--secondary_text_color, #666);
+    }
+
+    .connector {
+      position: absolute;
+      width: 62px;
+      top: 2px;
+      left: -38px;
+      stroke-width: 1px;
+      stroke: var(--branchGraphLine);
+      fill: var(--panel_background);
+      pointer-events: none;
+    }
+
+    @include darkTheme {
+      &:hover {
+        background: var(--Grey25, #404040);
+      }
+
+      .branch {
+        background: rgba(0, 0, 0, 0.34);
+      }
     }
   }
 
   @include darkTheme {
     --main_text_color: #ccc;
+    --secondary_text_color: #b3b3b3;
     --tertiary_text_color: #999;
     --app_panel_background: #242424;
-  }
-
-  @include isMobile {
-    .prevItems,
-    .nextItems {
-      top: calc(100% + 8px);
-    }
-
-    .prevItems {
-      left: 0;
-      right: auto;
-    }
-    .nextItems {
-      right: 0;
-      left: auto;
-    }
+    --branchGraphLine: var(--Grey40, #666);
   }
 }
