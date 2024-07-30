@@ -248,38 +248,22 @@ export function layoutBranchGraph(
       lastStackableNode = null;
     } else {
       // is plain migration item
-      if (item.children.length >= 2) {
-        // create branch point
-        parent = addNode({
+      if (lastStackableNode) {
+        // stack on last node
+        lastStackableNode.items.push(item);
+        col = lastStackableNode.col;
+        row = lastStackableNode.row;
+        parent = lastStackableNode;
+      } else {
+        // create new stackable node
+        lastStackableNode = {
           col: col,
           row: row,
           items: [item],
           parentNode,
           childrenNodes: [],
-        });
-        lastStackableNode = null;
-      } else {
-        // non branching
-        if (nodes.length) {
-          if (lastStackableNode) {
-            // stack on last node
-            lastStackableNode.items.push(item);
-            col = lastStackableNode.col;
-            row = lastStackableNode.row;
-            parent = lastStackableNode;
-          } else {
-            // create new stackable node
-            lastStackableNode = {
-              col: col,
-              row: row,
-              items: [item],
-              parentNode,
-              childrenNodes: [],
-            };
-            parent = addNode(lastStackableNode);
-          }
-        }
-        // else haven't reached root branch/branching point yet, so skip
+        };
+        parent = addNode(lastStackableNode);
       }
     }
 

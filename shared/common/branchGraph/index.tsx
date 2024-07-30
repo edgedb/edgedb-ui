@@ -80,6 +80,7 @@ export interface BranchGraphProps {
   BranchLink: BranchLink;
   githubDetails?: BranchGraphGithubDetails;
   BottomButton?: (props: {className?: string}) => JSX.Element;
+  onPanelOpen?: () => void;
 }
 
 export const BranchGraphContext = createContext<{
@@ -180,9 +181,10 @@ export function _BranchGraphRenderer({
   BottomButton,
   layoutNodes,
   githubDetails,
+  onPanelOpen,
 }: Pick<
   BranchGraphProps,
-  "className" | "BranchLink" | "BottomButton" | "githubDetails"
+  "className" | "BranchLink" | "BottomButton" | "githubDetails" | "onPanelOpen"
 > & {
   layoutNodes: LayoutNode[] | null | Error;
   TopButton?: (props: {className?: string}) => JSX.Element;
@@ -266,11 +268,15 @@ export function _BranchGraphRenderer({
 
   const setActiveMigrationItem = useCallback(
     (item: GraphItem) => {
-      setPanelOpen(true);
       _setActiveMigrationHistory(getMigrationHistoryFromItem(item));
       setHighlightedMigrationItem(item);
+
+      if (!panelOpen) {
+        onPanelOpen?.();
+        setPanelOpen(true);
+      }
     },
-    [_setActiveMigrationHistory]
+    [_setActiveMigrationHistory, panelOpen]
   );
 
   const setHighlightedMigrationItemAndCenter = useCallback(
@@ -309,37 +315,6 @@ export function _BranchGraphRenderer({
 
   return (
     <div className={cn(styles.branchGraph, className)}>
-      <div
-        className={cn(styles.migrationsPanelWrapper, {
-          [styles.panelOpen]: panelOpen,
-        })}
-        onTransitionEnd={
-          !panelOpen ? () => _setActiveMigrationHistory(null) : undefined
-        }
-      >
-        {activeMigrationHistory ? (
-          <>
-            <MigrationsPanel
-              key={activeMigrationHistory.items[0].name}
-              history={activeMigrationHistory}
-              setActiveMigrationItem={setActiveMigrationItem}
-              highlightedMigrationItem={highlightedMigrationItem}
-              setHighlightedMigrationItem={
-                setHighlightedMigrationItemAndCenter
-              }
-            />
-            <button
-              className={cn(styles.floatingButton, styles.closePanelButton)}
-              onClick={() => {
-                setHighlightedMigrationItem(null);
-                setPanelOpen(false);
-              }}
-            >
-              <ChevronDownIcon />
-            </button>
-          </>
-        ) : null}
-      </div>
       <CustomScrollbars
         className={styles.outerScrollContainer}
         innerClass={styles.nodeGrid}
@@ -384,7 +359,11 @@ export function _BranchGraphRenderer({
         {layoutNodes ? (
           <>
             {TopButton ? (
-              <TopButton className={styles.floatingButton} />
+              <TopButton
+                className={cn(styles.floatingButton, styles.topButton, {
+                  [styles.panelOpen]: panelOpen,
+                })}
+              />
             ) : null}
             {BottomButton ? (
               <BottomButton
@@ -404,6 +383,37 @@ export function _BranchGraphRenderer({
           </>
         ) : null}
       </CustomScrollbars>
+      <div
+        className={cn(styles.migrationsPanelWrapper, {
+          [styles.panelOpen]: panelOpen,
+        })}
+        onTransitionEnd={
+          !panelOpen ? () => _setActiveMigrationHistory(null) : undefined
+        }
+      >
+        {activeMigrationHistory ? (
+          <>
+            <MigrationsPanel
+              key={activeMigrationHistory.items[0].name}
+              history={activeMigrationHistory}
+              setActiveMigrationItem={setActiveMigrationItem}
+              highlightedMigrationItem={highlightedMigrationItem}
+              setHighlightedMigrationItem={
+                setHighlightedMigrationItemAndCenter
+              }
+            />
+            <button
+              className={cn(styles.floatingButton, styles.closePanelButton)}
+              onClick={() => {
+                setHighlightedMigrationItem(null);
+                setPanelOpen(false);
+              }}
+            >
+              <ChevronDownIcon />
+            </button>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -434,29 +444,6 @@ function BranchGraphNode({
   const item = node.items[0];
   const fadedItem =
     activeMigrationItems != null && !activeMigrationItems.includes(item);
-
-  if ((node.branchIndex != null && node.branchIndex > 0) || !item.name) {
-    return (
-      <div
-        className={cn(styles.branchNode, {
-          [styles.faded]: fadedItem,
-        })}
-        style={positionStyle}
-      >
-        <BranchGraphButton
-          branchName={
-            node.branchIndex
-              ? item.branches![node.branchIndex]
-              : item.branches![0]
-          }
-          BranchLink={BranchLink}
-          githubDetails={githubDetails}
-          setActivePopup={setActivePopup}
-          branchLine={node.branchIndex ? node.branchIndex + 1 : undefined}
-        />
-      </div>
-    );
-  }
 
   let connector: JSX.Element | null = null;
 
@@ -518,7 +505,7 @@ function BranchGraphNode({
         })}
         style={positionStyle}
       >
-        {item.name ? (
+        {node.branchIndex == null || node.branchIndex == 0 ? (
           <>
             <MigrationID
               node={node}
@@ -529,17 +516,20 @@ function BranchGraphNode({
               setActiveMigration={setActiveMigrationItem}
               getMigrationIdRef={getMigrationIdRef}
             />
-            <svg
-              className={cn(styles.line, {
-                [styles.root]: !connector,
-                [styles.leaf]: !item.children.length,
-              })}
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 31 31"
-              preserveAspectRatio="none"
-            >
-              <path d="M 0 15.5 H 31" />
-            </svg>
+            {connector || item.children.length ? (
+              <svg
+                className={cn(styles.line, {
+                  [styles.root]: !connector,
+                  [styles.leaf]: !item.children.length,
+                  [styles.multi]: node.items.length > 1,
+                })}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 31 31"
+                preserveAspectRatio="none"
+              >
+                <path d="M 0 15.5 H 31" />
+              </svg>
+            ) : null}
             {node.items.length > 1 ? (
               <svg
                 className={styles.multidot}
@@ -559,6 +549,7 @@ function BranchGraphNode({
             )}
           </>
         ) : null}
+
         {node.branchIndex != null ? (
           <BranchGraphButton
             branchName={item.branches![node.branchIndex]}
@@ -714,6 +705,10 @@ function MigrationID({
   setActiveMigration: SetActiveMigrationItem;
   getMigrationIdRef: GetMigrationIdRef;
 }) {
+  if (!node.items[0].name) {
+    return <div className={cn(styles.migrationId, styles.empty)}>empty</div>;
+  }
+
   return (
     <div
       ref={getMigrationIdRef(node)}
