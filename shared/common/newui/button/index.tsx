@@ -2,6 +2,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./button.module.scss";
 import Spinner from "../../ui/spinner";
+import {PropsWithChildren} from "react";
 
 interface _BaseButtonProps {
   className?: string;
@@ -57,10 +58,16 @@ export const SubmitButton = (props: Omit<ButtonProps, "onClick">) => (
   <_Button {...props} type="submit" />
 );
 
-export interface LinkButtonProps extends _BaseButtonProps {
-  href: string;
-  target?: React.AnchorHTMLAttributes<HTMLAnchorElement>["target"];
-}
+export type LinkButtonProps = _BaseButtonProps &
+  (
+    | {
+        href: string;
+        target?: React.AnchorHTMLAttributes<HTMLAnchorElement>["target"];
+      }
+    | {
+        link: (props: PropsWithChildren<{className?: string}>) => JSX.Element;
+      }
+  );
 
 export function LinkButton({
   className,
@@ -71,19 +78,29 @@ export function LinkButton({
   disabled,
   ...props
 }: LinkButtonProps) {
+  const classname = cn(
+    styles.linkButton,
+    {
+      [styles.primary]: kind === "primary",
+      [styles.outline]: kind === "outline",
+      [styles.disabled]: !!disabled,
+    },
+    className
+  );
+
+  if ("link" in props) {
+    return (
+      <props.link className={classname}>
+        {" "}
+        {leftIcon}
+        <span>{children}</span>
+        {rightIcon}
+      </props.link>
+    );
+  }
+
   return (
-    <a
-      className={cn(
-        styles.linkButton,
-        {
-          [styles.primary]: kind === "primary",
-          [styles.outline]: kind === "outline",
-          [styles.disabled]: !!disabled,
-        },
-        className
-      )}
-      {...props}
-    >
+    <a className={classname} {...props}>
       {leftIcon}
       <span>{children}</span>
       {rightIcon}
