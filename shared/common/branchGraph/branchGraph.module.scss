@@ -1,14 +1,10 @@
 @import "@edgedb/common/mixins.scss";
 
-.branchGraph {
+.branchGraphOuter {
   position: relative;
-  border-radius: 12px;
-  background: var(--branchGraphBg);
-  border: 1px solid var(--branchGraphBorder);
+  display: flex;
   height: 220px;
   min-width: 0;
-  display: flex;
-  overflow: hidden;
   font-family: "Roboto Flex Variable", sans-serif;
 
   --branchGraphBg: var(--Grey95, #f2f2f2);
@@ -20,6 +16,16 @@
     --branchGraphBorder: var(--Grey22, #363636);
     --branchGraphLine: var(--Grey30, #4d4d4d);
   }
+}
+
+.branchGraph {
+  position: relative;
+  border-radius: 12px;
+  background: var(--branchGraphBg);
+  border: 1px solid var(--branchGraphBorder);
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
 }
 
 .migrationsPanelWrapper {
@@ -35,18 +41,17 @@
     width: 460px;
   }
 
-  &:after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 12px;
-    height: 16px;
-    bottom: 0;
-    background: linear-gradient(transparent, var(--panel_background));
-  }
-
   .closePanelButton {
-    left: -48px;
+    width: auto;
+    right: calc(100% + 12px);
+    color: var(--secondary_text_color, #666);
+    font-weight: 500;
+    padding-right: 14px;
+    padding-left: 8px;
+    white-space: nowrap;
+    font-family: inherit;
+    font-size: 14px;
+    gap: 4px;
 
     svg {
       transform: rotate(-90deg);
@@ -55,6 +60,25 @@
 
   @include darkTheme {
     --panel_background: #363636;
+    --secondary_text_color: #b3b3b3;
+  }
+
+  @include isMobile {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    transform: translateX(100%);
+    transition: transform 0.25s;
+
+    &.panelOpen {
+      transform: translateX(0);
+    }
+
+    .closePanelButton {
+      display: none;
+    }
   }
 }
 
@@ -92,15 +116,6 @@
   min-width: 100%;
   min-height: 100%;
   align-items: center;
-  transition:
-    padding-right 0.2s linear,
-    padding-bottom 0.2s linear,
-    padding-top 0.2s 0.2s linear,
-    padding-left 0.2s 0.2s linear;
-
-  .migrationPopupOpen & {
-    transition: none;
-  }
 
   .loading {
     margin: auto;
@@ -148,14 +163,6 @@
     svg {
       animation: spin var(--rotationPeriod, 1s) infinite linear;
     }
-  }
-}
-
-.topButton {
-  transition: top 0.25s;
-
-  &.panelOpen {
-    top: 60px;
   }
 }
 
@@ -572,14 +579,40 @@
   width: 460px;
   left: 0px;
   height: 100%;
-  border-radius: 0px 12px 12px 0px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px 0 0 12px;
   background: var(--panel_background);
   box-shadow:
     0px 2px 8px rgba(0, 0, 0, 0.12),
     0px 0px 2px rgba(0, 0, 0, 0.06);
+  z-index: 2;
+
+  .closeButton {
+    display: none;
+  }
+
+  @include isMobile {
+    width: 100%;
+
+    .closeButton {
+      display: flex;
+      align-self: flex-end;
+      margin: 12px;
+      margin-bottom: 6px;
+    }
+  }
+}
+
+.migrationsPanelInner {
   overflow-y: auto;
   overscroll-behavior: contain;
-  z-index: 2;
+  mask-image: linear-gradient(
+    transparent,
+    #000 16px,
+    #000 calc(100% - 16px),
+    transparent
+  );
 
   .panelScrollWrapper {
     display: flex;
@@ -767,6 +800,10 @@
 
     &:hover {
       background: var(--app_panel_background, #f7f7f7);
+    }
+
+    &:first-child {
+      margin-top: 12px;
     }
 
     .body {
