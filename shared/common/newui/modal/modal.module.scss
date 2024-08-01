@@ -33,9 +33,30 @@
     }
   }
 
+  .modal {
+    box-shadow:
+      0px 4px 16px 0px rgba(0, 0, 0, 0.16),
+      0px 2px 4px 0px rgba(0, 0, 0, 0.08);
+
+    transition:
+      transform 0.3s,
+      opacity 0.3s;
+
+    :global(.MODAL_TRANSITION) & {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+
   @include darkTheme {
     &:before {
       background: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal {
+      box-shadow:
+        0px 4px 16px 0px rgba(0, 0, 0, 0.4),
+        0px 2px 4px 0px rgba(0, 0, 0, 0.2);
     }
   }
 
@@ -43,6 +64,15 @@
     justify-content: flex-end;
     padding: 0;
     padding-top: 48px;
+
+    .modal {
+      width: 100%;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .content {
+      margin: 0 auto;
+    }
   }
 }
 
@@ -54,31 +84,16 @@
   border-radius: 12px;
   border: 1px solid var(--Grey80, #ccc);
   background: var(--app_panel_background, #f7f7f7);
-  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.16),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.08);
   z-index: 1;
   color: var(--main_text_color, #4d4d4d);
   font-family: "Roboto Flex Variable";
-  transition: transform 0.3s, opacity 0.3s;
-
-  :global(.MODAL_TRANSITION) & {
-    transform: translateY(100px);
-    opacity: 0;
-  }
 
   @include darkTheme {
     --app_panel_background: var(--Grey14, #242424);
     border-color: var(--Grey22, #363636);
-    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
-      0px 2px 4px 0px rgba(0, 0, 0, 0.2);
     --main_text_color: #ccc;
     --secondary_text_color: #b3b3b3;
     --tertiary_text_colour: #999;
-  }
-
-  @include isMobile {
-    width: 100%;
-    border-radius: 12px 12px 0 0;
   }
 }
 
@@ -128,10 +143,6 @@
   padding: 16px 24px 24px 24px;
   gap: 16px;
   overflow: auto;
-
-  @include isMobile {
-    margin: 0 auto;
-  }
 }
 
 .closeButton {

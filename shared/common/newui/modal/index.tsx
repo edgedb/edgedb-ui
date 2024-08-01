@@ -18,46 +18,46 @@ export interface ModalProps {
   footerExtra?: JSX.Element;
 }
 
-export function Modal({
+export function ModalPanel({
   className,
+  noHeader,
   title,
   subheading,
   onClose,
-  noCloseOnOverlayClick,
   onSubmit,
   formError,
   children,
   footerDetails,
   footerButtons,
   footerExtra,
-}: PropsWithChildren<ModalProps>) {
+}: PropsWithChildren<
+  | ({noHeader?: false} & Omit<ModalProps, "noCloseOnOverlayClick">)
+  | ({
+      noHeader: true;
+      title?: undefined;
+      subheading?: undefined;
+      onClose?: undefined;
+    } & Omit<
+      ModalProps,
+      "noCloseOnOverlayClick" | "title" | "subheading" | "onClose"
+    >)
+>) {
   const El = onSubmit ? "form" : "div";
 
   return (
-    <div
-      className={styles.modalOverlay}
-      onClick={
-        onClose && !noCloseOnOverlayClick
+    <El
+      className={cn(styles.modal, className)}
+      onSubmit={
+        onSubmit
           ? (e) => {
-              if (e.target === e.currentTarget) {
-                onClose();
-              }
+              e.preventDefault();
+              onSubmit();
             }
           : undefined
       }
+      autoComplete="off"
     >
-      <El
-        className={cn(styles.modal, className)}
-        onSubmit={
-          onSubmit
-            ? (e) => {
-                e.preventDefault();
-                onSubmit();
-              }
-            : undefined
-        }
-        autoComplete="off"
-      >
+      {!noHeader ? (
         <div className={styles.header}>
           <div className={styles.headings}>
             <div className={styles.title}>{title}</div>
@@ -72,23 +72,45 @@ export function Modal({
             <CrossIcon />
           </div>
         </div>
-        {children}
-        {formError ? (
-          <div className={styles.formError}>
-            <WarningIcon />
-            <div>{formError}</div>
+      ) : null}
+      {children}
+      {formError ? (
+        <div className={styles.formError}>
+          <WarningIcon />
+          <div>{formError}</div>
+        </div>
+      ) : null}
+      {footerButtons || footerDetails ? (
+        <div className={styles.footer}>
+          {footerExtra}
+          <div className={styles.footerMain}>
+            <div className={styles.footerDetails}>{footerDetails}</div>
+            {footerButtons}
           </div>
-        ) : null}
-        {footerButtons || footerDetails ? (
-          <div className={styles.footer}>
-            {footerExtra}
-            <div className={styles.footerMain}>
-              <div className={styles.footerDetails}>{footerDetails}</div>
-              {footerButtons}
-            </div>
-          </div>
-        ) : null}
-      </El>
+        </div>
+      ) : null}
+    </El>
+  );
+}
+
+export function Modal({
+  noCloseOnOverlayClick,
+  ...props
+}: PropsWithChildren<ModalProps>) {
+  return (
+    <div
+      className={styles.modalOverlay}
+      onClick={
+        props.onClose && !noCloseOnOverlayClick
+          ? (e) => {
+              if (e.target === e.currentTarget) {
+                props.onClose!();
+              }
+            }
+          : undefined
+      }
+    >
+      <ModalPanel {...props} />
     </div>
   );
 }
