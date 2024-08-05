@@ -36,6 +36,11 @@ export class CurrentTimestamp {
       this._updateFrequency
     ) as unknown as number;
   }
+
+  @action.bound
+  refresh() {
+    this._updateTimestamp();
+  }
 }
 
 export const currentTimestamp = new CurrentTimestamp();
@@ -55,7 +60,7 @@ export const RelativeTime = observer(function RelativeTime({
 
   const diff = (currentTimestamp.timestamp - timestamp) / 1000;
   if (Math.floor(diff) <= 0) {
-    return <>Just now</>
+    return <>Just now</>;
   }
   if (diff < 60) {
     return (
