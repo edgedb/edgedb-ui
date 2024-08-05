@@ -83,24 +83,24 @@ export interface HeaderNavColProps<LinkProps> {
   ) => JSX.Element;
   showCursor?: boolean;
   closeDropdown: () => void;
-  itemGroups:
-    | ({
-        header: string;
-        items:
-          | {
-              key: string;
-              label: string;
-              linkProps: LinkProps;
-              avatarUrl?: string;
-              selected: boolean;
-              checked?: boolean;
-              onHover: () => void;
-              onClick?: () => void;
-            }[]
-          | null
-          | string;
-        emptyMessage?: string;
-      } | null)[];
+  itemGroups: ({
+    header: string;
+    items:
+      | {
+          key: string;
+          label: string;
+          linkProps: LinkProps;
+          avatar?: string | JSX.Element | null;
+          avatarTypeIcon?: JSX.Element;
+          selected: boolean;
+          checked?: boolean;
+          onHover: () => void;
+          onClick?: () => void;
+        }[]
+      | null
+      | string;
+    emptyMessage?: string;
+  } | null)[];
   currentOrgSlug?: string;
   currentInstanceName?: string;
   currentDatabaseName?: string;
@@ -160,13 +160,23 @@ export function HeaderNavCol<LinkProps>({
                       item.onClick?.();
                     }}
                   >
-                    {item.avatarUrl ? (
-                      <div
-                        className={styles.avatar}
-                        style={{
-                          backgroundImage: `url(${item.avatarUrl})`,
-                        }}
-                      />
+                    {item.avatar ? (
+                      typeof item.avatar === "string" ? (
+                        <div
+                          className={styles.avatar}
+                          style={{
+                            backgroundImage: `url(${item.avatar})`,
+                          }}
+                        >
+                          {item.avatarTypeIcon ? (
+                            <div className={styles.avatarType}>
+                              {item.avatarTypeIcon}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className={styles.iconAvatar}>{item.avatar}</div>
+                      )
                     ) : null}
                     <span>{item.label}</span>
                     {!!item.checked && <CheckIcon />}

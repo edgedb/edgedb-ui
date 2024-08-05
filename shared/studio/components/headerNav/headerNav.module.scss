@@ -75,14 +75,17 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(-20px);
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
   background-color: var(--grey25);
   color: var(--grey85);
   border-radius: 6px;
   overflow: hidden;
   min-height: 240px;
   max-width: calc(100% - 24px);
-  box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
+  box-shadow:
+    0px 32px 20px -24px rgba(0, 0, 0, 0.12),
     0px 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 10;
 
@@ -197,13 +200,47 @@
     }
   }
 
-  .avatar {
-    width: 22px;
-    height: 22px;
+  .avatar,
+  .iconAvatar {
+    position: relative;
+    width: 24px;
+    height: 24px;
     border-radius: 16px;
     background-size: contain;
-    margin-right: 8px;
+    margin-right: 12px;
     flex-shrink: 0;
+
+    .avatarType {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #2e2e2e;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f7f7f7;
+      bottom: -6px;
+      right: -6px;
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  .iconAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+
+    svg {
+      width: 18px;
+      height: 18px;
+      color: #2e2e2e;
+    }
   }
 
   .selected {
