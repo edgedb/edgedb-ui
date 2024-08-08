@@ -317,22 +317,24 @@ export class DataInspector extends Model({
     this._updateRowCount();
 
     const updateFieldDisposer = reaction(
-      () => [this.objectType] as const,
-      ([objectType]) => {
+      () => this.objectType,
+      (objectType) => {
         if (objectType) {
           this._updateFields();
         }
       }
     );
     const refreshDataDisposer = reaction(
-      () => [sessionStateCtx.get(this)?.activeState],
-      () => {
-        this.omittedLinks.clear();
-        this._refreshData(true);
+      () => sessionStateCtx.get(this)?.activeState,
+      (state) => {
+        if (state) {
+          this.omittedLinks.clear();
+          this._refreshData(true);
+        }
       }
     );
     const refreshSubtypesDataDisposer = reaction(
-      () => [this.fields],
+      () => this.fields,
       () => {
         this.omittedLinks.clear();
         this._refreshData(false, true);
@@ -517,9 +519,7 @@ export class DataInspector extends Model({
 
   @computed
   get insertTypeNames() {
-    const objectType = dbCtx
-      .get(this)!
-      .schemaData?.objects.get(this.objectTypeId);
+    const objectType = this.objectType;
 
     if (!objectType) {
       return [];
