@@ -121,21 +121,29 @@ export const BranchGraph = observer(function BranchGraph({
             findGraphItemBranch(graphItems[0])
           );
           const result = await conn.query(
-            `select (
-        select schema::Migration
-        filter .name in array_unpack(<array<str>>$names)
-      ).script`,
+            `select schema::Migration {
+              name,
+              script
+            }
+            filter .name in array_unpack(<array<str>>$names)`,
             {names: graphItems.map((item) => item.name)}
           );
-          const scripts = result.result;
-          if (scripts == null || scripts.length != graphItems.length) {
+          const migrations = new Map(
+            result.result?.map((m) => [m.name, m.script])
+          );
+
+          const missingMigrations = graphItems
+            .map((item) => item.name)
+            .filter((name) => !migrations.has(name));
+
+          if (missingMigrations.length) {
             throw new Error(
-              `Migrations not found for ${graphItems
-                .map((item) => item.name)
-                .join(", ")}`
+              `Migrations not found for ${missingMigrations.join(", ")}`
             );
           }
-          return scripts as string[];
+          return graphItems.map((item) =>
+            migrations.get(item.name)
+          ) as string[];
         };
 
   return (
