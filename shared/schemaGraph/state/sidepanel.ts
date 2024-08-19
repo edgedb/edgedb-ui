@@ -85,7 +85,7 @@ function createSchemaSidepanelFilter<T>(
 export const SchemaSidepanel = types
   .model("SchemaSidepanel", {
     selectedTab: types.optional(
-      types.enumeration<SidepanelTabType>(Object.values(SidepanelTabType)),
+      types.enumeration(Object.values(SidepanelTabType)),
       SidepanelTabType.inspector
     ),
     functions: types.optional(
