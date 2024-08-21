@@ -2012,7 +2012,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: ^1.4.1
+    edgedb: 1.5.12
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -2030,7 +2030,7 @@ __metadata:
     react-window: ^1.8.6
   peerDependencies:
     "@types/react": ^16.9.34
-    edgedb: ^1.4.1
+    edgedb: 1.5.12
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -2060,7 +2060,7 @@ __metadata:
     webcola: ^3.4.0
   peerDependencies:
     "@types/react": ^17.0.0
-    edgedb: ^1.4.1
+    edgedb: 1.5.12
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -2092,7 +2092,7 @@ __metadata:
     react-hook-form: ^7.32.2
     react-markdown: ^9.0.1
   peerDependencies:
-    edgedb: ^1.4.1
+    edgedb: 1.5.12
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -6334,6 +6334,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"debug@npm:^4.3.4":
+  version: 4.3.6
+  resolution: "debug@npm:4.3.6"
+  dependencies:
+    ms: 2.1.2
+  peerDependenciesMeta:
+    supports-color:
+      optional: true
+  checksum: 1630b748dea3c581295e02137a9f5cbe2c1d85fea35c1e6597a65ca2b16a6fce68cec61b299d480787ef310ba927dc8c92d3061faba0ad06c6a724672f66be7f
+  languageName: node
+  linkType: hard
+
 "decimal.js@npm:^10.2.1":
   version: 10.3.1
   resolution: "decimal.js@npm:10.3.1"
@@ -6743,12 +6755,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:^1.4.1":
-  version: 1.4.1
-  resolution: "edgedb@npm:1.4.1"
+"edgedb@npm:1.5.12":
+  version: 1.5.12
+  resolution: "edgedb@npm:1.5.12"
+  dependencies:
+    debug: ^4.3.4
+    env-paths: ^3.0.0
+    semver: ^7.6.2
+    shell-quote: ^1.8.1
+    which: ^4.0.0
   bin:
-    edgeql-js: dist/cli.js
-  checksum: 12581bf128a71552d75734d2fa0c09d5e87dd195997042a4b1f225e20a70d6fe2c2e47584390742f616e964d1981f06431a60bd347c475caafe2db537cc1de2f
+    edgedb: dist/cli.mjs
+  checksum: cfa23208c5ae2d6219456985eb77cb10d595147cb9ca99efa6e315426ab0c0bbc6e5bf83e56bef1f5d98a0e400f8b2f08e53825fa7c972ad65d833fdbf312e08
   languageName: node
   linkType: hard
 
@@ -6856,6 +6874,13 @@ __metadata:
   version: 2.2.1
   resolution: "env-paths@npm:2.2.1"
   checksum: 65b5df55a8bab92229ab2b40dad3b387fad24613263d103a97f91c9fe43ceb21965cd3392b1ccb5d77088021e525c4e0481adb309625d0cb94ade1d1fb8dc17e
+  languageName: node
+  linkType: hard
+
+"env-paths@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "env-paths@npm:3.0.0"
+  checksum: b2b0a0d0d9931a13d279c22ed94d78648a1cc5f408f05d47ff3e0c1616f0aa0c38fb33deec5e5be50497225d500607d57f9c8652c4d39c2f2b7608cd45768128
   languageName: node
   linkType: hard
 
@@ -8891,6 +8916,13 @@ __metadata:
   version: 2.0.0
   resolution: "isexe@npm:2.0.0"
   checksum: 26bf6c5480dda5161c820c5b5c751ae1e766c587b1f951ea3fcfc973bafb7831ae5b54a31a69bd670220e42e99ec154475025a468eae58ea262f813fdc8d1c62
+  languageName: node
+  linkType: hard
+
+"isexe@npm:^3.1.1":
+  version: 3.1.1
+  resolution: "isexe@npm:3.1.1"
+  checksum: 7fe1931ee4e88eb5aa524cd3ceb8c882537bc3a81b02e438b240e47012eef49c86904d0f0e593ea7c3a9996d18d0f1f3be8d3eaa92333977b0c3a9d353d5563e
   languageName: node
   linkType: hard
 
@@ -13692,6 +13724,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.6.2":
+  version: 7.6.3
+  resolution: "semver@npm:7.6.3"
+  bin:
+    semver: bin/semver.js
+  checksum: 4110ec5d015c9438f322257b1c51fe30276e5f766a3f64c09edd1d7ea7118ecbc3f379f3b69032bacf13116dc7abc4ad8ce0d7e2bd642e26b0d271b56b61a7d8
+  languageName: node
+  linkType: hard
+
 "send@npm:0.17.2":
   version: 0.17.2
   resolution: "send@npm:0.17.2"
@@ -13806,6 +13847,13 @@ __metadata:
   version: 1.7.3
   resolution: "shell-quote@npm:1.7.3"
   checksum: aca58e73a3a5d933d02e0bdddedc53ee14f7c2ec264f97ac915b9d4482d077a38e422aa664631d60a672cd3cdb4054eb2e6c0303f54882453dacb6483e482d34
+  languageName: node
+  linkType: hard
+
+"shell-quote@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "shell-quote@npm:1.8.1"
+  checksum: 5f01201f4ef504d4c6a9d0d283fa17075f6770bfbe4c5850b074974c68062f37929ca61700d95ad2ac8822e14e8c4b990ca0e6e9272e64befd74ce5e19f0736b
   languageName: node
   linkType: hard
 
@@ -15484,7 +15532,7 @@ __metadata:
     "@types/react-dom": ^17.0.9
     "@types/selenium-webdriver": ^4.1.10
     buffer: ^6.0.3
-    edgedb: ^1.4.1
+    edgedb: 1.5.12
     hash.js: ^1.1.7
     jest: ^29.4.0
     mobx: ^6.5.0
@@ -15591,6 +15639,17 @@ __metadata:
   bin:
     node-which: ./bin/node-which
   checksum: 1a5c563d3c1b52d5f893c8b61afe11abc3bab4afac492e8da5bde69d550de701cf9806235f20a47b5c8fa8a1d6a9135841de2596535e998027a54589000e66d1
+  languageName: node
+  linkType: hard
+
+"which@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "which@npm:4.0.0"
+  dependencies:
+    isexe: ^3.1.1
+  bin:
+    node-which: bin/which.js
+  checksum: f17e84c042592c21e23c8195108cff18c64050b9efb8459589116999ea9da6dd1509e6a1bac3aeebefd137be00fabbb61b5c2bc0aa0f8526f32b58ee2f545651
   languageName: node
   linkType: hard
 

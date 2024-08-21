@@ -24,7 +24,7 @@ import {codecsRegistry} from "../utils/decodeRawBuffer";
 import {cleanupOldSchemaDataForInstance} from "../idbStore";
 
 import {DatabaseState} from "./database";
-import {Connection} from "./connection";
+import {Connection, createAuthenticatedFetch} from "./connection";
 
 export const instanceCtx = createMobxContext<InstanceState>();
 
@@ -71,12 +71,12 @@ export class InstanceState extends Model({
 
   async fetchInstanceInfo() {
     const client = AdminUIFetchConnection.create(
-      {
-        address: this.serverUrl,
+      createAuthenticatedFetch({
+        serverUrl: this.serverUrl,
         database: "__edgedbsys__",
         user: this.authUsername ?? "edgedb",
-        token: this.authToken!,
-      },
+        authToken: this.authToken!,
+      }),
       codecsRegistry
     );
     try {

@@ -84,17 +84,34 @@ const queryOptions: QueryOptions = {
   injectObjectids: true,
 };
 
+export function createAuthenticatedFetch({
+  serverUrl,
+  database,
+  user,
+  authToken,
+}: ConnectConfig) {
+  const databaseUrl = `${serverUrl}/db/${encodeURIComponent(database)}/`;
+
+  return (path: string, init: RequestInit) => {
+    const url = new URL(path, databaseUrl);
+
+    const headers = new Headers(init.headers);
+    headers.append("X-EdgeDB-User", user);
+    headers.append("Authorization", `Bearer ${authToken}`);
+
+    return fetch(url, {
+      ...init,
+      headers,
+    });
+  };
+}
+
 @model("Connection")
 export class Connection extends Model({
   config: prop<ConnectConfig>(),
 }) {
   conn = AdminUIFetchConnection.create(
-    {
-      address: this.config.serverUrl,
-      database: encodeURIComponent(this.config.database),
-      user: this.config.user,
-      token: this.config.authToken,
-    },
+    createAuthenticatedFetch(this.config),
     codecsRegistry
   );
 
