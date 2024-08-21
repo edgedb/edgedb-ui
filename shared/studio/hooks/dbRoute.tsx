@@ -1,4 +1,4 @@
-import {createContext, useContext} from "react";
+import {createContext, useContext, ReactNode} from "react";
 
 export type NavigateFunction = (
   path: string | {path?: string; searchParams?: URLSearchParams},
