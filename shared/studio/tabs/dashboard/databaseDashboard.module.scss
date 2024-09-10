@@ -24,8 +24,16 @@
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  justify-content: center;
   color: #555;
+
+  .loading {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+  }
 
   @include darkTheme {
     color: #aaa;

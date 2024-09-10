@@ -44,8 +44,10 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
   if (dbState.schemaId == null) {
     return (
       <div className={styles.dashboard}>
-        <Spinner size={20} />
-        Loading schema...
+        <div className={styles.loading}>
+          <Spinner size={20} />
+          Loading schema...
+        </div>
       </div>
     );
   }
@@ -207,8 +209,8 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
                   instanceState.creatingExampleDB
                     ? `Creating example ${dbOrBranch}...`
                     : exampleDBExists
-                    ? `Switch to example ${dbOrBranch}`
-                    : `Create example ${dbOrBranch}`
+                      ? `Switch to example ${dbOrBranch}`
+                      : `Create example ${dbOrBranch}`
                 }
                 loading={instanceState.creatingExampleDB}
                 disabled={instanceState.creatingExampleDB}
