@@ -92,8 +92,6 @@ export function ModalProvider({children}: PropsWithChildren<{}>) {
   );
 }
 
-const modalPlaceholder = <></>;
-
 export function useModal(): {
   modal: JSX.Element | null;
   openModal: (modal: JSX.Element | null, transition?: boolean) => () => void;
@@ -109,6 +107,7 @@ export function useModal(modal?: JSX.Element): {
     | ((transition?: boolean) => () => void);
 } {
   const ctx = useContext(modalContext);
+  const placeholder = useRef(<></>);
 
   if (!modal) {
     return {
@@ -119,11 +118,11 @@ export function useModal(modal?: JSX.Element): {
 
   return {
     modal:
-      ctx.modal === modalPlaceholder
+      ctx.modal === placeholder.current
         ? createPortal(modal, document.getElementById("modal_target")!)
         : null,
     openModal: (transition?: boolean) =>
-      ctx.openModal(modalPlaceholder, transition),
+      ctx.openModal(placeholder.current, transition),
   };
 }
 
