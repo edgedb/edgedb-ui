@@ -22,7 +22,14 @@ export function MobileNavTabs({
   Link,
   extraMenu,
 }: MobileNavTabsProps) {
-  const {openModal} = useModal();
+  const {modal, openModal} = useModal(
+    <MobileMenu
+      tabs={tabs}
+      currentTabId={currentTabId}
+      Link={Link}
+      extraMenu={extraMenu}
+    />
+  );
   const modalDisposer = useRef<null | (() => void)>(null);
   const windowWidth = useWindowWidth();
 
@@ -54,19 +61,11 @@ export function MobileNavTabs({
       </div>
       <div
         className={styles.menuButton}
-        onClick={() =>
-          (modalDisposer.current = openModal(
-            <MobileMenu
-              tabs={tabs}
-              currentTabId={currentTabId}
-              Link={Link}
-              extraMenu={extraMenu}
-            />
-          ))
-        }
+        onClick={() => (modalDisposer.current = openModal())}
       >
         <EllipsisIcon />
       </div>
+      {modal}
     </div>
   );
 }
