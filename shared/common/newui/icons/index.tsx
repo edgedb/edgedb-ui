@@ -566,3 +566,23 @@ export function CircledCheckIcon() {
     </svg>
   );
 }
+
+export function CircledQuestionIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12 16.5H12.009M9.381 9.3C9.59259 8.69851 10.0102 8.1913 10.56 7.86822C11.1097 7.54515 11.756 7.42705 12.3845 7.53485C13.0129 7.64264 13.5829 7.96938 13.9936 8.45718C14.4042 8.94498 14.6289 9.56237 14.628 10.2C14.628 12 12 13 12 13V13.5M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

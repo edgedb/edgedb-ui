@@ -93,25 +93,40 @@ export function ModalPanel({
   );
 }
 
-export function Modal({
+export function ModalOverlay({
   noCloseOnOverlayClick,
-  ...props
-}: PropsWithChildren<ModalProps>) {
+  onClose,
+  children,
+}: PropsWithChildren<Pick<ModalProps, "noCloseOnOverlayClick" | "onClose">>) {
   return (
     <div
       className={styles.modalOverlay}
       onClick={
-        props.onClose && !noCloseOnOverlayClick
+        onClose && !noCloseOnOverlayClick
           ? (e) => {
               if (e.target === e.currentTarget) {
-                props.onClose!();
+                onClose!();
               }
             }
           : undefined
       }
     >
-      <ModalPanel {...props} />
+      {children}
     </div>
+  );
+}
+
+export function Modal({
+  noCloseOnOverlayClick,
+  ...props
+}: PropsWithChildren<ModalProps>) {
+  return (
+    <ModalOverlay
+      noCloseOnOverlayClick={noCloseOnOverlayClick}
+      onClose={props.onClose}
+    >
+      <ModalPanel {...props} />
+    </ModalOverlay>
   );
 }
 
