@@ -8,7 +8,7 @@ import {CrossIcon, WarningIcon} from "../icons";
 export interface ModalProps {
   className?: string;
   title: string;
-  subheading?: string;
+  subheading?: string | JSX.Element;
   onClose?: () => void;
   noCloseOnOverlayClick?: boolean;
   onSubmit?: () => void;

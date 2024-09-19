@@ -96,18 +96,21 @@ export function useModal(): {
   modal: JSX.Element | null;
   openModal: (modal: JSX.Element | null, transition?: boolean) => () => void;
 };
-export function useModal(modal: JSX.Element): {
+export function useModal<Ctx extends any = null>(
+  modal: (ctx: Ctx) => JSX.Element
+): {
   modal: JSX.Element | null;
-  openModal: (transition?: boolean) => () => void;
+  openModal: (ctx: Ctx, transition?: boolean) => () => void;
 };
-export function useModal(modal?: JSX.Element): {
+export function useModal(modal?: (ctx: any) => JSX.Element): {
   modal: JSX.Element | null;
   openModal:
     | ((modal: JSX.Element | null, transition?: boolean) => () => void)
-    | ((transition?: boolean) => () => void);
+    | ((ctx: any, transition?: boolean) => () => void);
 } {
   const ctx = useContext(modalContext);
   const placeholder = useRef(<></>);
+  const modalCtx = useRef<any>();
 
   if (!modal) {
     return {
@@ -119,10 +122,15 @@ export function useModal(modal?: JSX.Element): {
   return {
     modal:
       ctx.modal === placeholder.current
-        ? createPortal(modal, document.getElementById("modal_target")!)
+        ? createPortal(
+            modal(modalCtx.current),
+            document.getElementById("modal_target")!
+          )
         : null,
-    openModal: (transition?: boolean) =>
-      ctx.openModal(placeholder.current, transition),
+    openModal: (_ctx: any, transition?: boolean) => {
+      modalCtx.current = _ctx;
+      return ctx.openModal(placeholder.current, transition);
+    },
   };
 }
 
