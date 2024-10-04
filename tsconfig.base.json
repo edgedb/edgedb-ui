@@ -11,12 +11,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react",
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
+    "typeRoots": ["./node_modules/@types"],
     "allowJs": false,
     "skipLibCheck": false,
     "downlevelIteration": true,
     "paths": {}
-  },
+  }
 }
