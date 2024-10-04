@@ -24,6 +24,7 @@ export const KnownScalarTypes = [
   "std::json",
   "std::bigint",
   "cfg::memory",
+
   "ext::pgvector::vector",
   "ext::pgvector::halfvec",
   "ext::pgvector::sparsevec",
@@ -33,4 +34,9 @@ export const KnownScalarTypes = [
   "std::pg::timestamp",
   "std::pg::date",
   "std::pg::interval",
+
+  "ext::postgis::geometry",
+  "ext::postgis::geography",
+  "ext::postgis::box2d",
+  "ext::postgis::box3d",
 ] as const;

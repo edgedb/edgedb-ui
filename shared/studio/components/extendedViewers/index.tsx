@@ -3,6 +3,7 @@ import {createContext} from "react";
 import {HexViewer} from "./hexViewer";
 import {JsonViewer} from "./jsonViewer";
 import {TextViewer} from "./textViewer";
+import {PostgisViewer} from "./postgisViewer";
 
 import styles from "./shared.module.scss";
 import {ActionsBar} from "./shared";
@@ -15,6 +16,8 @@ export const extendedViewerRenderers: {
   "std::str": TextViewer as Renderer,
   "std::bytes": HexViewer as Renderer,
   "std::json": JsonViewer as Renderer,
+  "ext::postgis::geometry": PostgisViewer,
+  "ext::postgis::box2d": PostgisViewer,
 };
 
 export const extendedViewerIds = new Set(Object.keys(extendedViewerRenderers));

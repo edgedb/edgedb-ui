@@ -1,0 +1,1367 @@
+import {action, computed, observable, reaction, runInAction} from "mobx";
+import {model, Model, modelAction, prop} from "mobx-keystone";
+
+import maplibregl from "maplibre-gl";
+import {Protocol} from "pmtiles";
+import layers from "protomaps-themes-base";
+
+import {Theme} from "@edgedb/common/hooks/useTheme";
+import {assertNever} from "@edgedb/common/utils/assertNever";
+
+import * as PostGIS from "../../../../../web/node_modules/edgedb/dist/datatypes/postgis";
+// import {Bounds, Metadata, toGeoJSON} from "./toGeojson";
+import * as geojson from "./geojsonTypes";
+import {
+  EditableGeometry,
+  Geometry,
+  MultiGeometry,
+  LineString,
+  PlainPoint,
+  Point,
+  Polygon,
+} from "./editableGeom/types";
+import {convertToEditableGeometry, GeomMapping} from "./editableGeom/convert";
+import {
+  Bounds,
+  getBoundingBoxFeature,
+  getSelectableChildGeoms,
+  groupGeomsByParent,
+  pointInBounds,
+  polygonsIntersect,
+} from "./editableGeom/utils";
+
+// @ts-ignore
+import controlPointImage from "./controlPoint.png";
+
+export const ListItemRowHeight = 32;
+
+export type LineButtonMode = "line" | "circular";
+export type PolyButtonMode = "polygon" | "triangle";
+export type EditingMode = "point" | LineButtonMode | PolyButtonMode | "ring";
+
+export type GeomAction = "group-multi" | "group-collection" | "ungroup";
+
+const modeShortcuts = new Map<string, EditingMode | null>([
+  ["v", null],
+  ["p", "point"],
+  ["l", "line"],
+  ["c", "circular"],
+  ["s", "polygon"],
+  ["t", "triangle"],
+  ["r", "ring"],
+]);
+const actionShortcuts = new Map<
+  string,
+  {action: GeomAction; ctrlcmd?: boolean; shift?: boolean; altopt?: boolean}[]
+>([
+  [
+    "g",
+    [
+      {action: "group-multi", ctrlcmd: true},
+      {action: "group-collection", ctrlcmd: true, altopt: true},
+    ],
+  ],
+  ["u", [{action: "ungroup", ctrlcmd: true}]],
+]);
+
+export function createPostgisEditorState(
+  data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D,
+  theme: Theme
+): PostgisEditor {
+  const state = new PostgisEditor({theme});
+
+  state._setData(data);
+
+  state.mapElRef = state.mapElRef.bind(state);
+  state._updateLineEditMousePoint =
+    state._updateLineEditMousePoint.bind(state);
+
+  return state;
+}
+
+const DRAG_THRESHOLD = 3;
+
+const DATA_SOURCE = "query-data";
+const EDITING_SOURCE = "editing-data";
+const SELECTION_SOURCE = "selection-controls";
+
+const LAYER_DATA_POINTS = "layer-data-points";
+const LAYER_DATA_RENDER_LINES = "layer-data-render-lines";
+const LAYER_DATA_LINES = "layer-data-lines";
+const LAYER_DATA_BG = "layer-data-bg";
+const LAYER_DATA_BBOX = "layer-data-bbox";
+
+const LAYER_EDIT_POINTS = "layer-edit-points";
+const LAYER_EDIT_CONTROL_POINTS = "layer-edit-control-points";
+const LAYER_EDIT_RENDER_LINES = "layer-edit-render-lines";
+const LAYER_EDIT_LINES = "layer-edit-lines";
+const LAYER_EDIT_PENDING_LINES = "layer-edit-pending-lines";
+const LAYER_EDIT_BG = "layer-edit-bg";
+
+const emptyDataSource: geojson.FeatureCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
+
+@model("PostgisEditor")
+export class PostgisEditor extends Model({
+  theme: prop<Theme>(),
+
+  sidePanelHeight: prop(0).withSetter(),
+  sidePanelScrollTop: prop(0).withSetter(),
+}) {
+  @computed.struct
+  get visibleListItemIndexes(): [number, number] {
+    return [
+      Math.max(0, Math.floor(this.sidePanelScrollTop / ListItemRowHeight) - 3),
+      Math.ceil(
+        (this.sidePanelScrollTop + this.sidePanelHeight) / ListItemRowHeight
+      ) + 3,
+    ];
+  }
+
+  @observable.ref
+  data: Geometry | null = null;
+
+  @observable
+  hasZ: boolean = false;
+
+  @observable
+  hasM: boolean = false;
+
+  geomMapping: GeomMapping = new GeomMapping();
+
+  get geojsonData(): geojson.FeatureCollection {
+    return {
+      type: "FeatureCollection",
+      features: this.data?.geojson ?? [],
+    };
+  }
+
+  @action
+  _setData(data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D | null) {
+    if (data) {
+      const {geometry, mapping, hasZ, hasM} = convertToEditableGeometry(
+        data as PostGIS.Geometry
+      );
+
+      this.data = geometry;
+      this.geomMapping = mapping;
+      this.hasZ = hasZ;
+      this.hasM = hasM;
+    } else {
+      this.data = null;
+      this.geomMapping.clear();
+    }
+
+    this._updateMapDataSource();
+  }
+
+  @action
+  toggleHasZ() {
+    this.hasZ = !this.hasZ;
+  }
+
+  @action
+  toggleHasM() {
+    this.hasM = !this.hasM;
+  }
+
+  @observable.ref
+  map: maplibregl.Map | null = null;
+
+  layers: maplibregl.LayerSpecification[] = [
+    {
+      id: LAYER_DATA_BG,
+      source: DATA_SOURCE,
+      type: "fill",
+      filter: ["all", ["==", "$type", "Polygon"], ["!=", "isBoxType", true]],
+      paint: {
+        "fill-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "#ffbc3d",
+          "#007cbf",
+        ],
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "editing"], false],
+          0,
+          0.4,
+        ],
+      },
+    },
+    {
+      id: LAYER_DATA_RENDER_LINES,
+      source: DATA_SOURCE,
+      type: "line",
+      filter: ["!=", "isBoxType", true],
+      paint: {
+        "line-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "#ffbc3d",
+          "#007cbf",
+        ],
+        "line-width": 1.5,
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "editing"], false],
+          0,
+          0.6,
+        ],
+      },
+    },
+    {
+      id: LAYER_DATA_LINES,
+      source: DATA_SOURCE,
+      type: "line",
+      filter: ["!=", "isBoxType", true],
+      paint: {
+        "line-width": 10,
+        "line-opacity": 0,
+      },
+    },
+    {
+      id: LAYER_DATA_POINTS,
+      source: DATA_SOURCE,
+      type: "circle",
+      filter: ["==", "$type", "Point"],
+      paint: {
+        "circle-radius": 5,
+        "circle-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "#007cbf",
+          "#ffffff",
+        ],
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "#ffffff",
+          "#007cbf",
+        ],
+        "circle-opacity": [
+          "case",
+          ["boolean", ["feature-state", "editing"], false],
+          0,
+          1,
+        ],
+        "circle-stroke-opacity": [
+          "case",
+          ["boolean", ["feature-state", "editing"], false],
+          0,
+          1,
+        ],
+      },
+    },
+    {
+      id: LAYER_DATA_BBOX,
+      source: DATA_SOURCE,
+      type: "line",
+      filter: ["get", "isBoxType"],
+      paint: {
+        "line-color": "#007cbf",
+        "line-width": 1.5,
+        "line-opacity": 0.6,
+        "line-dasharray": [4, 2],
+      },
+    },
+    // editing layers
+    {
+      id: LAYER_EDIT_BG,
+      source: EDITING_SOURCE,
+      type: "fill",
+      filter: ["==", "$type", "Polygon"],
+      paint: {
+        "fill-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "purple",
+          "green",
+        ],
+        "fill-opacity": 0.4,
+      },
+    },
+    {
+      id: LAYER_EDIT_RENDER_LINES,
+      source: EDITING_SOURCE,
+      type: "line",
+      filter: ["!=", ["get", "pendingLine"], true],
+      paint: {
+        "line-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "purple",
+          "green",
+        ],
+        "line-width": 1.5,
+        "line-opacity": 0.6,
+      },
+    },
+    {
+      id: LAYER_EDIT_LINES,
+      source: DATA_SOURCE,
+      type: "line",
+      filter: ["!=", ["get", "pendingLine"], true],
+      paint: {
+        "line-width": 10,
+        "line-opacity": 0,
+      },
+    },
+    {
+      id: LAYER_EDIT_PENDING_LINES,
+      source: EDITING_SOURCE,
+      type: "line",
+      filter: ["get", "pendingLine"],
+      paint: {
+        "line-color": "purple",
+        "line-width": 1.5,
+        "line-opacity": 0.6,
+        "line-dasharray": [2, 1],
+      },
+    },
+    {
+      id: LAYER_EDIT_CONTROL_POINTS,
+      source: EDITING_SOURCE,
+      type: "symbol",
+      filter: ["get", "isControlPoint"],
+      layout: {
+        "icon-image": "control-point-icon",
+        "icon-allow-overlap": true,
+      },
+    },
+    {
+      id: LAYER_EDIT_POINTS,
+      source: EDITING_SOURCE,
+      type: "circle",
+      filter: [
+        "all",
+        ["==", "$type", "Point"],
+        ["!=", "isControlPoint", true],
+      ],
+      paint: {
+        "circle-radius": 5,
+        "circle-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "blue",
+          "#ffffff",
+        ],
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          "#ffffff",
+          "blue",
+        ],
+      },
+    },
+    // selection
+    {
+      id: "selection-bounding-box",
+      source: SELECTION_SOURCE,
+      type: "line",
+      filter: ["get", "selectionBoundingBox"],
+      paint: {
+        "line-color": "#007cbf",
+        "line-width": 1,
+        "line-opacity": 0.6,
+        "line-dasharray": [4, 2],
+      },
+    },
+  ];
+
+  _mapElRef: HTMLDivElement | null = null;
+  mapElRef(el: HTMLDivElement | null) {
+    this._mapElRef = el;
+    if (el) {
+      this._initMap(el);
+    }
+  }
+
+  _initMap(el: HTMLDivElement) {
+    const map = new maplibregl.Map({
+      container: el,
+      style: {
+        version: 8,
+        glyphs:
+          "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+        sprite: "https://protomaps.github.io/basemaps-assets/sprites/v3/light",
+        sources: {
+          protomaps: {
+            type: "vector",
+            tiles: [
+              "https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=fdf65ab6a368418b",
+            ],
+            maxzoom: 15,
+            attribution:
+              '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+          },
+          [DATA_SOURCE]: {
+            type: "geojson",
+            data: this.geojsonData as any,
+          },
+          [EDITING_SOURCE]: {
+            type: "geojson",
+            data: emptyDataSource as any,
+          },
+          [SELECTION_SOURCE]: {
+            type: "geojson",
+            data: {type: "FeatureCollection", features: []},
+          },
+        },
+        layers: [
+          ...layers(
+            "protomaps",
+            this.theme === Theme.dark ? "black" : "white"
+          ),
+          ...this.layers,
+        ],
+      },
+      center: [0, 0],
+      zoom: 1,
+      attributionControl: {compact: true},
+      boxZoom: false,
+      clickTolerance: DRAG_THRESHOLD,
+    });
+    // map.showPadding = true;
+    // map.showTileBoundaries = true;
+    map.setPadding({right: 12, top: 0, bottom: 0, left: 0});
+    if (this.data?.bounds) {
+      map.fitBounds(this.data.bounds.bounds, {padding: 80, animate: false});
+    }
+
+    map
+      .loadImage(controlPointImage)
+      .then((image) =>
+        map.addImage("control-point-icon", image.data, {pixelRatio: 3})
+      );
+
+    map.once("load", () => {
+      runInAction(() => (this.map = map));
+      this._initEvents(map);
+    });
+  }
+
+  @modelAction
+  setTheme(theme: Theme) {
+    this.theme = theme;
+
+    if (this.map) {
+      this.map.setStyle({
+        ...this.map.getStyle(),
+        layers: [
+          ...layers("protomaps", theme === Theme.dark ? "black" : "white"),
+          ...this.layers,
+        ],
+      });
+    }
+  }
+
+  @computed
+  get cursor() {
+    return this.activeLineEdit ? "crosshair" : null;
+  }
+
+  init() {
+    const selectionUpdateDisposer = reaction(
+      () => this.map != null && [...this.selectedGeoms],
+      () => this._updateSelectionSource()
+    );
+
+    const cursorUpdateDisposer = reaction(
+      () => this.cursor,
+      (cursor) => {
+        if (this.map) {
+          this.map.getCanvas().style.cursor = cursor ?? "";
+        }
+      }
+    );
+
+    const keyListener = (ev: KeyboardEvent) => {
+      if (ev.key === "Enter" && this.selectedGeoms.size === 1) {
+        const geom = [...this.selectedGeoms][0];
+        if (geom.kind === "Point") return;
+
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.startEditingGeom(geom);
+      } else if (
+        (ev.key === "Delete" || ev.key === "Backspace") &&
+        this.selectedGeoms.size > 0
+      ) {
+        ev.preventDefault();
+
+        const groupedGeoms = groupGeomsByParent(this.selectedGeoms);
+
+        this.deselectAllGeoms();
+
+        for (const [parent, geoms] of groupedGeoms) {
+          if (!parent) {
+            this.data = null;
+            this.geomMapping.clear();
+            this._updateMapDataSource();
+          } else if (parent instanceof MultiGeometry) {
+            parent.removeGeoms(geoms, this.geomMapping);
+            this._updateEditingSource();
+          } else if (parent instanceof LineString) {
+            parent.removePoints(geoms, this.geomMapping);
+            this._updateEditingSource();
+          }
+        }
+      } else {
+        const modeShortcut = modeShortcuts.get(ev.key);
+        if (modeShortcut !== undefined) {
+          ev.preventDefault();
+          if (this.availableModes.has(modeShortcut)) {
+            this.setEditingMode(modeShortcut);
+          }
+        } else {
+          const actionShortcut = actionShortcuts.get(ev.key);
+          if (actionShortcut) {
+            const shift = ev.shiftKey;
+            // todo: handle windows keys
+            const ctrlcmd = ev.metaKey;
+            const altopt = ev.altKey;
+            for (const shortcut of actionShortcut) {
+              if (
+                shift === (shortcut.shift ?? false) &&
+                ctrlcmd === (shortcut.ctrlcmd ?? false) &&
+                altopt === (shortcut.altopt ?? false)
+              ) {
+                ev.preventDefault();
+                this.applyGeomAction(shortcut.action);
+                break;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", keyListener);
+
+    const escListener = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        ev.stopPropagation();
+        if (this.activeLineEdit) {
+          this.endLineEdit();
+        } else if (this.editingGeom) {
+          this.endEditingGeom();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", escListener, {capture: true});
+
+    return () => {
+      selectionUpdateDisposer();
+      cursorUpdateDisposer();
+      window.removeEventListener("keydown", keyListener);
+      window.removeEventListener("keydown", escListener, {capture: true});
+    };
+  }
+
+  _updateMapDataSource() {
+    if (!this.map) return;
+    // console.log("updating data source", this.geojsonData);
+    (this.map.getSource(DATA_SOURCE) as maplibregl.GeoJSONSource).setData(
+      this.geojsonData as any
+    );
+  }
+
+  _updateEditingSource() {
+    if (!this.map) return;
+    // console.log("updating editing source", this.editingGeojsonData);
+    (this.map.getSource(EDITING_SOURCE) as maplibregl.GeoJSONSource).setData(
+      this.editingGeojsonData as any
+    );
+  }
+
+  _updateSelectionSource() {
+    if (!this.map) return;
+    (this.map.getSource(SELECTION_SOURCE) as maplibregl.GeoJSONSource).setData(
+      {
+        type: "FeatureCollection",
+        features:
+          this.editingGeom === null ||
+          this.editingGeom instanceof MultiGeometry
+            ? (getBoundingBoxFeature(this.selectedGeoms) as any)
+            : [],
+      }
+    );
+  }
+
+  fitToBounds() {
+    if (this.map && this.data?.bounds) {
+      this.map.fitBounds(this.data.bounds.bounds, {
+        padding: 80,
+        animate: true,
+      });
+    }
+  }
+
+  // _updateLayers(metadata: Metadata) {
+  //   if (!this.map) return;
+  //   if (this.data instanceof Geometry) {
+  //     const pointsCircleRadius: maplibregl.DataDrivenPropertyValueSpecification<number> =
+  //       this.data.hasM && metadata.maxM != metadata.minM
+  //         ? [
+  //             "interpolate",
+  //             ["linear"],
+  //             ["get", "mag"],
+  //             metadata.minM,
+  //             2,
+  //             metadata.maxM,
+  //             16,
+  //           ]
+  //         : 5;
+  //     (
+  //       this.layers.find(
+  //         (layer) => layer.id === LAYER_DATA_POINTS
+  //       ) as maplibregl.CircleLayerSpecification
+  //     ).paint!["circle-radius"] = pointsCircleRadius;
+  //     this.map.setPaintProperty(
+  //       LAYER_DATA_POINTS,
+  //       "circle-radius",
+  //       pointsCircleRadius
+  //     );
+  //   }
+  // }
+
+  @observable.shallow
+  selectedGeoms = new Set<Geometry>();
+
+  @observable.ref
+  editingGeom: EditableGeometry | null = null;
+
+  get editingGeojsonData(): geojson.FeatureCollection {
+    return this.editingGeom
+      ? {
+          type: "FeatureCollection",
+          features: this.editingGeom.editingGeojson(this.activeLineEdit),
+        }
+      : emptyDataSource;
+  }
+
+  @action
+  updatePointCoord(point: Point, index: 0 | 1 | 2, value: number) {
+    point.point[index] = value;
+    point.parent?.recalculateBounds();
+    if (this.editingGeom) {
+      this._updateEditingSource();
+    } else {
+      this._updateMapDataSource();
+    }
+  }
+
+  @action
+  updatePointMValue(point: Point, value: number) {
+    point.m = value;
+    // todo: update m min/max
+  }
+
+  @observable
+  editingMode: EditingMode | null = null;
+
+  @observable
+  selectedLineButtonMode: LineButtonMode = "line";
+
+  @observable
+  selectedPolyButtonMode: PolyButtonMode = "polygon";
+
+  @computed
+  get availableModes() {
+    const modes: (EditingMode | null)[] = [null];
+    if (this.editingGeom == null) {
+      modes.push("point", "line", "circular", "polygon", "triangle");
+    } else if (this.editingGeom instanceof MultiGeometry) {
+      if (this.editingGeom.kind === "MultiPolygon") {
+        modes.push("polygon");
+      } else if (this.editingGeom.kind === "MultiLineString") {
+        modes.push("line");
+      } else if (this.editingGeom.kind === "MultiPoint") {
+        modes.push("point");
+      } else {
+        modes.push("point", "line", "circular", "polygon", "triangle");
+      }
+    } else if (
+      this.editingGeom instanceof Polygon &&
+      this.editingGeom.kind !== "Triangle"
+    ) {
+      modes.push("ring");
+    }
+    return new Set(modes);
+  }
+
+  @action
+  setEditingMode(mode: EditingMode | null) {
+    this.editingMode = mode;
+    if (mode === "line" || mode === "circular") {
+      this.selectedLineButtonMode = mode;
+    }
+    if (mode === "polygon" || mode === "triangle") {
+      this.selectedPolyButtonMode = mode;
+    }
+  }
+
+  @computed
+  get availableGeomActions() {
+    const actions: GeomAction[] = [];
+    if (this.selectedGeoms.size === 1) {
+      const geom = [...this.selectedGeoms][0];
+      if (
+        geom instanceof MultiGeometry &&
+        !(geom.kind === "GeometryCollection" && this.data === geom)
+      ) {
+        actions.push("ungroup");
+      }
+    } else if (
+      this.selectedGeoms.size > 1 &&
+      (this.editingGeom === null ||
+        this.editingGeom.kind === "GeometryCollection")
+    ) {
+      actions.push("group-collection");
+      const geomKinds = new Set<Geometry["kind"]>();
+      for (const geom of this.selectedGeoms) {
+        geomKinds.add(geom.kind);
+      }
+      if (geomKinds.size === 1) {
+        const kind = [...geomKinds][0];
+        if (kind === "Polygon" || kind === "LineString" || kind === "Point") {
+          actions.push("group-multi");
+        }
+      }
+    }
+    return new Set(actions);
+  }
+
+  @action
+  applyGeomAction(action: GeomAction) {
+    if (!this.availableGeomActions.has(action)) return;
+    if (action === "ungroup") {
+      const geom = [...this.selectedGeoms][0];
+      this.deselectAllGeoms();
+      const childGeoms = (geom as MultiGeometry).geoms;
+      this.geomMapping.removeGeom(geom.id);
+      let geomParent = geom.parent;
+      if (!(geomParent instanceof MultiGeometry)) {
+        geomParent = this.geomMapping.addGeom(
+          (id) => new MultiGeometry(id, "GeometryCollection", childGeoms)
+        );
+        this.data = geomParent;
+      } else {
+        geomParent.replaceGeoms([geom], childGeoms);
+      }
+    } else if (action === "group-multi" || action === "group-collection") {
+      const geoms = [...this.selectedGeoms];
+      this.deselectAllGeoms();
+      const parentGeom = this.editingGeom as MultiGeometry;
+      const newKind =
+        action === "group-collection"
+          ? "GeometryCollection"
+          : geoms[0].kind === "Polygon"
+          ? "MultiPolygon"
+          : geoms[0].kind === "LineString"
+          ? "MultiLineString"
+          : "MultiPoint";
+      const newGeom = this.geomMapping.addGeom(
+        (id) => new MultiGeometry(id, newKind, geoms)
+      );
+      parentGeom.replaceGeoms(geoms, [newGeom]);
+    }
+    if (this.editingGeom) {
+      this._updateEditingSource();
+    } else {
+      this._updateMapDataSource();
+    }
+  }
+
+  @observable.shallow
+  activeLineEdit: {
+    line: LineString;
+    prepend: boolean;
+    pendingPoints: PlainPoint[];
+    mousePoint: PlainPoint;
+  } | null = null;
+
+  @action
+  startLineEdit(edit: this["activeLineEdit"]) {
+    this.activeLineEdit = edit;
+    window.addEventListener("mousemove", this._updateLineEditMousePoint);
+  }
+
+  @action
+  _updateLineEditMousePoint(ev: MouseEvent) {
+    if (!this.activeLineEdit) return;
+
+    const mousePoint = this._mousePosToPoint(ev);
+    let mouseLatlng = this.map!.unproject(mousePoint).toArray();
+
+    if (!this.activeLineEdit.pendingPoints.length) {
+      const line = this.activeLineEdit.line;
+      const snapPoints = [line.points[0].point];
+      if (line.points.length > 1) {
+        snapPoints.push(line.points[line.points.length - 1].point);
+      }
+      for (const point of snapPoints) {
+        const p = this.map!.project([point[0], point[1]]);
+        if ((mousePoint.x - p.x) ** 2 + (mousePoint.y - p.y) ** 2 <= 50) {
+          mouseLatlng = [point[0], point[1]];
+          break;
+        }
+      }
+    }
+
+    this.activeLineEdit.mousePoint = mouseLatlng;
+    this._updateEditingSource();
+  }
+
+  @action
+  updateActiveLineEdit() {
+    if (!this.activeLineEdit) return;
+    const edit = this.activeLineEdit;
+    const updatedEdit = edit.line.addPoint(edit, this.geomMapping);
+    if (updatedEdit) {
+      this.activeLineEdit = {
+        line: edit.line,
+        ...updatedEdit,
+      };
+      this._updateEditingSource();
+    } else {
+      this.endLineEdit();
+    }
+  }
+
+  @action
+  endLineEdit() {
+    window.removeEventListener("mousemove", this._updateLineEditMousePoint);
+    this.activeLineEdit?.line.finaliseEditing(this.geomMapping);
+    this.activeLineEdit = null;
+    this._updateEditingSource();
+  }
+
+  _getEventGeom(
+    ev: maplibregl.MapMouseEvent & {
+      features?: maplibregl.MapGeoJSONFeature[];
+    }
+  ) {
+    const feature = ev.features?.[0];
+    if (typeof feature?.id != "number") return null;
+
+    const geom = this.geomMapping.getGeom(feature.id);
+    if (!geom) {
+      throw new Error(`failed to find geom for id: ${feature.id}`);
+    }
+    return geom;
+  }
+
+  _findGeomParent(geom: Geometry) {
+    while (geom.parent) {
+      if (geom.parent === this.editingGeom) {
+        break;
+      }
+      geom = geom.parent;
+    }
+    return geom;
+  }
+
+  _mousePosToPoint(ev: MouseEvent) {
+    const mapRect = this.map!.getCanvas().getBoundingClientRect();
+    return new maplibregl.Point(
+      ev.clientX - mapRect.x,
+      ev.clientY - mapRect.y
+    );
+  }
+
+  _initEvents(map: maplibregl.Map) {
+    let mouseState:
+      | ((
+          | {geom: Geometry; editSource: boolean; lastLatLng: [number, number]}
+          | {geom: null}
+        ) & {startPos: maplibregl.Point; dragging: boolean; shiftKey: boolean})
+      | null = null;
+
+    for (const {editSource, layers} of [
+      {
+        editSource: false,
+        layers: [LAYER_DATA_BG, LAYER_DATA_LINES, LAYER_DATA_POINTS],
+      },
+      {
+        editSource: true,
+        layers: [
+          LAYER_EDIT_BG,
+          LAYER_EDIT_LINES,
+          LAYER_EDIT_POINTS,
+          LAYER_EDIT_CONTROL_POINTS,
+        ],
+      },
+    ]) {
+      const handler = (
+        ev: maplibregl.MapMouseEvent & {
+          features?: maplibregl.MapGeoJSONFeature[];
+        }
+      ) => {
+        if (editSource !== (this.editingGeom != null)) return;
+
+        const geom = this._getEventGeom(ev);
+
+        if (geom) {
+          mouseState = {
+            geom,
+            editSource,
+            startPos: ev.point,
+            lastLatLng: ev.lngLat.toArray(),
+            dragging: false,
+            shiftKey: ev.originalEvent.shiftKey,
+          };
+        }
+      };
+      for (const layer of layers) {
+        map.on("mousedown", layer, handler);
+      }
+    }
+
+    const mouseMoveHandler = (ev: MouseEvent) => {
+      if (!mouseState) return;
+
+      // console.log("mousemove");
+
+      const mousePoint = this._mousePosToPoint(ev);
+      if (!mouseState.dragging) {
+        if (
+          (mouseState.startPos.x - mousePoint.x) ** 2 +
+            (mouseState.startPos.y - mousePoint.y) ** 2 >=
+          DRAG_THRESHOLD ** 2
+        ) {
+          // dragging started
+          mouseState.dragging = true;
+          // console.log("dragstart");
+
+          // if line edit tool active ignore drag start actions
+          if (this.activeLineEdit) {
+            window.removeEventListener("mousemove", mouseMoveHandler, {
+              capture: true,
+            });
+            return;
+          }
+
+          if (mouseState.shiftKey) {
+            // shift key + drag = box selection
+            this.startDragSelection(mouseState.startPos);
+          } else if (mouseState.geom) {
+            // started dragging on geometry
+            if (
+              this.selectedGeoms.has(mouseState.geom) ||
+              this.selectedGeoms.has(this._findGeomParent(mouseState.geom))
+            ) {
+              // dragging started on selected geom so continue
+            } else if (
+              mouseState.geom instanceof Point &&
+              mouseState.geom.logicalParent == this.editingGeom
+            ) {
+              // dragging started on point allowed without being first selected
+              this.deselectAllGeoms();
+              this.selectGeom(mouseState.geom);
+            } else {
+              // dragging on non selected geometry so ignore further mousemove
+              window.removeEventListener("mousemove", mouseMoveHandler, {
+                capture: true,
+              });
+              return;
+            }
+          } else {
+            // dragging on map so ignore further mousemove
+            window.removeEventListener("mousemove", mouseMoveHandler, {
+              capture: true,
+            });
+            return;
+          }
+        } else {
+          // mouse hasn't moved enough to consider dragging started
+          return;
+        }
+      }
+
+      // dragging active so prevent default map drag
+      ev.stopPropagation();
+
+      if (this.dragSelectionBounds) {
+        this.onDragSelection(mousePoint);
+      } else if (mouseState.geom) {
+        const lngLat = this.map!.unproject(mousePoint);
+        const diff = [
+          lngLat.lng - mouseState.lastLatLng[0],
+          lngLat.lat - mouseState.lastLatLng[1],
+        ] as [number, number];
+        mouseState.lastLatLng = lngLat.toArray();
+        runInAction(() => {
+          for (const geom of this.selectedGeoms) {
+            geom.translate(diff);
+          }
+        });
+        this._updateSelectionSource();
+        if (this.editingGeom) {
+          this._updateEditingSource();
+        } else {
+          this._updateMapDataSource();
+        }
+      }
+    };
+
+    const mouseUpHandler = (ev: MouseEvent) => {
+      window.removeEventListener("mousemove", mouseMoveHandler, {
+        capture: true,
+      });
+
+      // console.log("mouseup", mouseState);
+
+      if (!mouseState) return;
+
+      if (mouseState.dragging) {
+        if (this.dragSelectionBounds) {
+          // finish dragging box selection
+          this.endDragSelection();
+        } else if (mouseState.geom) {
+          // finish dragging geometry
+          [...this.selectedGeoms][0]?.parent?.recalculateBounds();
+        }
+      } else {
+        // it was a click instead of drag
+        if (this.activeLineEdit) {
+          this.updateActiveLineEdit();
+        } else if (this.editingMode) {
+          this.deselectAllGeoms();
+          this.startGeomInsert(
+            this.editingMode,
+            map.unproject(mouseState.startPos)
+          );
+        } else if (mouseState.geom) {
+          const geomParent = this._findGeomParent(mouseState.geom);
+          if (mouseState.shiftKey) {
+            this.toggleGeomSelection(geomParent);
+          } else {
+            this.deselectAllGeoms();
+            this.selectGeom(geomParent);
+          }
+        } else {
+          this.deselectAllGeoms();
+        }
+      }
+      mouseState = null;
+    };
+
+    map.on("mousedown", (ev) => {
+      // console.log("mousedown", mouseState);
+      if (!mouseState) {
+        mouseState = {
+          startPos: ev.point,
+          dragging: false,
+          shiftKey: ev.originalEvent.shiftKey,
+          geom: null,
+        };
+      }
+
+      window.addEventListener("mousemove", mouseMoveHandler, {capture: true});
+      window.addEventListener("mouseup", mouseUpHandler, {once: true});
+    });
+  }
+
+  @action
+  selectGeom(geom: Geometry) {
+    if (this.selectedGeoms.has(geom)) {
+      return;
+    }
+    for (const id of geom.featureIds) {
+      this.map!.setFeatureState(
+        {
+          source: this.editingGeom ? EDITING_SOURCE : DATA_SOURCE,
+          id,
+        },
+        {selected: true}
+      );
+    }
+    this.selectedGeoms.add(geom);
+  }
+
+  @action
+  toggleGeomSelection(geom: Geometry) {
+    if (this.selectedGeoms.has(geom)) {
+      for (const id of geom.featureIds) {
+        this.map!.removeFeatureState(
+          {
+            source: this.editingGeom ? EDITING_SOURCE : DATA_SOURCE,
+            id,
+          },
+          "selected"
+        );
+      }
+      this.selectedGeoms.delete(geom);
+    } else {
+      for (const id of geom.featureIds) {
+        this.map!.setFeatureState(
+          {
+            source: this.editingGeom ? EDITING_SOURCE : DATA_SOURCE,
+            id,
+          },
+          {selected: true}
+        );
+      }
+      this.selectedGeoms.add(geom);
+    }
+  }
+
+  @action
+  deselectAllGeoms() {
+    for (const geom of this.selectedGeoms) {
+      for (const id of geom.featureIds) {
+        this.map!.removeFeatureState(
+          {
+            source: this.editingGeom ? EDITING_SOURCE : DATA_SOURCE,
+            id,
+          },
+          "selected"
+        );
+      }
+    }
+    this.selectedGeoms.clear();
+  }
+
+  dragSelectItemBounds:
+    | {geom: Geometry; bounds: PlainPoint | PlainPoint[]}[]
+    | null = null;
+
+  @observable
+  dragSelectionBounds: [PlainPoint, PlainPoint] | null = null;
+
+  @action
+  startDragSelection(startPoint: maplibregl.Point) {
+    const map = this.map!;
+    const mapWidth = map.getCanvas().clientWidth;
+    const mapHeight = map.getCanvas().clientHeight;
+    const corners = [
+      map.unproject([0, 0]),
+      map.unproject([mapWidth, 0]),
+      map.unproject([0, mapHeight]),
+      map.unproject([mapWidth, mapHeight]),
+    ];
+    const lngs = corners.map((p) => p.lng);
+    const lats = corners.map((p) => p.lat);
+    const boundsMin: PlainPoint = [Math.min(...lngs), Math.min(...lats)];
+    const boundsMax: PlainPoint = [Math.max(...lngs), Math.max(...lats)];
+
+    const selectItems: (typeof this)["dragSelectItemBounds"] = [];
+
+    const items = this.editingGeom
+      ? getSelectableChildGeoms(this.editingGeom)
+      : this.data
+      ? [this.data]
+      : [];
+    for (const item of items) {
+      if (
+        item instanceof Point &&
+        pointInBounds(item.point, boundsMin, boundsMax)
+      ) {
+        const projected = map.project([item.point[0], item.point[1]]);
+        selectItems.push({geom: item, bounds: [projected.x, projected.y]});
+      } else if (item.bounds && item.bounds.overlaps([boundsMin, boundsMax])) {
+        selectItems.push({
+          geom: item,
+          bounds: [
+            item.bounds.bounds[0],
+            [item.bounds.bounds[1][0], item.bounds.bounds[0][1]],
+            item.bounds.bounds[1],
+            [item.bounds.bounds[0][0], item.bounds.bounds[1][1]],
+          ]
+            .map((p) => map.project(p as [number, number]))
+            .map((p) => [p.x, p.y] as PlainPoint),
+        });
+      }
+    }
+
+    this.deselectAllGeoms();
+    this.dragSelectItemBounds = selectItems;
+    this.dragSelectionBounds = [
+      [startPoint.x, startPoint.y],
+      [startPoint.x, startPoint.y],
+    ];
+  }
+
+  @action
+  onDragSelection(mousePoint: maplibregl.Point) {
+    if (
+      this.dragSelectionBounds === null ||
+      this.dragSelectItemBounds === null
+    )
+      return;
+    this.dragSelectionBounds[1] = [mousePoint.x, mousePoint.y];
+
+    const xMin = Math.min(this.dragSelectionBounds[0][0], mousePoint.x);
+    const xMax = Math.max(this.dragSelectionBounds[0][0], mousePoint.x);
+    const yMin = Math.min(this.dragSelectionBounds[0][1], mousePoint.y);
+    const yMax = Math.max(this.dragSelectionBounds[0][1], mousePoint.y);
+
+    const bounds: PlainPoint[] = [
+      [xMin, yMin],
+      [xMax, yMin],
+      [xMax, yMax],
+      [xMin, yMax],
+    ];
+    for (const item of this.dragSelectItemBounds) {
+      const inBounds =
+        item.geom instanceof Point
+          ? pointInBounds(item.bounds as PlainPoint, bounds[0], bounds[2])
+          : polygonsIntersect(item.bounds as PlainPoint[], bounds);
+      if (inBounds !== this.selectedGeoms.has(item.geom)) {
+        this.toggleGeomSelection(item.geom);
+      }
+    }
+  }
+
+  @action
+  endDragSelection() {
+    this.dragSelectionBounds = null;
+    this.dragSelectItemBounds = null;
+  }
+
+  @action
+  startEditingGeom(geom: EditableGeometry) {
+    this.deselectAllGeoms();
+    if (this.editingGeom) {
+      for (const id of this.editingGeom.featureIds) {
+        this.map!.removeFeatureState({source: DATA_SOURCE, id}, "editing");
+      }
+    }
+    this.editingGeom = geom;
+    this._updateEditingSource();
+    for (const id of geom.featureIds) {
+      this.map!.setFeatureState(
+        {
+          source: DATA_SOURCE,
+          id,
+        },
+        {editing: true}
+      );
+    }
+  }
+
+  @action
+  endEditingGeom() {
+    this.deselectAllGeoms();
+    this.editingMode = null;
+    this.endLineEdit();
+    if (this.editingGeom?.parent instanceof MultiGeometry) {
+      this.editingGeom.parent.updateGeojson();
+    }
+    this._updateMapDataSource();
+    this.map!.removeFeatureState({source: DATA_SOURCE});
+    this.editingGeom = null;
+    this._updateEditingSource();
+  }
+
+  _insertGeom(newGeom: Geometry) {
+    if (!this.data) {
+      this.data = newGeom;
+      return null;
+    } else if (this.editingGeom instanceof MultiGeometry) {
+      this.editingGeom.insertGeom(newGeom);
+      return this.editingGeom;
+    } else {
+      const containerGeom = this.geomMapping.addGeom(
+        (id) =>
+          new MultiGeometry(id, "GeometryCollection", [this.data!, newGeom])
+      );
+      this.data = containerGeom;
+      return containerGeom;
+    }
+  }
+
+  @action
+  startGeomInsert(mode: EditingMode, lnglat: maplibregl.LngLat) {
+    const newPoint = this.geomMapping.addGeom(
+      (id) => new Point(id, [lnglat.lng, lnglat.lat], null)
+    );
+    switch (mode) {
+      case "point":
+        {
+          const updated = this._insertGeom(newPoint);
+          if (updated === this.editingGeom) {
+            this._updateEditingSource();
+          } else if (updated) {
+            this.startEditingGeom(updated);
+          }
+          this.editingMode = null;
+        }
+        break;
+      case "line":
+      case "circular":
+        {
+          const newLine = this.geomMapping.addGeom(
+            (id) =>
+              new LineString(
+                id,
+                mode === "circular" ? "CircularString" : "LineString",
+                [newPoint]
+              )
+          );
+          this._insertGeom(newLine);
+          this.startLineEdit({
+            line: newLine,
+            prepend: false,
+            pendingPoints: [],
+            mousePoint: [lnglat.lng, lnglat.lat],
+          });
+          this.startEditingGeom(newLine);
+          this.editingMode = null;
+        }
+        break;
+      case "polygon":
+      case "triangle":
+        {
+          const ring = this.geomMapping.addGeom(
+            (id) => new LineString(id, "LineString", [newPoint], true)
+          );
+          const poly = this.geomMapping.addGeom(
+            (id) =>
+              new Polygon(id, mode === "triangle" ? "Triangle" : "Polygon", [
+                ring,
+              ])
+          );
+          this._insertGeom(poly);
+          this.startLineEdit({
+            line: ring,
+            prepend: false,
+            pendingPoints: [],
+            mousePoint: [lnglat.lng, lnglat.lat],
+          });
+          this.startEditingGeom(poly);
+          this.editingMode = null;
+        }
+        break;
+      case "ring":
+        {
+          if (!this.editingGeom || !(this.editingGeom instanceof Polygon)) {
+            return;
+          }
+          const ring = this.geomMapping.addGeom(
+            (id) => new LineString(id, "LineString", [newPoint], true)
+          );
+          this.editingGeom.addRing(ring);
+          this.startLineEdit({
+            line: ring,
+            prepend: false,
+            pendingPoints: [],
+            mousePoint: [lnglat.lng, lnglat.lat],
+          });
+          this.editingMode = null;
+        }
+        break;
+      default:
+        assertNever(mode);
+    }
+
+    this._updateMapDataSource();
+  }
+}

@@ -1,0 +1,474 @@
+@import "@edgedb/common/mixins.scss";
+
+.postgisViewer {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  font-family: "Roboto Flex Variable", sans-serif;
+
+  :global(.maplibregl-ctrl-bottom-right) {
+    right: 12px;
+  }
+}
+
+.map {
+  flex-grow: 1;
+  position: relative;
+
+  .dragSelection {
+    position: absolute;
+    border: 1px solid #1285de;
+    background: rgb(18, 133, 222, 0.15);
+    pointer-events: none;
+  }
+}
+
+.sidepanel {
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  background: #fff;
+  border-radius: 12px 0 0 12px;
+  box-shadow: 0 0 4px #0000002e, 0 0 12px #00000012;
+  margin-left: -12px;
+  z-index: 1;
+}
+
+.panelHeader {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 6px;
+  padding-bottom: 2px;
+  color: #808080;
+
+  .headerButton {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: #f7f7f7;
+    }
+  }
+
+  .closeButton {
+    margin-left: auto;
+  }
+
+  .optionsMenu {
+    position: relative;
+    display: flex;
+
+    .menuDropdown {
+      position: absolute;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.12), 0 0 8px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      padding: 4px;
+      z-index: 100;
+      top: 100%;
+      width: max-content;
+      color: #666;
+    }
+
+    .menuItem {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 450;
+      padding: 0 12px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+
+      &:hover {
+        background: #f7f7f7;
+      }
+    }
+  }
+}
+
+.wktListWrapper {
+  flex-grow: 1;
+  overflow: auto;
+  overscroll-behavior-x: none;
+
+  @include hideScrollbar;
+
+  .marginSpacer {
+    background: red;
+    height: 8px;
+  }
+
+  .listInner {
+    display: grid;
+    grid-auto-rows: 32px;
+    margin-bottom: 8px;
+  }
+
+  .listItemWrapper {
+    position: relative;
+    grid-column: 1;
+    pointer-events: none;
+  }
+}
+
+.selectedBackground {
+  position: absolute;
+  inset: 0;
+
+  &:before {
+    display: block;
+    content: "";
+    width: calc(404px - var(--itemDepth, 0) * 16px);
+    height: 100%;
+    position: sticky;
+    left: calc(8px + var(--itemDepth, 0) * 16px);
+    background: #d5ecff;
+  }
+}
+
+.listItem {
+  position: relative;
+  pointer-events: auto;
+  height: 32px;
+  width: calc(404px - var(--itemDepth, 0) * 16px);
+  box-sizing: border-box;
+  position: sticky;
+  top: calc(32px * var(--itemDepth, 0));
+  left: calc(8px + var(--itemDepth, 0) * 16px);
+  display: flex;
+  padding: 1px 0;
+  background: #fff;
+  z-index: calc(50 - var(--itemDepth, 50));
+
+  &.selected {
+    &:before,
+    &:after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      inset: 0;
+      top: 1px;
+      border-radius: 6px;
+    }
+
+    &:before {
+      background: #d5ecff;
+      z-index: -1;
+    }
+    &:after {
+      border: 1px solid #6eb2e7;
+    }
+  }
+
+  &.expanded.selected {
+    &:before,
+    &:after {
+      border-radius: 6px 6px 0 0;
+      border-bottom: 0;
+    }
+  }
+
+  &.parentSelected {
+    background: #d5ecff;
+  }
+
+  .inner {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    padding-left: 32px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+
+      .actions {
+        opacity: 1;
+      }
+    }
+  }
+
+  .expandToggle {
+    display: flex;
+    width: 24px;
+    margin-left: -24px;
+    transform: rotate(-90deg);
+    cursor: pointer;
+
+    &.expanded {
+      transform: none;
+    }
+  }
+
+  .header {
+    font-family: "Roboto Mono Variable", monospace;
+    font-size: 13px;
+    line-height: 24px;
+    font-weight: 400;
+  }
+
+  .actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    margin-right: 4px;
+    opacity: 0;
+  }
+}
+
+.endBracket {
+  padding-left: 32px;
+  border-radius: 0 0 6px 6px;
+  z-index: calc(49 - var(--itemDepth, 50));
+
+  &.startSelected {
+    background: #d5ecff;
+
+    &:after {
+      position: absolute;
+      content: "";
+      inset: 0;
+      top: calc(var(--parentLength, 0) * -32px);
+      border: 1px solid #6eb2e7;
+      border-top: 0;
+      border-radius: 0 0 6px 6px;
+      pointer-events: none;
+    }
+  }
+}
+
+.listItemPoint {
+  pointer-events: auto;
+  height: 32px;
+  padding-left: calc(8px + var(--itemDepth, 0) * 16px);
+  padding-right: 8px;
+  display: flex;
+  align-items: center;
+
+  .points {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 32px;
+    border-radius: 6px;
+
+    .pointLabel {
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 13px;
+      line-height: 24px;
+      font-weight: 400;
+      opacity: 0.6;
+      padding: 0 4px 0 12px;
+
+      &:first-child {
+        padding-left: 0;
+      }
+    }
+
+    .pointInput {
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 13px;
+      border: 0;
+      outline: 0;
+      height: 30px;
+      padding: 0 8px;
+      background: transparent;
+      color: inherit;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
+
+      &:focus {
+        background: rgba(0, 0, 0, 0.06);
+      }
+    }
+
+    &:focus-within,
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+}
+
+.floatingToolbarWrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 380px + 16px * 2;
+  display: flex;
+  justify-content: center;
+  padding: 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.floatingToolbar {
+  background: #fff;
+  border-radius: 14px;
+  pointer-events: auto;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.12), 0 0 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  padding: 2px;
+  color: #4d4d4d;
+
+  .spacer {
+    border-left: 1px solid #ededed;
+    margin: 0 2px;
+  }
+}
+
+.toolbarButton {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 2px;
+  box-sizing: border-box;
+  background-clip: content-box;
+
+  > svg {
+    color: #808080;
+  }
+
+  &:hover,
+  &.selected {
+    background-color: #f7f7f7;
+  }
+
+  &.selected > svg {
+    color: #1285de;
+  }
+
+  .tooltipLabel {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    opacity: 0;
+    pointer-events: none;
+    width: max-content;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.12), 0 0 8px rgba(0, 0, 0, 0.06);
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+
+    .shortcut {
+      opacity: 0.6;
+      margin-left: 12px;
+      font-weight: 550;
+    }
+  }
+
+  &:hover .tooltipLabel {
+    opacity: 1;
+  }
+
+  &.hidden {
+    display: none;
+  }
+}
+
+.toolbarGroupWrapper {
+  display: flex;
+  position: relative;
+}
+
+.toolbarGroupShowMenu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  padding: 2px 2px 2px 0;
+  margin-left: -1px;
+  background-clip: content-box;
+  cursor: pointer;
+
+  > svg {
+    width: 16px;
+    transform: rotate(180deg);
+    color: #e0e0e0;
+
+    path {
+      vector-effect: non-scaling-stroke;
+      stroke-width: 1px;
+    }
+  }
+
+  &:before {
+    position: absolute;
+    content: "";
+    left: -1px;
+    top: 10px;
+    bottom: 10px;
+    border-left: 1px solid transparent//#e0e0e0;
+  }
+
+  &:hover {
+    background-color: #f7f7f7;
+  }
+}
+
+.toolbarGroupMenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: -40px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.12), 0 0 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  opacity: 0;
+  pointer-events: none;
+
+  &.menuOpen {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .menuItem {
+    display: flex;
+    min-width: max-content;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    gap: 4px;
+    padding: 0 2px;
+    border-radius: 8px;
+    cursor: pointer;
+
+    svg {
+      flex-shrink: 0;
+      color: #808080;
+    }
+
+    .shortcut {
+      opacity: 0.6;
+      padding-left: 12px;
+      margin-left: auto;
+      margin-right: 8px;
+      font-weight: 550;
+    }
+
+    &:hover {
+      background-color: #f7f7f7;
+    }
+  }
+}

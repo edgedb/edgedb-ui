@@ -84,7 +84,7 @@ select Type {
   constraintIds := [is ConsistencySubject].constraints.id,
   element_type_id := [is Array].element_type.id,
   range_element_type_id := [is Range].element_type.id${
-    versionGTE(version, [4, 0]) ? ` ?? [is MultiRange].element_type.id` : ""
+    versionGTE(version, [4, 0]) ? ` if Type is Range else [is MultiRange].element_type.id` : ""
   },
   [is Tuple].element_types: {
     name,
