@@ -42,9 +42,10 @@ $historyTransitionTime: 0.15s;
   right: 0;
   bottom: 0;
   background: var(--app-panel-bg);
-  border-radius: 8px;
+  border-radius: 12px;
   z-index: 1;
   overflow: hidden;
+  box-shadow: 0 0 8px #0000000a, 0 0 4px #0000000f;
 }
 
 .sidebar {

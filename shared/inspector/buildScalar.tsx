@@ -1,5 +1,6 @@
 import {PropsWithChildren, useState, Fragment} from "react";
 import {_ICodec, Range, MultiRange} from "edgedb";
+import {Geometry} from "edgedb/dist/datatypes/postgis";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -245,6 +246,19 @@ export function renderValue(
         <span>
           <Tag name={knownTypeName}>
             <VectorRenderer vec={value} />
+          </Tag>
+        </span>
+      ),
+    };
+  }
+
+  if (value instanceof Geometry) {
+    const wkt = value.toWKT(null, 100);
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>
+            {wkt.length >= 100 ? wkt.slice(0, 100) + "…" : wkt}
           </Tag>
         </span>
       ),

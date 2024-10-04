@@ -20,4 +20,8 @@ export const KnownScalarTypes = [
   "std::bigint",
   "cfg::memory",
   "ext::pgvector::vector",
+  "ext::postgis::geometry",
+  "ext::postgis::geography",
+  "ext::postgis::box2d",
+  "ext::postgis::box3d",
 ] as const;
