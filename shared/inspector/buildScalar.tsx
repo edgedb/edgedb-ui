@@ -1,5 +1,13 @@
 import {PropsWithChildren, useState, Fragment} from "react";
-import {_ICodec, Range, MultiRange, Float16Array, SparseVector} from "edgedb";
+import {
+  _ICodec,
+  Range,
+  MultiRange,
+  Float16Array,
+  SparseVector,
+  Geometry,
+  type AnyGeometry,
+} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -267,6 +275,19 @@ export function renderValue(
         <span>
           <Tag name={knownTypeName}>
             <VectorRenderer vec={value} format={sparseVectorToString} />
+          </Tag>
+        </span>
+      ),
+    };
+  }
+
+  if (value instanceof Geometry) {
+    const wkt = (value as AnyGeometry).toWKT(null, 100);
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>
+            {wkt.length >= 100 ? wkt.slice(0, 100) + "…" : wkt}
           </Tag>
         </span>
       ),
