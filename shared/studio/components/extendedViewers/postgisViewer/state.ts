@@ -2,6 +2,8 @@ import {action, computed, observable, reaction, runInAction} from "mobx";
 import {model, Model, modelAction, prop} from "mobx-keystone";
 
 import maplibregl from "maplibre-gl";
+// @ts-ignore
+import maplibreglWorkerUrl from "maplibre-gl/dist/maplibre-gl-csp-worker?url";
 import {Protocol} from "pmtiles";
 import layers from "protomaps-themes-base";
 
@@ -36,6 +38,7 @@ const PROTOMAPS_TILES_URL =
   (import.meta as any).env?.VITE_PROTOMAPS_TILES_URL ||
   process.env.REACT_APP_PROTOMAPS_TILES_URL;
 
+maplibregl.setWorkerUrl(maplibreglWorkerUrl);
 const protomapsProtocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protomapsProtocol.tile);
 
