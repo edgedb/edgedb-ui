@@ -1,11 +1,13 @@
-import {PropsWithChildren, useContext} from "react";
+import {PropsWithChildren, createContext, useContext} from "react";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {ExtendedViewerContext} from ".";
-
 import styles from "./shared.module.scss";
 import {CloseIcon} from "../../icons";
+
+export const ExtendedViewerContext = createContext<{
+  closeExtendedView: () => void;
+}>(null!);
 
 export function ActionsBar({children}: PropsWithChildren<{}>) {
   const {closeExtendedView} = useContext(ExtendedViewerContext);
