@@ -1,6 +1,5 @@
 import {computed, makeObservable, observable} from "mobx";
-import * as geojson from "../geojsonTypes";
-import {Bounds, pointsEqual} from "./utils";
+import * as geojson from "./geojsonTypes";
 import {GeomMapping} from "./convert";
 import {curveToLines} from "./curves";
 
@@ -41,6 +40,10 @@ interface EditableGeom {
 }
 
 export type PlainPoint = [number, number] | [number, number, number];
+
+export function pointsEqual(p1: PlainPoint, p2: PlainPoint) {
+  return p1[0] === p2[0] && p1[1] === p2[1] && p1[2] === p2[2];
+}
 
 export class Point implements BaseGeometry {
   parent: Geometry | null = null;
@@ -794,3 +797,55 @@ export type Geometry =
   | Polygon
   | MultiGeometry;
 export type EditableGeometry = Exclude<Geometry, Point>;
+
+export class Bounds {
+  constructor(
+    public bounds: [[number, number], [number, number]] = [
+      [Infinity, Infinity],
+      [-Infinity, -Infinity],
+    ]
+  ) {}
+
+  extend(point: PlainPoint) {
+    if (this.bounds[0][0] > point[0]) this.bounds[0][0] = point[0];
+    if (this.bounds[0][1] > point[1]) this.bounds[0][1] = point[1];
+    if (this.bounds[1][0] < point[0]) this.bounds[1][0] = point[0];
+    if (this.bounds[1][1] < point[1]) this.bounds[1][1] = point[1];
+  }
+
+  translate(by: [number, number]) {
+    this.bounds[0][0] += by[0];
+    this.bounds[0][1] += by[1];
+    this.bounds[1][0] += by[0];
+    this.bounds[1][1] += by[1];
+  }
+
+  join(other: Bounds) {
+    if (other.bounds[0][0] < this.bounds[0][0])
+      this.bounds[0][0] = other.bounds[0][0];
+    if (other.bounds[0][1] < this.bounds[0][1])
+      this.bounds[0][1] = other.bounds[0][1];
+    if (other.bounds[1][0] > this.bounds[1][0])
+      this.bounds[1][0] = other.bounds[1][0];
+    if (other.bounds[1][1] > this.bounds[1][1])
+      this.bounds[1][1] = other.bounds[1][1];
+  }
+
+  copy() {
+    return new Bounds([
+      [this.bounds[0][0], this.bounds[0][1]],
+      [this.bounds[1][0], this.bounds[1][1]],
+    ]);
+  }
+
+  overlaps(other: Bounds["bounds"] | Bounds): boolean {
+    const a = this.bounds;
+    const b = other instanceof Bounds ? other.bounds : other;
+    return (
+      a[0][0] < b[1][0] &&
+      a[1][0] > b[0][0] &&
+      a[0][1] < b[1][1] &&
+      a[1][1] > b[0][1]
+    );
+  }
+}

@@ -1,4 +1,4 @@
-import * as PostGIS from "../../../../../../web/node_modules/edgedb/dist/datatypes/postgis";
+import * as PostGIS from "edgedb/dist/datatypes/postgis";
 import {
   Geometry,
   Point,
@@ -7,8 +7,8 @@ import {
   LineString,
   MultiGeometry,
   CompoundCurve,
+  pointsEqual,
 } from "./types";
-import {pointsEqual} from "./utils";
 
 export function convertToEditableGeometry(geom: PostGIS.Geometry): {
   geometry: Geometry;
