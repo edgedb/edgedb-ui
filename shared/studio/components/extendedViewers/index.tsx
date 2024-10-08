@@ -1,12 +1,13 @@
 import {Item, ItemType} from "@edgedb/inspector/buildItem";
-import {createContext} from "react";
 import {HexViewer} from "./hexViewer";
 import {JsonViewer} from "./jsonViewer";
 import {TextViewer} from "./textViewer";
 import {PostgisViewer} from "./postgisViewer";
 
 import styles from "./shared.module.scss";
-import {ActionsBar} from "./shared";
+import {ActionsBar, ExtendedViewerContext} from "./shared";
+
+export {ExtendedViewerContext};
 
 type Renderer = (props: {data: any}) => JSX.Element | null;
 
@@ -21,10 +22,6 @@ export const extendedViewerRenderers: {
 };
 
 export const extendedViewerIds = new Set(Object.keys(extendedViewerRenderers));
-
-export const ExtendedViewerContext = createContext<{
-  closeExtendedView: () => void;
-}>(null!);
 
 export interface ExtendedViewerRendererProps {
   item?: Item;
