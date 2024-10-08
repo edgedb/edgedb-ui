@@ -1,13 +1,14 @@
 import cn from "@edgedb/common/utils/classNames";
-import {Select as _Select, SelectProps} from "@edgedb/common/ui/select";
+import {
+  Select as _Select,
+  SelectProps as _SelectProps,
+} from "@edgedb/common/ui/select";
 
 import styles from "./select.module.scss";
 
-export function Select<T>({
-  className,
-  label,
-  ...props
-}: SelectProps<T> & {label?: string}) {
+export type SelectProps<T = any> = _SelectProps<T> & {label?: string};
+
+export function Select<T>({className, label, ...props}: SelectProps) {
   if (label != null) {
     return (
       <label className={cn(styles.selectField, className)}>

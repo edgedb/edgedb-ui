@@ -22,7 +22,10 @@ export function ThemeProvider({
   children,
   localStorageKey,
   forceTheme,
-}: PropsWithChildren<{localStorageKey?: string; forceTheme?: Theme}>) {
+}: PropsWithChildren<{
+  localStorageKey?: string;
+  forceTheme?: Theme.light | Theme.dark;
+}>) {
   if (typeof window === "undefined") {
     return (
       <div
@@ -69,15 +72,19 @@ export function ThemeProvider({
 
   return (
     <div
-      className={resolvedTheme === Theme.light ? "light-theme" : "dark-theme"}
+      className={
+        (forceTheme ?? resolvedTheme) === Theme.light
+          ? "light-theme"
+          : "dark-theme"
+      }
       style={{
         display: "contents",
       }}
     >
       <themeContext.Provider
         value={[
-          theme,
-          resolvedTheme,
+          forceTheme ?? theme,
+          forceTheme ?? resolvedTheme,
           (theme) => {
             localStorage.setItem(localStorageKey ?? "appTheme", theme);
             setTheme(theme);

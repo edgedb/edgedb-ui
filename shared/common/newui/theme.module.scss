@@ -1,0 +1,52 @@
+@import "../mixins.scss";
+
+.theme {
+  // Base colors
+  --Grey6: #0f0f0f;
+  --Grey8: #141414;
+  --Grey10: #1a1a1a;
+  --Grey12: #1f1f1f;
+  --Grey14: #242424;
+  --Grey16: #292929;
+  --Grey18: #2e2e2e;
+  --Grey20: #333333;
+  --Grey22: #363636;
+  --Grey25: #404040;
+  --Grey30: #4d4d4d;
+  --Grey40: #666666;
+  --Grey45: #737373;
+  --Grey50: #808080;
+  --Grey55: #8c8c8c;
+  --Grey60: #999999;
+  --Grey65: #a6a6a6;
+  --Grey70: #b3b3b3;
+  --Grey75: #bfbfbf;
+  --Grey80: #cccccc;
+  --Grey85: #d9d9d9;
+  --Grey90: #e6e6e6;
+  --Grey93: #ededed;
+  --Grey95: #f2f2f2;
+  --Grey97: #f7f7f7;
+  --Grey99: #fcfcfc;
+
+  // Semantic colors
+  --page_background: var(--Grey93);
+  --app_panel_background: var(--Grey97);
+  --panel_background: #fff;
+  --panel_border: var(--Grey90);
+
+  --main_text_color: var(--Grey30);
+  --secondary_text_color: var(--Grey40);
+  --tertiary_text_color: var(--Grey50);
+
+  @include darkTheme {
+    --page_background: var(--Grey8);
+    --app_panel_background: var(--Grey14);
+    --panel_background: var(--Grey22);
+    --panel_border: var(--Grey30);
+
+    --main_text_color: var(--Grey80);
+    --secondary_text_color: var(--Grey70);
+    --tertiary_text_color: var(--Grey60);
+  }
+}
