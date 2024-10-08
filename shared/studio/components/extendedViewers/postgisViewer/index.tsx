@@ -3,35 +3,23 @@ import {observer} from "mobx-react-lite";
 import "@fontsource-variable/roboto-flex";
 import "@fontsource-variable/roboto-mono";
 
-import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-
-import {Protocol} from "pmtiles";
-import layers from "protomaps-themes-base";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./postgisViewer.module.scss";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
-import {
-  Geometry,
-  Box2D,
-  Box3D,
-} from "../../../../../web/node_modules/edgedb/dist/datatypes/postgis";
-import {Metadata, toGeoJSON} from "./toGeojson";
+import {Geometry, Box2D, Box3D} from "edgedb/dist/datatypes/postgis";
 import {createPostgisEditorState, PostgisEditor} from "./state";
 
 import {WKTRenderer} from "./wktRenderers";
 import {FloatingToolbar} from "./toolbar";
-import {ExtendedViewerContext} from "..";
+import {ExtendedViewerContext} from "../shared";
 import {CloseIcon} from "./icons";
 import {SettingsIcon} from "@edgedb/common/newui";
 
-const protomapsProtocol = new Protocol();
-maplibregl.addProtocol("pmtiles", protomapsProtocol.tile);
-
 export interface PostgisViewerProps {
-  data: Geometry | Box2D | Box3D;
+  data: Geometry | Box2D | Box3D | null;
 }
 
 export const PostgisViewer = observer(function PostgisViewer({

@@ -8,10 +8,10 @@ import layers from "protomaps-themes-base";
 import {Theme} from "@edgedb/common/hooks/useTheme";
 import {assertNever} from "@edgedb/common/utils/assertNever";
 
-import * as PostGIS from "../../../../../web/node_modules/edgedb/dist/datatypes/postgis";
-// import {Bounds, Metadata, toGeoJSON} from "./toGeojson";
-import * as geojson from "./geojsonTypes";
+import * as PostGIS from "edgedb/dist/datatypes/postgis";
+import * as geojson from "./editableGeom/geojsonTypes";
 import {
+  Bounds,
   EditableGeometry,
   Geometry,
   MultiGeometry,
@@ -22,7 +22,6 @@ import {
 } from "./editableGeom/types";
 import {convertToEditableGeometry, GeomMapping} from "./editableGeom/convert";
 import {
-  Bounds,
   getBoundingBoxFeature,
   getSelectableChildGeoms,
   groupGeomsByParent,
@@ -32,6 +31,13 @@ import {
 
 // @ts-ignore
 import controlPointImage from "./controlPoint.png";
+
+const PROTOMAPS_TILES_URL =
+  (import.meta as any).env?.VITE_PROTOMAPS_TILES_URL ||
+  process.env.REACT_APP_PROTOMAPS_TILES_URL;
+
+const protomapsProtocol = new Protocol();
+maplibregl.addProtocol("pmtiles", protomapsProtocol.tile);
 
 export const ListItemRowHeight = 32;
 
@@ -65,7 +71,7 @@ const actionShortcuts = new Map<
 ]);
 
 export function createPostgisEditorState(
-  data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D,
+  data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D | null,
   theme: Theme
 ): PostgisEditor {
   const state = new PostgisEditor({theme});
@@ -392,9 +398,7 @@ export class PostgisEditor extends Model({
         sources: {
           protomaps: {
             type: "vector",
-            tiles: [
-              "https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=fdf65ab6a368418b",
-            ],
+            tiles: [PROTOMAPS_TILES_URL],
             maxzoom: 15,
             attribution:
               '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
