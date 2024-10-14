@@ -1,0 +1,30 @@
+@import "@edgedb/common/mixins.scss";
+
+.loadingSkeleton {
+  border-radius: 8px;
+  background: var(--skeletonBg, #ededed);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--skeletonShimmer, #fafafa) 66%,
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-size: 100px 100%;
+  animation: shimmer 2s infinite linear;
+
+  @include darkTheme {
+    --skeletonBg: #2d2d2d;
+    --skeletonShimmer: #3c3c3c;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100px;
+  }
+  50%,
+  100% {
+    background-position: calc(100% + 100px);
+  }
+}

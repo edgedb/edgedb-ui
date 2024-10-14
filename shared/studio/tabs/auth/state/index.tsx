@@ -1,11 +1,11 @@
 import {action, computed, observable, runInAction} from "mobx";
 import {
+  arraySet,
   findParent,
   getParent,
   Model,
   model,
   modelAction,
-  objectActions,
   prop,
 } from "mobx-keystone";
 import {parsers} from "../../../components/dataEditor/parsers";
@@ -42,7 +42,13 @@ export type OAuthProviderData = {
     | "ext::auth::GoogleOAuthProvider"
     | "ext::auth::SlackOAuthProvider";
   client_id: string;
-  additional_scope: string;
+  additional_scope: string | null;
+};
+export type OpenIDProviderData = Omit<OAuthProviderData, "_typename"> & {
+  _typename: "ext::auth::OpenIDConnectProvider";
+  display_name: string;
+  issuer_url: string;
+  logo_url: string | null;
 };
 export type LocalEmailPasswordProviderData = {
   name: string;
@@ -62,6 +68,7 @@ export type LocalMagicLinkProviderData = {
 };
 export type AuthProviderData =
   | OAuthProviderData
+  | OpenIDProviderData
   | LocalEmailPasswordProviderData
   | LocalWebAuthnProviderData
   | LocalMagicLinkProviderData;
@@ -90,6 +97,23 @@ export interface SMTPConfigData {
   validate_certs: boolean;
   timeout_per_email: string;
   timeout_per_attempt: string;
+}
+
+export const webhookEvents = [
+  "IdentityCreated",
+  "IdentityAuthenticated",
+  "EmailFactorCreated",
+  "EmailVerified",
+  "PasswordResetRequested",
+  "MagicLinkRequested",
+] as const;
+
+export type WebhookEvent = (typeof webhookEvents)[number];
+
+export interface WebhookConfigData {
+  url: string;
+  events: [WebhookEvent, ...WebhookEvent[]];
+  signing_secret_key_exists: boolean;
 }
 
 export type ProviderKind = "OAuth" | "Local";
@@ -132,6 +156,11 @@ export const _providersInfo: {
     displayName: "Slack",
     icon: <SlackIcon />,
   },
+  "ext::auth::OpenIDConnectProvider": {
+    kind: "OAuth",
+    displayName: "OpenID Connect",
+    icon: <></>,
+  },
   // local
   "ext::auth::EmailPasswordProviderConfig": {
     kind: "Local",
@@ -154,10 +183,13 @@ export type ProviderTypename = keyof typeof _providersInfo;
 
 @model("AuthAdmin")
 export class AuthAdminState extends Model({
-  selectedTab: prop<"config" | "providers" | "smtp">("config").withSetter(),
+  selectedTab: prop<"config" | "providers" | "webhooks" | "smtp">(
+    "config"
+  ).withSetter(),
 
   draftCoreConfig: prop<DraftCoreConfig | null>(null),
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
+  draftWebhookConfig: prop<DraftWebhookConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
   draftSMTPConfig: prop(() => new DraftSMTPConfig({})),
 }) {
@@ -174,6 +206,15 @@ export class AuthAdminState extends Model({
     return (
       dbCtx.get(this)!.schemaData?.objectsByName.get("ext::auth::AuthConfig")
         ?.properties["app_name"] != null
+    );
+  }
+
+  @computed
+  get hasWebhooksSchema() {
+    return (
+      dbCtx
+        .get(this)!
+        .schemaData?.objectsByName.has("ext::auth::WebhookConfig") === true
     );
   }
 
@@ -221,6 +262,25 @@ export class AuthAdminState extends Model({
   }
 
   @modelAction
+  addDraftWebhook() {
+    this.draftWebhookConfig = new DraftWebhookConfig({});
+  }
+  @modelAction
+  cancelDraftWebhook() {
+    this.draftWebhookConfig = null;
+  }
+
+  async removeWebhook(webhookUrl: string) {
+    const conn = connCtx.get(this)!;
+
+    await conn.execute(
+      `configure current database reset ext::auth::WebhookConfig
+        filter .url = ${JSON.stringify(webhookUrl)}`
+    );
+    await this.refreshConfig();
+  }
+
+  @modelAction
   _createDraftCoreConfig() {
     if (!this.draftCoreConfig) {
       this.draftCoreConfig = new DraftCoreConfig({
@@ -238,7 +298,6 @@ export class AuthAdminState extends Model({
     }
   }
 
-  @modelAction
   async disableUI() {
     if (this.uiConfig) {
       const conn = connCtx.get(this)!;
@@ -246,9 +305,13 @@ export class AuthAdminState extends Model({
         "configure current database reset ext::auth::UIConfig"
       );
     }
-    objectActions.set(this, "draftUIConfig", null);
 
     this.refreshConfig();
+  }
+
+  @modelAction
+  _removeDraftUIConfig() {
+    this.draftUIConfig = null;
   }
 
   onAttachedToRootStore() {}
@@ -265,6 +328,14 @@ export class AuthAdminState extends Model({
   @observable.ref
   smtpConfig: SMTPConfigData | null = null;
 
+  @observable.ref
+  webhooks: WebhookConfigData[] | null = null;
+
+  @computed
+  get webhookUrls() {
+    return new Set(this.webhooks?.map((webhook) => webhook.url));
+  }
+
   async refreshConfig() {
     const conn = connCtx.get(this)!;
     const {newAppAuthSchema} = this;
@@ -280,6 +351,8 @@ export class AuthAdminState extends Model({
       !!this.providersInfo["ext::auth::WebAuthnProviderConfig"];
     const hasMagicLink =
       !!this.providersInfo["ext::auth::MagicLinkProviderConfig"];
+    const hasOpenIDConnect =
+      !!this.providersInfo["ext::auth::OpenIDConnectProvider"];
 
     const {result} = await conn.query(
       `with module ext::auth
@@ -294,6 +367,13 @@ export class AuthAdminState extends Model({
             name,
             [is OAuthProviderConfig].client_id,
             [is OAuthProviderConfig].additional_scope,
+            ${
+              hasOpenIDConnect
+                ? `[is OpenIDConnectProvider].display_name,
+              [is OpenIDConnectProvider].issuer_url,
+              [is OpenIDConnectProvider].logo_url,`
+                : ""
+            }
             require_verification := (
               [is EmailPasswordProviderConfig].require_verification${
                 hasWebAuthn
@@ -316,6 +396,18 @@ export class AuthAdminState extends Model({
             redirect_to,
             redirect_to_on_signup,
             ${newAppAuthSchema ? "" : appConfigQuery}
+          },
+          ${
+            this.hasWebhooksSchema
+              ? `webhooks := (
+            with webhook := .webhooks
+            select webhook {
+              url,
+              events,
+              signing_secret_key_exists := webhook_signing_key_exists(webhook),
+            }
+          )`
+              : ""
           }
         }),
         smtp := assert_single(cfg::Config.extensions[is SMTPConfig] {
@@ -347,15 +439,25 @@ export class AuthAdminState extends Model({
         dark_logo_url: auth.dark_logo_url ?? auth.ui?.dark_logo_url ?? null,
         brand_color: auth.brand_color ?? auth.ui?.brand_color ?? null,
       };
-      this.providers = auth.providers.map((p: any) =>
-        p._typename === "ext::auth::MagicLinkProviderConfig"
-          ? {...p, token_time_to_live: p.token_time_to_live_seconds}
-          : p
-      );
+      this.providers = (
+        auth.providers.map((p: any) =>
+          p._typename === "ext::auth::MagicLinkProviderConfig"
+            ? {...p, token_time_to_live: p.token_time_to_live_seconds}
+            : p
+        ) as AuthProviderData[]
+      ).sort((a, b) => {
+        const aKind = _providersInfo[a._typename].kind;
+        const bKind = _providersInfo[b._typename].kind;
+        return aKind == bKind
+          ? a.name.localeCompare(b.name)
+          : bKind.localeCompare(aKind);
+      });
       this.uiConfig = auth.ui ?? false;
       this._createDraftCoreConfig();
       if (auth.ui) {
         this.enableUI();
+      } else {
+        this._removeDraftUIConfig();
       }
       this.smtpConfig = {
         ...smtp,
@@ -363,6 +465,7 @@ export class AuthAdminState extends Model({
         timeout_per_email: smtp.timeout_per_email_seconds,
         timeout_per_attempt: smtp.timeout_per_attempt_seconds,
       };
+      this.webhooks = auth.webhooks ?? [];
     });
   }
 }
@@ -460,7 +563,7 @@ export class DraftCoreConfig
     });
 
     if (invalidUrls.length > 0) {
-      return `List contained the following invalid URLs:\n${invalidUrls.join(
+      return `List containes the following invalid URLs:\n${invalidUrls.join(
         ",\n"
       )}`;
     }
@@ -713,6 +816,7 @@ export class DraftUIConfig extends Model({
       await state.refreshConfig();
       this.clearForm();
     } catch (e) {
+      console.error(e);
       runInAction(
         () => (this.error = e instanceof Error ? e.message : String(e))
       );
@@ -894,28 +998,107 @@ export class DraftSMTPConfig
 export class DraftProviderConfig extends Model({
   selectedProviderType: prop<ProviderTypename>().withSetter(),
 
-  oauthClientId: prop("").withSetter(),
-  oauthSecret: prop("").withSetter(),
+  oauthClientId: prop<string | null>(null).withSetter(),
+  oauthSecret: prop<string | null>(null).withSetter(),
   additionalScope: prop("").withSetter(),
 
-  webauthnRelyingOrigin: prop("").withSetter(),
+  providerName: prop<string | null>(null).withSetter(),
+  displayName: prop<string | null>(null).withSetter(),
+  issuerUrl: prop<string | null>(null).withSetter(),
+  logoUrl: prop<string>("").withSetter(),
+
+  webauthnRelyingOrigin: prop<string | null>(null).withSetter(),
 
   requireEmailVerification: prop(true).withSetter(),
 
   tokenTimeToLive: prop("").withSetter(),
 }) {
   @computed
-  get oauthClientIdError() {
-    return this.oauthClientId.trim() === "" ? "Client ID is required" : null;
+  get oauthClientIdError(): string | null {
+    if (this.oauthClientId == null) return null;
+    if (this.oauthClientId.trim() === "") {
+      return "Client ID is required";
+    }
+    return this.selectedProviderType === "ext::auth::OpenIDConnectProvider"
+      ? this._getIssuerClientIdError()
+      : null;
   }
 
   @computed
-  get oauthSecretError() {
+  get oauthSecretError(): string | null {
+    if (this.oauthSecret === null) return null;
     return this.oauthSecret.trim() === "" ? "Secret is required" : null;
   }
 
   @computed
-  get webauthnRelyingOriginError() {
+  get providerNameError(): string | null {
+    if (this.providerName === null) return null;
+    if (this.providerName.trim() === "") {
+      return "Provider name is required";
+    }
+    if (this.providerName.startsWith("builtin::")) {
+      return "Provider name cannot start with 'builtin::'";
+    }
+    const providerNames = getParent<AuthAdminState>(this)?.providers?.map(
+      (p) => p.name
+    );
+    if (providerNames?.includes(this.providerName.trim())) {
+      return "A provider with this name already exists";
+    }
+    return null;
+  }
+
+  @computed
+  get displayNameError(): string | null {
+    if (this.displayName === null) return null;
+    return this.displayName.trim() === ""
+      ? "Provider display name is required"
+      : null;
+  }
+
+  _getIssuerClientIdError(): string | null {
+    const issuerUrl = this.issuerUrl?.trim();
+    const clientId = this.oauthClientId?.trim();
+    return getParent<AuthAdminState>(this)?.providers?.some(
+      (p) =>
+        p._typename === "ext::auth::OpenIDConnectProvider" &&
+        p.issuer_url === issuerUrl &&
+        p.client_id === clientId
+    )
+      ? "A provider with this Issuer URL and Client ID pair already exists"
+      : null;
+  }
+
+  @computed
+  get issuerUrlError(): string | null {
+    if (this.issuerUrl === null) return null;
+    if (this.issuerUrl.trim() === "") {
+      return "Issuer URL is required";
+    }
+    try {
+      new URL(this.issuerUrl.trim());
+    } catch {
+      return "Invalid URL";
+    }
+    return this._getIssuerClientIdError();
+  }
+
+  @computed
+  get logoUrlError(): string | null {
+    if (this.logoUrl.trim() === "") {
+      return null;
+    }
+    try {
+      new URL(this.logoUrl.trim());
+    } catch {
+      return "Invalid URL";
+    }
+    return null;
+  }
+
+  @computed
+  get webauthnRelyingOriginError(): string | null {
+    if (this.webauthnRelyingOrigin == null) return null;
     const origin = this.webauthnRelyingOrigin.trim();
     if (origin === "") {
       return "Relying origin is required";
@@ -942,7 +1125,7 @@ export class DraftProviderConfig extends Model({
   }
 
   @computed
-  get tokenTimeToLiveError() {
+  get tokenTimeToLiveError(): string | null {
     return validateDuration(this.tokenTimeToLive, false);
   }
 
@@ -950,11 +1133,26 @@ export class DraftProviderConfig extends Model({
   get formValid(): boolean {
     switch (_providersInfo[this.selectedProviderType].kind) {
       case "OAuth":
-        return !this.oauthClientIdError && !this.oauthSecretError;
+        return (
+          this.oauthClientId != null &&
+          !this.oauthClientIdError &&
+          this.oauthSecret != null &&
+          !this.oauthSecretError &&
+          (this.selectedProviderType === "ext::auth::OpenIDConnectProvider"
+            ? this.providerName != null &&
+              !this.providerNameError &&
+              this.displayName != null &&
+              !this.displayNameError &&
+              this.issuerUrl != null &&
+              !this.issuerUrlError &&
+              !this.logoUrlError
+            : true)
+        );
       case "Local":
         return this.selectedProviderType ===
           "ext::auth::WebAuthnProviderConfig"
-          ? !this.webauthnRelyingOriginError
+          ? this.webauthnRelyingOrigin != null &&
+              !this.webauthnRelyingOriginError
           : this.selectedProviderType === "ext::auth::MagicLinkProviderConfig"
           ? !this.tokenTimeToLiveError
           : true;
@@ -982,8 +1180,20 @@ export class DraftProviderConfig extends Model({
 
       const queryFields: string[] = [];
       if (provider.kind === "OAuth") {
+        if (this.selectedProviderType === "ext::auth::OpenIDConnectProvider") {
+          queryFields.push(
+            `name := ${JSON.stringify(this.providerName!.trim())}`,
+            `display_name := ${JSON.stringify(this.displayName!.trim())}`,
+            `issuer_url := ${JSON.stringify(this.issuerUrl!.trim())}`
+          );
+          if (this.logoUrl.trim()) {
+            queryFields.push(
+              `logo_url := ${JSON.stringify(this.logoUrl!.trim())}`
+            );
+          }
+        }
         queryFields.push(
-          `client_id := ${JSON.stringify(this.oauthClientId)}`,
+          `client_id := ${JSON.stringify(this.oauthClientId!.trim())}`,
           `secret := ${JSON.stringify(this.oauthSecret)}`
         );
         if (this.additionalScope.trim()) {
@@ -1034,6 +1244,84 @@ export class DraftProviderConfig extends Model({
       );
       await state.refreshConfig();
       state.cancelDraftProvider();
+    } catch (e) {
+      console.log(e);
+      runInAction(
+        () => (this.error = e instanceof Error ? e.message : String(e))
+      );
+    } finally {
+      runInAction(() => (this.updating = false));
+    }
+  }
+}
+
+@model("AuthAdmin/DraftWebhookConfig")
+export class DraftWebhookConfig extends Model({
+  url: prop<string | null>(null).withSetter(),
+  events: prop(() => arraySet<WebhookEvent>()),
+  signing_key: prop<string | null>(null).withSetter(),
+}) {
+  @computed
+  get urlError() {
+    if (this.url == null) return null;
+    if (this.url.trim() === "") return "Webhook URL is required";
+    try {
+      new URL(this.url);
+    } catch {
+      return "URL is invalid";
+    }
+    return getParent<AuthAdminState>(this)?.webhookUrls.has(this.url)
+      ? "A webhook already exists with this URL"
+      : null;
+  }
+
+  @computed
+  get eventsError() {
+    return this.events.size < 1
+      ? "At least one webhook event is required"
+      : null;
+  }
+
+  @computed
+  get formValid(): boolean {
+    return (
+      this.url != null && this.urlError == null && this.eventsError == null
+    );
+  }
+
+  @observable
+  updating = false;
+
+  @observable
+  error: string | null = null;
+
+  @action
+  async addWebhook() {
+    if (!this.formValid) return;
+
+    const conn = connCtx.get(this)!;
+    const state = getParent<AuthAdminState>(this)!;
+
+    this.updating = true;
+    this.error = null;
+
+    try {
+      await conn.execute(
+        `configure current database
+          insert ext::auth::WebhookConfig {
+            url := ${JSON.stringify(this.url)},
+            events := {${[...this.events.values()]
+              .map((val) => `"${val}"`)
+              .join(", ")}},
+            ${
+              this.signing_key
+                ? `signing_secret_key := ${JSON.stringify(this.signing_key)}`
+                : ""
+            }
+          }`
+      );
+      await state.refreshConfig();
+      state.cancelDraftWebhook();
     } catch (e) {
       console.log(e);
       runInAction(

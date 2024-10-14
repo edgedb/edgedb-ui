@@ -3,6 +3,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
+import themeStyles from "@edgedb/common/newui/theme.module.scss";
 
 import "@fontsource-variable/roboto-flex/index.css";
 import "@fontsource-variable/roboto-mono/index.css";
@@ -39,7 +40,7 @@ function App() {
 const AppMain = observer(function _AppMain() {
   return (
     <BrowserRouter basename="ui">
-      <div className={styles.theme}>
+      <div className={`${styles.theme} ${themeStyles.theme}`}>
         <ModalProvider>
           <div className={styles.app}>
             <Routes>
