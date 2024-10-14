@@ -2,22 +2,20 @@
 
 .authAdmin {
   flex-grow: 1;
-  background-color: var(--app-panel-bg);
-  border-radius: 8px;
+  background-color: var(--app_panel_background);
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
   display: flex;
   min-width: 0;
   min-height: 0;
 
-  &.loaded {
-    background-color: #ededed;
-
-    @include darkTheme {
-      background-color: #1c1c1c;
-    }
-  }
-
   @include isMobile {
     flex-direction: column;
+  }
+
+  @include darkTheme {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -82,58 +80,398 @@
   flex-grow: 1;
   min-width: 0;
   min-height: 0;
-  background: var(--app-panel-bg);
-  border-radius: 8px;
 }
 
-.contentWrapper {
+.scrollContent {
   overflow: auto;
   flex-grow: 1;
   @include hideScrollbar;
+
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 760px) 1fr;
+
+  @include isMobile {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
 }
 
-.tabs {
+.tabContentWrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 48px;
+  box-sizing: border-box;
+  min-width: 0;
+  font-family: "Roboto Flex Variable", sans-serif;
+  color: var(--main_text_color);
+
+  h2 {
+    color: inherit;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 26px;
+    margin: 0;
+  }
+
+  @include isMobile {
+    padding: 48px 24px;
+  }
+}
+
+.cardList {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 24px 8px;
-  flex-shrink: 0;
-  color: #545454;
+  margin-top: 16px;
+}
 
-  .tab {
-    padding: 12px 22px;
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid var(--panel_border);
+  background: var(--panel_background);
+  position: relative;
+
+  .expandButton {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
     border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
     cursor: pointer;
-    text-transform: uppercase;
 
-    &.selected {
-      background: #f8f8f8;
+    &:hover {
+      background: var(--Grey95);
+    }
 
-      @include darkTheme {
-        background: #2c2c2c;
+    svg {
+      width: 32px;
+      height: 32px;
+      color: var(--secondary_text_color);
+    }
+
+    &.expanded svg {
+      transform: rotate(180deg);
+    }
+
+    @include darkTheme {
+      &:hover {
+        background: var(--Grey30);
+      }
+    }
+  }
+}
+
+.cardMain {
+  display: flex;
+  padding: 12px 16px 12px 22px;
+  align-items: center;
+  gap: 16px;
+}
+
+.addDraft,
+.enableUI {
+  display: flex;
+  padding: 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 32px;
+  border-radius: 8px;
+  background-image: dashedBorderBg(#ccc);
+
+  @include darkTheme {
+    background-image: dashedBorderBg(#4d4d4d);
+  }
+}
+
+.draftForm,
+.expandedConfig {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+
+  .formRow {
+    display: flex;
+    gap: 16px;
+
+    &.fullWidth > * {
+      flex-grow: 1;
+    }
+
+    &.evenWidth {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+    }
+
+    @include isMobile {
+      flex-direction: column;
+      gap: 8px;
+
+      &.evenWidth {
+        display: flex;
       }
     }
   }
 
-  @include darkTheme {
-    color: #c5c5c5;
-  }
-
-  @include isMobile {
+  .buttons {
+    justify-content: flex-end;
+    margin-top: 16px;
     flex-direction: row;
-    justify-content: center;
-    padding: 8px;
   }
 }
 
-.tabContent {
-  padding: 32px;
+.expandedConfig {
+  width: auto;
+  padding: 18px;
+  padding-top: 8px;
+}
+
+.webhookEvents {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  min-height: max-content;
+  gap: 6px;
+  margin-top: 8px;
+
+  --colCount: 3;
+
+  .grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(calc(var(--itemCount) / var(--colCount)), auto);
+    gap: 4px;
+
+    label {
+      font-family: "Roboto Mono Variable", monospace;
+      font-weight: 425;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 960px) {
+    --colCount: 2;
+  }
+  @media (max-width: 512px) {
+    --colCount: 1;
+  }
+}
+
+.webhookConfigCard {
+  .cardMain {
+    align-items: start;
+  }
+
+  .details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+    gap: 6px;
+
+    .url {
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 22px;
+      font-weight: 450;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .events {
+      display: flex;
+      gap: 8px;
+      margin: 0 -4px;
+      margin-bottom: 2px;
+      overflow: hidden;
+      mask-image: linear-gradient(270deg, transparent, #000 16px, #000);
+
+      span {
+        background: var(--Grey97);
+        color: var(--secondary_text_color);
+        padding: 0 12px;
+        font-family: "Roboto Mono Variable", monospace;
+        font-size: 13px;
+        height: 24px;
+        line-height: 24px;
+        font-weight: 425;
+        border-radius: 16px;
+        border: 1px solid var(--Grey90);
+
+        @include darkTheme {
+          background: var(--Grey25);
+          border-color: var(--Grey30);
+        }
+      }
+    }
+  }
+
+  &.expanded .details {
+    display: none;
+  }
+
+  .expandedConfig {
+    margin-top: -12px;
+  }
+}
+
+.providerCard {
+  .details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .oauthIcon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .logo {
+      width: 24px;
+      height: 24px;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .name {
+      font-weight: 500;
+
+      span {
+        color: var(--tertiary_text_color);
+        font-weight: 400;
+        margin-left: 8px;
+      }
+    }
+
+    .providerType {
+      background: var(--Grey97);
+      color: var(--secondary_text_color);
+      padding: 0 10px;
+      font-size: 12px;
+      text-transform: uppercase;
+      height: 22px;
+      line-height: 22px;
+      font-weight: 500;
+      border-radius: 16px;
+      border: 1px solid var(--Grey90);
+      margin-left: 8px;
+
+      @include darkTheme {
+        background: var(--Grey25);
+        border-color: var(--Grey30);
+      }
+    }
+  }
+}
+
+.providerSelectItem {
+  display: flex;
+  align-items: center;
+  line-height: 22px;
+
+  .oauthIcon {
+    width: 22px;
+    height: 22px;
+    margin-right: 6px;
+    margin-left: -6px;
+  }
+}
+
+.webhookSkeleton {
+  width: 100%;
+  height: 80px;
+}
+
+.providerSkeleton {
+  width: 100%;
+  height: 56px;
+}
+
+.uiConfigSkeleton {
+  width: 100%;
+  height: 84px;
+  margin-top: 32px;
+}
+
+.configGrid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px 16px;
+  padding: 0 16px;
+  margin-top: 48px;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  .gridItem {
+    display: contents;
+    min-width: 0;
+  }
+
+  .configName {
+    align-self: center;
+    justify-self: end;
+  }
+
+  .configInput {
+    display: flex;
+    gap: 8px;
+
+    &.fullWidth > * {
+      flex-grow: 1;
+    }
+  }
+
+  .configExplain {
+    grid-column: 2;
+    max-width: 420px;
+    color: var(--tertiary_text_color);
+    font-size: 13px;
+    margin: 6px 4px;
+    margin-top: -18px;
+  }
+
+  @include isMobile {
+    grid-template-columns: auto;
+    padding: 0;
+    margin-top: 24px;
+
+    .gridItem {
+      display: block;
+    }
+
+    .configName {
+      margin-bottom: 4px;
+    }
+
+    .configExplain {
+      grid-column: 1;
+      margin-top: 6px;
+    }
+  }
+}
+
+.securitySelect {
+  font-family: "Roboto Mono Variable", monospace;
+}
+
+.redirectUrlsLabel {
+  align-self: auto !important;
+
+  > div {
+    height: 42px;
+
+    @include isMobile {
+      height: auto;
+    }
+  }
+}
+
+.redirectUrlsInput textarea {
+  resize: vertical;
 }
 
 .docsNote {
@@ -141,11 +479,12 @@
   align-items: flex-start;
   padding: 14px 24px;
   line-height: 22px;
-  background: #dee6f6;
-  border-radius: 8px;
+  background: #e9eef8;
+  border: 1px solid #b8cbf3;
+  border-radius: 12px;
   margin: -8px;
-  margin-bottom: -16px;
-  max-width: 100%;
+  margin-bottom: 48px;
+  max-width: calc(100% + 16px);
   box-sizing: border-box;
 
   a {
@@ -160,6 +499,7 @@
   > div {
     max-width: 100%;
     box-sizing: border-box;
+    flex-grow: 1;
   }
 
   > svg {
@@ -172,7 +512,8 @@
   }
 
   @include darkTheme {
-    background: #252d3d;
+    background: #242a36;
+    border-color: #2b406b;
   }
 }
 
@@ -192,58 +533,26 @@
   .copyUrl {
     display: flex;
     align-items: center;
-    font-family: "Roboto Mono", monospace;
+    font-family: "Roboto Mono Variable", monospace;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.35);
-    height: 32px;
+    background: rgba(255, 255, 255, 0.6);
+    height: 36px;
     padding-left: 12px;
     border-radius: 6px;
     user-select: text;
     min-width: 0;
 
     @include darkTheme {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.3);
     }
 
     span {
       margin-right: 6px;
       flex-shrink: 1;
       overflow: auto;
+      flex-grow: 1;
 
       @include hideScrollbar;
-    }
-
-    button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      padding: 0;
-      margin-left: auto;
-      background: none;
-      border: 0;
-      outline: 0;
-      color: inherit;
-      width: 34px;
-      height: 34px;
-      cursor: pointer;
-      opacity: 0.3;
-      flex-shrink: 0;
-
-      svg {
-        fill: currentColor;
-      }
-
-      &:hover {
-        opacity: 0.5;
-      }
-    }
-
-    &.copied {
-      button {
-        opacity: 1;
-        color: #1f8aed;
-      }
     }
   }
 
@@ -269,419 +578,64 @@
   }
 }
 
-.header {
-  font-weight: 500;
-  font-size: 13px;
-  text-transform: uppercase;
-  margin-bottom: 16px;
-
-  &:not(:first-child) {
-    margin-top: 56px;
-  }
-}
-
-.inputWrapper {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.input {
-  position: relative;
-  background: #fff;
-  border: 1px solid #d6d6d6;
-  border-radius: 6px;
-  line-height: 32px;
-  font-family: "Roboto Mono", monospace;
-  display: flex;
-  width: fit-content;
-  min-width: 0;
-  max-width: 100%;
-
-  textarea,
+.authSigningKeyInput {
   input {
-    font-family: inherit;
-    line-height: inherit;
-    font-size: 14px;
-    border: 0;
-    outline: 0;
-    background: none;
-    padding: 0 10px;
-    color: inherit;
-    padding-left: calc(10px + var(--prefixLen, 0) * 1ch);
-    min-width: 0;
+    padding-right: 44px;
   }
 
-  &.error:after {
-    content: "";
+  .generateKeyButton {
     position: absolute;
-    inset: -1px;
-    border: 2px solid #db5246;
-    border-radius: 6px;
-    pointer-events: none;
-  }
-
-  &.disabled {
-    background: none;
-    pointer-events: none;
-  }
-
-  &.placeholder {
-    padding: 0 10px;
-    overflow: hidden;
-  }
-
-  .prefix {
-    position: absolute;
-    padding-left: 8px;
-    pointer-events: none;
-    opacity: 0.6;
-  }
-
-  @include darkTheme {
-    background-color: #1a1a1a;
-    border-color: #545454;
-  }
-}
-
-.inputErrorMessage {
-  font-size: 14px;
-  line-height: 20px;
-  min-height: 20px;
-  padding: 4px;
-  padding-bottom: 0;
-  color: #db5246;
-  white-space: pre-wrap;
-}
-
-.button.button {
-  padding: 0;
-  --buttonBg: #e9e9e9;
-  --buttonTextColour: #4d4d4d;
-  height: 34px;
-
-  & > div {
-    height: 34px;
-    border-radius: 6px;
-    text-transform: none;
-    font-size: 14px;
-  }
-
-  @include darkTheme {
-    --buttonBg: #3a3a3a;
-    --buttonTextColour: #dcdcdc;
-  }
-}
-
-.generateKeyButton {
-  position: relative;
-  display: flex;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  color: #747474;
-  font-family: "Roboto", sans-serif;
-  margin-left: -8px;
-  margin-right: 4px;
-
-  span {
-    position: absolute;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.1s;
-    font-size: 12px;
-    white-space: nowrap;
-    top: 100%;
-    line-height: 16px;
-    color: #4d4d4d;
-    background: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    z-index: 1;
-  }
-
-  &:hover {
-    color: #4d4d4d;
-
-    span {
-      opacity: 1;
-    }
-  }
-}
-
-.configGrid {
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: 24px;
-  padding: 0 16px;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin-top: 8px;
-
-  .gridItem {
-    display: contents;
-    min-width: 0;
-  }
-
-  .configName {
-    font-family: "Roboto Mono", monospace;
-    text-align: right;
-    line-height: 34px;
-  }
-
-  .configInput {
-    display: flex;
-    gap: 8px;
-  }
-
-  .configExplain {
-    max-width: 320px;
-    opacity: 0.7;
-    font-size: 13px;
-    margin: 6px 4px;
-  }
-
-  @include isMobile {
-    grid-template-columns: auto;
-    padding: 0;
-
-    .gridItem {
-      display: block;
-    }
-
-    .configName {
-      text-align: left;
-      padding: 0 4px;
-      line-height: 28px;
-      margin-bottom: 2px;
-    }
-  }
-}
-
-.checkbox {
-  display: flex;
-  padding: 7px;
-  margin: 0 -7px;
-  cursor: pointer;
-
-  input {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    outline: 0;
-    border: 2px solid #9a9a9a;
-    border-radius: 4px;
-    background: transparent no-repeat center center;
-    box-sizing: border-box;
-    cursor: pointer;
-
-    &:checked {
-      background-color: #1f8aed;
-      border: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath fill='%23fff' d='M0,8 5,13 14,4 12,2 5,9 2,6z'/%3E%3C/svg%3E");
-    }
-  }
-}
-
-.providersList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  align-self: stretch;
-  max-width: 560px;
-}
-
-.noProviders {
-  border: 2px dashed #ccc;
-  padding: 18px;
-  border-radius: 8px;
-  opacity: 0.7;
-  font-style: italic;
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.providerCard {
-  background: #eee;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-
-  .providerCardHeader {
-    display: flex;
-    align-items: center;
-    height: 48px;
-    font-weight: 500;
-
-    .oauthIcon {
-      width: 24px;
-      height: 24px;
-      margin-left: -8px;
-      margin-right: 4px;
-    }
-  }
-
-  .expandProvider {
-    width: 40px;
-    height: 48px;
+    height: 100%;
+    width: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
+    right: 8px;
     cursor: pointer;
-    opacity: 0.8;
 
-    &.collapsed svg {
-      transform: rotate(-90deg);
+    svg {
+      stroke-width: 1.25px;
+      color: var(--secondary_text_color);
     }
 
-    &.disabled {
+    span {
+      position: absolute;
+      top: 36px;
+      right: 6px;
       pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+      white-space: nowrap;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      z-index: 1;
 
-      svg {
-        display: none;
+      @include darkTheme {
+        background: rgba(50, 50, 50, 0.85);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    &:hover {
+      span {
+        opacity: 1;
       }
     }
   }
 
-  .providerType {
-    opacity: 0.75;
-    margin-left: 8px;
-    text-transform: uppercase;
-    font-size: 12px;
-    margin-top: 1px;
-    margin-bottom: -1px;
-    background: #d3d3d3;
-    padding: 2px 8px;
-    border-radius: 16px;
-  }
-
-  .removeProviderButton {
-    margin-left: auto;
-    --buttonTextColour: #747474;
-    display: none;
-
-    .icon {
-      fill: currentColor;
+  &.error {
+    input {
+      padding-right: 68px;
     }
 
-    & > div {
-      text-transform: none;
-      font-size: 14px;
+    .generateKeyButton {
+      right: 38px;
     }
-
-    &.noHide {
-      display: block;
-    }
-  }
-
-  &:hover .removeProviderButton {
-    display: block;
-  }
-
-  .providerDetails {
-    display: grid;
-    grid-template-columns: auto auto;
-    align-self: flex-start;
-    gap: 16px 24px;
-    padding: 16px 18px;
-    padding-top: 6px;
-    font-family: "Roboto Mono", monospace;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: auto;
-    @include hideScrollbar;
-  }
-
-  .providerConfigValue {
-    span {
-      opacity: 0.7;
-      font-style: italic;
-    }
-  }
-
-  @include darkTheme {
-    background-color: #2f2f2f;
-
-    .providerType {
-      background-color: #4a4a4a;
-    }
-  }
-}
-
-.addProviderForm {
-  background: #eee;
-  border-radius: 8px;
-  max-width: 560px;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 16px;
-  box-sizing: border-box;
-
-  .errorMessage {
-    color: #db5246;
-    background-color: #db52461a;
-    border-radius: 6px;
-    padding: 8px 16px;
-  }
-
-  @include darkTheme {
-    background-color: #2f2f2f;
-  }
-}
-
-.addProviderFormButtons {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-
-  .button {
-    --buttonBg: #e2e2e2;
-  }
-}
-
-.providerSelect,
-.securitySelect {
-  background: #fff;
-  flex-grow: 1;
-  padding: 0px 10px;
-  border: 1px solid #d6d6d6;
-  border-radius: 6px;
-  height: 34px;
-
-  @include darkTheme {
-    background-color: #1a1a1a;
-    border-color: #545454;
-    color: #d6d6d6;
-  }
-}
-
-.securitySelect {
-  font-family: "Roboto Mono", monospace;
-}
-
-.providerSelect {
-  & > .providerSelectItem .oauthIcon {
-    margin-left: 0;
-  }
-}
-
-.providerSelectItem {
-  display: flex;
-  align-items: center;
-  line-height: 22px;
-
-  .oauthIcon {
-    width: 22px;
-    height: 22px;
-    margin-right: 6px;
-    margin-left: -6px;
   }
 }
 
@@ -689,48 +643,53 @@
   position: sticky;
   bottom: 0;
   align-self: stretch;
-  background: var(--app-panel-bg);
+  margin: 32px -24px -48px -24px;
+  padding: 0 16px;
   padding-bottom: 24px;
-  margin: 24px -8px -32px -8px;
-}
+  overflow: hidden;
+  pointer-events: none;
 
-.formButtons {
-  display: flex;
-  gap: 12px;
-  background: #ededed;
-  padding: 8px;
-  border-radius: 8px;
+  .bar {
+    pointer-events: auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--panel_background);
+    border-radius: 12px;
+    border: 1px solid var(--panel_border);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform 0.2s, opacity 0.2s;
 
-  .button {
-    --buttonBg: #fafafa;
+    &:before {
+      position: absolute;
+      content: "";
+      top: 100%;
+      left: 0;
+      height: 32px;
+      width: 100%;
+      background: var(--app_panel_background);
+      z-index: -1;
+    }
+
+    @include darkTheme {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
   }
 
-  .disableButton {
-    margin-left: auto;
-  }
-
-  @include darkTheme {
-    background: #1c1c1c;
-  }
-}
-
-.uiConfigSection {
-  display: flex;
-  gap: 56px;
-  align-self: stretch;
-  flex-wrap: wrap;
-}
-
-.uiConfigFormWrapper {
-  @include isMobile {
-    flex-grow: 1;
+  &.visible .bar {
+    transform: none;
+    opacity: 1;
   }
 }
 
 .loginUIPreview {
   flex-grow: 1;
   max-width: 800px;
-  margin-top: -32px;
+  margin-top: 64px;
   min-width: 0;
 }
 
@@ -778,8 +737,8 @@
 .colorPickerSwatch {
   position: relative;
   border: 1px solid #d6d6d6;
-  height: 32px;
-  width: 32px;
+  height: 40px;
+  width: 40px;
   border-radius: 6px;
   background-clip: padding-box;
   cursor: pointer;
@@ -794,6 +753,11 @@
   @include darkTheme {
     border-color: #545454;
   }
+}
+
+.inputSkeleton {
+  height: 42px;
+  min-width: 200px;
 }
 
 .appleIcon {

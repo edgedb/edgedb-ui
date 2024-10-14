@@ -19,7 +19,7 @@
 
   @include isMobile {
     padding: 48px 32px;
-    margin: 0 -32px;
+    margin: 0 -24px;
     border-radius: 0;
     border-left: none;
     border-right: none;
@@ -266,6 +266,12 @@
 
       span {
         margin-left: 12px;
+      }
+
+      img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
       }
     }
 
