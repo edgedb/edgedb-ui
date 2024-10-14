@@ -4,6 +4,7 @@ import {observer} from "mobx-react-lite";
 import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
+  ConfirmButton,
   ChevronDownIcon,
   InfoTooltip,
   Select,
@@ -12,7 +13,6 @@ import {
 } from "@edgedb/common/newui";
 
 import {useTabState} from "../../state";
-import {ConfirmButton} from ".";
 import {
   AIAdminState,
   AIProviderAPIStyle,

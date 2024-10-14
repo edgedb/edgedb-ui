@@ -12,6 +12,7 @@ export interface TextInputProps extends FieldHeaderProps {
   type?: "text" | "password" | "textarea";
   error?: string | null;
   prefix?: string;
+  suffixEl?: JSX.Element;
 }
 
 export const TextInput = forwardRef(function TextInput(
@@ -23,6 +24,7 @@ export const TextInput = forwardRef(function TextInput(
     headerNote,
     error,
     prefix,
+    suffixEl,
     ...props
   }: TextInputProps &
     Omit<InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement>, "type">,
@@ -53,6 +55,7 @@ export const TextInput = forwardRef(function TextInput(
               : undefined,
           }}
         />
+        {suffixEl}
         {error != null ? (
           <div className={styles.error}>
             <InfoIcon />

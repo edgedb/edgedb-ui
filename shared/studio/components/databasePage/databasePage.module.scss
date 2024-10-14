@@ -3,9 +3,9 @@
 .databasePage {
   position: relative;
   flex-grow: 1;
-  overflow: hidden;
+  min-height: 0;
   display: grid;
-  padding: 0 16px 16px 0;
+  padding: 0 8px 8px 0;
   grid-template-areas: "tabs session" "tabs content";
   grid-template-columns: auto 1fr;
   grid-template-rows: auto 1fr;
