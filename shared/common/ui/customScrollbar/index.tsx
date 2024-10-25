@@ -22,6 +22,7 @@ export interface CustomScrollbarsProps {
   reverse?: boolean;
   hideVertical?: boolean;
   hideHorizontal?: boolean;
+  style?: React.CSSProperties;
 }
 
 const defaultThumbSizes: [number, number] = [-1, -1];
@@ -38,6 +39,7 @@ export function CustomScrollbars({
   reverse,
   hideVertical,
   hideHorizontal,
+  style
 }: PropsWithChildren<CustomScrollbarsProps>) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -252,6 +254,7 @@ export function CustomScrollbars({
       className={cn(styles.customScrollbars, className, {
         [styles.dragging]: dragging,
       })}
+      style={style}
       onMouseDownCapture={onMouseDown}
     >
       {children}

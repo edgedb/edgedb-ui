@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {HeaderTabs} from "@edgedb/studio/components/headerNav";
 import {ThemeSwitcher} from "@edgedb/common/ui/themeSwitcher";
 import cn from "@edgedb/common/utils/classNames";

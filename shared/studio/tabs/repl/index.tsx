@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 
-import {reaction} from "mobx";
+import {reaction, runInAction} from "mobx";
 import {observer} from "mobx-react-lite";
 
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
@@ -18,7 +18,7 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Spinner from "@edgedb/common/ui/spinner";
-import Button from "@edgedb/common/ui/button";
+import {Button} from "@edgedb/common/newui";
 import cn from "@edgedb/common/utils/classNames";
 
 import {
@@ -26,7 +26,14 @@ import {
   CodeEditorRef,
   createCodeEditor,
 } from "@edgedb/code-editor";
-import Inspector, {DEFAULT_ROW_HEIGHT} from "@edgedb/inspector";
+
+import {
+  DEFAULT_LINE_HEIGHT,
+  DEFAULT_ROW_HEIGHT,
+  InspectorRow,
+  useInspectorKeybindings,
+} from "@edgedb/inspector";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {ExplainType, ExplainVis} from "../../components/explainVis";
@@ -35,12 +42,11 @@ import {
   ExplainHighlightsRef,
   ExplainHighlightsRenderer,
 } from "../../components/explainVis/codeEditorContexts";
-import {ExplainStateType} from "../../components/explainVis/state";
 import {
   ExtendedViewerContext,
   ExtendedViewerRenderer,
 } from "../../components/extendedViewers";
-import {ArrowDown, TabReplIcon} from "../../icons";
+import {TabReplIcon} from "../../icons";
 
 import {useDatabaseState, useTabState} from "../../state";
 import {
@@ -48,7 +54,7 @@ import {
   Repl,
   ReplHistoryItem as ReplHistoryItemState,
 } from "./state";
-import {QueryEditor} from "../queryEditor/state";
+import {OutputMode, QueryEditor} from "../queryEditor/state";
 import {renderCommandResult} from "./commands";
 
 import {useDBRouter} from "../../hooks/dbRoute";
@@ -57,6 +63,13 @@ import styles from "./repl.module.scss";
 import {isEndOfStatement} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {RunButton} from "@edgedb/common/ui/mobile";
+import {InspectorState} from "@edgedb/inspector/state";
+import {InspectorContext} from "@edgedb/inspector/context";
+import {outputModeToggle} from "../queryEditor";
+import {
+  ResultGrid,
+  ResultGridState,
+} from "@edgedb/common/components/resultGrid";
 
 const ReplView = observer(function ReplView() {
   const replState = useTabState(Repl);
@@ -378,6 +391,190 @@ const ReplInput = observer(function ReplInput() {
   );
 });
 
+const InspectorRenderer = observer(function InspectorRenderer({
+  replState,
+  inspectorState,
+  maxLines,
+  offsetTop,
+}: {
+  replState: Repl;
+  inspectorState: InspectorState;
+  maxLines?: number;
+  offsetTop: number;
+}) {
+  const vPad = DEFAULT_ROW_HEIGHT - DEFAULT_LINE_HEIGHT;
+  const items = inspectorState.getItems();
+  const noVirt = (items[1]?.height ?? 0) > 1;
+  const itemsLength = maxLines
+    ? Math.min(items.length, maxLines)
+    : items.length;
+
+  const [visibleItems, setVisibleItems] = useState([0, maxLines ?? 1]);
+
+  useLayoutEffect(() => {
+    const el = replState.scrollRef;
+    if (!el || noVirt) return;
+
+    const listener = () => {
+      const scrollTop = el.scrollHeight + el.scrollTop - el.clientHeight;
+      setVisibleItems([
+        Math.min(
+          itemsLength - 1,
+          Math.max(
+            0,
+            Math.floor((scrollTop - offsetTop) / DEFAULT_ROW_HEIGHT) - 5
+          )
+        ),
+        Math.min(
+          itemsLength - 1,
+          Math.max(
+            maxLines ?? 0,
+            Math.ceil(
+              (scrollTop - offsetTop + el.clientHeight) / DEFAULT_ROW_HEIGHT
+            ) + 5
+          )
+        ),
+      ]);
+    };
+    listener();
+
+    el.addEventListener("scroll", listener);
+
+    return () => {
+      el.removeEventListener("scroll", listener);
+    };
+  }, [itemsLength, offsetTop, replState.scrollRef, noVirt]);
+
+  const onKeyDown = useInspectorKeybindings(inspectorState);
+
+  const inspectorStyle = {
+    "--lineHeight": `${DEFAULT_LINE_HEIGHT}px`,
+    "--rowPad": `${vPad / 2}px`,
+    gridAutoRows: DEFAULT_ROW_HEIGHT,
+    ...(noVirt
+      ? {
+          height:
+            DEFAULT_ROW_HEIGHT * 2 +
+            items[1].height! * DEFAULT_LINE_HEIGHT +
+            vPad,
+          gridTemplateRows: `${DEFAULT_ROW_HEIGHT}px ${
+            items[1].height! * DEFAULT_LINE_HEIGHT + vPad
+          }px ${DEFAULT_ROW_HEIGHT}px`,
+        }
+      : {height: itemsLength * DEFAULT_ROW_HEIGHT}),
+  } as any;
+
+  return (
+    <InspectorContext.Provider value={inspectorState}>
+      <div
+        className={cn(inspectorStyles.inspector, styles.inspector)}
+        style={inspectorStyle}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+      >
+        <InspectorRendererInner
+          inspectorState={inspectorState}
+          startIndex={noVirt ? 0 : visibleItems[0]}
+          endIndex={noVirt ? itemsLength : visibleItems[1]}
+        />
+      </div>
+    </InspectorContext.Provider>
+  );
+});
+
+const InspectorRendererInner = observer(function InspectorRendererInner({
+  inspectorState,
+  startIndex,
+  endIndex,
+}: {
+  inspectorState: InspectorState;
+  startIndex: number;
+  endIndex: number;
+}) {
+  return (
+    <>
+      {inspectorState
+        .getItems()
+        .slice(startIndex, endIndex + 1)
+        .map((item, i) => {
+          const isExpanded = inspectorState.expanded!.has(item.id);
+          const index = i + startIndex;
+          return (
+            <InspectorRow
+              key={`${index}_${item.id}`}
+              index={index}
+              item={item}
+              state={inspectorState}
+              isExpanded={isExpanded}
+              style={{gridRowStart: index + 1}}
+              toggleExpanded={() => {
+                isExpanded
+                  ? inspectorState.collapseItem(index)
+                  : inspectorState.expandItem(index);
+              }}
+            />
+          );
+        })}
+    </>
+  );
+});
+
+const ResultGridWrapper = observer(function ResultGridWrapper({
+  replState,
+  gridState,
+  offsetTop,
+  truncated,
+}: {
+  replState: Repl;
+  gridState: ResultGridState;
+  offsetTop: number;
+  truncated: boolean;
+}) {
+  const [containerHeight, setContainerHeight] = useState(
+    replState.scrollRef?.clientHeight ?? 0
+  );
+  useResize(replState.scrollRef, ({height}) => setContainerHeight(height));
+
+  const contentHeight =
+    gridState.grid.headerHeight + gridState.grid.gridContentHeight;
+
+  useLayoutEffect(() => {
+    const el = replState.scrollRef;
+    const gridEl = gridState.grid.gridElRef;
+    if (truncated || !el || !gridEl) return;
+
+    const listener = () => {
+      const scrollTop = el.scrollHeight + el.scrollTop - el.clientHeight;
+      gridEl.scrollTop = scrollTop - offsetTop;
+    };
+    listener();
+
+    el.addEventListener("scroll", listener);
+
+    return () => {
+      el.removeEventListener("scroll", listener);
+    };
+  }, [offsetTop, truncated, replState.scrollRef, gridState.grid.gridElRef]);
+
+  return (
+    <div
+      className={styles.replResultGridWrapper}
+      style={{
+        height: contentHeight,
+      }}
+    >
+      <ResultGrid
+        state={gridState}
+        className={styles.replResultGrid}
+        noVerticalScroll
+        style={{
+          height: Math.min(containerHeight, contentHeight),
+        }}
+      />
+    </div>
+  );
+});
+
 const ReplHistoryItem = observer(function ReplHistoryItem({
   state,
   index,
@@ -388,29 +585,45 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
   state: Repl;
   index: number;
   item: ReplHistoryItemState;
-  styleTop: any;
+  styleTop: number;
   dbName: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const replState = useTabState(Repl);
+  const headerRef = useRef<HTMLDivElement>(null);
+
   const editorState = useTabState(QueryEditor);
-  const isMobile = useIsMobile();
-  let showExpandBtn = false;
-
   const {navigate, currentPath} = useDBRouter();
-
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const updateScroll = useRef(false);
 
   const runInEditor = () => {
     editorState.loadFromRepl(item);
     navigate(`${currentPath[0]}/editor`);
   };
 
+  const replState = useTabState(Repl);
+  const isMobile = useIsMobile();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateScroll = useRef(false);
+
+  const [data, setData] = useState(() =>
+    item.hasResult
+      ? state.resultDataCache.get(item.$modelId)?.result
+      : undefined
+  );
+
+  useEffect(() => {
+    if (item.hasResult && data === undefined) {
+      state.getResultData(item.$modelId).promise.then((data) => setData(data));
+    }
+  }, [item.hasResult]);
+
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useResize(headerRef, ({height}) => setHeaderHeight(height));
+
   useEffect(() => {
     const disposer = reaction(
-      () => item.inspectorState?._items.length,
+      () => item._inspectorState?._items.length,
       (curr, prev) => {
         if (prev && curr !== prev) {
           updateScroll.current = true;
@@ -420,7 +633,10 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
     return () => {
       disposer();
-      item._inspector = null;
+      runInAction(() => {
+        item._inspectorState = null;
+        item._explainState = null;
+      });
     };
   }, []);
 
@@ -441,11 +657,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     [item.showDateHeader]
   );
 
-  let output: JSX.Element | null;
-
-  const isExplain =
-    item.status === ExplainStateType.explain ||
-    item.status === ExplainStateType.analyzeQuery;
+  let output: JSX.Element | null = null;
+  let headerExtra: JSX.Element | null = null;
+  let showExpandBtn = false;
+  let showHeaderShadow = true;
+  let hasScroll = false;
 
   if (item.error) {
     output = (
@@ -464,40 +680,70 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
     );
   } else if (item.status) {
     if (item.hasResult) {
-      if (isExplain) {
+      if (!data) {
+        output = <>loading ...</>;
+      } else if (item.isExplain) {
         output = (
           <div className={styles.explain}>
-            <Button
-              label="VIEW FULL UI IN EDITOR"
-              className={styles.runInEditorBtn}
-              onClick={runInEditor}
-            />
+            <Button className={styles.runInEditorBtn} onClick={runInEditor}>
+              View full UI in editor
+            </Button>
             <ExplainVis
-              state={item.explainState}
+              state={item.getExplainState(data)}
               type={ExplainType.light}
               classes={styles.explainVis}
             />
           </div>
         );
       } else {
-        const inspectorState = item.inspectorState;
+        const maxLines = item.showMore ? undefined : 16;
 
-        if (inspectorState) {
-          const maxLines = item.showMore ? undefined : 16;
+        const {mode, toggleEl} = outputModeToggle(
+          data._codec,
+          item.outputMode,
+          (mode) => {
+            updateScroll.current = true;
+            item.setOutputMode(mode);
+          }
+        );
+
+        headerExtra = (
+          <div className={styles.resultModeHeader}>{toggleEl}</div>
+        );
+
+        if (mode === OutputMode.Tree) {
+          const inspectorState = item.getInspectorState(data);
 
           showExpandBtn =
             !!maxLines && inspectorState.totalItemsLines > maxLines;
 
           output = (
-            <Inspector
-              disableVirtualisedRendering
-              className={styles.inspector}
-              state={item.inspectorState}
+            <InspectorRenderer
+              replState={replState}
+              inspectorState={inspectorState}
               maxLines={maxLines}
+              offsetTop={
+                styleTop + headerHeight + (item.showDateHeader ? 36 : 12)
+              }
             />
           );
         } else {
-          output = <>loading ...</>;
+          const gridState = item.getResultGridState(data);
+
+          showExpandBtn = !!maxLines && gridState.rowCount > maxLines;
+          showHeaderShadow = false;
+          hasScroll = true;
+
+          output = (
+            <ResultGridWrapper
+              replState={replState}
+              gridState={gridState}
+              truncated={showExpandBtn}
+              offsetTop={
+                styleTop + headerHeight + (item.showDateHeader ? 36 : 12)
+              }
+            />
+          );
         }
       }
     } else {
@@ -532,16 +778,29 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const marginLeftRepl = isMobile
     ? "0px"
-    : isExplain
+    : item.isExplain
     ? "16px"
     : `${dbName.length + 2}ch`;
+
+  const expandButton = showExpandBtn ? (
+    <div className={styles.showMore}>
+      <button
+        onClick={() => {
+          item.setShowMore(true);
+          updateScroll.current = true;
+        }}
+      >
+        show more...
+      </button>
+    </div>
+  ) : null;
 
   return (
     <div
       ref={ref}
       className={cn(styles.replHistoryItem, {
         [styles.showDateHeader]: item.showDateHeader,
-        [styles.explain]: isExplain,
+        [styles.explain]: item.isExplain,
       })}
       style={{top: styleTop}}
     >
@@ -551,115 +810,124 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         </div>
       ) : null}
       <div
-        className={cn(styles.historyQuery, {
-          [styles.historyQueryExplain]: isExplain,
+        ref={headerRef}
+        className={cn(styles.historyHeader, {
+          [styles.noOutput]: !output,
+          [styles.noShadow]: !showHeaderShadow,
         })}
       >
-        <div className={styles.historyPrompt}>
-          {[
-            `${dbName}>`,
-            ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
-              ".".repeat(dbName.length + 1)
-            ),
-          ].join("\n")}
-        </div>
+        <div className={styles.historyQuery}>
+          <div className={styles.historyPrompt}>
+            {[
+              `${dbName}>`,
+              ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
+                ".".repeat(dbName.length + 1)
+              ),
+            ].join("\n")}
+          </div>
 
-        <CustomScrollbars
-          className={styles.historyQueryCode}
-          innerClass={styles.codeBlockContainer}
-        >
-          <div className={styles.scrollWrapper}>
-            <div
-              ref={containerRef}
-              className={cn(styles.codeBlockContainer, {
-                [styles.truncateQuery]: truncateQuery,
-              })}
-            >
-              <QueryCodeBlock item={item} containerRef={containerRef} />
-              {item.error?.data.range ? (
-                <div
-                  className={styles.codeBlockErrorLines}
-                  style={{
-                    top: `${
-                      item.query.slice(0, item.error.data.range[0]).split("\n")
-                        .length - 1
-                    }em`,
-                    height: `${
-                      item.query
-                        .slice(
-                          item.error.data.range[0],
-                          item.error.data.range[1]
-                        )
-                        .split("\n").length
-                    }em`,
-                  }}
-                />
+          <CustomScrollbars
+            className={styles.historyQueryCode}
+            innerClass={styles.codeBlockContainer}
+          >
+            <div className={styles.scrollWrapper}>
+              <div
+                ref={containerRef}
+                className={cn(styles.codeBlockContainer, {
+                  [styles.truncateQuery]: truncateQuery,
+                })}
+              >
+                <QueryCodeBlock item={item} containerRef={containerRef} />
+                {item.error?.data.range ? (
+                  <div
+                    className={styles.codeBlockErrorLines}
+                    style={{
+                      top: `${
+                        item.query
+                          .slice(0, item.error.data.range[0])
+                          .split("\n").length - 1
+                      }em`,
+                      height: `${
+                        item.query
+                          .slice(
+                            item.error.data.range[0],
+                            item.error.data.range[1]
+                          )
+                          .split("\n").length
+                      }em`,
+                    }}
+                  />
+                ) : null}
+              </div>
+              {truncateQuery ? (
+                <div className={styles.showFullQuery}>
+                  <button
+                    onClick={() => {
+                      item.setShowFullQuery(true);
+                      updateScroll.current = true;
+                    }}
+                  >
+                    show more...
+                  </button>
+                </div>
               ) : null}
             </div>
-            {truncateQuery ? (
-              <div className={styles.showFullQuery}>
-                <Button
-                  className={styles.showFullQueryBtn}
-                  label="Show more"
-                  icon={<ArrowDown />}
-                  onClick={() => {
-                    item.setShowFullQuery(true);
-                    updateScroll.current = true;
-                  }}
-                />
-              </div>
-            ) : null}
+          </CustomScrollbars>
+          <div className={styles.historyTime}>
+            {new Date(item.timestamp).toLocaleTimeString()}
           </div>
-        </CustomScrollbars>
-        <div className={styles.historyTime}>
-          {new Date(item.timestamp).toLocaleTimeString()}
         </div>
+        {headerExtra}
       </div>
       {output ? (
-        <CustomScrollbars
-          className={styles.outputOuterWrapper}
-          innerClass={styles.historyOutput}
-          hideVertical
-        >
-          <div
-            className={cn(styles.scrollWrapper, {
-              [styles.sticky]: isExplain,
-            })}
-            style={
-              showExpandBtn ? {maxHeight: 16 * DEFAULT_ROW_HEIGHT} : undefined
-            }
+        !hasScroll ? (
+          <CustomScrollbars
+            className={styles.outputOuterWrapper}
+            innerClass={styles.historyOutput}
+            hideVertical
           >
             <div
-              className={cn(styles.historyOutput, {
-                [styles.wrapContent]: item.error != null,
-                [styles.explain]: isExplain,
+              className={cn(styles.scrollWrapper, {
+                [styles.sticky]: item.isExplain,
               })}
-              style={{
-                marginLeft: marginLeftRepl,
-              }}
+              style={
+                showExpandBtn
+                  ? {maxHeight: 16 * DEFAULT_ROW_HEIGHT}
+                  : undefined
+              }
             >
-              {output}
-            </div>
-            {showExpandBtn ? (
-              <div className={styles.showMore}>
-                <button
-                  onClick={() => {
-                    item.setShowMore(true);
-                    updateScroll.current = true;
-                  }}
-                >
-                  show more...
-                </button>
+              <div
+                className={cn(styles.historyOutput, {
+                  [styles.wrapContent]: item.error != null,
+                  [styles.explain]: item.isExplain,
+                })}
+                style={{
+                  marginLeft: marginLeftRepl,
+                }}
+              >
+                {output}
               </div>
-            ) : null}
+              {expandButton}
+            </div>
+          </CustomScrollbars>
+        ) : (
+          <div
+            style={
+              showExpandBtn
+                ? {maxHeight: 16 * DEFAULT_ROW_HEIGHT, overflow: "hidden"}
+                : undefined
+            }
+          >
+            {output}
+            {expandButton}
           </div>
-        </CustomScrollbars>
+        )
       ) : null}
     </div>
   );
 });
 
-function QueryCodeBlock({
+const QueryCodeBlock = observer(function QueryCodeBlock({
   item,
   containerRef,
 }: {
@@ -667,8 +935,6 @@ function QueryCodeBlock({
   containerRef: RefObject<HTMLElement>;
 }) {
   const [ref, setRef] = useState<ExplainHighlightsRef | null>(null);
-  const isExplain =
-    item.status === "EXPLAIN" || item.status === "ANALYZE QUERY";
 
   const explainHighlightsRef = useCallback((node: any) => {
     if (node) {
@@ -682,17 +948,17 @@ function QueryCodeBlock({
     }
   }, [ref]);
 
-  return isExplain ? (
+  return item.isExplain ? (
     <>
       <ExplainCodeBlock
         className={cn(styles.code)}
         code={item.query}
-        explainContexts={item.explainState?.contextsByBufIdx[0] ?? []}
+        explainContexts={item._explainState?.contextsByBufIdx[0] ?? []}
       />
-      {item.explainState ? (
+      {item._explainState ? (
         <ExplainHighlightsRenderer
           ref={explainHighlightsRef}
-          state={item.explainState}
+          state={item._explainState}
           isEditor={false}
         />
       ) : null}
@@ -713,7 +979,7 @@ function QueryCodeBlock({
       }
     />
   );
-}
+});
 
 const headerASCII = `
                                           /$$

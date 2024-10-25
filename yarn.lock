@@ -1033,8 +1033,8 @@ __metadata:
     "@types/react-transition-group": ^4.4.0
     fastpriorityqueue: ^0.6.3
     fuse.js: ^6.4.1
-    mobx: ^6.3.0
-    mobx-react: ^7.1.0
+    mobx: ^6.5.0
+    mobx-react-lite: ^4.0.0
     mobx-state-tree: ^5.0.1
     react-transition-group: ^4.4.1
     webcola: ^3.4.0
@@ -1066,7 +1066,7 @@ __metadata:
     idb: ^7.0.1
     mobx: ^6.5.0
     mobx-keystone: ^1.11.0
-    mobx-react-lite: ^3.3.0
+    mobx-react-lite: ^4.0.0
     react-colorful: ^5.6.1
     react-error-boundary: ^3.1.4
     react-hook-form: ^7.32.2
@@ -6599,21 +6599,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mobx-react-lite@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "mobx-react-lite@npm:3.3.0"
-  peerDependencies:
-    mobx: ^6.1.0
-    react: ^16.8.0 || ^17
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-    react-native:
-      optional: true
-  checksum: 0f55bd2009a9cedc6b81d70b88b57dc4161362a16ba6ae0af341e673ca1c627bc3c4088c0cb13133e57e6fa6748b09b4c26aff7fab26c60ed95d27e939846fa3
-  languageName: node
-  linkType: hard
-
 "mobx-react-lite@npm:^4.0.0":
   version: 4.0.7
   resolution: "mobx-react-lite@npm:4.0.7"
@@ -6631,23 +6616,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mobx-react@npm:^7.1.0":
-  version: 7.3.0
-  resolution: "mobx-react@npm:7.3.0"
-  dependencies:
-    mobx-react-lite: ^3.3.0
-  peerDependencies:
-    mobx: ^6.1.0
-    react: ^16.8.0 || ^17
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-    react-native:
-      optional: true
-  checksum: 4a53fd45994bfc6d6bcf24072a651f09c15b7afa0f1d0040b92058e6aa55ef0c3a5176986e616a7e791ea0c24561f8c75a964cb08cfe3a1025c550b8a890799a
-  languageName: node
-  linkType: hard
-
 "mobx-state-tree@npm:^5.0.1":
   version: 5.1.3
   resolution: "mobx-state-tree@npm:5.1.3"
@@ -6657,7 +6625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mobx@npm:^6.3.0, mobx@npm:^6.5.0":
+"mobx@npm:^6.5.0":
   version: 6.5.0
   resolution: "mobx@npm:6.5.0"
   checksum: 1210fb0b1c515b5f0ec2916296c32ca19b733e03b34f180af382d44b90668a15b4143c69bb06ca8785ebc3da3e761c6c60d0e72c945c199efc823088af1941ab
@@ -8482,7 +8450,7 @@ __metadata:
     jest: ^29.7.0
     mobx: ^6.5.0
     mobx-keystone: ^1.11.0
-    mobx-react-lite: ^3.3.0
+    mobx-react-lite: ^4.0.0
     react: ^18.3.1
     react-dom: ^18.3.1
     react-router-dom: ^6.3.0

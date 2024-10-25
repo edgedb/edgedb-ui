@@ -59,16 +59,21 @@
 }
 
 .resizer {
-  min-width: 4px;
-  min-height: 4px;
+  min-width: 3px;
+  min-height: 3px;
   position: relative;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #e2e2e2;
 
   @include breakpoint(mobile) {
     display: none;
+  }
+
+  @include darkTheme {
+    background: #0f0f0f;
   }
 
   .grabHandle {
@@ -81,20 +86,20 @@
   }
 
   .resizerIndicator {
-    width: 10px;
-    height: 40px;
+    width: 9px;
+    height: 38px;
     flex-shrink: 0;
-    background: var(--app-bg);
+    background: #e2e2e2;
     border-radius: 5px;
     pointer-events: none;
 
     &:after {
       content: "";
       display: block;
-      width: 2px;
+      width: 3px;
       height: 32px;
-      background: var(--app-card-bg);
-      margin: 4px;
+      background: var(--panel_background);
+      margin: 3px;
       border-radius: 2px;
     }
 
@@ -106,6 +111,10 @@
         height: 2px;
         width: 32px;
       }
+    }
+
+    @include darkTheme {
+      background: #0f0f0f;
     }
   }
 

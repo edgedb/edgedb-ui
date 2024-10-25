@@ -1,5 +1,5 @@
 import React, {Fragment, useRef} from "react";
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -98,7 +98,8 @@ export default observer(function SplitView({
     >
       {views.map((view, viewIndex) => {
         const lastView = viewIndex === views.length - 1;
-        const margins = 4 + (viewIndex === 0 ? -2 : 0) + (lastView ? -2 : 0);
+        const margins =
+          3 + (viewIndex === 0 ? -1.5 : 0) + (lastView ? -1.5 : 0);
         const size = {
           [childSizeKey]: `calc(${state.sizes[viewIndex]}%${
             margins ? ` - ${margins}px` : ""

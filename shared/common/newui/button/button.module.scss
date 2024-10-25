@@ -32,6 +32,12 @@
     flex-shrink: 0;
   }
 
+  .shortcut {
+    opacity: 0.85;
+    font-size: 13px;
+    margin-left: 8px;
+  }
+
   &.primary {
     // background: linear-gradient(180deg, #a565cd 0%, #9c56b4 100%);
     background: var(--buttonPrimaryBackground, #a565cd);

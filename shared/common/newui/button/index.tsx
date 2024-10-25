@@ -4,6 +4,8 @@ import styles from "./button.module.scss";
 import Spinner from "../../ui/spinner";
 import {CSSProperties, PropsWithChildren, useEffect, useState} from "react";
 
+const isMac = navigator.platform.toLowerCase().includes("mac");
+
 interface _BaseButtonProps {
   className?: string;
   kind?: "primary" | "secondary" | "outline";
@@ -12,6 +14,7 @@ interface _BaseButtonProps {
   rightIcon?: JSX.Element;
   disabled?: boolean;
   loading?: boolean;
+  shortcut?: string | {default: string; macos?: string};
   style?: CSSProperties;
 }
 
@@ -28,6 +31,7 @@ function _Button({
   rightIcon,
   disabled,
   loading,
+  shortcut,
   ...props
 }: ButtonProps & {type: "button" | "submit"}) {
   return (
@@ -45,7 +49,18 @@ function _Button({
       {...props}
     >
       {loading ? <Spinner size={16} strokeWidth={1.5} /> : leftIcon}
-      <span>{children}</span>
+      <span>
+        {children}
+        {shortcut ? (
+          <span className={styles.shortcut}>
+            {typeof shortcut === "string"
+              ? shortcut
+              : isMac && shortcut.macos
+              ? shortcut.macos
+              : shortcut.default}
+          </span>
+        ) : null}
+      </span>
       {rightIcon}
     </button>
   );

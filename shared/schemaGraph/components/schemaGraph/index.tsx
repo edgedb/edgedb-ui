@@ -1,5 +1,5 @@
 import React, {useRef, useEffect, useCallback, Fragment} from "react";
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";

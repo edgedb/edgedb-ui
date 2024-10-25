@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 
 import {useDBRouter} from "@edgedb/studio/hooks/dbRoute";
 import styles from "./schemaGraph.module.scss";

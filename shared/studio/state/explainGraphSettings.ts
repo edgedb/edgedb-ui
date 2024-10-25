@@ -20,7 +20,7 @@ export class ExplainGraphSettings extends Model({
   userUnitChoice: prop<graphUnit | null>(null).withSetter(),
 }) {
   @computed
-  get isTimeGraph() {
+  get _isTimeGraph() {
     return this.graphUnit === graphUnit.time;
   }
 

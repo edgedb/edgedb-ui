@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 
 import "./fonts/include.scss";

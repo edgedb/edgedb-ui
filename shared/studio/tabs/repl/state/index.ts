@@ -22,7 +22,6 @@ import {
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
 import {InspectorState, Item} from "@edgedb/inspector/state";
-import {ObservableLRU} from "../../../state/utils/lru";
 import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
 import {
@@ -43,6 +42,13 @@ import {
   ExplainStateType,
 } from "../../../components/explainVis/state";
 import {NavigateFunction} from "../../../hooks/dbRoute";
+import {
+  createResultGridState,
+  ResultGridState,
+} from "@edgedb/common/components/resultGrid";
+import LRU from "edgedb/dist/primitives/lru";
+import {Completer} from "../../../utils/completer";
+import {OutputMode} from "../../queryEditor/state";
 
 export const defaultItemHeight = 85;
 
@@ -72,6 +78,14 @@ export class ReplHistoryItem extends Model({
   renderHeight: number | null = null;
   showDateHeader: boolean = false;
 
+  @computed
+  get isExplain() {
+    return (
+      this.status === ExplainStateType.explain ||
+      this.status === ExplainStateType.analyzeQuery
+    );
+  }
+
   @observable
   showMore = false;
 
@@ -86,6 +100,20 @@ export class ReplHistoryItem extends Model({
   @action
   setShowFullQuery(val: boolean) {
     this.showFullQuery = val;
+  }
+
+  @observable
+  outputMode: OutputMode = OutputMode.Tree;
+
+  @action
+  setOutputMode(mode: OutputMode) {
+    this.outputMode = mode;
+  }
+
+  @action
+  toggleOutputMode() {
+    this.outputMode =
+      this.outputMode === OutputMode.Tree ? OutputMode.Grid : OutputMode.Tree;
   }
 
   @modelAction
@@ -105,72 +133,50 @@ export class ReplHistoryItem extends Model({
     this.commandResult = frozen(result);
   }
 
-  _inspector: InspectorState | null = null;
+  @observable.ref
+  _inspectorState: InspectorState | null = null;
 
-  get inspectorState() {
-    if (!this.hasResult) {
-      return null;
-    }
-    if (this._inspector) {
-      return this._inspector;
-    }
-    const cache = inspectorCacheCtx.get(this)!;
-    const state = cache.get(this.$modelId);
+  @action
+  getInspectorState(data: EdgeDBSet) {
+    const cache = cachesCtx.get(this)!.inspector;
+    let state = cache.get(this.$modelId);
     if (!state) {
-      fetchResultData(this.$modelId).then((resultData) => {
-        if (resultData) {
-          const inspector = createInspector(
-            decode(
-              resultData.outCodecBuf,
-              resultData.resultBuf,
-              resultData.protoVer ?? [1, 0]
-            )!,
-            this.implicitLimit,
-            (item) =>
-              findParent<Repl>(
-                this,
-                (p) => p instanceof Repl
-              )!.setExtendedViewerItem(item)
-          );
-          cache.set(this.$modelId, inspector);
-        }
-      });
-    } else {
-      this._inspector = state;
+      state = createInspector(data, this.implicitLimit, (item) =>
+        findParent<Repl>(
+          this,
+          (p) => p instanceof Repl
+        )!.setExtendedViewerItem(item)
+      );
+      cache.set(this.$modelId, state);
     }
-    return state ?? null;
+    this._inspectorState = state;
+    return state;
   }
 
-  _explain: ExplainState | null = null;
-
-  get explainState() {
-    if (!this.hasResult) {
-      return null;
-    }
-
-    if (this._explain) {
-      return this._explain;
-    }
-
-    const explainCache = replExplainCacheCtx.get(this)!;
-    const state = explainCache.get(this.$modelId);
-
+  @action
+  getResultGridState(data: EdgeDBSet) {
+    const cache = cachesCtx.get(this)!.grid;
+    let state = cache.get(this.$modelId);
     if (!state) {
-      fetchResultData(this.$modelId).then((resultData) => {
-        if (resultData) {
-          const explainState = createExplainState(
-            decode(
-              resultData.outCodecBuf,
-              resultData.resultBuf,
-              resultData.protoVer ?? [1, 0]
-            )![0]
-          );
-          explainCache.set(this.$modelId, explainState);
-        }
-      });
+      state = createResultGridState(data._codec, data);
+      cache.set(this.$modelId, state);
     }
+    return state;
+  }
 
-    return state ?? null;
+  @observable.ref
+  _explainState: ExplainState | null = null;
+
+  @action
+  getExplainState(data: EdgeDBSet) {
+    const cache = cachesCtx.get(this)!.explain;
+    let state = cache.get(this.$modelId);
+    if (!state) {
+      state = createExplainState(data[0]);
+      cache.set(this.$modelId, state);
+    }
+    this._explainState = state;
+    return state;
   }
 }
 
@@ -178,19 +184,22 @@ export interface ReplSettings {
   retroMode: boolean;
 }
 
-const inspectorCacheCtx =
-  createMobxContext<ObservableLRU<string, InspectorState>>();
-
-const replExplainCacheCtx =
-  createMobxContext<ObservableLRU<string, ExplainState>>();
+const cachesCtx = createMobxContext<{
+  inspector: LRU<string, InspectorState>;
+  grid: LRU<string, ResultGridState>;
+  explain: LRU<string, ExplainState>;
+}>();
 
 @model("Repl")
 export class Repl extends Model({
   queryHistory: prop<ReplHistoryItem[]>(() => []),
 }) {
   onInit() {
-    inspectorCacheCtx.set(this, this.resultInspectorCache);
-    replExplainCacheCtx.set(this, this.resultExplainCache);
+    cachesCtx.set(this, {
+      inspector: this.resultInspectorCache,
+      grid: this.resultGridCache,
+      explain: this.resultExplainCache,
+    });
   }
 
   navigation: NavigateFunction | null = null;
@@ -274,8 +283,32 @@ export class Repl extends Model({
     this.extendedViewerItem = item;
   }
 
-  resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
-  resultExplainCache = new ObservableLRU<string, ExplainState>(20);
+  resultDataCache = new LRU<string, Completer<EdgeDBSet | null>>({
+    capacity: 20,
+  });
+
+  resultInspectorCache = new LRU<string, InspectorState>({capacity: 20});
+  resultExplainCache = new LRU<string, ExplainState>({capacity: 20});
+  resultGridCache = new LRU<string, ResultGridState>({capacity: 20});
+
+  getResultData(itemId: string): Completer<EdgeDBSet | null> {
+    let data = this.resultDataCache.get(itemId);
+    if (!data) {
+      data = new Completer(
+        fetchResultData(itemId).then((resultData) =>
+          resultData
+            ? decode(
+                resultData.outCodecBuf,
+                resultData.resultBuf,
+                resultData.protoVer ?? [1, 0]
+              )
+            : null
+        )
+      );
+      this.resultDataCache.set(itemId, data);
+    }
+    return data;
+  }
 
   @observable
   _hasUnfetchedHistory = true;
@@ -437,6 +470,10 @@ export class Repl extends Model({
           implicitLimitConfig != null ? Number(implicitLimitConfig) : null;
         historyItem.setResult(status, !!result, implicitLimit);
         if (result) {
+          this.resultDataCache.set(
+            historyItem.$modelId,
+            new Completer(result)
+          );
           if (
             status === ExplainStateType.explain ||
             status === ExplainStateType.analyzeQuery

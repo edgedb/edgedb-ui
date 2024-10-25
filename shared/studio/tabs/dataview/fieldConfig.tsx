@@ -345,7 +345,7 @@ const FieldConfigPopup = observer(function FieldConfigPopup({
         <div className={styles.listWrapper}>
           {draftState.pinned.size ? (
             <div
-              key={draftState.pinnedOrder.length}
+              key={`pinned-${draftState.pinnedOrder.length}`}
               className={cn(styles.fieldList, styles.pinnedList)}
               style={{height: draftState.pinnedOrder.length * FieldItemHeight}}
             >
@@ -368,7 +368,7 @@ const FieldConfigPopup = observer(function FieldConfigPopup({
             </div>
           ) : null}
           <div
-            key={draftState.unpinnedOrder.length}
+            key={`unpinned-${draftState.unpinnedOrder.length}`}
             className={styles.fieldList}
             style={{height: draftState.unpinnedOrder.length * FieldItemHeight}}
           >

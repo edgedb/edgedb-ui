@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import cn from "@edgedb/common/utils/classNames";
 import {useDatabaseState, useTabState} from "../../state";
 import {SchemaData} from "../../state/database";

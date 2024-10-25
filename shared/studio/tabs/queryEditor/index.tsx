@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {Text} from "@codemirror/state";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -15,6 +15,9 @@ import {
   QueryHistoryResultItem,
   QueryHistoryErrorItem,
   EditorKind,
+  QueryHistoryItem,
+  OutputMode,
+  explainStateCache,
 } from "./state";
 
 import {DatabaseTabSpec} from "../../components/databasePage";
@@ -22,8 +25,9 @@ import {DatabaseTabSpec} from "../../components/databasePage";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 
 import SplitView from "@edgedb/common/ui/splitView";
-import Button from "@edgedb/common/ui/button";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+
+import {Button} from "@edgedb/common/newui";
 
 import {HistoryPanel} from "./history";
 import ParamEditorPanel from "./paramEditor";
@@ -31,6 +35,7 @@ import {TabEditorIcon, MobileHistoryIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
+import {ResultGrid} from "@edgedb/common/components/resultGrid";
 import {
   ExtendedViewerContext,
   ExtendedViewerRenderer,
@@ -43,6 +48,9 @@ import {CodeEditorExplainContexts} from "../../components/explainVis/codeEditorC
 import {ExplainStateType} from "../../components/explainVis/state";
 import {LabelsSwitch, switchState} from "@edgedb/common/ui/switch";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
+import {EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
+import {ObjectCodec} from "edgedb/dist/codecs/object";
+import {ICodec} from "edgedb/dist/codecs/ifaces";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
@@ -119,7 +127,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
         </div>
         <HistoryPanel />
       </div>
-
       <SplitView
         className={styles.main}
         views={[
@@ -132,23 +139,26 @@ export const QueryEditorView = observer(function QueryEditorView() {
                     <div className={styles.controls}>
                       {!editorState.queryRunning ? (
                         <Button
+                          kind="primary"
                           className={styles.runBtn}
-                          label="Run"
-                          shortcut="Ctrl+Enter"
-                          macShortcut="⌘+Enter"
+                          shortcut={{default: "Ctrl+Enter", macos: "⌘+Enter"}}
                           disabled={!editorState.canRunQuery}
                           onClick={() => editorState.runQuery()}
-                        />
+                        >
+                          Run
+                        </Button>
                       ) : (
                         <Button
+                          kind="primary"
                           className={styles.runBtn}
-                          label="Cancel"
                           shortcut="Ctrl+C"
                           loading={true}
                           onClick={() =>
                             editorState.runningQueryAbort?.abort()
                           }
-                        />
+                        >
+                          Cancel
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -161,7 +171,15 @@ export const QueryEditorView = observer(function QueryEditorView() {
               />
             )}
           </div>,
-          <QueryResult />,
+          editorState.currentResult ? (
+            <QueryResult
+              key={editorState.currentResult.$modelId}
+              state={editorState}
+              result={editorState.currentResult}
+            />
+          ) : (
+            <></>
+          ),
         ]}
         state={editorState.splitView}
         minViewSize={20}
@@ -203,7 +221,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
           <HistoryPanel className={styles.historyPanel} />
         </div>
       )}
-
       {editorState.extendedViewerItem ? (
         <div className={styles.extendedViewerContainer}>
           <ExtendedViewerContext.Provider
@@ -215,7 +232,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
           </ExtendedViewerContext.Provider>
         </div>
       ) : null}
-
       {/* {editorState.showExplain &&
       (editorState.currentResult as QueryHistoryResultItem).explainState ? (
         <TestExplainVis
@@ -270,7 +286,7 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
     editorState.currentResult instanceof QueryHistoryResultItem &&
     (editorState.currentResult.status === ExplainStateType.explain ||
       editorState.currentResult.status === ExplainStateType.analyzeQuery)
-      ? editorState.currentResult.explainState
+      ? explainStateCache.get(editorState.currentResult.$modelId)
       : null;
 
   return (
@@ -343,29 +359,62 @@ const ResultInspector = observer(function ResultInspector({
   );
 });
 
-const QueryResult = observer(function QueryResult() {
-  const editorState = useTabState(QueryEditor);
+const QueryResult = observer(function QueryResult({
+  state,
+  result,
+}: {
+  state: QueryEditor;
+  result: QueryHistoryItem;
+}) {
+  const [data, setData] = useState<EdgeDBSet | null>(null);
 
-  const result = editorState.currentResult;
+  useEffect(() => {
+    if (
+      !data &&
+      result instanceof QueryHistoryResultItem &&
+      result.hasResult
+    ) {
+      state.getResultData(result.$modelId).then((data) => setData(data));
+    }
+  }, [data]);
 
   let content: JSX.Element | null = null;
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
-      if (result.status === "EXPLAIN" || result.status === "ANALYZE QUERY") {
-        content = <ExplainVis state={result.explainState} />;
-      } else if (result.inspectorState) {
-        content = (
-          <ResultInspector
-            key={result.$modelId}
-            state={result.inspectorState}
-          />
-        );
-      } else {
+      if (data === null) {
         content = (
           <div className={styles.inspectorLoading}>
             <Spinner size={24} />
           </div>
+        );
+      } else if (
+        result.status === "EXPLAIN" ||
+        result.status === "ANALYZE QUERY"
+      ) {
+        content = <ExplainVis state={result.getExplainState(data)} />;
+      } else {
+        const {mode, toggleEl} = outputModeToggle(
+          data._codec,
+          state.outputMode,
+          state.setOutputMode.bind(state)
+        );
+
+        content = (
+          <>
+            <div
+              className={cn(styles.resultHeader, {
+                [styles.noBorder]: mode === OutputMode.Tree,
+              })}
+            >
+              {toggleEl}
+            </div>
+            {mode === OutputMode.Grid ? (
+              <ResultGrid state={result.getResultGridState(data)} />
+            ) : (
+              <ResultInspector state={result.getInspectorState(data)} />
+            )}
+          </>
         );
       }
     } else {
@@ -397,6 +446,53 @@ const QueryResult = observer(function QueryResult() {
 
   return <div className={styles.queryResult}>{content}</div>;
 });
+
+export function outputModeToggle(
+  codec: ICodec,
+  outputMode: OutputMode,
+  setOutputMode: (mode: OutputMode) => void
+) {
+  const tableOutputAvailable = codec instanceof ObjectCodec;
+  const mode = tableOutputAvailable ? outputMode : OutputMode.Tree;
+
+  return {
+    mode,
+    toggleEl: (
+      <div className={styles.outputModeToggle}>
+        <div
+          className={cn(styles.label, {
+            [styles.selected]: mode === OutputMode.Tree,
+          })}
+          onClick={() => setOutputMode(OutputMode.Tree)}
+        >
+          Tree
+        </div>
+        <div
+          className={cn(styles.toggle, {
+            [styles.rightSelected]: mode === OutputMode.Grid,
+            [styles.disabled]: !tableOutputAvailable,
+          })}
+          onClick={() =>
+            setOutputMode(
+              outputMode === OutputMode.Grid
+                ? OutputMode.Tree
+                : OutputMode.Grid
+            )
+          }
+        />
+        <div
+          className={cn(styles.label, {
+            [styles.selected]: mode === OutputMode.Grid,
+            [styles.disabled]: !tableOutputAvailable,
+          })}
+          onClick={() => setOutputMode(OutputMode.Grid)}
+        >
+          Table
+        </div>
+      </div>
+    ),
+  };
+}
 
 export const editorTabSpec: DatabaseTabSpec = {
   path: "editor",

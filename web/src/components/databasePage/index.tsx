@@ -1,5 +1,5 @@
 import {PropsWithChildren, useState} from "react";
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {useLocation, useNavigate, useParams, Link} from "react-router-dom";
 
 import {
