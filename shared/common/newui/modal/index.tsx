@@ -12,7 +12,7 @@ export interface ModalProps {
   onClose?: () => void;
   noCloseOnOverlayClick?: boolean;
   onSubmit?: () => void;
-  formError?: string | null;
+  formError?: string | JSX.Element | null;
   footerButtons?: JSX.Element;
   footerDetails?: JSX.Element;
   footerExtra?: JSX.Element;

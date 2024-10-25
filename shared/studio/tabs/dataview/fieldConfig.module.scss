@@ -1,0 +1,244 @@
+@import "@edgedb/common/mixins.scss";
+
+.fieldConfigWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  height: 48px;
+  grid-row: 2;
+}
+
+.fieldConfigButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 8px;
+
+  svg {
+    color: var(--secondary_text_color);
+  }
+
+  &:hover {
+    background: var(--Grey93);
+
+    @include darkTheme {
+      background: var(--Grey30);
+    }
+  }
+}
+
+.fieldConfigPopup {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel_background);
+  border-radius: 12px;
+  border: 1px solid var(--panel_border);
+  box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.12),
+    0px 2px 4px 0px rgba(0, 0, 0, 0.06);
+  min-width: 280px;
+  z-index: 10;
+
+  @include darkTheme {
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
+      0px 2px 4px 0px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.listWrapper {
+  padding: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.fieldList {
+  position: relative;
+
+  &.pinnedList {
+    border-bottom: 1px solid var(--Grey90);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+
+    @include darkTheme {
+      border-bottom-color: var(--Grey30);
+    }
+  }
+}
+
+.fieldItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  margin-bottom: -40px;
+  border-radius: 8px;
+  transition: top 0.2s;
+
+  .dragHandle {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    padding-left: 4px;
+    padding-right: 2px;
+    color: var(--tertiary_text_color);
+    cursor: grab;
+  }
+
+  &.undraggable .dragHandle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &.dragging {
+    transition: none;
+  }
+
+  .details {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 0 8px;
+    font-size: 13px;
+    font-weight: 450;
+    color: var(--main_text_color);
+
+    .subtype {
+      font-size: 12px;
+      color: var(--tertiary_text_color);
+    }
+  }
+
+  &.unselected .details {
+    opacity: 0.7;
+  }
+
+  .pin {
+    display: flex;
+    margin-left: auto;
+    padding: 6px 4px;
+    cursor: pointer;
+    color: var(--tertiary_text_color);
+    opacity: 0;
+
+    svg {
+      height: 20px;
+    }
+
+    &.pinned {
+      color: #a15ec0;
+      opacity: 1;
+
+      @include darkTheme {
+        color: #c187dc;
+      }
+    }
+  }
+
+  &:hover,
+  &.dragging {
+    background: var(--Grey95);
+
+    @include darkTheme {
+      background: var(--Grey25);
+    }
+  }
+
+  &:not(.dragging):hover .pin {
+    opacity: 1;
+  }
+}
+
+.selectionControls {
+  display: flex;
+  gap: 12px;
+  font-family: "Roboto Flex Variable", sans-serif;
+  color: var(--secondary_text_color);
+  padding: 4px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--panel_border);
+  border-radius: 11px 11px 0 0;
+  background: var(--Grey97);
+  line-height: 26px;
+
+  > span {
+    opacity: 0.5;
+  }
+
+  @include darkTheme {
+    background: var(--Grey25);
+  }
+}
+
+.selectionButton {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  padding-left: 10px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--Grey93);
+
+    @include darkTheme {
+      background: var(--Grey30);
+    }
+  }
+
+  svg {
+    height: 22px;
+    color: var(--tertiary_text_color);
+  }
+}
+
+.selectionButtonWrapper {
+  display: flex;
+  position: relative;
+
+  .dropdown {
+    position: absolute;
+    top: calc(100% - 4px);
+    left: 0;
+    background: var(--panel_background);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--panel_border);
+    width: max-content;
+    z-index: 1;
+    cursor: default;
+
+    > div {
+      padding: 0 8px;
+      border-radius: 6px;
+      line-height: 28px;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--Grey95);
+
+        @include darkTheme {
+          background: var(--Grey30);
+        }
+      }
+
+      &.disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+@import "@edgedb/common/mixins.scss";
+
+.header {
+  position: relative;
+  padding: 8px 12px;
+  overflow: hidden;
+}
+
+.cellContent {
+  height: 39px;
+  line-height: 38px;
+  padding: 0 12px;
+  top: 64px;
+  white-space: nowrap;
+  overflow: hidden;
+
+  &.stickyCell {
+    position: sticky;
+  }
+}
