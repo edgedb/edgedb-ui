@@ -25,4 +25,6 @@ export const KnownScalarTypes = [
   "std::bigint",
   "cfg::memory",
   "ext::pgvector::vector",
+  "ext::pgvector::halfvec",
+  "ext::pgvector::sparsevec",
 ] as const;

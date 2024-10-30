@@ -13,7 +13,12 @@ import {Session} from "edgedb/dist/options";
 import LRU from "edgedb/dist/primitives/lru";
 import {Capabilities} from "edgedb/dist/baseConn";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
-import {Cardinality, OutputFormat, QueryOptions} from "edgedb/dist/ifaces";
+import {
+  Cardinality,
+  OutputFormat,
+  ProtocolVersion,
+  QueryOptions,
+} from "edgedb/dist/ifaces";
 import {ICodec} from "edgedb/dist/codecs/ifaces";
 
 import {
@@ -48,12 +53,14 @@ interface QueryResult {
   duration: QueryDuration;
   outCodecBuf: Uint8Array;
   resultBuf: Uint8Array;
+  protoVer: ProtocolVersion;
   capabilities: number;
   status: string;
 }
 
 interface ParseResult {
   outCodecBuf: Uint8Array;
+  protoVer: ProtocolVersion;
   duration: number;
 }
 
@@ -286,7 +293,11 @@ export class Connection extends Model({
       const parseEndTime = performance.now();
 
       if (kind === "parse") {
-        return {outCodecBuf, duration: Math.round(parseEndTime - startTime)};
+        return {
+          outCodecBuf,
+          protoVer: this.conn.protocolVersion,
+          duration: Math.round(parseEndTime - startTime),
+        };
       }
 
       this.checkAborted(abortSignal);
@@ -337,10 +348,16 @@ export class Connection extends Model({
       };
 
       return {
-        result: decode(outCodecBuf, resultBuf, opts.newCodec),
+        result: decode(
+          outCodecBuf,
+          resultBuf,
+          this.conn.protocolVersion,
+          opts.newCodec
+        ),
         duration,
         outCodecBuf,
         resultBuf,
+        protoVer: this.conn.protocolVersion,
         capabilities,
         status: (this.conn as any).lastStatus,
       };

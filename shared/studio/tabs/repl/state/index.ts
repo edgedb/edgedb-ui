@@ -120,7 +120,11 @@ export class ReplHistoryItem extends Model({
       fetchResultData(this.$modelId).then((resultData) => {
         if (resultData) {
           const inspector = createInspector(
-            decode(resultData.outCodecBuf, resultData.resultBuf)!,
+            decode(
+              resultData.outCodecBuf,
+              resultData.resultBuf,
+              resultData.protoVer ?? [1, 0]
+            )!,
             this.implicitLimit,
             (item) =>
               findParent<Repl>(
@@ -155,7 +159,11 @@ export class ReplHistoryItem extends Model({
       fetchResultData(this.$modelId).then((resultData) => {
         if (resultData) {
           const explainState = createExplainState(
-            decode(resultData.outCodecBuf, resultData.resultBuf)![0]
+            decode(
+              resultData.outCodecBuf,
+              resultData.resultBuf,
+              resultData.protoVer ?? [1, 0]
+            )![0]
           );
           explainCache.set(this.$modelId, explainState);
         }
@@ -402,20 +410,26 @@ export class Repl extends Model({
             (opt) => opt.name === "Implicit Limit"
           )?.value;
 
-        const {result, outCodecBuf, resultBuf, capabilities, status} =
-          yield* _await(
-            conn.query(
-              query,
-              undefined,
-              {
-                implicitLimit:
-                  implicitLimitConfig != null
-                    ? implicitLimitConfig + BigInt(1)
-                    : undefined,
-              },
-              (this._runningQuery as AbortController).signal
-            )
-          );
+        const {
+          result,
+          outCodecBuf,
+          resultBuf,
+          protoVer,
+          capabilities,
+          status,
+        } = yield* _await(
+          conn.query(
+            query,
+            undefined,
+            {
+              implicitLimit:
+                implicitLimitConfig != null
+                  ? implicitLimitConfig + BigInt(1)
+                  : undefined,
+            },
+            (this._runningQuery as AbortController).signal
+          )
+        );
 
         dbState.refreshCaches(capabilities, status ? [status] : []);
 
@@ -443,6 +457,7 @@ export class Repl extends Model({
           resultData = {
             outCodecBuf,
             resultBuf,
+            protoVer,
           };
         }
       }

@@ -1,4 +1,5 @@
 import {openDB, DBSchema} from "idb";
+import {ProtocolVersion} from "edgedb/dist/ifaces";
 import {StoredSchemaData} from "../state/database";
 import {StoredSessionStateData} from "../state/sessionState";
 
@@ -12,6 +13,7 @@ export interface QueryHistoryItem {
 export interface QueryResultData {
   outCodecBuf: Uint8Array;
   resultBuf: Uint8Array;
+  protoVer?: ProtocolVersion;
 }
 
 export interface SessionStateData {

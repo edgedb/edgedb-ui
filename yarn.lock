@@ -794,7 +794,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: 1.5.12
+    edgedb: 1.6.0-canary.20241030T172506
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -812,7 +812,7 @@ __metadata:
     react-window: ^1.8.6
   peerDependencies:
     "@types/react": ^16.9.34
-    edgedb: 1.5.12
+    edgedb: 1.6.0-canary.20241030T172506
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -842,7 +842,7 @@ __metadata:
     webcola: ^3.4.0
   peerDependencies:
     "@types/react": ^17.0.0
-    edgedb: 1.5.12
+    edgedb: 1.6.0-canary.20241030T172506
     react: ^17.0.0
     react-dom: ^17.0.0
   languageName: unknown
@@ -874,7 +874,7 @@ __metadata:
     react-hook-form: ^7.32.2
     react-markdown: ^9.0.1
   peerDependencies:
-    edgedb: 1.5.12
+    edgedb: 1.6.0-canary.20241030T172506
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1612,6 +1612,13 @@ __metadata:
     mkdirp: ^1.0.4
     rimraf: ^3.0.2
   checksum: c96381d4a37448ea280951e46233f7e541058cf57a57d4094dd4bdcaae43fa5872b5f2eb6bfb004591a68e29c5877abe3cdc210cb3588cbf20ab2877f31a7de7
+  languageName: node
+  linkType: hard
+
+"@petamoriken/float16@npm:^3.8.7":
+  version: 3.8.7
+  resolution: "@petamoriken/float16@npm:3.8.7"
+  checksum: 0e4c12e9d88aac08f125a2e804a28207bafd1ea0cdc2ddbde95cc9a3b19c155747f5001a5d5b42f9dca18f697df553d42680067817ce5dc4e3456f9c605a6d88
   languageName: node
   linkType: hard
 
@@ -3691,10 +3698,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:1.5.12":
-  version: 1.5.12
-  resolution: "edgedb@npm:1.5.12"
+"edgedb@npm:1.6.0-canary.20241030T172506":
+  version: 1.6.0-canary.20241030T172506
+  resolution: "edgedb@npm:1.6.0-canary.20241030T172506"
   dependencies:
+    "@petamoriken/float16": ^3.8.7
     debug: ^4.3.4
     env-paths: ^3.0.0
     semver: ^7.6.2
@@ -3702,7 +3710,7 @@ __metadata:
     which: ^4.0.0
   bin:
     edgedb: dist/cli.mjs
-  checksum: cfa23208c5ae2d6219456985eb77cb10d595147cb9ca99efa6e315426ab0c0bbc6e5bf83e56bef1f5d98a0e400f8b2f08e53825fa7c972ad65d833fdbf312e08
+  checksum: db0c5adf4a2e3dacdf961678d4bcd1b1a96625d7899a5d097ca7598bf1f3c2f677c803595b0f27e0d3ce70ce5bd8001a747977fd48123e1f79e9c8e5bff72013
   languageName: node
   linkType: hard
 
@@ -7592,11 +7600,11 @@ __metadata:
   linkType: hard
 
 "ts-api-utils@npm:^1.3.0":
-  version: 1.4.0
-  resolution: "ts-api-utils@npm:1.4.0"
+  version: 1.3.0
+  resolution: "ts-api-utils@npm:1.3.0"
   peerDependencies:
     typescript: ">=4.2.0"
-  checksum: 477601317dc8a6d961788663ee76984005ed20c70689bd6f807eed2cad258d3731edcc4162d438ce04782ca62a05373ba51e484180fc2a081d8dab2bf693a5af
+  checksum: c746ddabfdffbf16cb0b0db32bb287236a19e583057f8649ee7c49995bb776e1d3ef384685181c11a1a480369e022ca97512cb08c517b2d2bd82c83754c97012
   languageName: node
   linkType: hard
 
@@ -8004,7 +8012,7 @@ __metadata:
     "@types/selenium-webdriver": ^4.1.10
     "@vitejs/plugin-react-swc": ^3.5.0
     buffer: ^6.0.3
-    edgedb: 1.5.12
+    edgedb: 1.6.0-canary.20241030T172506
     eslint: ^9.13.0
     eslint-plugin-react-hooks: ^5.0.0
     eslint-plugin-react-refresh: ^0.4.14

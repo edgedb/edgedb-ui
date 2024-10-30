@@ -1,5 +1,5 @@
 import {_CodecsRegistry} from "edgedb";
-import {QueryArgs} from "edgedb/dist/ifaces";
+import {ProtocolVersion, QueryArgs} from "edgedb/dist/ifaces";
 import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 import {TupleCodec} from "edgedb/dist/codecs/tuple";
 import {decode as _decode, EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
@@ -21,20 +21,25 @@ export const codecsRegistry = newCodecsRegistry();
 export function decode(
   outCodecBuf: Uint8Array,
   resultBuf: Uint8Array,
+  protocolVersion: ProtocolVersion,
   newCodec: boolean = false
 ): EdgeDBSet | null {
   return _decode(
     newCodec ? newCodecsRegistry() : codecsRegistry,
     outCodecBuf,
     resultBuf,
-    [1, 0]
+    protocolVersion
   );
 }
 
 export type QueryParams = QueryArgs;
 
-export function encodeArgs(inCodecBuf: Uint8Array, queryParams: QueryParams) {
-  const inCodec = codecsRegistry.buildCodec(inCodecBuf, [1, 0]);
+export function encodeArgs(
+  inCodecBuf: Uint8Array,
+  queryParams: QueryParams,
+  protocolVersion: ProtocolVersion
+) {
+  const inCodec = codecsRegistry.buildCodec(inCodecBuf, protocolVersion);
 
   if (!(inCodec instanceof NamedTupleCodec || inCodec instanceof TupleCodec)) {
     throw new Error("Invalid input codec");

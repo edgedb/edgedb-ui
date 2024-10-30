@@ -1,5 +1,5 @@
 import {PropsWithChildren, useState, Fragment} from "react";
-import {_ICodec, Range, MultiRange} from "edgedb";
+import {_ICodec, Range, MultiRange, Float16Array, SparseVector} from "edgedb";
 
 import cn from "@edgedb/common/utils/classNames";
 
@@ -244,7 +244,29 @@ export function renderValue(
       body: (
         <span>
           <Tag name={knownTypeName}>
-            <VectorRenderer vec={value} />
+            <VectorRenderer vec={value} format={float32ArrayToString} />
+          </Tag>
+        </span>
+      ),
+    };
+  }
+  if (value instanceof Float16Array) {
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>
+            <VectorRenderer vec={value} format={float16ArrayToString} />
+          </Tag>
+        </span>
+      ),
+    };
+  }
+  if (value instanceof SparseVector) {
+    return {
+      body: (
+        <span>
+          <Tag name={knownTypeName}>
+            <VectorRenderer vec={value} format={sparseVectorToString} />
           </Tag>
         </span>
       ),
@@ -277,6 +299,9 @@ export function scalarItemToString(item: any, typename: string): string {
   if (item instanceof Float32Array) {
     return float32ArrayToString(item);
   }
+  if (item instanceof Float16Array) {
+    return float16ArrayToString(item);
+  }
   switch (typename) {
     case "std::bytes":
       return bufferToString(item);
@@ -289,22 +314,38 @@ export function scalarItemToString(item: any, typename: string): string {
   }
 }
 
-export function float32ArrayToString(vec: Float32Array): string {
+export function float32ArrayToString(vec: Float32Array | number[]): string {
   return `[${[...vec]
     .map((float) =>
       float
-        .toPrecision(8)
+        .toPrecision(7)
         .replace(/(\.\d*?)0+$/, (_, $1) => ($1 === "." ? "" : $1))
     )
     .join(", ")}]`;
 }
 
-function VectorRenderer({vec}: {vec: Float32Array}) {
+export function float16ArrayToString(vec: Float16Array | number[]): string {
+  return `[${[...vec]
+    .map((float) =>
+      float
+        .toPrecision(4)
+        .replace(/(\.\d*?)0+$/, (_, $1) => ($1 === "." ? "" : $1))
+    )
+    .join(", ")}]`;
+}
+
+export function sparseVectorToString(vec: SparseVector | number[]): string {
+  return float32ArrayToString([...vec]);
+}
+
+function VectorRenderer<
+  VecType extends Float32Array | Float16Array | SparseVector
+>({vec, format}: {vec: VecType; format: (vec: VecType | number[]) => string}) {
   const [expanded, setExpanded] = useState(false);
   if (vec.length > 20 && !expanded) {
     return (
       <>
-        {float32ArrayToString(vec.slice(0, 20)).slice(0, -1)},
+        {format(sliceVec(vec, 20)).slice(0, -1)},
         <span
           className={cn(styles.ellipsis, styles.inline)}
           onClick={() => setExpanded(true)}
@@ -315,8 +356,18 @@ function VectorRenderer({vec}: {vec: Float32Array}) {
       </>
     );
   } else {
-    return <>{float32ArrayToString(vec)}</>;
+    return <>{format(vec)}</>;
   }
+}
+
+function sliceVec(vec: Iterable<number>, length: number): number[] {
+  const arr: number[] = [];
+  let i = 0;
+  for (const val of vec) {
+    if (i++ >= length) break;
+    arr.push(val);
+  }
+  return arr;
 }
 
 function formatDatetime(date: Date): string {

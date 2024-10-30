@@ -1,9 +1,11 @@
 import {
   ConfigMemory,
   Duration,
+  Float16Array,
   LocalDate,
   LocalDateTime,
   LocalTime,
+  SparseVector,
 } from "edgedb";
 
 export const parsers: {
@@ -233,24 +235,99 @@ export const parsers: {
     return new ConfigMemory(bytes);
   },
   "ext::pgvector::vector": (val: string, typeArgs) => {
-    const vec = Float32Array.from(
-      val
-        .trim()
-        .replace(/^\[|\]$/g, "")
-        .split(",")
-        .map((num) => {
-          const float = Number(num);
-          if (Number.isNaN(float) || num.trim() === "") {
-            throw new Error(`Invalid float "${num}" in vector`);
-          }
-          return float;
-        })
-    );
-    if (typeArgs?.[0] && vec.length !== Number(typeArgs[0])) {
-      throw new Error(
-        `invalid vector length ${vec.length}, expected ${typeArgs[0]}`
-      );
+    return Float32Array.from(_parseFloatArray(val, typeArgs));
+  },
+  "ext::pgvector::halfvec": (val: string, typeArgs) => {
+    return Float16Array.from(_parseFloatArray(val, typeArgs));
+  },
+  "ext::pgvector::sparsevec": (val: string) => {
+    let objMode = false;
+    val = val.trim();
+    if (val.startsWith("{")) {
+      val = val.replace(/^\{|\}$/g, "");
+      objMode = true;
+    } else {
+      val = val.replace(/^\[|\]$/g, "");
     }
-    return vec;
+    const parts = val.split(",");
+    if (parts[0].includes(":")) {
+      objMode = true;
+    }
+
+    let length: number | null = null;
+    const map: Record<number, number> = {};
+    if (objMode) {
+      for (const part of parts) {
+        let [index, val] = part.split(":");
+        val = val?.trim();
+        if (!val) {
+          throw new Error(`Invalid index:val pair '${part}'`);
+        }
+        index = index.trim();
+        if (
+          (index.startsWith(`"`) || index.startsWith(`'`)) &&
+          index[index.length - 1] === index[0]
+        ) {
+          index = index.slice(1, -1);
+        }
+        if (index === "dim" && length === null) {
+          const len = Number(val);
+          if (Number.isNaN(len) || !Number.isInteger(len)) {
+            throw new Error(`Invalid vector length '${val}'`);
+          }
+          length = len;
+        } else {
+          const indexInt = Number(index);
+          if (Number.isNaN(indexInt) || !Number.isInteger(indexInt)) {
+            throw new Error(`Invalid index '${index}'`);
+          }
+          const float = Number(val);
+          if (Number.isNaN(float) || !val.trim()) {
+            throw new Error(`Invalid float value '${val}' for index ${index}`);
+          }
+          map[indexInt] = float;
+        }
+      }
+      if (length === null) {
+        throw new Error(`Expected 'dim' key`);
+      }
+    } else {
+      let i = 0;
+      for (const part of parts) {
+        const float = Number(part.trim());
+        if (Number.isNaN(float) || !part.trim()) {
+          throw new Error(`Invalid float value`);
+        }
+        if (float !== 0) {
+          map[i] = float;
+        }
+        i++;
+      }
+      length = parts.length;
+    }
+
+    return new SparseVector(length, map);
   },
 };
+
+function _parseFloatArray(val: string, typeArgs: string[] | null): number[] {
+  const vec = val
+    .trim()
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map((num) => {
+      const float = Number(num);
+      if (Number.isNaN(float) || num.trim() === "") {
+        throw new Error(`Invalid float "${num}" in vector`);
+      }
+      return float;
+    });
+
+  if (typeArgs?.[0] && vec.length !== Number(typeArgs[0])) {
+    throw new Error(
+      `invalid vector length ${vec.length}, expected ${typeArgs[0]}`
+    );
+  }
+
+  return vec;
+}

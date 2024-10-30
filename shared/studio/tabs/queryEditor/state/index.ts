@@ -52,6 +52,7 @@ import {
   ExplainState,
   ExplainStateType,
 } from "../../../components/explainVis/state";
+import {ProtocolVersion} from "edgedb/dist/ifaces";
 
 export enum EditorKind {
   EdgeQL,
@@ -108,7 +109,11 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
       fetchResultData(this.$modelId).then((resultData) => {
         if (resultData) {
           const explainState = createExplainState(
-            decode(resultData.outCodecBuf, resultData.resultBuf)![0]
+            decode(
+              resultData.outCodecBuf,
+              resultData.resultBuf,
+              resultData.protoVer ?? [1, 0]
+            )![0]
           );
           explainStateCache.set(this.$modelId, explainState);
         }
@@ -293,7 +298,11 @@ export class QueryEditor extends Model({
     const resultData = await fetchResultData(itemId);
     if (resultData) {
       const inspector = createInspector(
-        decode(resultData.outCodecBuf, resultData.resultBuf)!,
+        decode(
+          resultData.outCodecBuf,
+          resultData.resultBuf,
+          resultData.protoVer ?? [1, 0]
+        )!,
         implicitLimit,
         (item) => this.setExtendedViewerItem(item)
       );
@@ -490,6 +499,7 @@ export class QueryEditor extends Model({
         result: EdgeDBSet | null;
         outCodecBuf: Uint8Array;
         resultBuf: Uint8Array;
+        protoVer: ProtocolVersion;
         status: string;
         implicitLimit: number;
       }
@@ -539,6 +549,7 @@ export class QueryEditor extends Model({
         resultData = {
           outCodecBuf: data.outCodecBuf,
           resultBuf: data.resultBuf,
+          protoVer: data.protoVer,
         };
       }
     } else {
@@ -645,7 +656,7 @@ export class QueryEditor extends Model({
       .activeState.options.find((opt) => opt.name === "Implicit Limit")?.value;
 
     try {
-      const {result, outCodecBuf, resultBuf, capabilities, status} =
+      const {result, outCodecBuf, resultBuf, protoVer, capabilities, status} =
         yield* _await(
           conn.query(
             query,
@@ -667,6 +678,7 @@ export class QueryEditor extends Model({
         result,
         outCodecBuf,
         resultBuf,
+        protoVer,
         status,
         implicitLimit: Number(implicitLimit),
       });

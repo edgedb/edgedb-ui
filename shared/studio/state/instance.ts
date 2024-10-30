@@ -80,19 +80,21 @@ export class InstanceState extends Model({
       codecsRegistry
     );
     try {
-      const data = await client.fetch(
-        `
+      const data = (
+        await client.fetch(
+          `
       select {
         instanceName := sys::get_instance_name(),
         version := sys::get_version(),
         databases := sys::Database.name,
         roles := sys::Role.name,
       }`,
-        null,
-        OutputFormat.BINARY,
-        Cardinality.ONE,
-        Session.defaults()
-      );
+          null,
+          OutputFormat.BINARY,
+          Cardinality.ONE,
+          Session.defaults()
+        )
+      ).result;
 
       runInAction(() => {
         this.instanceName = data.instanceName ?? "_localdev";

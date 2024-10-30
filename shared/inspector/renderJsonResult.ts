@@ -1,7 +1,11 @@
-import type {_ICodec as ICodec} from "edgedb";
+import {Float16Array, SparseVector, type _ICodec as ICodec} from "edgedb";
 import type {ObjectCodec} from "edgedb/dist/codecs/object";
 import type {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
-import {float32ArrayToString, scalarItemToString} from "./buildScalar";
+import {
+  float16ArrayToString,
+  float32ArrayToString,
+  scalarItemToString,
+} from "./buildScalar";
 
 export function renderResultAsJson(
   result: any,
@@ -46,6 +50,12 @@ export function _renderToJson(
         default:
           if (val instanceof Float32Array) {
             return float32ArrayToString(val);
+          }
+          if (val instanceof Float16Array) {
+            return float16ArrayToString(val);
+          }
+          if (val instanceof SparseVector) {
+            return _renderSparseVectorToJSON(val);
           }
           return JSON.stringify(scalarItemToString(val, typename));
       }
@@ -142,4 +152,15 @@ function _renderRangeToJSON(
   )}, "inc_lower": ${val.incLower ? "true" : "false"}, "inc_upper": ${
     val.incUpper ? "true" : "false"
   }}`;
+}
+
+function _renderSparseVectorToJSON(val: SparseVector): string {
+  return `{${[...val.indexes]
+    .map(
+      (index, i) =>
+        `"${index}": ${val.values[i]
+          .toPrecision(7)
+          .replace(/(\.\d*?)0+$/, (_, $1) => ($1 === "." ? "" : $1))}`
+    )
+    .join(", ")}, "dim": ${val.length}}`;
 }
