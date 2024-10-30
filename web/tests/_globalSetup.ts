@@ -132,7 +132,7 @@ export default async function globalSetup() {
     uiServerAlive.set();
   } else {
     console.log("Starting UI server...");
-    uiServerProc = spawn("yarn", ["start"], {
+    uiServerProc = spawn("yarn", ["dev"], {
       // @ts-ignore
       env: {...process.env, NODE_ENV: undefined},
     }) as ChildProcess;

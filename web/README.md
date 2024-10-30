@@ -11,7 +11,7 @@ these steps, just run the `edgedb ui` command from your project directory.
 To start the UI dev server:
 
 ```sh
-yarn start
+yarn dev
 ```
 
 The app is served at `http://localhost:3002/ui`.
@@ -31,7 +31,7 @@ To customize the EdgeDB server address (if it's not running at the
 default of `localhost:5656`):
 
 ```sh
-env REACT_APP_EDGEDB_SERVER="192.168.0.123:5656" yarn start
+env VITE_EDGEDB_SERVER_URL="192.168.0.123:5656" yarn dev
 ```
 
 ## UI Tests

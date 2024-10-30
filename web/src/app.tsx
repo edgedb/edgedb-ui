@@ -4,7 +4,9 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
 
+// @ts-expect-error
 import "@fontsource-variable/roboto-flex";
+// @ts-expect-error
 import "@fontsource-variable/roboto-mono";
 
 import appState from "./state/store";
@@ -16,9 +18,9 @@ import {ModalProvider} from "@edgedb/common/hooks/useModal";
 import {HeaderNavProvider} from "@edgedb/studio/components/headerNav";
 import {GlobalTooltipsProvider} from "@edgedb/common/hooks/useTooltips";
 
-import Header from "src/components/header";
-import Main from "src/components/main";
-import LoginPage from "src/components/loginPage";
+import Header from "./components/header";
+import Main from "./components/main";
+import LoginPage from "./components/loginPage";
 
 function App() {
   return (

@@ -62,7 +62,7 @@ type HistoryItemQueryData =
   | {
       kind: EditorKind.EdgeQL;
       query: string;
-      params: Frozen<SerializedParamsData> | null;
+      params: SerializedParamsData | null;
     }
   | {
       kind: EditorKind.VisualBuilder;
@@ -322,7 +322,7 @@ export class QueryEditor extends Model({
     selectedEditor: EditorKind;
     [EditorKind.EdgeQL]: {
       query: Text;
-      params: Frozen<SerializedParamsData> | null;
+      params: Frozen<SerializedParamsData | null>;
       isEdited: boolean;
       result: QueryHistoryItem | null;
     };
@@ -340,7 +340,7 @@ export class QueryEditor extends Model({
       selectedEditor: this.selectedEditor,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
-        params: this.queryParamsEditor.serializeParamsData(),
+        params: frozen(this.queryParamsEditor.serializeParamsData()),
         isEdited: this.queryIsEdited[EditorKind.EdgeQL],
         result: this.currentResults[EditorKind.EdgeQL],
       },
@@ -363,7 +363,7 @@ export class QueryEditor extends Model({
       };
 
       this.queryParamsEditor.restoreParamsData(
-        draft[EditorKind.EdgeQL].params
+        draft[EditorKind.EdgeQL].params?.data
       );
 
       this.setSelectedEditor(draft.selectedEditor);
@@ -599,7 +599,7 @@ export class QueryEditor extends Model({
         queryData = {
           kind: EditorKind.EdgeQL,
           query: query!,
-          params: paramsData,
+          params: paramsData?.data ?? null,
         };
         break;
       }

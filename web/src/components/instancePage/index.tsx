@@ -9,7 +9,7 @@ import {InfoCards} from "@edgedb/common/components/infoCards";
 // import CreateBranchModal from "@edgedb/studio/components/modals/createBranch";
 // import {fetchExampleSchema} from "@edgedb/studio/tabs/dashboard";
 
-import {useAppState} from "src/state/providers";
+import {useAppState} from "../../state/providers";
 
 import styles from "./instancePage.module.scss";
 

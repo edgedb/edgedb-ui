@@ -3,7 +3,6 @@ import {z} from "zod";
 
 const latestInfoUrl =
   (import.meta as any).env?.VITE_LATEST_INFO_URL ||
-  process.env.REACT_APP_LATEST_INFO_URL ||
   "https://www.edgedb.com/latestInfo.json";
 
 const latestInfoType = z.object({

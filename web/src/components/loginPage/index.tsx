@@ -4,8 +4,8 @@ import {useForm} from "react-hook-form";
 import Button from "@edgedb/common/ui/button";
 import {ModalTextField} from "@edgedb/common/ui/modal";
 
-import {serverUrl, setAuthToken} from "src/state/models/app";
-import {SCRAMAuth} from "src/utils/scram";
+import {serverUrl, setAuthToken} from "../../state/models/app";
+import {SCRAMAuth} from "../../utils/scram";
 
 import styles from "./loginPage.module.scss";
 import {ArrowRight} from "@edgedb/studio/icons";

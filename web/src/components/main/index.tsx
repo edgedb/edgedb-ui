@@ -5,7 +5,7 @@ import {observer} from "mobx-react-lite";
 import {HeaderTab} from "@edgedb/studio/components/headerNav";
 import {HeaderInstanceIcon} from "@edgedb/studio/icons";
 
-import {useAppState} from "src/state/providers";
+import {useAppState} from "../../state/providers";
 
 import styles from "./main.module.scss";
 import headerNavStyles from "@edgedb/studio/components/headerNav/headerNav.module.scss";

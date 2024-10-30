@@ -2,12 +2,11 @@ import {createContext, Model, model, prop} from "mobx-keystone";
 
 import {InstanceState} from "@edgedb/studio/state/instance";
 
-export const serverUrl =
-  process.env.NODE_ENV === "development"
-    ? process.env.REACT_APP_EDGEDB_SERVER
-      ? `http://${process.env.REACT_APP_EDGEDB_SERVER}`
-      : "http://localhost:5656"
-    : window.location.origin;
+export const serverUrl = import.meta.env.DEV
+  ? import.meta.env.VITE_EDGEDB_SERVER_URL
+    ? `http://${import.meta.env.VITE_EDGEDB_SERVER_URL}`
+    : "http://localhost:5656"
+  : window.location.origin;
 
 const url = new URL(window.location.toString());
 

@@ -182,7 +182,7 @@ export class QueryParamsEditor extends Model({}) {
       : undefined;
   }
 
-  serializeParamsData(): Frozen<SerializedParamsData> | null {
+  serializeParamsData(): SerializedParamsData | null {
     this._extractQueryParameters();
 
     const paramDefs = this.paramDefs;
@@ -205,18 +205,25 @@ export class QueryParamsEditor extends Model({}) {
       }
     }
 
-    return frozen(data);
+    return data;
   }
 
   @action
-  restoreParamsData(paramsData?: Frozen<SerializedParamsData> | null) {
+  restoreParamsData(
+    _paramsData?: SerializedParamsData | Frozen<SerializedParamsData> | null
+  ) {
     this.clear();
     this._extractQueryParameters();
 
-    if (paramsData) {
+    if (_paramsData) {
+      const paramsData = (
+        _paramsData.data && typeof _paramsData.data.disabled !== "boolean"
+          ? _paramsData.data
+          : _paramsData
+      ) as SerializedParamsData;
       for (const [name, paramDef] of this.paramDefs.entries()) {
         if (paramDef.error === null) {
-          const data = paramsData.data[name];
+          const data = paramsData[name];
 
           if (data && data.typeName === paramDef.type.name) {
             const paramData = this.paramData.get(name)!;

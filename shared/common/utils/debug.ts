@@ -1,12 +1,11 @@
 /* eslint-disable no-console */
 
-const flags = (process.env.REACT_APP_DEBUG?.split(",") ?? []).reduce(
-  (_flags, flag) => {
-    _flags[flag] = true;
-    return _flags;
-  },
-  {} as {[flag: string]: boolean}
-);
+const flags = (
+  ((import.meta as any).env?.VITE_APP_DEBUG?.split(",") ?? []) as string[]
+).reduce((_flags, flag) => {
+  _flags[flag] = true;
+  return _flags;
+}, {} as {[flag: string]: boolean});
 
 const noOp = () => {
   // no-op

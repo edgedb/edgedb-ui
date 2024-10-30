@@ -9,7 +9,9 @@ import {
   WorkerRequestMessage,
 } from "./interfaces";
 
-const worker = new Worker(new URL("./layout.worker", import.meta.url));
+import LayoutWorker from "./layout.worker?worker";
+
+const worker = new LayoutWorker();
 
 const handlers = new Map<number, (returnData: any) => void>();
 

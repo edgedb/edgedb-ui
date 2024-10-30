@@ -1,3 +1,4 @@
+import {PropsWithChildren, useState} from "react";
 import {observer} from "mobx-react";
 import {useLocation, useNavigate, useParams, Link} from "react-router-dom";
 
@@ -28,8 +29,7 @@ import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 import {authAdminTabSpec} from "@edgedb/studio/tabs/auth";
 import {aiTabSpec} from "@edgedb/studio/tabs/ai";
 
-import {useAppState} from "src/state/providers";
-import {PropsWithChildren, useState} from "react";
+import {useAppState} from "../../state/providers";
 
 const tabs: DatabaseTabSpec[] = [
   dashboardTabSpec,
