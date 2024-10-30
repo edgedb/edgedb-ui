@@ -388,7 +388,7 @@ export class AIAdminState extends Model({
 
     const messages = Object.values(newPromptDraft._messages).map((m) => ({
       role: m.participant_role,
-      name: m.participant_name,
+      name: m.participant_name?.trim() || null,
       content: m.content,
     }));
 
@@ -883,7 +883,7 @@ export class AIPromptDraft extends Model({
     this._messages[id] = {
       id,
       participant_role: "System",
-      participant_name: "",
+      participant_name: null,
       content: null,
     };
   }
@@ -983,10 +983,15 @@ export class AIPromptDraft extends Model({
       filter .id = <uuid>$messageId
       set {
         participant_role := <str>$participant_role,
-        participant_name := <str>$participant_name,
+        participant_name := <optional str>$participant_name,
         content := <str>$content
       }`,
-      {messageId, participant_role, participant_name, content},
+      {
+        messageId,
+        participant_role,
+        participant_name: participant_name?.trim() || null,
+        content,
+      },
       {ignoreSessionConfig: true}
     );
 
@@ -1006,7 +1011,7 @@ export class AIPromptDraft extends Model({
         newMessage := (
           insert ext::ai::ChatPromptMessage {
             participant_role := <str>$participant_role,
-            participant_name := <str>$participant_name,
+            participant_name := <optional str>$participant_name,
             content := <str>$content
           }
         )
@@ -1015,7 +1020,12 @@ export class AIPromptDraft extends Model({
       set {
         messages += newMessage
       }`,
-      {promptId: this.id, participant_role, participant_name, content},
+      {
+        promptId: this.id,
+        participant_role,
+        participant_name: participant_name?.trim() || null,
+        content,
+      },
       {ignoreSessionConfig: true}
     );
 
