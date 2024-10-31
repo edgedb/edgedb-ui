@@ -21,11 +21,12 @@ describe("REPL:", () => {
       until.elementLocated(ByUIClass("repl_replHistoryItem"))
     );
 
-    expect(
-      await (
-        await response.findElement(ByUIClass("repl_historyPrompt"))
-      ).getText()
-    ).toBe("_test>");
+    console.log(await response.getAttribute("innerHTML"));
+
+    const prompt = await response.findElement(ByUIClass("repl_historyPrompt"));
+    const promptText = await prompt.getText();
+    console.log(promptText);
+    expect(promptText).toBe("_test>");
     expect(
       await (await response.findElement(ByUIClass("repl_code"))).getText()
     ).toBe("\\help");

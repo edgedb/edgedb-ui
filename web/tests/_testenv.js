@@ -1,12 +1,12 @@
 import {TestEnvironment as NodeEnvironment} from "jest-environment-node";
 
-import {Builder, By, until, Key, error} from "selenium-webdriver";
+import {Builder, Browser, By, until, Key, error} from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
 
 let opts = new chrome.Options();
 
 if (process.env["CI"] || !process.argv.slice(2).includes("--no-headless")) {
-  opts = opts.headless();
+  opts.addArguments("--headless=new");
 }
 
 class SeleniumEnvironment extends NodeEnvironment {
@@ -14,7 +14,7 @@ class SeleniumEnvironment extends NodeEnvironment {
     await super.setup();
 
     const driver = await new Builder()
-      .forBrowser("chrome")
+      .forBrowser(Browser.CHROME)
       .setChromeOptions(opts)
       .build();
 

@@ -877,6 +877,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bazel/runfiles@npm:^6.3.1":
+  version: 6.3.1
+  resolution: "@bazel/runfiles@npm:6.3.1"
+  checksum: a39bb40b8750059180ce19c19885d2d1676d2e5e02626bafb897c37a01c702a35130226261a556f7c5b064a3497ec30b9544339bbceedc9f027468273ae3b2e8
+  languageName: node
+  linkType: hard
+
 "@bcoe/v8-coverage@npm:^0.2.3":
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3"
@@ -2807,12 +2814,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/selenium-webdriver@npm:^4.1.10":
-  version: 4.1.10
-  resolution: "@types/selenium-webdriver@npm:4.1.10"
+"@types/selenium-webdriver@npm:^4.1.27":
+  version: 4.1.27
+  resolution: "@types/selenium-webdriver@npm:4.1.27"
   dependencies:
+    "@types/node": "*"
     "@types/ws": "*"
-  checksum: 9641eaeb7bbbeee4a109c584af95fbb8b5d512831f185060b62f85d5c263ce3ca84963868083cd2e808c1a072c48cd1e5738f023c69e8ec0f572bda4633d22d2
+  checksum: 3f731fdda2f9cb94638ff7ceaec87a1e8afb03dc7761439386fc939129fd3ed3c1250404eb5e56a8c0e34c627c97404da8e415cb45dddf0f8b0dd2c63dee5200
   languageName: node
   linkType: hard
 
@@ -2847,11 +2855,11 @@ __metadata:
   linkType: hard
 
 "@types/ws@npm:*":
-  version: 8.5.4
-  resolution: "@types/ws@npm:8.5.4"
+  version: 8.5.12
+  resolution: "@types/ws@npm:8.5.12"
   dependencies:
     "@types/node": "*"
-  checksum: fefbad20d211929bb996285c4e6f699b12192548afedbe4930ab4384f8a94577c9cd421acaad163cacd36b88649509970a05a0b8f20615b30c501ed5269038d1
+  checksum: ddefb6ad1671f70ce73b38a5f47f471d4d493864fca7c51f002a86e5993d031294201c5dced6d5018fb8905ad46888d65c7f20dd54fc165910b69f42fba9a6d0
   languageName: node
   linkType: hard
 
@@ -5831,7 +5839,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jszip@npm:^3.10.0":
+"jszip@npm:^3.10.1":
   version: 3.10.1
   resolution: "jszip@npm:3.10.1"
   dependencies:
@@ -7441,7 +7449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:^3.0.0, rimraf@npm:^3.0.2":
+"rimraf@npm:^3.0.2":
   version: 3.0.2
   resolution: "rimraf@npm:3.0.2"
   dependencies:
@@ -7579,14 +7587,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selenium-webdriver@npm:^4.8.0":
-  version: 4.8.0
-  resolution: "selenium-webdriver@npm:4.8.0"
+"selenium-webdriver@npm:^4.26.0":
+  version: 4.26.0
+  resolution: "selenium-webdriver@npm:4.26.0"
   dependencies:
-    jszip: ^3.10.0
-    tmp: ^0.2.1
-    ws: ">=8.11.0"
-  checksum: 0245389cc954427436535f9c6ebe978d1aa27aeaf7db61c4ecb28fecdaf1c41e356fa40c291e1020b1fba04cb91944a60c14c385857183eb8e0479b8845c1756
+    "@bazel/runfiles": ^6.3.1
+    jszip: ^3.10.1
+    tmp: ^0.2.3
+    ws: ^8.18.0
+  checksum: 016dc7926413132ec0ea3acc7bfab28f9e744c0a943448407d6e1f140e06ab38f1a480bfd83a449cb18566b983a23249bd77490d9ed5f8b0281a154103ff20ca
   languageName: node
   linkType: hard
 
@@ -7983,12 +7992,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tmp@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "tmp@npm:0.2.1"
-  dependencies:
-    rimraf: ^3.0.0
-  checksum: 8b1214654182575124498c87ca986ac53dc76ff36e8f0e0b67139a8d221eaecfdec108c0e6ec54d76f49f1f72ab9325500b246f562b926f85bcdfca8bf35df9e
+"tmp@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "tmp@npm:0.2.3"
+  checksum: 73b5c96b6e52da7e104d9d44afb5d106bb1e16d9fa7d00dbeb9e6522e61b571fbdb165c756c62164be9a3bbe192b9b268c236d370a2a0955c7689cd2ae377b95
   languageName: node
   linkType: hard
 
@@ -8462,7 +8469,7 @@ __metadata:
     "@testing-library/react": ^12.0.0
     "@testing-library/user-event": ^13.2.1
     "@types/jest": ^27.0.1
-    "@types/selenium-webdriver": ^4.1.10
+    "@types/selenium-webdriver": ^4.1.27
     "@vitejs/plugin-react-swc": ^3.5.0
     buffer: ^6.0.3
     edgedb: 1.6.0-canary.20241030T172506
@@ -8480,7 +8487,7 @@ __metadata:
     react-dom: ^18.3.1
     react-router-dom: ^6.3.0
     sass: ^1.49.9
-    selenium-webdriver: ^4.8.0
+    selenium-webdriver: ^4.26.0
     swr: ^2.1.5
     ts-jest: ^29.2.5
     typescript: ^5.6.0
@@ -8566,9 +8573,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:>=8.11.0":
-  version: 8.12.0
-  resolution: "ws@npm:8.12.0"
+"ws@npm:^8.18.0":
+  version: 8.18.0
+  resolution: "ws@npm:8.18.0"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ">=5.0.2"
@@ -8577,7 +8584,7 @@ __metadata:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 818ff3f8749c172a95a114cceb8b89cedd27e43a82d65c7ad0f7882b1e96a2ee6709e3746a903c3fa88beec0c8bae9a9fcd75f20858b32a166dfb7519316a5d7
+  checksum: 91d4d35bc99ff6df483bdf029b9ea4bfd7af1f16fc91231a96777a63d263e1eabf486e13a2353970efc534f9faa43bdbf9ee76525af22f4752cbc5ebda333975
   languageName: node
   linkType: hard
 
