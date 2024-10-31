@@ -52,37 +52,8 @@
   @include hideScrollbar;
 }
 
-.header {
-  box-sizing: border-box;
-  position: sticky;
-  top: 0;
-  height: 48px;
-  display: flex;
-  width: max-content;
-  min-width: 100%;
-  padding-left: var(--rowIndexWidth);
-  padding-right: 4rem;
-  background: rgba(228, 228, 228, 0.9);
-  backdrop-filter: blur(4px);
-  z-index: 2;
-
-  .headerFieldWrapper {
-    position: relative;
-    display: flex;
-  }
-
-  &.hasSubtypeFields {
-    height: 64px;
-    padding-top: 16px;
-  }
-
-  @include darkTheme {
-    background: rgba(37, 37, 37, 0.9);
-
-    @include breakpoint(mobile) {
-      background: #333;
-    }
-  }
+.headers {
+  grid-template-rows: 1fr auto;
 }
 
 .headerField {
@@ -90,10 +61,11 @@
   box-sizing: border-box;
   display: flex;
   flex-shrink: 0;
-  padding: 0 8px;
+  height: 48px;
+  padding: 0 8px 0 12px;
   align-items: center;
 
-  font-family: Roboto Mono;
+  font-family: "Roboto Mono Variable";
 
   .fieldTitle {
     flex-shrink: 1;
@@ -107,8 +79,8 @@
   }
 
   .fieldName {
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: 450;
+    font-size: 13px;
     line-height: 16px;
     color: #333;
     margin-bottom: 2px;
@@ -127,6 +99,7 @@
     font-size: 11px;
     line-height: 16px;
     color: var(--grey50);
+    font-weight: 450;
   }
 
   .fieldSort {
@@ -191,48 +164,29 @@
   }
 }
 
-.dragHandle {
-  position: absolute;
-  right: -6px;
-  width: 12px;
-  height: 100%;
-  cursor: ew-resize;
-  z-index: 1;
-  opacity: 0.2;
-
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 2px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 32'%3E%3Cpath d='M 1 2 V 30' stroke='%23000' stroke-width='1' stroke-linecap='round' /%3E%3C/svg%3E");
-
-  &:hover {
-    opacity: 0.3;
-  }
-
-  @include darkTheme {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 32'%3E%3Cpath d='M 1 2 V 30' stroke='%23fff' stroke-width='1' stroke-linecap='round' /%3E%3C/svg%3E");
-  }
-}
-
 .subtypeRangeHeader {
-  position: absolute;
-  top: -12px;
+  position: relative;
   height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 4px;
+  margin-bottom: -4px;
+  z-index: 1;
+  pointer-events: none;
+  min-width: 0;
 
   .subtypeLabel {
-    height: 14px;
+    height: 16px;
     border-radius: 7px;
     padding: 0 8px;
-    background: #a8a8a8;
-    font-family: Roboto Mono;
+    background: var(--Grey93);
+    font-family: "Roboto Mono Variable", monospace;
     font-style: normal;
-    font-weight: 400;
-    font-size: 10px;
-    line-height: 14px;
-    color: #fff;
+    font-weight: 450;
+    font-size: 11px;
+    line-height: 15px;
+    color: var(--secondary_text_color);
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -240,7 +194,7 @@
   &:before {
     content: "";
     position: absolute;
-    background: #a8a8a8;
+    background: var(--Grey93);
     left: 8px;
     right: 8px;
     height: 3px;
@@ -276,16 +230,28 @@
   flex-grow: 1;
   box-sizing: border-box;
   overflow: hidden;
-  line-height: 32px;
+  line-height: 39px;
   white-space: nowrap;
   text-overflow: ellipsis;
-  padding: 0 8px;
-  font-family: Roboto Mono;
+  padding: 0 12px;
+  font-family: "Roboto Mono Variable", monospace;
   font-weight: normal;
   font-size: 14px;
 
   &.selectable {
     user-select: text;
+  }
+
+  .firstCol & {
+    padding-left: 16px;
+  }
+}
+
+.hoveredCell {
+  background: #fff;
+
+  @include darkTheme {
+    background: var(--Grey18);
   }
 }
 
@@ -311,15 +277,9 @@
 }
 
 .linksCell {
-  height: 32px;
+  height: 39px;
   display: flex;
   align-items: center;
-  mask-image: linear-gradient(
-    90deg,
-    #000,
-    #000 calc(100% - 15px),
-    transparent
-  );
 }
 
 .editableCell {
@@ -330,14 +290,15 @@
   &:hover:after {
     content: "";
     position: absolute;
-    top: 4px;
-    left: 0;
-    right: 0;
-    bottom: 4px;
+    inset: -1px;
     border: 2px solid #047cff;
-    border-radius: 4px;
-    opacity: 0.5;
+    border-radius: 2px;
+    opacity: 0.8;
     pointer-events: none;
+
+    .firstCol & {
+      left: 0;
+    }
   }
 }
 
@@ -346,38 +307,56 @@
   &:before {
     content: "";
     position: absolute;
-    top: 7px;
-    left: 2px;
-    bottom: 7px;
-    border: 2px solid #ffa900;
-    border-radius: 5px;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #ffa900;
 
     @include darkTheme {
-      border-color: #e5c18c;
+      background-color: #b88523;
     }
   }
 }
 
+.hasEdits {
+  background: #fff5e3;
+
+  @include darkTheme {
+    background: #4e422c;
+  }
+}
+
 .hasErrors {
+  background: #fee;
+
   .invalidValue {
     color: #c44f45;
   }
   &:before {
-    border-color: #d78d87;
+    background-color: #d17870;
   }
 
   @include darkTheme {
+    background: #3a2323;
+
     .invalidValue {
       color: #e6776e;
     }
     &:before {
-      border-color: #af6963;
+      background-color: #e26e64;
     }
   }
 }
 
 .isDeleted {
-  opacity: 0.5;
+  opacity: 0.3;
+  background: rgba(0, 0, 0, 0.07);
+  pointer-events: none;
+
+  @include darkTheme {
+    background: rgba(0, 0, 0, 0.45);
+  }
 }
 
 .undoCellChanges {
@@ -395,7 +374,7 @@
     fill: #ffa900;
 
     @include darkTheme {
-      fill: #e5c18c;
+      fill: #b88523;
     }
   }
 }
@@ -460,76 +439,35 @@
   opacity: 0.8;
 }
 
-.stickyCol {
-  position: relative;
-  height: 0px;
-  left: 0px;
+.inspectorRow {
+  --lineHeight: 28px;
 
-  .deletedRowStrikethrough {
-    position: absolute;
-    left: var(--rowIndexWidth);
-    width: var(--gridWidth);
-    height: 40px;
-    z-index: 1;
+  position: absolute;
+  font-family: "Roboto Mono Variable", monospace;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  user-select: text;
+  box-sizing: border-box;
+  width: 100%;
 
-    &:after {
-      content: "";
-      position: absolute;
-      display: block;
-      left: -2px;
-      right: -2px;
-      height: 0px;
-      border: 1px solid #a1843d;
-      border-radius: 2px;
-      top: 20px;
-    }
-  }
-
-  .rowHoverBg {
-    position: absolute;
-    height: 40px;
-    width: calc(var(--rowIndexWidth) + var(--gridWidth) + 32px);
-    min-width: 100%;
-
-    &.active {
-      background: #fafafa;
-
-      @include darkTheme {
-        background: #262626;
-      }
-    }
-
-    @include breakpoint(mobile) {
-      height: 56px;
-    }
-  }
-
-  .inspectorRow {
-    --lineHeight: 28px;
-
-    position: absolute;
-    font-family: Roboto Mono;
-    font-size: 14px;
-    margin-left: var(--rowIndexWidth);
-    display: flex;
-    align-items: center;
-    user-select: text;
-    width: 100%;
-    z-index: 1;
+  &.lastItem {
+    border-bottom: 1px solid var(--panel_border);
   }
 
   .viewInTableButton {
     display: flex;
     align-items: center;
     height: 20px;
-    border: 1px solid #666;
+    border: 1px solid var(--Grey80);
     border-radius: 11px;
-    font-family: Inter;
+    font-family: "Roboto Flex Variable", sans-serif;
     font-style: normal;
     font-weight: 500;
     font-size: 11px;
     color: #858585;
     text-transform: uppercase;
+    white-space: nowrap;
     padding: 0 8px;
     margin-left: 1rem;
     cursor: pointer;
@@ -542,6 +480,13 @@
   }
 }
 
+.scalar_str,
+.scalar_uuid {
+  &:before,
+  &:after {
+    content: "";
+  }
+}
 .scalar_uuid {
   color: #6f6f6f;
 
@@ -550,45 +495,60 @@
       color: #adadad;
     }
   }
-
-  &:before,
-  &:after {
-    content: "";
-  }
 }
 
 .rowIndex {
-  position: absolute;
-  width: var(--rowIndexWidth);
-  height: 40px;
-  z-index: 1;
   display: flex;
   padding-left: 4px;
 
-  &.hasLinkEdit:after {
-    content: "";
-    position: absolute;
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    bottom: 2px;
-    border: 2px solid #ffa900;
-    border-radius: 5px;
+  &.hasLinkEdit,
+  &.isNewRow,
+  &.isDeletedRow {
+    &:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 3px;
+      background-color: #ffa900;
+
+      @include darkTheme {
+        background-color: #b88523;
+      }
+    }
+  }
+  &.isNewRow:before {
+    background-color: #58ba2b;
 
     @include darkTheme {
-      border-color: #e5c18c;
+      background-color: #55873d;
+    }
+  }
+  &.isDeletedRow:before {
+    background-color: #d17870;
+
+    @include darkTheme {
+      background-color: #e26e64;
     }
   }
 
-  .cell {
+  &.unlinked,
+  &.isDeletedRow {
+    background: var(--Grey95);
+
+    @include darkTheme {
+      background: var(--Grey12);
+    }
+  }
+
+  .index {
     text-align: right;
     flex-grow: 1;
-    overflow: visible;
-    padding-left: 0;
-    font-size: 12px;
-    font-weight: 500;
-    color: #a7a7a7;
-    line-height: 40px;
+    font-size: 13px;
+    font-weight: 450;
+    color: var(--secondary_text_color);
+    align-self: center;
   }
 
   @include breakpoint(mobile) {
@@ -612,8 +572,7 @@
   }
 
   .expandRow {
-    width: 10px;
-    padding: 0 1rem;
+    width: 26px;
     flex-shrink: 0;
     cursor: pointer;
     display: flex;
@@ -621,13 +580,17 @@
     opacity: 0;
 
     svg {
-      width: 100%;
+      color: var(--tertiary_text_color);
       transform: rotate(-90deg);
       transition: transform 0.1s;
     }
 
-    &.isExpanded svg {
-      transform: none;
+    &.isExpanded {
+      opacity: 1;
+
+      svg {
+        transform: none;
+      }
     }
 
     &.isHidden {
@@ -702,9 +665,7 @@
   }
 
   &.active {
-    .cell {
-      color: #00ba83;
-    }
+    background: #fff;
 
     .expandRow {
       opacity: 1;
@@ -712,6 +673,10 @@
 
     .deleteRowAction {
       opacity: 1;
+    }
+
+    @include darkTheme {
+      background: var(--Grey18);
     }
   }
 }

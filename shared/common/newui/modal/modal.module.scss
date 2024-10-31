@@ -34,13 +34,10 @@
   }
 
   .modal {
-    box-shadow:
-      0px 4px 16px 0px rgba(0, 0, 0, 0.16),
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.16),
       0px 2px 4px 0px rgba(0, 0, 0, 0.08);
 
-    transition:
-      transform 0.3s,
-      opacity 0.3s;
+    transition: transform 0.3s, opacity 0.3s;
 
     :global(.MODAL_TRANSITION) & {
       transform: translateY(100px);
@@ -54,8 +51,7 @@
     }
 
     .modal {
-      box-shadow:
-        0px 4px 16px 0px rgba(0, 0, 0, 0.4),
+      box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
         0px 2px 4px 0px rgba(0, 0, 0, 0.2);
     }
   }
@@ -81,6 +77,7 @@
   flex-direction: column;
   min-height: 0;
   width: min-content;
+  max-width: 100%;
   border-radius: 12px;
   border: 1px solid var(--Grey80, #ccc);
   background: var(--app_panel_background, #f7f7f7);

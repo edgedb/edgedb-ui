@@ -10,9 +10,8 @@ import {
   findParent,
   objectMap,
   idProp,
+  ModelCreationData,
 } from "mobx-keystone";
-
-import {VariableSizeGrid as Grid} from "react-window";
 
 import {NavigateFunction} from "../../../hooks/dbRoute";
 
@@ -39,6 +38,9 @@ import {DataEditingManager, UpdateLinkChangeKind} from "./edits";
 import {sessionStateCtx} from "../../../state/sessionState";
 import {sortObjectTypes} from "../../../components/objectTypeSelect";
 
+import {DataGridState} from "@edgedb/common/components/dataGrid/state";
+import {deserialiseFieldConfig, serialiseFieldConfig} from "../fieldConfig";
+
 const fetchBlockSize = 100;
 
 type ParentObject = {
@@ -60,7 +62,6 @@ export class DataView extends Model({
   inspectorStack: prop<DataInspector[]>(() => []),
 
   edits: prop(() => new DataEditingManager({})),
-  showSubtypeFields: prop(() => false).withSetter(),
 }) {
   lastSelectedPath: string = "";
 
@@ -92,13 +93,15 @@ export class DataView extends Model({
   @modelAction
   selectObject(objectTypeId: string | undefined) {
     this.inspectorStack = objectTypeId
-      ? [new DataInspector({objectTypeId})]
+      ? [createDataInspectorState({objectTypeId})]
       : [];
   }
 
   @modelAction
   openNestedView(objectTypeId: string, parentObject: ParentObject) {
-    this.inspectorStack.push(new DataInspector({objectTypeId, parentObject}));
+    this.inspectorStack.push(
+      createDataInspectorState({objectTypeId, parentObject})
+    );
   }
 
   @modelAction
@@ -170,7 +173,7 @@ export class DataView extends Model({
           objId !== stackItem?.parentObject!.id ||
           pointerName !== stackItem?.parentObject!.fieldName
         ) {
-          this.inspectorStack[i + 1] = new DataInspector({
+          this.inspectorStack[i + 1] = createDataInspectorState({
             objectTypeId: pointer.target!.id,
             parentObject: {
               editMode: false,
@@ -208,8 +211,10 @@ export enum RowKind {
 export type DataRowData = {kind: RowKind.data; index: number};
 export type ExpandedRowData = {
   kind: RowKind.expanded;
-  index: number;
+  indexes: number[];
   dataRowIndex: number;
+  dataRowOffset: number;
+  lastRow: boolean;
   state: ExpandedInspector;
 };
 
@@ -219,6 +224,7 @@ export enum ObjectFieldType {
 }
 
 interface _BaseObjectField {
+  id: string;
   subtypeName?: string;
   escapedSubtypeName?: string;
   name: string;
@@ -248,7 +254,7 @@ export interface ObjectLinkField extends _BaseObjectField {
 export type ObjectField = ObjectPropertyField | ObjectLinkField;
 
 interface SortBy {
-  fieldIndex: number;
+  fieldId: string;
   direction: "ASC" | "DESC";
 }
 
@@ -261,7 +267,73 @@ function pointerTargetHasSelectAccessPolicy(pointer: SchemaLink) {
   );
 }
 
+function createDataInspectorState(props: ModelCreationData<DataInspector>) {
+  const state = new DataInspector(props);
+  state.grid = new DataGridState(
+    40,
+    () => state.fields,
+    () => [{id: "_indexCol"}, ...state.pinnedFields],
+    () => state.gridRowCount,
+    {
+      ...deserialiseColWidths(
+        localStorage.getItem(`DataTableColWidths-${props.objectTypeId}`) ?? ""
+      ),
+      _indexCol: state.indexColWidth,
+    },
+    (colWidths) => {
+      localStorage.setItem(
+        `DataTableColWidths-${props.objectTypeId}`,
+        serialiseColWidths(colWidths, state.allFields!)
+      );
+    }
+  );
+  const rawFieldConfig = localStorage.getItem(
+    `DataTableFieldConfig-${props.objectTypeId}`
+  );
+  if (rawFieldConfig) {
+    runInAction(
+      () => (state.fieldConfig = deserialiseFieldConfig(rawFieldConfig))
+    );
+  }
+  return state;
+}
+
+function serialiseColWidths(
+  colWidths: Map<string, number>,
+  fields?: Map<string, ObjectField>
+): string {
+  return JSON.stringify(
+    [...colWidths.entries()].reduce((widths, [id, width]) => {
+      if (id !== "_indexCol" && (!fields || fields.has(id))) {
+        widths[id] = width;
+      }
+      return widths;
+    }, {} as {[id: string]: number})
+  );
+}
+function deserialiseColWidths(rawWidths: string): {[id: string]: number} {
+  try {
+    const widthsJSON = JSON.parse(rawWidths);
+    const widths: {[id: string]: number} = {};
+    if (typeof widthsJSON !== "object") return widths;
+    for (const [id, width] of Object.entries(widthsJSON)) {
+      if (typeof width !== "number") continue;
+      widths[id] = width;
+    }
+    return widths;
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
 type ErrorFilter = {filter: string; error: string};
+
+export interface FieldConfig {
+  order: string[];
+  selected: Set<string>;
+  pinned: Set<string>;
+}
 
 @model("DataInspector")
 export class DataInspector extends Model({
@@ -269,10 +341,7 @@ export class DataInspector extends Model({
   objectTypeId: prop<string>(),
   parentObject: prop<ParentObject | null>(null),
 
-  scrollPos: prop<[number, number]>(() => [0, 0]).withSetter(),
-
   sortBy: prop<SortBy | null>(null),
-  fieldWidths: prop<number[]>(() => []),
   expandedInspectors: prop(() => objectMap<ExpandedInspector>()),
 
   // [stripped filter, original filter str]
@@ -280,20 +349,55 @@ export class DataInspector extends Model({
   errorFilter: prop<ErrorFilter | null>(null),
   filterPanelOpen: prop<boolean>(false).withSetter(),
 }) {
-  gridRef: Grid | null = null;
-  fieldWidthsUpdated = false;
+  grid: DataGridState = null!;
 
   @observable.ref
   filterEditStr = Text.of(["filter "]);
 
   @observable.ref
-  allFields: {fields: ObjectField[]; subtypeIndex: number} | null = null;
+  allFields: Map<string, ObjectField> | null = null;
+
+  @observable
+  fieldConfig: FieldConfig | null = null;
+
+  @action
+  setFieldConfig(config: FieldConfig) {
+    this.fieldConfig = config;
+    localStorage.setItem(
+      `DataTableFieldConfig-${this.objectTypeId}`,
+      serialiseFieldConfig(config)
+    );
+  }
+
+  @computed
+  get selectedFields() {
+    const config = this.fieldConfig;
+    return (
+      (config?.order
+        .map((id) => this.allFields?.get(id))
+        .filter(
+          (f) => f != null && this.fieldConfig?.selected.has(f.id)
+        ) as ObjectField[]) ?? []
+    );
+  }
 
   @computed
   get fields() {
-    return this.showSubtypeFields
-      ? this.allFields?.fields
-      : this.allFields?.fields.slice(0, this.allFields.subtypeIndex);
+    return this.selectedFields.filter(
+      (field) => !this.fieldConfig!.pinned.has(field.id)
+    );
+  }
+
+  @computed
+  get pinnedFields() {
+    return this.selectedFields.filter((field) =>
+      this.fieldConfig!.pinned.has(field.id)
+    );
+  }
+
+  @computed
+  get indexColWidth() {
+    return 62 + Math.ceil((this.rowCount ?? 0).toString().length * 7.8);
   }
 
   @action
@@ -301,16 +405,8 @@ export class DataInspector extends Model({
     this.filterEditStr = filterStr;
   }
 
-  @computed
-  get showSubtypeFields() {
-    return (
-      findParent<DataView>(this, (parent) => parent instanceof DataView)
-        ?.showSubtypeFields ?? false
-    );
-  }
-
   onAttachedToRootStore() {
-    if (!this.fields) {
+    if (!this.allFields) {
       this._updateFields();
     }
 
@@ -333,18 +429,32 @@ export class DataInspector extends Model({
         }
       }
     );
-    const refreshSubtypesDataDisposer = reaction(
-      () => this.fields,
+    const refreshFieldsDataDisposer = reaction(
+      () => new Set(this.selectedFields),
       () => {
         this.omittedLinks.clear();
         this._refreshData(false, true);
+      },
+      {
+        equals: (a, b) => {
+          if (a.size !== b.size) return false;
+          for (const item of a) {
+            if (!b.has(item)) return false;
+          }
+          return true;
+        },
       }
+    );
+    const updateIndexColWidthDisposer = reaction(
+      () => this.indexColWidth,
+      (width) => this.grid.setColWidth("_indexCol", width)
     );
 
     return () => {
       updateFieldDisposer();
       refreshDataDisposer();
-      refreshSubtypesDataDisposer();
+      refreshFieldsDataDisposer();
+      updateIndexColWidthDisposer();
     };
   }
 
@@ -499,23 +609,41 @@ export class DataInspector extends Model({
           );
       });
 
-    this.allFields = {
-      fields: [...baseFields, ...subtypeFields].sort((a, b) =>
-        a.name === "id" ? -1 : b.name === "id" ? 1 : 0
-      ),
-      subtypeIndex: baseFields.length,
-    };
-    this.fieldWidths = Array(this.allFields.fields.length).fill(180);
-    this.gridRef?.resetAfterColumnIndex(0);
+    const fields = [...baseFields, ...subtypeFields];
+    this.allFields = new Map(fields.map((field) => [field.id, field]));
+    if (!this.fieldConfig) {
+      this.fieldConfig = {
+        order: fields
+          .sort((a, b) => (a.name === "id" ? -1 : b.name === "id" ? 1 : 0))
+          .map((f) => f.id),
+        selected: new Set(baseFields.map((f) => f.id)),
+        pinned: new Set(),
+      };
+    } else {
+      const order = this.fieldConfig.order.filter((id) =>
+        this.allFields!.has(id)
+      );
+      const newFieldIds = fields
+        .filter((f) => !order.includes(f.id))
+        .map((f) => f.id);
+      order.push(...newFieldIds);
+      const selected = new Set(
+        [...this.fieldConfig.selected].filter((id) => this.allFields!.has(id))
+      );
+      const pinned = new Set(
+        [...this.fieldConfig.pinned].filter((id) => this.allFields!.has(id))
+      );
+      for (const field of baseFields) {
+        if (newFieldIds.includes(field.id)) {
+          selected.add(field.id);
+        }
+      }
+      this.setFieldConfig({order, selected, pinned});
+    }
   }
 
   @observable
   omittedLinks = new Set<string>();
-
-  @computed
-  get hasSubtypeFields() {
-    return !!this.fields?.some((field) => field.subtypeName);
-  }
 
   @computed
   get insertTypeNames() {
@@ -552,31 +680,7 @@ export class DataInspector extends Model({
     );
   }
 
-  @computed
-  get subtypeFieldRanges() {
-    const ranges = new Map<string, {left: number; width: number}>();
-
-    let left = 0;
-    let i = 0;
-    for (const field of this.fields ?? []) {
-      const fieldWidth = this.fieldWidths[i++];
-      if (field.subtypeName) {
-        if (!ranges.has(field.subtypeName)) {
-          ranges.set(field.subtypeName, {left, width: fieldWidth});
-        } else {
-          ranges.get(field.subtypeName)!.width += fieldWidth;
-        }
-      }
-      left += fieldWidth;
-    }
-
-    return ranges;
-  }
-
   // offset handling
-
-  @observable
-  visibleIndexes: [number, number] = [0, 0];
 
   @observable
   rowCount: number | null = null;
@@ -607,18 +711,9 @@ export class DataInspector extends Model({
   }
 
   @action
-  setVisibleRowIndexes(startIndex: number, endIndex: number) {
-    if (startIndex > endIndex) {
-      // Sometimes react-window returns a startIndex greater than the endIndex
-      // when the data is cleared for a refresh, so ignore these updates.
-      // The next update when the refresh completes seems to be correct.
-      return;
-    }
-
+  updateVisibleOffsets(startIndex: number, endIndex: number) {
     const startRow = this.getRowData(startIndex);
     const endRow = this.getRowData(endIndex);
-
-    this.visibleIndexes = [startIndex, endIndex];
 
     const startDataIndex =
       startRow.kind === RowKind.expanded
@@ -660,12 +755,24 @@ export class DataInspector extends Model({
       }
 
       const expandedLength = expandedRow.inspector.rowsCount;
+      const itemsLength = expandedRow.inspector.itemsLength;
 
       if (index <= expandedRow.dataRowIndex + expandedLength) {
+        const startTop = (index - expandedRow.dataRowIndex - 1) * 40;
+        let expandedIndex = Math.ceil(Math.max(0, startTop - 6) / 28);
+        const indexes = [];
+        while (
+          expandedIndex < itemsLength &&
+          6 + expandedIndex * 28 < startTop + 40
+        ) {
+          indexes.push(expandedIndex++);
+        }
         return {
           kind: RowKind.expanded,
-          index: index - expandedRow.dataRowIndex - 1,
+          indexes,
           dataRowIndex: expandedRow.dataRowIndex,
+          dataRowOffset: index - expandedRow.dataRowIndex - 1,
+          lastRow: index === expandedRow.dataRowIndex + expandedLength,
           state: expandedRow.inspector,
         };
       }
@@ -775,7 +882,7 @@ export class DataInspector extends Model({
   data = new ObservableLRU<number, EdgeDBSet>(20);
 
   @observable.ref
-  dataCodecs: _ICodec[] | null = null;
+  dataCodecs: Map<string, _ICodec> | null = null;
 
   @observable
   runningDataFetch: {abortController: AbortController; offset: number} | null =
@@ -923,10 +1030,9 @@ export class DataInspector extends Model({
       const codec = data._codec as ObjectCodec;
       const codecs = codec.getSubcodecs();
       const codecNames = codec.getFields().map((f) => f.name);
-      this.dataCodecs =
-        this.fields!.map(
-          (field) => codecs[codecNames.indexOf(field.queryName)]
-        ) ?? null;
+      this.dataCodecs = new Map(
+        codecNames.map((name, i) => [name, codecs[i]])
+      );
     }
 
     const expandedRows: typeof DataInspector.prototype.expandedRows = [];
@@ -955,7 +1061,6 @@ export class DataInspector extends Model({
       this.dataCodecs = null;
     }
     this.expandedRows = [];
-    this.gridRef?.resetAfterRowIndex(0);
     this._pendingOffsets = [...this.visibleOffsets];
     this.fullyFetchedData.clear();
 
@@ -1052,11 +1157,13 @@ export class DataInspector extends Model({
 
   @computed
   get dataQuery() {
-    if (!this.fields) {
+    if (!this.selectedFields.length) {
       return null;
     }
 
-    const sortField = this.sortBy ? this.fields[this.sortBy.fieldIndex] : null;
+    const sortField = this.sortBy
+      ? this.selectedFields.find((f) => f.id === this.sortBy!.fieldId)
+      : null;
 
     const inEditMode = this.parentObject?.editMode;
 
@@ -1079,7 +1186,7 @@ export class DataInspector extends Model({
     SELECT rows {
       id,
       ${inEditMode ? "__isLinked," : ""}
-      ${this.fields
+      ${this.selectedFields
         .filter((field) => field.name !== "id" && !field.secret)
         .map((field) => {
           const selectName = `${
@@ -1129,27 +1236,12 @@ export class DataInspector extends Model({
     };
   }
 
-  @computed
-  get mobileFieldsAndCodecs() {
-    const fields = this.fields ? [...this.fields] : null;
-    const codecs = this.dataCodecs ? [...this.dataCodecs] : null;
-
-    const index = fields?.findIndex((field) => field.name === "id");
-
-    if (index !== undefined && index > -1) {
-      fields?.splice(index, 1);
-      codecs?.splice(index, 1);
-    }
-
-    return {fields, codecs};
-  }
-
   // sorting
 
   @modelAction
-  setSortBy(fieldIndex: number) {
+  setSortBy(fieldId: string) {
     const currentDirection =
-      this.sortBy?.fieldIndex === fieldIndex && this.sortBy.direction;
+      this.sortBy?.fieldId === fieldId && this.sortBy.direction;
     const direction = currentDirection
       ? currentDirection === "ASC"
         ? "DESC"
@@ -1158,7 +1250,7 @@ export class DataInspector extends Model({
 
     this.sortBy = direction
       ? {
-          fieldIndex,
+          fieldId,
           direction,
         }
       : null;
@@ -1253,19 +1345,6 @@ export class DataInspector extends Model({
       this._refreshData(true);
     }
   }
-
-  @modelAction
-  setInitialFieldWidths(width: number) {
-    this.fieldWidthsUpdated = true;
-    this.fieldWidths = new Array(this.allFields!.fields.length).fill(
-      Math.max(width, 100)
-    );
-  }
-
-  @modelAction
-  setFieldWidth(fieldIndex: number, width: number) {
-    this.fieldWidths[fieldIndex] = Math.max(width, 100);
-  }
 }
 
 @model("ExpandedInspector")
@@ -1298,20 +1377,6 @@ class ExpandedInspector extends Model({
         return {data: result, codec: result._codec};
       }
     });
-  }
-
-  onAttachedToRootStore() {
-    const dataInspector = findParent<DataInspector>(
-      this,
-      (parent) => parent instanceof DataInspector
-    )!;
-
-    return reaction(
-      () => this.state._items.length,
-      () => {
-        dataInspector.gridRef?.resetAfterRowIndex(0);
-      }
-    );
   }
 
   async loadNestedData(
@@ -1383,9 +1448,14 @@ class ExpandedInspector extends Model({
   }
 
   @computed
-  get rowsCount() {
+  get itemsLength() {
     const itemsLength = this.state.getItems().length;
     return itemsLength ? itemsLength - 2 : 1;
+  }
+
+  @computed
+  get rowsCount() {
+    return Math.ceil((this.itemsLength * 28 + 12) / 40);
   }
 
   @computed
@@ -1396,7 +1466,7 @@ class ExpandedInspector extends Model({
     )!;
 
     return new Set(
-      dataInspector.fields
+      [...(dataInspector.allFields?.values() ?? [])]
         ?.filter((field) => field.type === ObjectFieldType.link)
         .map((field) => field.name)
     );

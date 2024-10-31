@@ -1,15 +1,5 @@
-import {
-  createContext,
-  forwardRef,
-  Fragment,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import {createContext, Fragment, useContext, useEffect} from "react";
 import {observer} from "mobx-react";
-import {VariableSizeGrid as Grid} from "react-window";
 
 import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {EnumCodec} from "edgedb/dist/codecs/enum";
@@ -18,44 +8,51 @@ import {MultiRangeCodec, RangeCodec} from "edgedb/dist/codecs/range";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
-
 import {InspectorRow} from "@edgedb/inspector";
 import {renderValue} from "@edgedb/inspector/buildScalar";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
-
-import {useResize} from "@edgedb/common/hooks/useResize";
-import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 
 import styles from "./dataInspector.module.scss";
 
 import {
   DataInspector as DataInspectorState,
+  DataRowData,
   ExpandedRowData,
   ObjectField,
   ObjectFieldType,
   RowKind,
 } from "./state";
-import {DataEditingManager, UpdateLinkChangeKind} from "./state/edits";
+import {
+  DataEditingManager,
+  InsertObjectEdit,
+  UpdateLinkChangeKind,
+} from "./state/edits";
 
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
+import {SortIcon, SortedDescIcon} from "./icons";
 import {
-  ChevronDownIcon,
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
   WarningIcon,
-  BackIcon,
 } from "../../icons";
 import {PrimitiveType} from "../../components/dataEditor";
 import {DataEditor} from "../../components/dataEditor/editor";
 import {renderInvalidEditorValue} from "../../components/dataEditor/utils";
-import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
-import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
-import {ObjectCodec} from "edgedb/dist/codecs/object";
+
+import {ChevronDownIcon} from "@edgedb/common/newui";
+
+import {
+  DataGrid,
+  GridContent,
+  GridHeaders,
+  HeaderResizeHandle,
+} from "@edgedb/common/components/dataGrid";
+import gridStyles from "@edgedb/common/components/dataGrid/dataGrid.module.scss";
+import {DefaultColumnWidth} from "@edgedb/common/components/dataGrid/state";
+import {calculateInitialColWidths} from "@edgedb/common/components/dataGrid/utils";
+import {FieldConfigButton} from "./fieldConfig";
 
 const DataInspectorContext = createContext<{
   state: DataInspectorState;
@@ -66,198 +63,405 @@ const useDataInspectorState = () => {
   return useContext(DataInspectorContext)!;
 };
 
-const innerElementType = forwardRef<HTMLDivElement>(
-  ({style, ...props}: any, ref) => {
-    const {state} = useDataInspectorState();
-
-    return (
-      <div
-        ref={ref}
-        className={styles.innerContainer}
-        style={{
-          ...style,
-          position: "relative",
-        }}
-        onMouseLeave={() => {
-          state.setHoverRowIndex(null);
-        }}
-        {...props}
-      />
-    );
-  }
-);
-
-const outerElementType = forwardRef<HTMLDivElement>(
-  ({children, style, ...props}: any, ref) => (
-    <div ref={ref} style={{...style, willChange: null}} {...props}>
-      <div className={styles.gridInner}>
-        <FieldHeaders />
-        <StickyCol />
-        {children}
-      </div>
-    </div>
-  )
-);
-
 interface DataInspectorProps {
   state: DataInspectorState;
   edits: DataEditingManager;
-  className?: string;
 }
 
 export default observer(function DataInspectorTable({
   state,
   edits,
-  className,
 }: DataInspectorProps) {
-  const gridContainer = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState<[number, number]>([0, 0]);
-
-  const gridRef = useRef<Grid>(null);
-
-  const initialScrollOffset = useInitialValue(() => state.scrollPos);
-
-  const isMobile = useIsMobile();
-
-  const rowHeight = isMobile ? 58 : 40;
-
-  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
-
-  useResize(gridContainer, ({width, height}) =>
-    setContainerSize([width, height])
-  );
-
-  useLayoutEffect(() => {
-    const availableWidth = gridContainer.current?.clientWidth;
-
-    if (!state.fieldWidthsUpdated && availableWidth && fields) {
-      const newWidth = Math.min(
-        Math.floor((availableWidth - 200) / fields.length),
-        350
-      );
-
-      state.setInitialFieldWidths(isMobile ? 180 : newWidth);
-      gridRef.current?.resetAfterColumnIndex(0);
-    }
-  }, []);
-
   useEffect(() => {
-    if (gridRef.current) {
-      state.gridRef = gridRef.current;
-
-      return () => {
-        state.gridRef = null;
-      };
+    if (
+      state.grid.gridContainerSize.width > 0 &&
+      state.allFields !== null &&
+      state.grid._colWidths.size <= 1
+    ) {
+      state.grid.setColWidths(
+        calculateInitialColWidths(
+          state.selectedFields.map(({id, typename, type}) => ({
+            id,
+            typename,
+            isLink: type === ObjectFieldType.link,
+          })),
+          state.grid.gridContainerSize.width - state.indexColWidth - 40
+        )
+      );
     }
-  }, [gridRef]);
-
-  const rowIndexCharWidth = (state.rowCount ?? 0).toString().length;
+  }, [state.allFields, state.grid.gridContainerSize.width]);
 
   return (
     <DataInspectorContext.Provider value={{state, edits}}>
-      <div
-        ref={gridContainer}
-        className={cn(
-          styles.dataInspector,
-          inspectorStyles.inspectorTheme,
-          className,
-          {
-            [styles.editMode]: !!state.parentObject?.editMode,
-          }
-        )}
-        style={
-          {
-            "--rowIndexCharWidth": rowIndexCharWidth,
-            ...(!isMobile && {
-              "--gridWidth":
-                (state.fieldWidths
-                  ?.slice(0, state.fields?.length)
-                  .reduce((sum, width) => sum + width, 0) ?? 0) + "px",
-            }),
-            "--gridBottomPadding":
-              containerSize[1] -
-              (state.hasSubtypeFields ? 64 : 48) -
-              40 +
-              "px",
-          } as any
-        }
-      >
-        <CustomScrollbars
-          innerClass={styles.gridInner}
-          headerPadding={state.hasSubtypeFields ? 64 : 48}
-        >
-          <Grid
-            ref={gridRef}
-            className={styles.gridScrollContainer}
-            outerElementType={outerElementType}
-            innerElementType={innerElementType}
-            width={containerSize[0]}
-            height={containerSize[1]}
-            initialScrollTop={initialScrollOffset[0]}
-            initialScrollLeft={initialScrollOffset[1]}
-            onScroll={({scrollTop, scrollLeft}) => {
-              state.setScrollPos([scrollTop, scrollLeft]);
-            }}
-            columnCount={fields?.length ?? 0}
-            estimatedColumnWidth={180}
-            columnWidth={(index) => state.fieldWidths![index]}
-            rowCount={state.gridRowCount}
-            estimatedRowHeight={rowHeight}
-            rowHeight={(rowIndex) => {
-              const rowData = state.getRowData(
-                rowIndex - state.insertedRows.length
-              );
-              return rowData.kind === RowKind.expanded
-                ? (rowData.state.state.getItems()[rowData.index + 1]?.height ??
-                    1) * 28
-                : rowHeight;
-            }}
-            overscanRowCount={5}
-            onItemsRendered={({
-              overscanRowStartIndex,
-              overscanRowStopIndex,
-            }) => {
-              state.setVisibleRowIndexes(
-                overscanRowStartIndex,
-                overscanRowStopIndex
-              );
-            }}
-          >
-            {GridCellWrapper}
-          </Grid>
-        </CustomScrollbars>
-      </div>
+      <DataGrid state={state.grid}>
+        <DataViewHeaders state={state} />
+        <DataViewContent state={state} />
+      </DataGrid>
     </DataInspectorContext.Provider>
+  );
+});
+
+const DataViewHeaders = observer(function DataViewHeaders({
+  state,
+}: {
+  state: DataInspectorState;
+}) {
+  let lastSubtype: {name: string; startIndex: number} | null = null;
+  const headers: JSX.Element[] = [];
+  const fields = state.fields ?? [];
+  for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+    const field = fields[fieldIndex];
+    headers.push(
+      <FieldHeader
+        key={field.id}
+        colIndex={fieldIndex}
+        field={field}
+        isOmitted={state.omittedLinks.has(field.name)}
+      />,
+      <HeaderResizeHandle
+        key={`resize-${field.id}`}
+        state={state.grid}
+        columnId={field.id}
+        style={{
+          gridColumn: fieldIndex + 3,
+          gridRow: 2,
+        }}
+      />
+    );
+    if (lastSubtype && lastSubtype.name !== field.subtypeName) {
+      headers.push(
+        <FieldSubtypeHeader
+          key={`${lastSubtype.name}-${lastSubtype.startIndex}`}
+          {...lastSubtype}
+          endIndex={fieldIndex}
+        />
+      );
+    }
+    lastSubtype =
+      field.subtypeName != null
+        ? lastSubtype && lastSubtype.name === field.subtypeName
+          ? lastSubtype
+          : {name: field.subtypeName, startIndex: fieldIndex}
+        : null;
+  }
+  if (lastSubtype) {
+    headers.push(
+      <FieldSubtypeHeader
+        key={`${lastSubtype.name}-${lastSubtype.startIndex}`}
+        {...lastSubtype}
+        endIndex={fields.length}
+      />
+    );
+    lastSubtype = null;
+  }
+
+  const pinnedHeaders: JSX.Element[] = [
+    <FieldConfigButton key="_fieldConfig" state={state} />,
+  ];
+  const pinnedFields = state.pinnedFields ?? [];
+  for (let fieldIndex = 0; fieldIndex < pinnedFields.length; fieldIndex++) {
+    const field = pinnedFields[fieldIndex];
+    const lastField = fieldIndex === pinnedFields.length - 1;
+    pinnedHeaders.push(
+      <FieldHeader
+        key={field.id}
+        colIndex={fieldIndex}
+        field={field}
+        isOmitted={state.omittedLinks.has(field.name)}
+      />,
+      <HeaderResizeHandle
+        key={`resize-${field.id}`}
+        className={lastField ? gridStyles.lastPinned : undefined}
+        state={state.grid}
+        columnId={field.id}
+        style={{
+          gridColumn: fieldIndex + 3,
+          gridRowStart: lastField ? 1 : 2,
+          gridRowEnd: 3,
+        }}
+      />
+    );
+
+    if (lastSubtype && lastSubtype.name !== field.subtypeName) {
+      pinnedHeaders.push(
+        <FieldSubtypeHeader
+          key={`${lastSubtype.name}-${lastSubtype.startIndex}`}
+          {...lastSubtype}
+          endIndex={fieldIndex}
+        />
+      );
+    }
+    lastSubtype =
+      field.subtypeName != null
+        ? lastSubtype && lastSubtype.name === field.subtypeName
+          ? lastSubtype
+          : {name: field.subtypeName, startIndex: fieldIndex}
+        : null;
+  }
+  if (lastSubtype) {
+    pinnedHeaders.push(
+      <FieldSubtypeHeader
+        key={`${lastSubtype.name}-${lastSubtype.startIndex}`}
+        {...lastSubtype}
+        endIndex={fields.length}
+      />
+    );
+  }
+
+  return (
+    <GridHeaders
+      className={styles.headers}
+      state={state.grid}
+      pinnedHeaders={pinnedHeaders}
+      headers={headers}
+    />
+  );
+});
+
+function FieldSubtypeHeader({
+  name,
+  startIndex,
+  endIndex,
+}: {
+  name: string;
+  startIndex: number;
+  endIndex: number;
+}) {
+  return (
+    <div
+      className={styles.subtypeRangeHeader}
+      style={{
+        gridRow: 1,
+        gridColumnStart: startIndex + 2,
+        gridColumnEnd: endIndex + 2,
+      }}
+    >
+      <div className={styles.subtypeLabel}>{name}</div>
+    </div>
+  );
+}
+
+interface FieldHeaderProps {
+  colIndex: number;
+  field: ObjectField;
+  isOmitted: boolean;
+}
+
+const FieldHeader = observer(function FieldHeader({
+  colIndex,
+  field,
+  isOmitted,
+}: FieldHeaderProps) {
+  const {state} = useDataInspectorState();
+
+  const sortDir = state.sortBy?.fieldId === field.id && state.sortBy.direction;
+
+  return (
+    <div
+      className={styles.headerField}
+      style={{
+        gridColumn: colIndex + 2,
+        gridRow: 2,
+      }}
+    >
+      {isOmitted ? (
+        <div className={styles.fieldWarning}>
+          <WarningIcon />
+          <div>
+            Cannot fetch link data: target of required link is hidden by access
+            policy
+          </div>
+        </div>
+      ) : null}
+      <div className={styles.fieldTitle}>
+        <div className={styles.fieldName}>
+          {field.name}
+          {field.computedExpr ? <span>:=</span> : null}
+        </div>
+        <div className={styles.fieldTypename}>
+          {field.multi ? "multi " : ""}
+          {field.typename}
+        </div>
+      </div>
+
+      {!field.secret &&
+      field.type === ObjectFieldType.property &&
+      field.name !== "id" ? (
+        <div
+          className={cn(styles.fieldSort, {
+            [styles.fieldSorted]: !!sortDir,
+            [styles.fieldSortAsc]: sortDir === "ASC",
+          })}
+          onClick={() => state.setSortBy(field.id)}
+        >
+          {sortDir ? <SortedDescIcon /> : <SortIcon />}
+        </div>
+      ) : null}
+    </div>
+  );
+});
+
+const DataViewContent = observer(function DataViewContent({
+  state,
+}: {
+  state: DataInspectorState;
+}) {
+  const ranges = state.grid.visibleRanges;
+
+  state.updateVisibleOffsets(...ranges.rows);
+
+  const cells: JSX.Element[] = [];
+  const pinnedCells: JSX.Element[] = [];
+
+  const fields = state.fields?.slice(ranges.cols[0], ranges.cols[1] + 1) ?? [];
+
+  for (let rowIndex = ranges.rows[0]; rowIndex < ranges.rows[1]; rowIndex++) {
+    const rowDataIndex = rowIndex - state.insertedRows.length;
+    const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
+
+    pinnedCells.push(
+      <StickyRow
+        key={`_indexCol.${rowDataIndex}`}
+        state={state}
+        rowIndex={rowIndex}
+        rowData={rowData}
+      />
+    );
+
+    if (rowData && rowData.kind !== RowKind.data) {
+      if (rowData.kind === RowKind.expanded && rowData.lastRow) {
+        cells.push(
+          <ExpandedEndCell
+            key={`_expandedEnd-${rowIndex}`}
+            state={state}
+            rowIndex={rowIndex}
+          />
+        );
+      }
+      continue;
+    }
+
+    const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
+    const data = rowData ? state.getData(rowData.index) : insertedRow!.data;
+
+    let columnIndex = 1;
+    for (const field of state.pinnedFields) {
+      pinnedCells.push(
+        <GridCellWrapper
+          key={`${field.id}.${rowDataIndex}`}
+          state={state}
+          field={field}
+          columnIndex={columnIndex++}
+          rowIndex={rowIndex}
+          data={data}
+          insertedRow={insertedRow}
+        />
+      );
+    }
+
+    columnIndex += ranges.cols[0];
+    for (const field of fields) {
+      cells.push(
+        <GridCellWrapper
+          key={`${field.id}.${rowDataIndex}`}
+          state={state}
+          field={field}
+          columnIndex={columnIndex++}
+          rowIndex={rowIndex}
+          data={data}
+          insertedRow={insertedRow}
+        />
+      );
+    }
+  }
+
+  return (
+    <GridContent
+      className={cn(inspectorStyles.inspectorTheme)}
+      style={{
+        paddingBottom:
+          state.grid.gridContainerSize.height - state.grid.headerHeight - 40,
+      }}
+      state={state.grid}
+      cells={cells}
+      pinnedCells={pinnedCells}
+    />
+  );
+});
+
+const GridCellWrapper = observer(function GridCellWrapper({
+  state,
+  field,
+  columnIndex,
+  rowIndex,
+  data,
+  insertedRow,
+}: {
+  state: DataInspectorState;
+  field: ObjectField;
+  columnIndex: number;
+  rowIndex: number;
+  data: any;
+  insertedRow: InsertObjectEdit | null;
+}) {
+  const isEmptyCell =
+    field.subtypeName &&
+    data?.__tname__ &&
+    data?.__tname__ !== field.subtypeName;
+
+  return (
+    <div
+      className={cn(gridStyles.cell, {
+        [gridStyles.emptyCell]: isEmptyCell,
+        [gridStyles.lastPinned]: columnIndex === state.pinnedFields.length,
+        [styles.firstCol]: columnIndex === state.pinnedFields.length + 1,
+        [styles.hoveredCell]: state.hoverRowIndex === rowIndex,
+      })}
+      style={{
+        top: rowIndex * 40,
+        left: state.grid.colLefts[columnIndex],
+        width: state.grid._colWidths.get(field.id) ?? DefaultColumnWidth,
+      }}
+      onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
+      onMouseLeave={() => state.setHoverRowIndex(null)}
+    >
+      {!isEmptyCell ? (
+        <GridCell field={field} data={data} insertedRow={insertedRow} />
+      ) : null}
+    </div>
+  );
+});
+
+const ExpandedEndCell = observer(function ExpandedEndCell({
+  state,
+  rowIndex,
+}: {
+  state: DataInspectorState;
+  rowIndex: number;
+}) {
+  return (
+    <div
+      className={cn(gridStyles.cell)}
+      style={{
+        top: rowIndex * 40,
+        left: 0,
+        width: state.grid.gridContentWidth,
+        borderRight: 0,
+      }}
+    />
   );
 });
 
 const inspectorOverrideStyles = {
   uuid: styles.scalar_uuid,
+  str: styles.scalar_str,
 };
 
-function GridCellWrapper({
-  columnIndex,
-  rowIndex,
-  style,
-}: {
-  columnIndex: number;
-  rowIndex: number;
-  style: any;
-}) {
-  const {state} = useDataInspectorState();
-
-  return (
-    <div
-      className={styles.cellWrapper}
-      style={style}
-      onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
-    >
-      <GridCell columnIndex={columnIndex} rowIndex={rowIndex} />
-    </div>
-  );
-}
-
-function renderCellValue(value: any, codec: ICodec): JSX.Element {
+function renderCellValue(
+  value: any,
+  codec: ICodec,
+  nested = false
+): JSX.Element {
   switch (codec.getKind()) {
     case "scalar":
     case "range":
@@ -270,7 +474,7 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
           ? codec.getSubcodecs()[0].getKnownTypeName()
           : undefined,
         false,
-        inspectorOverrideStyles,
+        !nested ? inspectorOverrideStyles : undefined,
         100
       ).body;
     case "set":
@@ -280,7 +484,7 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
           {(value as any[]).map((item, i) => (
             <Fragment key={i}>
               {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[0])}
+              {renderCellValue(item, codec.getSubcodecs()[0], true)}
             </Fragment>
           ))}
           {"}"}
@@ -293,7 +497,7 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
           {(value as any[]).map((item, i) => (
             <Fragment key={i}>
               {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[0])}
+              {renderCellValue(item, codec.getSubcodecs()[0], true)}
             </Fragment>
           ))}
           ]
@@ -306,7 +510,7 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
           {(value as any[]).map((item, i) => (
             <Fragment key={i}>
               {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[i])}
+              {renderCellValue(item, codec.getSubcodecs()[i], true)}
             </Fragment>
           ))}
           )
@@ -323,7 +527,7 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
               {i !== 0 ? ", " : null}
               {name}
               {" := "}
-              {renderCellValue(value[name], subCodecs[i])}
+              {renderCellValue(value[name], subCodecs[i], true)}
             </Fragment>
           ))}
           )
@@ -336,31 +540,16 @@ function renderCellValue(value: any, codec: ICodec): JSX.Element {
 }
 
 const GridCell = observer(function GridCell({
-  columnIndex,
-  rowIndex,
+  field,
+  data,
+  insertedRow,
 }: {
-  columnIndex: number;
-  rowIndex: number;
+  field: ObjectField;
+  data: any;
+  insertedRow: InsertObjectEdit | null;
 }) {
   const {state, edits} = useDataInspectorState();
   const {navigate, currentPath} = useDBRouter();
-  const basePath = currentPath.join("/");
-
-  const rowDataIndex = rowIndex - state.insertedRows.length;
-
-  const isMobile = useIsMobile();
-
-  const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
-
-  if (rowData && rowData.kind !== RowKind.data) {
-    return null;
-  }
-
-  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
-  const field = fields![columnIndex];
-  const insertedRow = !rowData ? state.insertedRows[rowIndex] : null;
-
-  const data = rowData ? state.getData(rowData.index) : insertedRow!.data;
 
   const isDeletedRow = edits.deleteEdits.has(data?.id);
 
@@ -376,18 +565,12 @@ const GridCell = observer(function GridCell({
   const _value =
     cellEditState?.value !== undefined
       ? cellEditState.value.value
-      : data?.[rowData ? field.queryName : field.name] ?? null;
+      : data?.[insertedRow ? field.name : field.queryName] ?? null;
 
   const value = insertedRow && _value ? _value.value : _value;
 
-  const isEmptySubtype =
-    field.subtypeName &&
-    data?.__tname__ &&
-    data?.__tname__ !== field.subtypeName;
-
   if (
     !isDeletedRow &&
-    !isEmptySubtype &&
     field.type === ObjectFieldType.property &&
     edits.activePropertyEdit?.cellId === cellId
   ) {
@@ -400,9 +583,7 @@ const GridCell = observer(function GridCell({
 
   let content: JSX.Element | null = null;
   let selectable = false;
-  if (isEmptySubtype) {
-    content = <span className={styles.emptySubtypeField}>-</span>;
-  } else if (data) {
+  if (data) {
     if (field.secret) {
       content = <span className={styles.emptySet}>secret data hidden</span>;
     } else if (field.type === ObjectFieldType.property) {
@@ -416,19 +597,18 @@ const GridCell = observer(function GridCell({
           </div>
         ) : null;
 
-      if ((!rowData && field.name === "id") || value === null) {
+      if ((insertedRow && field.name === "id") || value === null) {
         content = (
           <>
             <span className={styles.emptySet}>
-              {(!rowData ? field.default ?? field.computedExpr : null) ?? "{}"}
+              {(insertedRow ? field.default ?? field.computedExpr : null) ??
+                "{}"}
             </span>
             {undoEdit}
           </>
         );
       } else {
-        const codec = isMobile
-          ? state.mobileFieldsAndCodecs.codecs?.[columnIndex]
-          : state.dataCodecs?.[columnIndex];
+        const codec = state.dataCodecs?.get(field.queryName);
 
         if (codec) {
           content = (
@@ -478,7 +658,7 @@ const GridCell = observer(function GridCell({
         if (Object.keys(counts).length === 0) {
           content = (
             <span className={styles.emptySet}>
-              {field.required && !insertedRow
+              {field.required && !insertedRow && !linkEditState
                 ? "hidden by access policy"
                 : "{}"}
             </span>
@@ -500,11 +680,9 @@ const GridCell = observer(function GridCell({
   }
 
   const isEditable =
-    !isMobile &&
-    !isEmptySubtype &&
     !field.computedExpr &&
     !state.objectType?.readonly &&
-    (!field.readonly || !rowData) &&
+    (!field.readonly || insertedRow) &&
     data &&
     (field.type === ObjectFieldType.link || field.name !== "id");
 
@@ -516,7 +694,8 @@ const GridCell = observer(function GridCell({
         [styles.isDeleted]:
           isDeletedRow ||
           editedLinkChange?.kind === UpdateLinkChangeKind.Remove ||
-          (!state.parentObject?.isMultiLink &&
+          (!insertedRow &&
+            !state.parentObject?.isMultiLink &&
             !!editedLink &&
             (state.parentObject?.editMode
               ? !!data?.__isLinked
@@ -527,12 +706,14 @@ const GridCell = observer(function GridCell({
           field.type === ObjectFieldType.property,
         [styles.linkCell]: field.type === ObjectFieldType.link,
         [styles.hasEdits]:
-          !isDeletedRow && rowData && (!!cellEditState || !!linkEditState),
+          !isDeletedRow &&
+          !insertedRow &&
+          (!!cellEditState || !!linkEditState),
         [styles.hasErrors]:
           isEditable &&
           ((cellEditState && !cellEditState.value.valid) ||
             (insertedRow && _value && !_value.valid) ||
-            (!rowData &&
+            (insertedRow &&
               isEditable &&
               field.required &&
               !field.hasDefault &&
@@ -542,7 +723,7 @@ const GridCell = observer(function GridCell({
       onClick={() => {
         if (field.type === ObjectFieldType.link && content !== null) {
           state.openNestedView(
-            basePath,
+            currentPath.join("/"),
             navigate,
             data.id,
             data.__tname__,
@@ -559,7 +740,7 @@ const GridCell = observer(function GridCell({
             );
           } else {
             state.openNestedView(
-              basePath,
+              currentPath.join("/"),
               navigate,
               data.id,
               data.__tname__,
@@ -575,158 +756,29 @@ const GridCell = observer(function GridCell({
   );
 });
 
-const FieldHeaders = observer(function FieldHeaders() {
-  const {state} = useDataInspectorState();
-  const isMobile = useIsMobile();
-
-  const fields = isMobile ? state.mobileFieldsAndCodecs.fields : state.fields;
-
-  return (
-    <div
-      className={cn(styles.header, {
-        [styles.hasSubtypeFields]: state.hasSubtypeFields,
-      })}
-    >
-      <div className={styles.headerFieldWrapper}>
-        {[...state.subtypeFieldRanges?.entries()].map(
-          ([subtypeName, {left, width}]) => (
-            <div
-              key={subtypeName}
-              className={styles.subtypeRangeHeader}
-              style={{left, width}}
-            >
-              <div className={styles.subtypeLabel}>{subtypeName}</div>
-            </div>
-          )
-        )}
-        {fields?.map((field, i) => (
-          <FieldHeader
-            key={field.queryName}
-            colIndex={i}
-            field={field}
-            isOmitted={state.omittedLinks.has(field.name)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-});
-
-interface FieldHeaderProps {
-  colIndex: number;
-  field: ObjectField;
-  isOmitted: boolean;
-}
-
-const FieldHeader = observer(function FieldHeader({
-  colIndex,
-  field,
-  isOmitted,
-}: FieldHeaderProps) {
-  const {state} = useDataInspectorState();
-  const fieldWidth = state.fieldWidths[colIndex];
-
-  const resizeHandler = useDragHandler(() => {
-    let initialWidth: number;
-    let initialPos: Position;
-
-    return {
-      onStart(initialMousePos: Position) {
-        initialPos = initialMousePos;
-        initialWidth = state.fieldWidths[colIndex];
-      },
-      onMove(currentMousePos: Position) {
-        const xDelta = currentMousePos.x - initialPos.x;
-        state.setFieldWidth(colIndex, initialWidth + xDelta);
-        state.gridRef?.resetAfterColumnIndex(colIndex);
-      },
-    };
-  }, []);
-
-  const sortDir =
-    state.sortBy?.fieldIndex === colIndex && state.sortBy.direction;
-
-  return (
-    <div className={styles.headerField} style={{width: fieldWidth + "px"}}>
-      {isOmitted ? (
-        <div className={styles.fieldWarning}>
-          <WarningIcon />
-          <div>
-            Cannot fetch link data: target of required link is hidden by access
-            policy
-          </div>
-        </div>
-      ) : null}
-      <div className={styles.fieldTitle}>
-        <div className={styles.fieldName}>
-          {field.name}
-          {field.computedExpr ? <span>:=</span> : null}
-        </div>
-        <div className={styles.fieldTypename}>
-          {field.multi ? "multi " : ""}
-          {field.typename}
-        </div>
-      </div>
-
-      {!field.secret &&
-      field.type === ObjectFieldType.property &&
-      field.name !== "id" ? (
-        <div
-          className={cn(styles.fieldSort, {
-            [styles.fieldSorted]: !!sortDir,
-            [styles.fieldSortAsc]: sortDir === "ASC",
-          })}
-          onClick={() => state.setSortBy(colIndex)}
-        >
-          {sortDir ? <SortedDescIcon /> : <SortIcon />}
-        </div>
-      ) : null}
-
-      <div className={styles.dragHandle} onMouseDown={resizeHandler} />
-    </div>
-  );
-});
-
-const StickyCol = observer(function StickyCol() {
-  const {state} = useDataInspectorState();
-  const [startIndex, endIndex] = state.visibleIndexes;
-
-  return (
-    <div className={styles.stickyCol}>
-      {Array(Math.min(endIndex - startIndex + 1))
-        .fill(0)
-        .map((_, i) => (
-          <StickyRow key={startIndex + i} rowIndex={startIndex + i} />
-        ))}
-    </div>
-  );
-});
-
 interface StickyRowProps {
+  state: DataInspectorState;
   rowIndex: number;
+  rowData: DataRowData | ExpandedRowData | null;
 }
 
-const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
-  const {state} = useDataInspectorState();
-
-  const style = (state.gridRef as any)?._getItemStyle(rowIndex, 0) ?? {};
-
-  const rowDataIndex = rowIndex - state.insertedRows.length;
-  const rowData = rowDataIndex >= 0 ? state.getRowData(rowDataIndex) : null;
-
-  const isMobile = useIsMobile();
+const StickyRow = observer(function StickyRow({
+  state,
+  rowIndex,
+  rowData,
+}: StickyRowProps) {
+  // const isMobile = useIsMobile();
   if (rowData?.kind === RowKind.expanded) {
-    return isMobile ? (
-      <MobileDataInspector rowData={rowData} />
-    ) : (
-      <ExpandedDataInspector rowData={rowData} styleTop={style.top} />
-    );
+    // return isMobile ? (
+    //   <MobileDataInspector rowData={rowData} />
+    // ) : (
+    return <ExpandedDataInspector rowIndex={rowIndex} rowData={rowData} />;
+    // );
   } else {
     return (
       <DataRowIndex
         rowIndex={rowIndex}
         dataIndex={rowData?.index ?? null}
-        styleTop={style.top}
         active={state.hoverRowIndex === rowIndex}
       />
     );
@@ -736,17 +788,15 @@ const StickyRow = observer(function StickyRow({rowIndex}: StickyRowProps) {
 const DataRowIndex = observer(function DataRowIndex({
   rowIndex,
   dataIndex,
-  styleTop,
   active,
 }: {
   rowIndex: number;
   dataIndex: number | null;
-  styleTop: any;
   active: boolean;
 }) {
   const {state, edits} = useDataInspectorState();
 
-  const isMobile = useIsMobile();
+  // const isMobile = useIsMobile();
 
   if (dataIndex !== null && dataIndex >= (state.rowCount ?? 0)) return null;
 
@@ -894,194 +944,218 @@ const DataRowIndex = observer(function DataRowIndex({
   return (
     <>
       <div
-        className={cn(styles.rowIndex, {
+        className={cn(gridStyles.cell, styles.rowIndex, {
+          [gridStyles.lastPinned]: state.pinnedFields.length === 0,
           [styles.active]: active,
-          [styles.hasLinkEdit]: hasLinkEdit || dataIndex === null,
+          [styles.hasLinkEdit]: hasLinkEdit,
+          [styles.isNewRow]: dataIndex === null,
+          [styles.isDeletedRow]: isDeletedRow,
+          [styles.unlinked]:
+            editedLinkChange?.kind === UpdateLinkChangeKind.Remove ||
+            (dataIndex !== null &&
+              !state.parentObject?.isMultiLink &&
+              !!editedLink &&
+              (state.parentObject?.editMode
+                ? !!data?.__isLinked
+                : !editedLinkChange)),
         })}
-        style={{top: styleTop}}
+        style={{
+          top: rowIndex * 40,
+          width: state.grid._colWidths.get("_indexCol"),
+        }}
         onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
+        onMouseLeave={() => state.setHoverRowIndex(null)}
       >
         <div className={styles.rowActions}>{rowAction}</div>
-        <div className={styles.cell}>
+        <div className={styles.index}>
           {dataIndex !== null ? dataIndex + 1 : null}
         </div>
         {dataIndex !== null ? (
-          isMobile ? (
-            <button
-              className={styles.expandRowMobile}
-              onClick={() => {
-                state.toggleRowExpanded(dataIndex);
-              }}
-            >
-              <TopRightIcon />
-            </button>
-          ) : (
-            <div
-              className={cn(styles.expandRow, {
-                [styles.isExpanded]:
-                  state.expandedDataRowIndexes.has(dataIndex),
-                [styles.isHidden]: isDeletedRow,
-              })}
-              onClick={() => {
-                state.toggleRowExpanded(dataIndex);
-                state.gridRef?.resetAfterRowIndex(rowIndex);
-              }}
-            >
-              <ChevronDownIcon />
-            </div>
-          )
-        ) : null}
+          // isMobile ? (
+          //   <button
+          //     className={styles.expandRowMobile}
+          //     onClick={() => {
+          //       state.toggleRowExpanded(dataIndex);
+          //     }}
+          //   >
+          //     <TopRightIcon />
+          //   </button>
+          // ) : (
+          <div
+            className={cn(styles.expandRow, {
+              [styles.isExpanded]: state.expandedDataRowIndexes.has(dataIndex),
+              [styles.isHidden]: isDeletedRow,
+            })}
+            onClick={() => {
+              state.toggleRowExpanded(dataIndex);
+            }}
+          >
+            <ChevronDownIcon />
+          </div>
+        ) : // )
+        null}
       </div>
-      <div
-        className={cn(styles.rowHoverBg, {
-          [styles.active]: active,
-        })}
-        style={{top: styleTop}}
-        onMouseEnter={() => state.setHoverRowIndex(rowIndex)}
-      />
-      {isDeletedRow ? (
-        <div
-          className={styles.deletedRowStrikethrough}
-          style={{top: styleTop}}
-        />
-      ) : null}
     </>
   );
 });
 
 const ExpandedDataInspector = observer(function ExpandedDataInspector({
+  rowIndex,
   rowData,
-  styleTop,
 }: {
+  rowIndex: number;
   rowData: ExpandedRowData;
-  styleTop: any;
 }) {
   const {state} = useDataInspectorState();
   const {navigate, currentPath} = useDBRouter();
   const basePath = currentPath.join("/");
-  const item = rowData.state.getItems()?.[rowData.index];
 
   return (
-    <div className={styles.inspectorRow} style={{top: styleTop}}>
-      {item ? (
-        <>
-          <InspectorRow
-            item={item}
-            state={rowData.state.state}
-            isExpanded={!!rowData.state.state.expanded?.has(item.id)}
-            toggleExpanded={() => {
-              rowData.state.toggleExpanded(rowData.index);
+    <>
+      {rowData.indexes.map((index) => {
+        const item = rowData.state.getItems()?.[index];
+        const lastItem = index === rowData.state.itemsLength - 1;
+        return (
+          <div
+            key={`inspectorRow-${rowData.dataRowIndex}-${index}`}
+            className={cn(styles.inspectorRow, {[styles.lastItem]: lastItem})}
+            style={{
+              top:
+                (rowIndex - rowData.dataRowOffset) * 40 +
+                (index ? 6 : 0) +
+                index * 28,
+              paddingLeft: state.indexColWidth - 16,
+              paddingTop: index ? 0 : 6,
+              paddingBottom: lastItem
+                ? rowData.state.rowsCount * 40 -
+                  (rowData.state.itemsLength * 28 + 7)
+                : 0,
             }}
-            disableCopy
-          />
-          {item.level === 2 &&
-          rowData.state.linkFields.has(item.fieldName as string) ? (
-            <div
-              className={styles.viewInTableButton}
-              onClick={() =>
-                state.openNestedView(
-                  basePath,
-                  navigate,
-                  rowData.state.objectId,
-                  rowData.state.objectTypeName,
-                  state.fields!.find((field) => field.name === item.fieldName)!
-                )
-              }
-            >
-              View in Table
-            </div>
-          ) : null}
-        </>
-      ) : (
-        <div>Loading...</div>
-      )}
-    </div>
-  );
-});
-
-interface MobileDataInspectorProps {
-  rowData: ExpandedRowData;
-}
-
-export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
-  const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
-
-  const {state} = useDataInspectorState();
-  const fields =
-    state.allFields?.fields.filter(
-      (field) =>
-        !field.subtypeName ||
-        field.subtypeName === rowData.state.objectTypeName
-    ) || [];
-  const codecs =
-    (item?.codec as ObjectCodec)?.getFields().reduce((codecs, {name}, i) => {
-      codecs[name] = item?.codec.getSubcodecs()[i]!;
-      return codecs;
-    }, {} as {[name: string]: ICodec}) ?? {};
-
-  const {navigate, currentPath} = useDBRouter();
-  const basePath = currentPath.join("/");
-
-  const closeExtendedView = () => {
-    state.toggleRowExpanded(rowData.dataRowIndex);
-    state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
-  };
-
-  return (
-    <div className={styles.mobileInspectorWindow}>
-      <div className={styles.fieldsWrapper}>
-        {item &&
-          fields.map((field) => {
-            const isLink = field.type === ObjectFieldType.link;
-            const data = item.data;
-            const value = isLink
-              ? Number(data[`__count_${field.name}`])
-              : data[field.name];
-
-            const codec = codecs[field.name];
-
-            return (
-              <div className={styles.field} key={field.name}>
-                <div className={styles.fieldHeader}>
-                  <span className={styles.name}>{field.name}</span>
-                  <span className={styles.type}>
-                    {`${field.multi ? "multi" : ""} ${field.typename}`}
-                  </span>
-                </div>
-                {isLink ? (
-                  <button
-                    className={styles.linkObjName}
-                    onClick={() => {
+          >
+            {item ? (
+              <>
+                <InspectorRow
+                  item={item}
+                  state={rowData.state.state}
+                  isExpanded={!!rowData.state.state.expanded?.has(item.id)}
+                  toggleExpanded={() => {
+                    rowData.state.toggleExpanded(index);
+                  }}
+                  disableCopy
+                />
+                {item.level === 2 &&
+                rowData.state.linkFields.has(item.fieldName as string) ? (
+                  <div
+                    className={styles.viewInTableButton}
+                    onClick={() =>
                       state.openNestedView(
                         basePath,
                         navigate,
-                        data.id,
-                        data.__tname__,
-                        field
-                      );
-                    }}
+                        rowData.state.objectId,
+                        rowData.state.objectTypeName,
+                        state.fields!.find(
+                          (field) => field.name === item.fieldName
+                        )!
+                      )
+                    }
                   >
-                    {field.typename.split("::").pop()}
-                    <span>{value}</span>
-                  </button>
-                ) : codec ? (
-                  renderCellValue(value, codec)
-                ) : (
-                  <p className={styles.fieldValue}>{value}</p>
-                )}
-              </div>
-            );
-          })}
-      </div>
-      <div className={styles.footer}>
-        <button onClick={closeExtendedView} className={styles.footerBtn}>
-          <BackIcon />
-        </button>
-
-        <p className={styles.title}>
-          {item ? item.data.__tname__ : `loading...`}
-        </p>
-      </div>
-    </div>
+                    View in Table
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div>Loading...</div>
+            )}
+          </div>
+        );
+      })}
+    </>
   );
-};
+});
+
+// interface MobileDataInspectorProps {
+//   rowData: ExpandedRowData;
+// }
+
+// export const MobileDataInspector = ({rowData}: MobileDataInspectorProps) => {
+//   const item = rowData.state.getItems()?.[0] as ObjectLikeItem | undefined;
+
+//   const {state} = useDataInspectorState();
+//   const fields =
+//     state.allFields?.fields.filter(
+//       (field) =>
+//         !field.subtypeName ||
+//         field.subtypeName === rowData.state.objectTypeName
+//     ) || [];
+//   const codecs =
+//     (item?.codec as ObjectCodec)?.getFields().reduce((codecs, {name}, i) => {
+//       codecs[name] = item?.codec.getSubcodecs()[i]!;
+//       return codecs;
+//     }, {} as {[name: string]: ICodec}) ?? {};
+
+//   const {navigate, currentPath} = useDBRouter();
+//   const basePath = currentPath.join("/");
+
+//   const closeExtendedView = () => {
+//     state.toggleRowExpanded(rowData.dataRowIndex);
+//     state.gridRef?.resetAfterRowIndex(rowData.dataRowIndex);
+//   };
+
+//   return (
+//     <div className={styles.mobileInspectorWindow}>
+//       <div className={styles.fieldsWrapper}>
+//         {item &&
+//           fields.map((field) => {
+//             const isLink = field.type === ObjectFieldType.link;
+//             const data = item.data;
+//             const value = isLink
+//               ? Number(data[`__count_${field.name}`])
+//               : data[field.name];
+
+//             const codec = codecs[field.name];
+
+//             return (
+//               <div className={styles.field} key={field.name}>
+//                 <div className={styles.fieldHeader}>
+//                   <span className={styles.name}>{field.name}</span>
+//                   <span className={styles.type}>
+//                     {`${field.multi ? "multi" : ""} ${field.typename}`}
+//                   </span>
+//                 </div>
+//                 {isLink ? (
+//                   <button
+//                     className={styles.linkObjName}
+//                     onClick={() => {
+//                       state.openNestedView(
+//                         basePath,
+//                         navigate,
+//                         data.id,
+//                         data.__tname__,
+//                         field
+//                       );
+//                     }}
+//                   >
+//                     {field.typename.split("::").pop()}
+//                     <span>{value}</span>
+//                   </button>
+//                 ) : codec ? (
+//                   renderCellValue(value, codec)
+//                 ) : (
+//                   <p className={styles.fieldValue}>{value}</p>
+//                 )}
+//               </div>
+//             );
+//           })}
+//       </div>
+//       <div className={styles.footer}>
+//         <button onClick={closeExtendedView} className={styles.footerBtn}>
+//           <BackIcon />
+//         </button>
+
+//         <p className={styles.title}>
+//           {item ? item.data.__tname__ : `loading...`}
+//         </p>
+//       </div>
+//     </div>
+//   );
+// };

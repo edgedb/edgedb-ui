@@ -1,6 +1,7 @@
-export function ChevronDownIcon() {
+export function ChevronDownIcon({className}: {className?: string}) {
   return (
     <svg
+      className={className}
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -598,6 +599,104 @@ export function TransferIcon() {
     >
       <path
         d="M20 16H10M20 16L16.5 12.5M20 16L16.5 19.5M4 7.99999L14 8M4 7.99999L7.5 11.5M4 7.99999L7.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function PinIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12.5 21.5V16M12.5 16H17.8461C18.455 16 18.9342 15.4561 18.7693 14.87C18.3636 13.428 17.5831 12.5602 16 11.5L15.5 6C16.5032 5.32712 17.0172 4.80334 17.2807 4.07536C17.4814 3.52065 16.9897 3 16.3998 3H8.60023C8.01032 3 7.51858 3.52065 7.71932 4.07536C7.98276 4.80334 8.49678 5.32712 9.5 6L9 11.5C7.41693 12.5602 6.63641 13.428 6.23068 14.87C6.06578 15.4561 6.54504 16 7.1539 16H12.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function TiltedPinIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4.51472 19.6777L8.40381 15.7886M8.40381 15.7886L12.1841 19.5688C12.6146 19.9994 13.3381 19.9537 13.6359 19.4226C14.3687 18.1161 14.4304 16.9506 14.0607 15.0815L17.5962 10.8388C18.7814 11.0724 19.5152 11.0655 20.2163 10.737C20.7504 10.4867 20.7709 9.77088 20.3537 9.35375L14.8386 3.83864C14.4215 3.42151 13.7056 3.44196 13.4553 3.97614C13.1269 4.67717 13.12 5.41101 13.3536 6.59619L9.11091 10.1317C7.24182 9.76203 6.07631 9.82371 4.76976 10.5565C4.23872 10.8543 4.19302 11.5778 4.62354 12.0083L8.40381 15.7886Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function DragHandleIcon() {
+  return (
+    <svg
+      width="16"
+      height="24"
+      viewBox="0 0 16 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M7 7C7 7.55228 6.55228 8 6 8C5.44772 8 5 7.55228 5 7C5 6.44772 5.44772 6 6 6C6.55228 6 7 6.44772 7 7Z"
+        fill="currentColor"
+      />
+      <path
+        d="M7 12C7 12.5523 6.55228 13 6 13C5.44772 13 5 12.5523 5 12C5 11.4477 5.44772 11 6 11C6.55228 11 7 11.4477 7 12Z"
+        fill="currentColor"
+      />
+      <path
+        d="M7 17C7 17.5523 6.55228 18 6 18C5.44772 18 5 17.5523 5 17C5 16.4477 5.44772 16 6 16C6.55228 16 7 16.4477 7 17Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 7C12 7.55228 11.5523 8 11 8C10.4477 8 10 7.55228 10 7C10 6.44772 10.4477 6 11 6C11.5523 6 12 6.44772 12 7Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 12C12 12.5523 11.5523 13 11 13C10.4477 13 10 12.5523 10 12C10 11.4477 10.4477 11 11 11C11.5523 11 12 11.4477 12 12Z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 17C12 17.5523 11.5523 18 11 18C10.4477 18 10 17.5523 10 17C10 16.4477 10.4477 16 11 16C11.5523 16 12 16.4477 12 17Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+export function FilterIcon({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M19 6H5L10.6 12.622V17.2L13.4 18.6V12.622L19 6Z"
         stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"

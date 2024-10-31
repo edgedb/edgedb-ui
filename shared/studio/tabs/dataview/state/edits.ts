@@ -57,7 +57,7 @@ interface UpdateLinkEdit {
   inserts: Set<InsertObjectEdit>;
 }
 
-interface InsertObjectEdit {
+export interface InsertObjectEdit {
   kind: EditKind.InsertObject;
   id: number;
   objectTypeName: string;

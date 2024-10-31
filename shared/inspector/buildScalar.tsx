@@ -165,7 +165,7 @@ export function renderValue(
         : strToString(value);
       return {
         body: (
-          <span className={styles.scalar_string}>
+          <span className={cn(styles.scalar_string, overrideStyles.str)}>
             {str}
             {implicitLength && value.length === implicitLength ? "…" : ""}
           </span>
