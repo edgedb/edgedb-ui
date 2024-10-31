@@ -11,6 +11,7 @@
 
   @include isMobile {
     flex-direction: column;
+    border-radius: 0;
   }
 
   @include darkTheme {

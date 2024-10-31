@@ -48,7 +48,9 @@ export const AuthAdmin = observer(function AuthAdmin() {
               className={styles.tabs}
               tabs={[
                 {id: "config", label: "Config"},
-                {id: "webhooks", label: "Webhooks"},
+                ...(state.hasWebhooksSchema
+                  ? [{id: "webhooks", label: "Webhooks"} as const]
+                  : []),
                 {id: "providers", label: "Providers / UI"},
                 {id: "smtp", label: "SMTP"},
               ]}
