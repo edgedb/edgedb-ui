@@ -30,20 +30,16 @@ import {
 
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {SortIcon, SortedDescIcon, TopRightIcon} from "./icons";
+import {SortIcon, SortedDescIcon} from "./icons";
 import {
   DeleteIcon,
   UndeleteIcon,
   UndoChangesIcon,
   WarningIcon,
-  BackIcon,
 } from "../../icons";
 import {PrimitiveType} from "../../components/dataEditor";
 import {DataEditor} from "../../components/dataEditor/editor";
 import {renderInvalidEditorValue} from "../../components/dataEditor/utils";
-import {useIsMobile} from "@edgedb/common/hooks/useMobile";
-import {ObjectLikeItem} from "@edgedb/inspector/buildItem";
-import {ObjectCodec} from "edgedb/dist/codecs/object";
 
 import {ChevronDownIcon} from "@edgedb/common/newui";
 

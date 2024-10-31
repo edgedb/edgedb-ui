@@ -48,6 +48,8 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
 
   const {params, statements} = state.edits.generateStatements();
 
+  const closeModal = () => openModal(null, true);
+
   const hasErrors = statements.some((statement) => statement.error);
 
   return (
@@ -57,14 +59,14 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
         <Button
           kind="primary"
           loading={commiting}
-          // disabled={hasErrors}
+          disabled={hasErrors}
           onClick={async () => {
             setCommitting(true);
             try {
               await state.edits.commitPendingEdits();
               state.edits.clearAllPendingEdits();
               state.refreshAllViews();
-              openModal(null);
+              closeModal();
             } catch (e: any) {
               setCommitError(extractErrorDetails(e));
             }
@@ -78,13 +80,13 @@ export const ReviewEditsModal = observer(function ReviewEditsModal({
         <ConfirmButton
           onClick={() => {
             state.edits.clearAllPendingEdits();
-            openModal(null);
+            closeModal();
           }}
         >
           Clear all changes
         </ConfirmButton>
       }
-      onClose={() => openModal(null)}
+      onClose={closeModal}
       formError={
         commitError ? (
           <>

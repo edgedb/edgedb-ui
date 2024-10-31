@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from "react";
-import {action, computed, makeObservable, observable, runInAction} from "mobx";
+import {action, computed, makeObservable, observable} from "mobx";
 import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";

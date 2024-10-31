@@ -34,7 +34,7 @@ import {ReviewEditsModal} from "./reviewEditsModal";
 
 import {ObjectTypeSelect} from "../../components/objectTypeSelect";
 
-import {ApplyFilterIcon, BackArrowIcon, ClearFilterIcon} from "./icons";
+import {BackArrowIcon} from "./icons";
 import {BackIcon, TabDataExplorerIcon, WarningIcon} from "../../icons";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {CloseButton} from "@edgedb/common/ui/mobile";
@@ -211,7 +211,7 @@ const DataInspectorView = observer(function DataInspectorView({
                 kind="primary"
                 className={styles.reviewChanges}
                 onClick={() =>
-                  openModal(<ReviewEditsModal state={dataviewState} />)
+                  openModal(<ReviewEditsModal state={dataviewState} />, true)
                 }
               >
                 Review Changes

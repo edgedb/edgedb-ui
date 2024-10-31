@@ -1,4 +1,4 @@
-import {ICodec, ScalarCodec} from "edgedb/dist/codecs/ifaces";
+import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 import {SetCodec} from "edgedb/dist/codecs/set";
 import {DataGridState} from "../dataGrid/state";
