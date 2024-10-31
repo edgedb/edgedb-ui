@@ -1,3 +1,4 @@
+import {promise} from "selenium-webdriver";
 import {
   ByUIClass,
   goToPage,
@@ -13,8 +14,12 @@ describe("dataViewer:", () => {
       await goToPage("_test/data/default::Account");
 
       // wait until schema and data loaded
-      await driver.wait(
-        until.elementLocated(ByUIClass("dataInspector_cellWrapper"))
+      await waitUntilElementsContentHasChanged(
+        await driver.wait(
+          until.elementLocated(ByUIClass("dataview_rowCount"))
+        ),
+        "loading...",
+        2000
       );
     });
 
@@ -24,7 +29,18 @@ describe("dataViewer:", () => {
       );
       const initialItemsCount = parseInt(await itemsCountEl.getText(), 10);
       // click insert button
-      await driver.findElement(ByUIClass("dataview_headerButton")).click();
+      await driver
+        .findElement(() =>
+          promise.filter(
+            driver.findElements(
+              ByUIClass("dataview_headerButtons", "button_button")
+            ),
+            async (button) =>
+              (await button.getText()).toLowerCase().includes("insert")
+          )
+        )
+        .click();
+
       // enter new username
       const usernameField = await driver.findElement(
         By.css(
@@ -40,7 +56,9 @@ describe("dataViewer:", () => {
         .sendKeys("Test Account", Key.chord(cmdCtrl, Key.ENTER));
       // apply changes
       await driver.findElement(ByUIClass("dataview_reviewChanges")).click();
-      await driver.findElement(ByUIClass("editsModal_greenButton")).click();
+      await driver
+        .findElement(ByUIClass("modal_modal", "button_primary"))
+        .click();
       // wait for data refresh
       await waitUntilElementNotLocated(ByUIClass("modal_modalOverlay"));
       const newItemsCount = parseInt(await itemsCountEl.getText(), 10);
@@ -71,7 +89,9 @@ describe("dataViewer:", () => {
 
       // apply changes
       await driver.findElement(ByUIClass("dataview_reviewChanges")).click();
-      await driver.findElement(ByUIClass("editsModal_greenButton")).click();
+      await driver
+        .findElement(ByUIClass("modal_modal", "button_primary"))
+        .click();
       // wait for data refresh
       await waitUntilElementNotLocated(ByUIClass("modal_modalOverlay"));
 
@@ -96,8 +116,12 @@ describe("dataViewer:", () => {
       await goToPage("_test/data/default::Movie");
 
       // wait until schema and data loaded
-      await driver.wait(
-        until.elementLocated(ByUIClass("dataInspector_cellWrapper"))
+      await waitUntilElementsContentHasChanged(
+        await driver.wait(
+          until.elementLocated(ByUIClass("dataview_rowCount"))
+        ),
+        "loading...",
+        2000
       );
     });
 
