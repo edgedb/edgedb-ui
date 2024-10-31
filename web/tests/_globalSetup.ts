@@ -1,5 +1,5 @@
-import http from "http";
-import {ChildProcess, spawn} from "child_process";
+import * as http from "node:http";
+import {ChildProcess, spawn} from "node:child_process";
 
 import createClient, {AccessError, UnknownDatabaseError} from "edgedb";
 import Event from "edgedb/dist/primitives/event";
@@ -55,7 +55,7 @@ async function waitUntilAlive(
 
 async function checkUIServerAlive() {
   return new Promise<boolean>((resolve) => {
-    const req = http.get("http://127.0.0.1:3002/", (res) => {
+    const req = http.get("http://localhost:3002/ui", (res) => {
       if (res.statusCode === 200) {
         resolve(true);
       } else {
@@ -133,7 +133,6 @@ export default async function globalSetup() {
   } else {
     console.log("Starting UI server...");
     uiServerProc = spawn("yarn", ["dev"], {
-      // @ts-ignore
       env: {...process.env, NODE_ENV: undefined},
     }) as ChildProcess;
     uiServerProc.once("close", (code) => {
@@ -192,9 +191,7 @@ export default async function globalSetup() {
   }
   console.log("... Done");
 
-  // @ts-ignore
   globalThis.uiServerProc = uiServerProc;
-  // @ts-ignore
   globalThis.edgedbServerProc = edbServerProc;
 
   console.log("\n");

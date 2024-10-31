@@ -11,7 +11,7 @@ export const Logo = ({className}: {className?: string}) => {
   return <LogoLocal className={cn(className, styles.logo)} />;
 };
 
-export default observer(function Header() {
+export const Header = observer(function Header() {
   return (
     <div className={styles.header}>
       <Logo />

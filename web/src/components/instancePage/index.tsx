@@ -13,7 +13,7 @@ import {useAppState} from "../../state/providers";
 
 import styles from "./instancePage.module.scss";
 
-export default observer(function InstancePage() {
+export const InstancePage = observer(function InstancePage() {
   const instanceState = useAppState().instanceState;
   // const navigate = useNavigate();
   // const {openModal} = useModal();

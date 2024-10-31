@@ -28,10 +28,10 @@ jobs:
         run: |
           yarn
 
-      - name: Lint
+      - name: Lint and typecheck
         working-directory: web
         run: |
-          yarn lint
+          yarn lint && yarn typecheck
 
       - name: Run build
         working-directory: web

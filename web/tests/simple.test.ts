@@ -1,7 +1,7 @@
 import {ByUIClass, client, goToPage} from "./_utils";
 
 test("select version query", async () => {
-  await goToPage("edgedb/editor");
+  await goToPage("main/editor");
 
   const editor = await driver.wait(
     until.elementLocated(By.className("cm-content"))

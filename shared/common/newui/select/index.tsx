@@ -8,7 +8,7 @@ import styles from "./select.module.scss";
 
 export type SelectProps<T = any> = _SelectProps<T> & {label?: string};
 
-export function Select<T>({className, label, ...props}: SelectProps) {
+export function Select<T>({className, label, ...props}: SelectProps<T>) {
   if (label != null) {
     return (
       <label className={cn(styles.selectField, className)}>

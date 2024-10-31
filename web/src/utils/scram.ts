@@ -1,6 +1,6 @@
-// @ts-ignore
+// @ts-expect-error No types available
 import * as SHA256 from "hash.js/lib/hash/sha/256";
-// @ts-ignore
+// @ts-expect-error No types available
 import * as Hmac from "hash.js/lib/hash/hmac";
 
 import {ProtocolError} from "edgedb";

@@ -10,10 +10,10 @@ import {useAppState} from "../../state/providers";
 import styles from "./main.module.scss";
 import headerNavStyles from "@edgedb/studio/components/headerNav/headerNav.module.scss";
 
-import InstancePage from "../instancePage";
-import DatabasePage from "../databasePage";
+import {InstancePage} from "../instancePage";
+import {DatabasePage} from "../databasePage";
 
-export default observer(function Main() {
+const Main = observer(function Main() {
   const appState = useAppState();
   const match = useMatch(":databaseName/*");
 
@@ -53,3 +53,5 @@ export default observer(function Main() {
     </>
   );
 });
+
+export default Main;

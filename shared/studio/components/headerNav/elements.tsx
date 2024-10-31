@@ -80,7 +80,7 @@ export interface HeaderNavColProps<LinkProps> {
       onMouseEnter?: () => void;
     }> &
       LinkProps
-  ) => JSX.Element;
+  ) => JSX.Element | null;
   showCursor?: boolean;
   closeDropdown: () => void;
   itemGroups: ({

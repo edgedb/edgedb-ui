@@ -11,9 +11,9 @@
     "genMeta": "node genMeta.js"
   },
   "dependencies": {
-    "@lezer/highlight": "^0.16.0"
+    "@lezer/highlight": "^1.2.0"
   },
   "devDependencies": {
-    "@lezer/generator": "^0.16.0"
+    "@lezer/generator": "^1.7.0"
   }
 }

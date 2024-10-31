@@ -1,4 +1,4 @@
-import {ChildProcess} from "child_process";
+import {ChildProcess} from "node:child_process";
 
 function killProcess(proc: ChildProcess, signal?: number | NodeJS.Signals) {
   return new Promise<void>((resolve) => {
@@ -12,7 +12,6 @@ function killProcess(proc: ChildProcess, signal?: number | NodeJS.Signals) {
 }
 
 export default async function globalTeardown() {
-  // @ts-ignore
   const uiServerProc: ChildProcess = globalThis.uiServerProc;
 
   const waits: Promise<void>[] = [];
@@ -24,7 +23,6 @@ export default async function globalTeardown() {
     );
   }
 
-  // @ts-ignore
   const edbServerProc: ChildProcess = globalThis.edgedbServerProc;
 
   if (edbServerProc) {

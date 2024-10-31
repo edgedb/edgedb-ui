@@ -1,7 +1,7 @@
-const NodeEnvironment = require("jest-environment-node").TestEnvironment;
+import {TestEnvironment as NodeEnvironment} from "jest-environment-node";
 
-const {Builder, By, until, Key, error} = require("selenium-webdriver");
-const chrome = require("selenium-webdriver/chrome");
+import {Builder, By, until, Key, error} from "selenium-webdriver";
+import chrome from "selenium-webdriver/chrome.js";
 
 let opts = new chrome.Options();
 
@@ -42,4 +42,4 @@ class SeleniumEnvironment extends NodeEnvironment {
   }
 }
 
-module.exports = SeleniumEnvironment;
+export default SeleniumEnvironment;

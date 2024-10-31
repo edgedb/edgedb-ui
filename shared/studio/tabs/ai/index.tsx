@@ -1,6 +1,5 @@
 import {useEffect, useLayoutEffect, useState} from "react";
 import {Observer, observer} from "mobx-react-lite";
-import "@fontsource-variable/roboto-flex";
 
 import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";

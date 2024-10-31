@@ -4,10 +4,8 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import "./fonts/include.scss";
 import styles from "./app.module.scss";
 
-// @ts-expect-error
-import "@fontsource-variable/roboto-flex";
-// @ts-expect-error
-import "@fontsource-variable/roboto-mono";
+import "@fontsource-variable/roboto-flex/index.css";
+import "@fontsource-variable/roboto-mono/index.css";
 
 import appState from "./state/store";
 import {appContext} from "./state/providers";
@@ -18,7 +16,7 @@ import {ModalProvider} from "@edgedb/common/hooks/useModal";
 import {HeaderNavProvider} from "@edgedb/studio/components/headerNav";
 import {GlobalTooltipsProvider} from "@edgedb/common/hooks/useTooltips";
 
-import Header from "./components/header";
+import {Header} from "./components/header";
 import Main from "./components/main";
 import LoginPage from "./components/loginPage";
 
