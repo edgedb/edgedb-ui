@@ -27,7 +27,9 @@ describe("REPL:", () => {
       ).getAttribute("innerText")
     ).toBe("_test>");
     expect(
-      await (await response.findElement(ByUIClass("repl_code"))).getText()
+      await (
+        await response.findElement(ByUIClass("repl_code"))
+      ).getAttribute("innerText")
     ).toBe("\\help");
 
     await response.findElement(ByUIClass("repl_historyTime"));
