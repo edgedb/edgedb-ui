@@ -3,6 +3,7 @@ import {
   Select as _Select,
   SelectProps as _SelectProps,
 } from "@edgedb/common/ui/select";
+export type {SelectItem, SelectItems} from "@edgedb/common/ui/select";
 
 import styles from "./select.module.scss";
 

@@ -2,7 +2,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./button.module.scss";
 import Spinner from "../../ui/spinner";
-import {PropsWithChildren} from "react";
+import {CSSProperties, PropsWithChildren, useEffect, useState} from "react";
 
 interface _BaseButtonProps {
   className?: string;
@@ -12,6 +12,7 @@ interface _BaseButtonProps {
   rightIcon?: JSX.Element;
   disabled?: boolean;
   loading?: boolean;
+  style?: CSSProperties;
 }
 
 export interface ButtonProps extends _BaseButtonProps {
@@ -105,5 +106,33 @@ export function LinkButton({
       <span>{children}</span>
       {rightIcon}
     </a>
+  );
+}
+
+export function ConfirmButton({onClick, children, ...props}: ButtonProps) {
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (confirming) {
+      const timer = setTimeout(() => setConfirming(false), 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [confirming]);
+
+  return (
+    <Button
+      onClick={() => {
+        if (confirming) {
+          setConfirming(false);
+          onClick?.();
+        } else {
+          setConfirming(true);
+        }
+      }}
+      {...props}
+    >
+      {confirming ? "Confirm?" : children}
+    </Button>
   );
 }

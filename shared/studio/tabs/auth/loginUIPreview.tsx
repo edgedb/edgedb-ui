@@ -6,6 +6,7 @@ import {
   AuthProviderData,
   DraftAppConfig,
   OAuthProviderData,
+  OpenIDProviderData,
   _providersInfo,
 } from "./state";
 
@@ -41,7 +42,7 @@ export function LoginUIPreview({
   let hasPasswordProvider = false,
     hasWebAuthnProvider = false,
     hasMagicLinkProvider = false;
-  const oauthProviders: OAuthProviderData[] = [];
+  const oauthProviders: (OAuthProviderData | OpenIDProviderData)[] = [];
   for (const provider of providers) {
     switch (provider._typename) {
       case "ext::auth::EmailPasswordProviderConfig":
@@ -61,16 +62,22 @@ export function LoginUIPreview({
   const hasEmailFactor =
     hasPasswordProvider || hasWebAuthnProvider || hasMagicLinkProvider;
 
-  const oauthButtons = providers
-    .filter((provider) => _providersInfo[provider._typename].kind === "OAuth")
-    .map((provider) => (
-      <a key={provider.name}>
-        {_providersInfo[provider._typename].icon}
-        <span>
-          Sign in with {_providersInfo[provider._typename].displayName}
-        </span>
-      </a>
-    ));
+  const oauthButtons = oauthProviders.map((provider) => (
+    <a key={provider.name}>
+      {provider._typename === "ext::auth::OpenIDConnectProvider" &&
+      provider.logo_url ? (
+        <img src={provider.logo_url} />
+      ) : (
+        _providersInfo[provider._typename].icon
+      )}
+      <span>
+        Sign in with{" "}
+        {provider._typename === "ext::auth::OpenIDConnectProvider"
+          ? provider.display_name
+          : _providersInfo[provider._typename].displayName}
+      </span>
+    </a>
+  ));
 
   let extraPadding = 0;
   let emailFactorForm = (

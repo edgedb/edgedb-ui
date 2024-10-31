@@ -43,6 +43,14 @@
     pointer-events: none;
   }
 
+  &.readonly {
+    pointer-events: none;
+
+    .check {
+      opacity: 0.5;
+    }
+  }
+
   @include darkTheme {
     color: #ccc;
 

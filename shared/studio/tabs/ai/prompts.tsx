@@ -4,6 +4,7 @@ import {observer} from "mobx-react-lite";
 import cn from "@edgedb/common/utils/classNames";
 import {
   Button,
+  ConfirmButton,
   ChevronDownIcon,
   InfoIcon,
   InfoTooltip,
@@ -16,7 +17,6 @@ import {AIAdminState, AIPromptDraft, PromptChatParticipantRole} from "./state";
 
 import textStyles from "@edgedb/common/newui/textInput/textInput.module.scss";
 import styles from "./aiAdmin.module.scss";
-import {ConfirmButton} from ".";
 
 export const PromptsTab = observer(function PromptTab() {
   const state = useTabState(AIAdminState);
