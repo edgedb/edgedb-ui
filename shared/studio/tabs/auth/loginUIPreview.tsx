@@ -1,5 +1,4 @@
 import {useEffect, useRef, useState} from "react";
-import "@fontsource-variable/roboto-flex";
 
 import cn from "@edgedb/common/utils/classNames";
 

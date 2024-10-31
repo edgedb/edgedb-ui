@@ -1,14 +1,11 @@
-import type {WebDriver} from "selenium-webdriver";
+import * as selenium from "selenium-webdriver";
 
 declare global {
-  const driver: WebDriver;
-  export {driver};
+  const driver: selenium.WebDriver;
 
-  export {
-    until,
-    By,
-    Key,
-    Condition,
-    error as SeleniumError,
-  } from "selenium-webdriver";
+  const until: typeof selenium.until;
+  const By: typeof selenium.By;
+  const Key: typeof selenium.Key;
+  const Condition: typeof selenium.Condition;
+  const SeleniumError: typeof selenium.error;
 }

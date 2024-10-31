@@ -1,12 +1,12 @@
-const NodeEnvironment = require("jest-environment-node").TestEnvironment;
+import {TestEnvironment as NodeEnvironment} from "jest-environment-node";
 
-const {Builder, By, until, Key, error} = require("selenium-webdriver");
-const chrome = require("selenium-webdriver/chrome");
+import {Builder, Browser, By, until, Key, error} from "selenium-webdriver";
+import chrome from "selenium-webdriver/chrome.js";
 
 let opts = new chrome.Options();
 
 if (process.env["CI"] || !process.argv.slice(2).includes("--no-headless")) {
-  opts = opts.headless();
+  opts.addArguments("--headless=new");
 }
 
 class SeleniumEnvironment extends NodeEnvironment {
@@ -14,7 +14,7 @@ class SeleniumEnvironment extends NodeEnvironment {
     await super.setup();
 
     const driver = await new Builder()
-      .forBrowser("chrome")
+      .forBrowser(Browser.CHROME)
       .setChromeOptions(opts)
       .build();
 
@@ -42,4 +42,4 @@ class SeleniumEnvironment extends NodeEnvironment {
   }
 }
 
-module.exports = SeleniumEnvironment;
+export default SeleniumEnvironment;

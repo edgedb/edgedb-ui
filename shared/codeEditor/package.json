@@ -4,16 +4,15 @@
   "version": "0.0.0",
   "license": "UNLICENSED",
   "peerDependencies": {
-    "@types/react": "^17.0.0",
-    "react": "^17.0.0",
-    "react-dom": "^17.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@codemirror/autocomplete": "^0.20.0",
-    "@codemirror/commands": "^0.20.0",
-    "@codemirror/language": "^0.20.0",
-    "@codemirror/state": "^0.20.0",
-    "@codemirror/view": "^0.20.0",
-    "@replit/codemirror-indentation-markers": "^0.20.0"
+    "@codemirror/autocomplete": "^6.0.0",
+    "@codemirror/commands": "^6.0.0",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
+    "@replit/codemirror-indentation-markers": "^6.0.0"
   }
 }

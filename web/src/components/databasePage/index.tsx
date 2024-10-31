@@ -41,7 +41,7 @@ const tabs: DatabaseTabSpec[] = [
   aiTabSpec,
 ];
 
-export default observer(function DatabasePage() {
+export const DatabasePage = observer(function DatabasePage() {
   const appState = useAppState();
   const params = useParams();
 
@@ -90,7 +90,7 @@ function HeaderNavMenu({
       setDropdownOpen={setDropdownOpen}
     >
       <HeaderNavCol<{to: string}>
-        Link={Link as any}
+        Link={Link}
         closeDropdown={() => setDropdownOpen(false)}
         itemGroups={[
           {
@@ -125,7 +125,7 @@ function HeaderNavMenu({
   );
 }
 
-function RouterProvider({children}: PropsWithChildren<{}>) {
+function RouterProvider({children}: PropsWithChildren<unknown>) {
   const navigate = useNavigate();
   const location = useLocation();
 
