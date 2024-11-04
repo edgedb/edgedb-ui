@@ -295,6 +295,11 @@ export class QueryEditor extends Model({
     this.historyCursor = -1;
   }
 
+  @action
+  setEdgeQLString(query: string) {
+    this.currentQueryData[EditorKind.EdgeQL] = Text.of(query.split("\n"));
+  }
+
   @computed
   get currentQueryText() {
     if (this.selectedEditor === EditorKind.VisualBuilder) return null;
