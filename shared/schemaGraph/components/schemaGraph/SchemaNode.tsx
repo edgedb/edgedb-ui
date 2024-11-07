@@ -1,5 +1,5 @@
 import React, {useState, useRef} from "react";
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {CSSTransition} from "react-transition-group";
 
 import styles from "./schemaGraph.module.scss";
@@ -38,7 +38,7 @@ export default observer(function SchemaNode({node}: SchemaNodeProps) {
       >
         <DraggableNode
           ref={nodeRef}
-          NodeComponent={SchemaNodeObject}
+          NodeComponent={SchemaNodeObject as any}
           node={node}
           nodeState={nodeState}
         />
@@ -123,9 +123,8 @@ const DraggableNode = observer(
       let dragging = false;
 
       const updateNodePosition = () => {
-        const mouseGraphPos = viewport.getClientPosInGraphSpace(
-          currentMousePos
-        );
+        const mouseGraphPos =
+          viewport.getClientPosInGraphSpace(currentMousePos);
         nodeState.updatePosition(
           initialNodePos.x + (mouseGraphPos.x - initialMouseGraphPos.x),
           initialNodePos.y + (mouseGraphPos.y - initialMouseGraphPos.y)
@@ -174,9 +173,8 @@ const DraggableNode = observer(
           setDragging(true);
           viewport.updateViewportRect();
 
-          initialMouseGraphPos = viewport.getClientPosInGraphSpace(
-            initialMousePos
-          );
+          initialMouseGraphPos =
+            viewport.getClientPosInGraphSpace(initialMousePos);
           initialNodePos = {x: nodeState.x, y: nodeState.y};
           currentMousePos = initialMousePos;
 

@@ -61,7 +61,7 @@ export const ExplainVis = observer(function ExplainVis({
 const ExplainHeader = observer(function ExplainHeader() {
   const state = useExplainState();
   const plan = state.focusedPlan ?? state.planTree.data;
-  const queryTimeCost = explainGraphSettings.isTimeGraph
+  const queryTimeCost = state.isTimeGraph
     ? `${plan.totalTime}ms`
     : plan.totalCost;
 
@@ -88,13 +88,9 @@ const ExplainHeader = observer(function ExplainHeader() {
         <Switch
           labels={["Time", "Cost"]}
           disabled={!state.planTree.data.totalTime}
-          value={
-            explainGraphSettings.isTimeGraph
-              ? switchState.left
-              : switchState.right
-          }
+          value={state.isTimeGraph ? switchState.left : switchState.right}
           onChange={() => {
-            explainGraphSettings.isTimeGraph
+            state.isTimeGraph
               ? explainGraphSettings.setGraphUnit(graphUnit.cost)
               : explainGraphSettings.setGraphUnit(graphUnit.time);
 
@@ -127,12 +123,12 @@ const Flamegraph = observer(function Flamegraph({
 
   const range = isLight
     ? (state.planTree.data.totalTime ?? state.planTree.data.totalCost) / zoom
-    : ((explainGraphSettings.isTimeGraph && state.planTree.data.totalTime) ||
+    : ((state.isTimeGraph && state.planTree.data.totalTime) ||
         state.planTree.data.totalCost) / zoom;
 
   const isTimeGraph = isLight
     ? !!state.planTree.data.totalTime
-    : explainGraphSettings.isTimeGraph;
+    : state.isTimeGraph;
 
   return (
     <div
@@ -195,19 +191,19 @@ const PlanDetails = observer(function PlanDetails() {
       <div className={styles.header}>
         <span className={styles.nodeType}>{plan.name ?? "Query"}:</span>
         <span className={styles.stats}>
-          Self {explainGraphSettings.isTimeGraph ? "Time:" : "Cost:"}
+          Self {state.isTimeGraph ? "Time:" : "Cost:"}
           <span className={styles.statsResults}>
-            {explainGraphSettings.isTimeGraph
-              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
-              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}{" "}
+            {state.isTimeGraph
+              ? plan.selfTime!.toPrecision(5).replace(/\.0+$/, "") + "ms"
+              : plan.selfCost.toPrecision(5).replace(/\.0+$/, "")}{" "}
             &nbsp; &nbsp;
             {(
-              (explainGraphSettings.isTimeGraph
+              (state.isTimeGraph
                 ? plan.selfTimePercent!
                 : plan.selfCostPercent) * 100
             )
-              .toPrecision(2)
-              .replace(/\.?0+$/, "")}
+              .toPrecision(3)
+              .replace(/\.0+$/, "")}
             %
           </span>
         </span>
@@ -224,17 +220,19 @@ const PlanDetails = observer(function PlanDetails() {
             </div>
           ))}
         </div>
-        <div className={styles.result}>
-          {[
-            ["Startup Time", "actual_startup_time"],
-            ["Total Time", "actual_total_time"],
-          ].map(([name, key]) => (
-            <div key={key}>
-              <span className={styles.label}>{name}:</span>
-              <span>{plan.raw[key]}ms</span>
-            </div>
-          ))}
-        </div>
+        {plan.totalTime != null ? (
+          <div className={styles.result}>
+            {[
+              ["Startup Time", "actual_startup_time"],
+              ["Total Time", "actual_total_time"],
+            ].map(([name, key]) => (
+              <div key={key}>
+                <span className={styles.label}>{name}:</span>
+                <span>{plan.raw[key]}ms</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   ) : (
@@ -280,7 +278,7 @@ const FlamegraphNode = observer(function _FlamegraphNode({
     }
 
     const childWidth =
-      (explainGraphSettings.isTimeGraph
+      (state.isTimeGraph
         ? subplan.totalTime! / plan.totalTime!
         : subplan.totalCost / plan.totalCost) *
       (width - 8);
@@ -395,11 +393,11 @@ const FlamegraphNode = observer(function _FlamegraphNode({
       <Tooltip.Trigger asChild>{flamegraphNode}</Tooltip.Trigger>
       <Tooltip.Content sideOffset={2}>
         <p className={styles.tooltipContent}>
-          {explainGraphSettings.isTimeGraph ? "Self time: " : "Self cost: "}
+          {state.isTimeGraph ? "Self time: " : "Self cost: "}
           <b>
-            {explainGraphSettings.isTimeGraph
-              ? plan.selfTime!.toPrecision(5).replace(/\.?0+$/, "") + "ms"
-              : plan.selfCost.toPrecision(5).replace(/\.?0+$/, "")}
+            {state.isTimeGraph
+              ? plan.selfTime!.toPrecision(5).replace(/\.0+$/, "") + "ms"
+              : plan.selfCost.toPrecision(5).replace(/\.0+$/, "")}
           </b>
         </p>
         <Tooltip.Arrow className={styles.tooltipArrow} />

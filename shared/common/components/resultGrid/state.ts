@@ -2,6 +2,8 @@ import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 import {SetCodec} from "edgedb/dist/codecs/set";
 import {DataGridState} from "../dataGrid/state";
+import {assertNever} from "../../utils/assertNever";
+import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
 
 export function createResultGridState(codec: ICodec, data: any[]) {
   return new ResultGridState(codec, data);
@@ -12,9 +14,10 @@ export const RowHeight = 40;
 export interface GridHeader {
   id: string;
   parent: GridHeader | null;
-  name: string;
+  name: string | null;
   multi: boolean;
   codec: ICodec;
+  typename: string;
   depth: number;
   startIndex: number;
   span: number;
@@ -50,9 +53,6 @@ export class ResultGridState {
       () => [],
       () => this.rowCount
     );
-
-    console.log(this.data);
-    console.log(this.rowTops);
   }
 
   getData(
@@ -76,7 +76,7 @@ export class ResultGridState {
       ? tops.findIndex((top) => top > offsetRowIndex) - 1
       : offsetRowIndex;
     return {
-      data: parentData[dataIndex][header.parent.name],
+      data: parentData[dataIndex][header.parent.name!],
       indexOffset: indexOffset + (tops ? tops[dataIndex] : dataIndex),
       endIndex: indexOffset + (tops ? tops[dataIndex + 1] : dataIndex + 1),
     };
@@ -95,9 +95,10 @@ function _getRowTops(
     let height = 1;
     for (const header of headers) {
       if (!header.multi) continue;
-      const colHeight = header.subHeaders
-        ? _getRowTops(topsMap, item[header.name], header.subHeaders)
-        : item[header.name].length;
+      const colHeight =
+        header.subHeaders && header.subHeaders[0].name !== null
+          ? _getRowTops(topsMap, item[header.name!], header.subHeaders)
+          : item[header.name!].length;
       if (colHeight > height) {
         height = colHeight;
       }
@@ -123,9 +124,11 @@ function _getHeaders(
     const headers: GridHeader[] = [];
     let colCount = 0;
     let i = 0;
-    for (const field of codec.getFields()) {
+    const fields = codec.getFields();
+    const showImplicitId = fields.every((field) => field.implicit);
+    for (const field of fields) {
       let subcodec = subcodecs[i++];
-      if (!field.implicit) {
+      if (!field.implicit || (showImplicitId && field.name === "id")) {
         let multi = false;
         if (subcodec instanceof SetCodec) {
           multi = true;
@@ -138,6 +141,7 @@ function _getHeaders(
           name: field.name,
           multi,
           codec: subcodec,
+          typename: getTypename(subcodec),
           depth,
           startIndex,
           span: 1,
@@ -155,6 +159,22 @@ function _getHeaders(
           header.subHeaders = subheaders.headers;
           colCount += subheaders.colCount;
         } else {
+          if (multi) {
+            header.subHeaders = [
+              {
+                id: `${header.id}.__multi__`,
+                parent: header,
+                name: null,
+                multi: false,
+                codec: subcodec,
+                typename: getTypename(subcodec),
+                depth,
+                startIndex,
+                span: 1,
+                subHeaders: null,
+              },
+            ];
+          }
           colCount++;
         }
       }
@@ -169,4 +189,33 @@ function _flattenHeaders(headers: GridHeader[]): GridHeader[] {
     header,
     ...(header.subHeaders ? _flattenHeaders(header.subHeaders) : []),
   ]);
+}
+
+function getTypename(codec: ICodec): string {
+  const kind = codec.getKind();
+  switch (kind) {
+    case "scalar":
+    case "object":
+    case "sparse_object":
+      return codec.getKnownTypeName();
+    case "array":
+    case "range":
+    case "multirange":
+      return `${kind}<${getTypename(codec.getSubcodecs()[0])}>`;
+    case "tuple":
+      return `tuple<${codec
+        .getSubcodecs()
+        .map((subcodec) => getTypename(subcodec))
+        .join(", ")}>`;
+    case "namedtuple":
+      const subcodecs = codec.getSubcodecs();
+      return `tuple<${(codec as NamedTupleCodec)
+        .getNames()
+        .map((name, i) => `${name}: ${getTypename(subcodecs[i])}`)
+        .join(", ")}>`;
+    case "set":
+      return getTypename(codec.getSubcodecs()[0]);
+    default:
+      assertNever(kind);
+  }
 }

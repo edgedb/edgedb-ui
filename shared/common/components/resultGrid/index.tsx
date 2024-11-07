@@ -6,73 +6,130 @@ import {GridHeader, ResultGridState, RowHeight} from "./state";
 
 import {
   DataGrid,
+  DataGridProps,
   GridContent,
   GridHeaders,
   HeaderResizeHandle,
 } from "../dataGrid";
+import {renderCellValue} from "../dataGrid/renderUtils";
 
 import gridStyles from "../dataGrid/dataGrid.module.scss";
+import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
+
 import styles from "./resultGrid.module.scss";
+import {useEffect} from "react";
+import {calculateInitialColWidths} from "../dataGrid/utils";
 
 export {createResultGridState, ResultGridState} from "./state";
 
-export interface ResultGridProps {
+export interface ResultGridProps extends Omit<DataGridProps, "state"> {
   state: ResultGridState;
 }
 
-export function ResultGrid({state}: ResultGridProps) {
+export const ResultGrid = observer(function ResultGrid({
+  state,
+  ...props
+}: ResultGridProps) {
+  useEffect(() => {
+    if (
+      state.grid.gridContainerSize.width > 0 &&
+      state.grid._colWidths.size == 0
+    ) {
+      state.grid.setColWidths(
+        calculateInitialColWidths(
+          state.flatHeaders.map(({id, typename}) => ({
+            id,
+            typename,
+            isLink: false,
+          })),
+          state.grid.gridContainerSize.width
+        )
+      );
+    }
+  }, [state.grid.gridContainerSize.width]);
+
   return (
-    <DataGrid state={state.grid}>
+    <DataGrid state={state.grid} {...props}>
       <ResultGridHeaders state={state} />
       <ResultGridContent state={state} />
     </DataGrid>
   );
-}
+});
 
-const ResultGridHeaders = observer(function ResultGridHeaders({
+export const ResultGridHeaders = observer(function ResultGridHeaders({
   state,
 }: {
   state: ResultGridState;
 }) {
+  const headers = state.allHeaders;
+  const lastHeader = headers[headers.length - 1];
   return (
     <GridHeaders
       state={state.grid}
+      style={{gridTemplateRows: `repeat(${state.maxDepth + 1}, auto)`}}
       pinnedHeaders={null}
-      headers={state.allHeaders.flatMap((header, i, headers) => [
-        <div
-          key={header.id}
-          className={styles.header}
+      headers={[
+        ...headers.flatMap((header, i) => {
+          if (header.name == null) {
+            return [];
+          }
+          const hasSubheaders = header.subHeaders?.[0].name != null;
+          return header.name != null
+            ? [
+                <div
+                  key={header.id}
+                  className={cn(styles.header, {
+                    [styles.hasSubheaders]: hasSubheaders,
+                  })}
+                  style={{
+                    gridColumn: `${header.startIndex + 1} / ${
+                      header.startIndex + header.span + 1
+                    }`,
+                    gridRow: `${header.depth + 1}${
+                      !hasSubheaders ? `/ -1` : ""
+                    }`,
+                  }}
+                >
+                  <div className={styles.headerName}>{header.name}</div>
+                  {!hasSubheaders ? (
+                    <div className={styles.typename}>{header.typename}</div>
+                  ) : null}
+                </div>,
+                (
+                  header.parent == null
+                    ? header.startIndex != 0
+                    : header.parent.subHeaders![0] != header
+                ) ? (
+                  <HeaderResizeHandle
+                    key={`resize-${headers[i - 1].id}`}
+                    state={state.grid}
+                    columnId={headers[i - 1].id}
+                    style={{
+                      gridColumn: header.startIndex + 1,
+                      gridRowStart: header.depth + 1,
+                      gridRowEnd: -1,
+                    }}
+                  />
+                ) : null,
+              ]
+            : [];
+        }),
+        <HeaderResizeHandle
+          key={`resize-${lastHeader.id}`}
+          state={state.grid}
+          columnId={lastHeader.id}
           style={{
-            gridColumn: `${header.startIndex + 1} / ${
-              header.startIndex + header.span + 1
-            }`,
-            gridRow: `${header.depth + 1}`,
+            gridColumn: -2,
+            gridRowStart: 1,
+            gridRowEnd: -1,
           }}
-        >
-          {header.name}
-        </div>,
-        (
-          header.parent == null
-            ? header.startIndex != 0
-            : header.parent.subHeaders![0] != header
-        ) ? (
-          <HeaderResizeHandle
-            key={`resize-${headers[i - 1].id}`}
-            state={state.grid}
-            columnId={headers[i - 1].id}
-            style={{
-              gridColumn: header.startIndex + 1,
-              gridRowStart: header.depth + 1,
-              gridRowEnd: state.maxDepth + 2,
-            }}
-          />
-        ) : null,
-      ])}
+        />,
+      ]}
     />
   );
 });
 
-const ResultGridContent = observer(function ResultGridContent({
+export const ResultGridContent = observer(function ResultGridContent({
   state,
 }: ResultGridProps) {
   const ranges = state.grid.visibleRanges;
@@ -104,7 +161,7 @@ const ResultGridContent = observer(function ResultGridContent({
               indexOffset -
               rowIndex
             }
-            data={data[dataIndex][header.name]}
+            data={header.name ? data[dataIndex][header.name] : data[dataIndex]}
           />
         );
         dataIndex += 1;
@@ -128,7 +185,14 @@ const ResultGridContent = observer(function ResultGridContent({
     }
   }
 
-  return <GridContent state={state.grid} cells={cells} />;
+  return (
+    <GridContent
+      className={cn(inspectorStyles.inspectorTheme)}
+      style={{"--gridHeaderHeight": state.grid.headerHeight + "px"} as any}
+      state={state.grid}
+      cells={cells}
+    />
+  );
 });
 
 const GridCell = observer(function GridCell({
@@ -160,7 +224,7 @@ const GridCell = observer(function GridCell({
         <div
           className={cn(styles.cellContent, {[styles.stickyCell]: height > 1})}
         >
-          {data?.toString() ?? "{}"}
+          {renderCellValue(data, header.codec)}
         </div>
       ) : null}
     </div>

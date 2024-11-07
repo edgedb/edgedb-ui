@@ -1,4 +1,4 @@
-import {observer} from "mobx-react";
+import {observer} from "mobx-react-lite";
 import {VariableSizeList as List, ListChildComponentProps} from "react-window";
 import {_ICodec} from "edgedb";
 
@@ -315,6 +315,7 @@ interface InspectorRowProps {
   isExpanded: boolean;
   toggleExpanded: () => void;
   disableCopy?: boolean;
+  style?: React.CSSProperties;
 }
 
 export const InspectorRow = observer(function InspectorRow({
@@ -325,6 +326,7 @@ export const InspectorRow = observer(function InspectorRow({
   isExpanded,
   toggleExpanded,
   disableCopy = false,
+  style,
 }: InspectorRowProps) {
   const expandableItem =
     item.type !== ItemType.Scalar && item.type !== ItemType.Other;
@@ -341,6 +343,7 @@ export const InspectorRow = observer(function InspectorRow({
           state.hoverId !== item.id && item.id.startsWith(state.hoverId!),
       })}
       style={{
+        ...style,
         paddingLeft: `${(item.level + 1) * 2 + 1}ch`,
       }}
       onClick={index != null ? () => state.setSelectedIndex(index) : undefined}

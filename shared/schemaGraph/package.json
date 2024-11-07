@@ -13,8 +13,8 @@
     "@types/react-transition-group": "^4.4.0",
     "fastpriorityqueue": "^0.6.3",
     "fuse.js": "^6.4.1",
-    "mobx": "^6.3.0",
-    "mobx-react": "^7.1.0",
+    "mobx": "^6.5.0",
+    "mobx-react-lite": "^4.0.0",
     "mobx-state-tree": "^5.0.1",
     "react-transition-group": "^4.4.1",
     "webcola": "^3.4.0"

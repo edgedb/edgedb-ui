@@ -9,10 +9,7 @@ import {
   modelAction,
   prop,
 } from "mobx-keystone";
-import {
-  explainGraphSettings,
-  graphUnit,
-} from "../../state/explainGraphSettings";
+import {explainGraphSettings} from "../../state/explainGraphSettings";
 
 export function createExplainState(rawExplainOutput: string) {
   const rawData = JSON.parse(rawExplainOutput);
@@ -25,13 +22,6 @@ export function createExplainState(rawExplainOutput: string) {
       : null,
     rootPlan.total_cost,
     contexts
-  );
-
-  explainGraphSettings.setGraphUnit(
-    planTree.totalTime == null ||
-      explainGraphSettings.userUnitChoice === graphUnit.cost
-      ? graphUnit.cost
-      : graphUnit.time
   );
 
   return new ExplainState({
@@ -59,7 +49,7 @@ export class ExplainState extends Model({
   get maxFlamegraphZoom() {
     return Math.max(
       1,
-      explainGraphSettings.isTimeGraph
+      this.isTimeGraph
         ? this.planTree.data.totalTime! * 10
         : this.planTree.data.totalCost
     );
@@ -78,6 +68,14 @@ export class ExplainState extends Model({
   @computed
   get parentCtxId() {
     return this.getCtxId(this.selectedPlan?.parent);
+  }
+
+  @computed
+  get isTimeGraph() {
+    return (
+      this.planTree.data.totalTime !== null &&
+      explainGraphSettings._isTimeGraph
+    );
   }
 
   getCtxId(plan: Plan | null | undefined) {

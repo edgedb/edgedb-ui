@@ -50,13 +50,22 @@ import {sessionStateCtx} from "../../../state/sessionState";
 import {
   createExplainState,
   ExplainState,
-  ExplainStateType,
 } from "../../../components/explainVis/state";
 import {ProtocolVersion} from "edgedb/dist/ifaces";
+import {
+  createResultGridState,
+  ResultGridState,
+} from "@edgedb/common/components/resultGrid";
+import LRU from "edgedb/dist/primitives/lru";
 
 export enum EditorKind {
   EdgeQL,
   VisualBuilder,
+}
+
+export enum OutputMode {
+  Tree,
+  Grid,
 }
 
 type HistoryItemQueryData =
@@ -85,7 +94,9 @@ export class QueryHistoryDraftItem extends ExtendedModel(
   {}
 ) {}
 
-const explainStateCache = new ObservableLRU<string, ExplainState>(10);
+const resultInspectorCache = new LRU<string, InspectorState>({capacity: 10});
+const resultGridStateCache = new LRU<string, ResultGridState>({capacity: 10});
+export const explainStateCache = new ObservableLRU<string, ExplainState>(10);
 
 @model("QueryEditor/HistoryResultItem")
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
@@ -93,33 +104,42 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   hasResult: prop<boolean>(),
   implicitLimit: prop<number>(),
 }) {
-  get inspectorState() {
-    const queryEditor = queryEditorCtx.get(this)!;
-    const state = queryEditor.resultInspectorCache.get(this.$modelId);
-    if (!state) {
-      queryEditor.fetchResultData(this.$modelId, this.implicitLimit);
-    }
-    return state ?? null;
+  get queryEditor() {
+    return queryEditorCtx.get(this)!;
   }
 
-  get explainState() {
-    const state = explainStateCache.get(this.$modelId);
+  getInspectorState(data: EdgeDBSet) {
+    const queryEditor = this.queryEditor;
 
+    let state = resultInspectorCache.get(this.$modelId);
     if (!state) {
-      fetchResultData(this.$modelId).then((resultData) => {
-        if (resultData) {
-          const explainState = createExplainState(
-            decode(
-              resultData.outCodecBuf,
-              resultData.resultBuf,
-              resultData.protoVer ?? [1, 0]
-            )![0]
-          );
-          explainStateCache.set(this.$modelId, explainState);
-        }
-      });
+      state = createInspector(data, this.implicitLimit, (item) =>
+        queryEditor.setExtendedViewerItem(item)
+      );
+      resultInspectorCache.set(this.$modelId, state);
     }
-    return state ?? null;
+
+    return state;
+  }
+
+  getResultGridState(data: EdgeDBSet) {
+    let state = resultGridStateCache.get(this.$modelId);
+    if (!state) {
+      state = createResultGridState(data._codec, data);
+      resultGridStateCache.set(this.$modelId, state);
+    }
+
+    return state;
+  }
+
+  getExplainState(data: EdgeDBSet) {
+    let state = explainStateCache.get(this.$modelId);
+    if (!state) {
+      state = createExplainState(data[0]);
+      explainStateCache.set(this.$modelId, state);
+    }
+
+    return state;
   }
 }
 
@@ -154,6 +174,8 @@ export class QueryEditor extends Model({
   splitView: prop(() => new SplitViewState({})),
 
   selectedEditor: prop<EditorKind>(EditorKind.EdgeQL).withSetter(),
+
+  outputMode: prop<OutputMode>(OutputMode.Tree).withSetter(),
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
@@ -284,7 +306,7 @@ export class QueryEditor extends Model({
     this._fetchingHistory = false;
   });
 
-  resultInspectorCache = new ObservableLRU<string, InspectorState>(20);
+  resultDataCache = new LRU<string, Promise<EdgeDBSet | null>>({capacity: 20});
 
   @observable.ref
   extendedViewerItem: Item | null = null;
@@ -294,20 +316,21 @@ export class QueryEditor extends Model({
     this.extendedViewerItem = item;
   }
 
-  async fetchResultData(itemId: string, implicitLimit: number) {
-    const resultData = await fetchResultData(itemId);
-    if (resultData) {
-      const inspector = createInspector(
-        decode(
-          resultData.outCodecBuf,
-          resultData.resultBuf,
-          resultData.protoVer ?? [1, 0]
-        )!,
-        implicitLimit,
-        (item) => this.setExtendedViewerItem(item)
+  async getResultData(itemId: string): Promise<EdgeDBSet | null> {
+    let data = this.resultDataCache.get(itemId);
+    if (!data) {
+      data = fetchResultData(itemId).then((resultData) =>
+        resultData
+          ? decode(
+              resultData.outCodecBuf,
+              resultData.resultBuf,
+              resultData.protoVer ?? [1, 0]
+            )
+          : null
       );
-      this.resultInspectorCache.set(itemId, inspector);
+      this.resultDataCache.set(itemId, data);
     }
+    return data;
   }
 
   @modelAction
@@ -402,8 +425,9 @@ export class QueryEditor extends Model({
       }),
     };
 
-    if (item.explainState)
-      explainStateCache.set(item.$modelId, item.explainState);
+    if (item._explainState) {
+      explainStateCache.set(item.$modelId, item._explainState);
+    }
 
     const historyItem = new QueryHistoryResultItem({
       ...historyItemData,
@@ -530,22 +554,10 @@ export class QueryEditor extends Model({
         implicitLimit: data.implicitLimit,
       });
       if (data.result) {
-        if (
-          data.status === ExplainStateType.explain ||
-          data.status === ExplainStateType.analyzeQuery
-        ) {
-          explainStateCache.set(
-            historyItem.$modelId,
-            createExplainState(data.result[0])
-          );
-        } else {
-          this.resultInspectorCache.set(
-            historyItem.$modelId,
-            createInspector(data.result, data.implicitLimit, (item) =>
-              this.setExtendedViewerItem(item)
-            )
-          );
-        }
+        this.resultDataCache.set(
+          historyItem.$modelId,
+          Promise.resolve(data.result)
+        );
         resultData = {
           outCodecBuf: data.outCodecBuf,
           resultBuf: data.resultBuf,

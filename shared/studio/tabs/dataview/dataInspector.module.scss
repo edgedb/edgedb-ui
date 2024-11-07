@@ -480,23 +480,6 @@
   }
 }
 
-.scalar_str,
-.scalar_uuid {
-  &:before,
-  &:after {
-    content: "";
-  }
-}
-.scalar_uuid {
-  color: #6f6f6f;
-
-  @include breakpoint(mobile) {
-    @include darkTheme {
-      color: #adadad;
-    }
-  }
-}
-
 .rowIndex {
   display: flex;
   padding-left: 4px;

@@ -13,9 +13,18 @@ import {useGlobalDragCursor} from "../../hooks/globalDragCursor";
 
 export interface DataGridProps {
   state: DataGridState;
+  className?: string;
+  style?: React.CSSProperties;
+  noVerticalScroll?: boolean;
 }
 
-export function DataGrid({state, children}: PropsWithChildren<DataGridProps>) {
+export function DataGrid({
+  state,
+  className,
+  style,
+  noVerticalScroll,
+  children,
+}: PropsWithChildren<DataGridProps>) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useResize(ref, ({width, height}) =>
@@ -40,9 +49,11 @@ export function DataGrid({state, children}: PropsWithChildren<DataGridProps>) {
 
   return (
     <CustomScrollbars
-      className={styles.scrollbarWrapper}
+      className={cn(styles.scrollbarWrapper, className)}
       innerClass={styles.innerWrapper}
-      headerPadding={state.headerHeight}
+      style={style}
+      headerPadding={noVerticalScroll ? undefined : state.headerHeight}
+      hideVertical={noVerticalScroll}
     >
       <div
         ref={(el) => {
@@ -53,7 +64,9 @@ export function DataGrid({state, children}: PropsWithChildren<DataGridProps>) {
             el.scrollLeft = state.scrollPos.left;
           }
         }}
-        className={styles.dataGrid}
+        className={cn(styles.dataGrid, {
+          [styles.noVerticalScroll]: !!noVerticalScroll,
+        })}
       >
         <div className={styles.innerWrapper}>{children}</div>
       </div>
@@ -66,11 +79,13 @@ export const GridHeaders = observer(function GridHeaders({
   state,
   pinnedHeaders,
   headers,
+  style,
 }: {
   className?: string;
   state: DataGridState;
   pinnedHeaders: React.ReactNode;
   headers: React.ReactNode;
+  style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -81,6 +96,7 @@ export const GridHeaders = observer(function GridHeaders({
       ref={ref}
       className={cn(styles.headers, className)}
       style={{
+        ...style,
         gridTemplateColumns: `${
           state.pinnedColsWidth ? `${state.pinnedColsWidth}px ` : ""
         }${state.colWidths.join("px ")}px minmax(100px, 1fr)`,

@@ -1,15 +1,9 @@
-import {createContext, Fragment, useContext, useEffect} from "react";
-import {observer} from "mobx-react";
-
-import {ICodec} from "edgedb/dist/codecs/ifaces";
-import {EnumCodec} from "edgedb/dist/codecs/enum";
-import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
-import {MultiRangeCodec, RangeCodec} from "edgedb/dist/codecs/range";
+import {createContext, useContext, useEffect} from "react";
+import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import {InspectorRow} from "@edgedb/inspector";
-import {renderValue} from "@edgedb/inspector/buildScalar";
 import inspectorStyles from "@edgedb/inspector/inspector.module.scss";
 
 import styles from "./dataInspector.module.scss";
@@ -50,6 +44,8 @@ import {
   HeaderResizeHandle,
 } from "@edgedb/common/components/dataGrid";
 import gridStyles from "@edgedb/common/components/dataGrid/dataGrid.module.scss";
+import {renderCellValue} from "@edgedb/common/components/dataGrid/renderUtils";
+
 import {DefaultColumnWidth} from "@edgedb/common/components/dataGrid/state";
 import {calculateInitialColWidths} from "@edgedb/common/components/dataGrid/utils";
 import {FieldConfigButton} from "./fieldConfig";
@@ -451,93 +447,6 @@ const ExpandedEndCell = observer(function ExpandedEndCell({
     />
   );
 });
-
-const inspectorOverrideStyles = {
-  uuid: styles.scalar_uuid,
-  str: styles.scalar_str,
-};
-
-function renderCellValue(
-  value: any,
-  codec: ICodec,
-  nested = false
-): JSX.Element {
-  switch (codec.getKind()) {
-    case "scalar":
-    case "range":
-    case "multirange":
-      return renderValue(
-        value,
-        codec.getKnownTypeName(),
-        codec instanceof EnumCodec,
-        codec instanceof RangeCodec || codec instanceof MultiRangeCodec
-          ? codec.getSubcodecs()[0].getKnownTypeName()
-          : undefined,
-        false,
-        !nested ? inspectorOverrideStyles : undefined,
-        100
-      ).body;
-    case "set":
-      return (
-        <>
-          {"{"}
-          {(value as any[]).map((item, i) => (
-            <Fragment key={i}>
-              {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[0], true)}
-            </Fragment>
-          ))}
-          {"}"}
-        </>
-      );
-    case "array":
-      return (
-        <>
-          [
-          {(value as any[]).map((item, i) => (
-            <Fragment key={i}>
-              {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[0], true)}
-            </Fragment>
-          ))}
-          ]
-        </>
-      );
-    case "tuple":
-      return (
-        <>
-          (
-          {(value as any[]).map((item, i) => (
-            <Fragment key={i}>
-              {i !== 0 ? ", " : null}
-              {renderCellValue(item, codec.getSubcodecs()[i], true)}
-            </Fragment>
-          ))}
-          )
-        </>
-      );
-    case "namedtuple": {
-      const fieldNames = (codec as NamedTupleCodec).getNames();
-      const subCodecs = codec.getSubcodecs();
-      return (
-        <>
-          (
-          {fieldNames.map((name, i) => (
-            <Fragment key={i}>
-              {i !== 0 ? ", " : null}
-              {name}
-              {" := "}
-              {renderCellValue(value[name], subCodecs[i], true)}
-            </Fragment>
-          ))}
-          )
-        </>
-      );
-    }
-    default:
-      return <></>;
-  }
-}
 
 const GridCell = observer(function GridCell({
   field,
