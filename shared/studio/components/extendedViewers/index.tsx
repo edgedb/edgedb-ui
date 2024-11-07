@@ -13,7 +13,7 @@ export const extendedViewerRenderers: {
   [key: string]: Renderer;
 } = {
   "std::str": TextViewer as Renderer,
-  "std::bytes": HexViewer,
+  "std::bytes": HexViewer as Renderer,
   "std::json": JsonViewer as Renderer,
 };
 
