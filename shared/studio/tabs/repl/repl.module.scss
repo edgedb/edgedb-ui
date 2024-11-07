@@ -65,6 +65,7 @@
 
 .replHeader {
   padding: 0 32px;
+  padding-bottom: 16px;
 
   .headerAscii {
     white-space: pre;
@@ -78,9 +79,11 @@
   }
 
   .headerMsg {
-    margin-top: 32px;
-    line-height: 26px;
-    color: var(--grey60);
+    margin-top: 16px * -3;
+    margin-left: 16ch;
+    padding-bottom: 16px;
+    line-height: 16px;
+    color: var(--Grey60);
 
     span {
       text-decoration: underline;

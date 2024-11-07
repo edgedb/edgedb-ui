@@ -2,10 +2,10 @@
 
 .header {
   flex-shrink: 0;
-  height: 56px;
+  height: 54px;
   display: flex;
   align-items: center;
-  padding: 0 16px 0 19px;
+  padding: 0 16px 0 22px;
 
   .themeSwitcher {
     margin-left: auto;
@@ -28,16 +28,17 @@
 }
 
 .logo {
-  fill: #4f4f4f;
+  fill: var(--Grey30);
 
-  g {
-    fill: #848484;
+  path:nth-child(2) {
+    fill: var(--Grey65);
   }
 
   @include darkTheme {
-    fill: #f7f7f7;
-    g {
-      fill: #c1c1c1;
+    fill: var(--Grey60);
+
+    path:nth-child(2) {
+      fill: var(--Grey40);
     }
   }
 }

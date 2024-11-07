@@ -274,7 +274,7 @@ const DraftProviderConfigForm = observer(function DraftProviderConfigForm({
                         <>
                           The full origin of the sign-in page including
                           protocol and port of the application. If using the
-                          built-in UI, this should be the origin of the EdgeDB
+                          built-in UI, this should be the origin of the Gel
                           server.
                         </>
                       }

@@ -36,12 +36,12 @@ export function InfoCards({
       priority: 0,
       card: (
         <InfoCard
-          title="Learn EdgeDB"
+          title="Learn Gel"
           icon={<DocsIcon />}
           link="https://docs.edgedb.com"
         >
           Check out our docs for to learn everything you need to know about
-          EdgeDB, from helpful guides to full API reference docs.
+          Gel, from helpful guides to full API reference docs.
         </InfoCard>
       ),
     },
@@ -56,7 +56,7 @@ export function InfoCards({
           priority: 1,
           card: (
             <InfoCard
-              title="What's New in EdgeDB"
+              title="What's New in Gel"
               icon={<NewUpdatesIcon />}
               link={data.latestUpdate.url}
             >
@@ -75,11 +75,11 @@ export function InfoCards({
           priority: 3,
           card: (
             <InfoCard
-              title={`EdgeDB ${data.latestEdgeDBVersion.major}.${data.latestEdgeDBVersion.minor} is available`}
+              title={`Gel ${data.latestEdgeDBVersion.major}.${data.latestEdgeDBVersion.minor} is available`}
               icon={<UpgradeIcon />}
               link={`https://docs.edgedb.com/changelog/${data.latestEdgeDBVersion.major}_x`}
             >
-              This instance is ready to update to the latest version of EdgeDB.{" "}
+              This instance is ready to update to the latest version of Gel.{" "}
               <u>Find out what's new in the changelog.</u>
             </InfoCard>
           ),
