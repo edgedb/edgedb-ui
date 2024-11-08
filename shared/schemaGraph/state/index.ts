@@ -66,6 +66,7 @@ export const Schema = types
       self.constraints = constraints;
       self.scalars = scalars;
 
+      self.graph.hideAllLinks = true;
       self.graph.updateGraphNodesAndLinks(objects);
       return self.graph.autoLayoutNodes();
     },
