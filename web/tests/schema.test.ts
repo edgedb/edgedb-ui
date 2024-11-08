@@ -90,7 +90,7 @@ describe("Schema:", () => {
     expect(
       await (
         await selectedNode.findElement(ByUIClass("schemaGraph_header"))
-      ).getText()
+      ).getAttribute("innerText")
     ).toBe(typeName);
   });
 });
