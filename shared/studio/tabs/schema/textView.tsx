@@ -13,13 +13,13 @@ import {VariableSizeList as List, ListChildComponentProps} from "react-window";
 import cn from "@edgedb/common/utils/classNames";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
-import {Select} from "@edgedb/common/ui/select";
+import {Select, CrossIcon} from "@edgedb/common/newui";
 
 import {useTabState} from "../../state";
 
 import styles from "./textView.module.scss";
 
-import {CloseIcon, SearchIcon} from "../../icons";
+import {SearchIcon} from "../../icons";
 
 import {
   ModuleGroup,
@@ -124,7 +124,12 @@ export const SchemaTextView = observer(function SchemaTextView() {
 
   return (
     <div className={styles.schemaTextView}>
-      <div ref={filtersRef} className={styles.filterControls}>
+      <div
+        ref={filtersRef}
+        className={cn(styles.filterControls, {
+          [styles.searchExpanded]: isInputVisible,
+        })}
+      >
         <div className={styles.searchRow}>
           <div className={styles.filterSelect}>
             <div className={styles.filterSelectName}>Schema</div>
@@ -224,7 +229,7 @@ export const SchemaTextView = observer(function SchemaTextView() {
                   if (isMobile) setIsInputVisible(false);
                 }}
               >
-                <CloseIcon />
+                <CrossIcon />
               </div>
             ) : null}
           </div>

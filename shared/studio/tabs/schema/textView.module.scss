@@ -5,7 +5,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--app-panel-bg);
+  background: var(--app_panel_background);
 }
 
 .filterControls {
@@ -13,16 +13,13 @@
   flex-direction: column;
   padding: 10px 12px;
   padding-top: 8px;
-  background: #ededed;
+  font-family: "Roboto Flex Variable", sans-serif;
+  background: var(--header_background);
+  border-bottom: 1px solid var(--panel_border);
   z-index: 1;
 
-  @include darkTheme {
-    background: #343434;
-  }
-
   @include breakpoint(mobile) {
-    background: #e6e6e6;
-    padding: 8px;
+    padding: 8px 16px;
   }
 }
 
@@ -40,12 +37,12 @@
   margin-right: 8px;
 
   .filterSelectName {
-    font-weight: 400;
-    font-size: 11px;
+    font-weight: 500;
+    font-size: 12px;
     line-height: 16px;
-    color: #acacac;
+    color: var(--tertiary_text_color);
     margin-bottom: 4px;
-    padding-left: 12px;
+    padding-left: 10px;
   }
 
   @include breakpoint(mobile) {
@@ -58,33 +55,34 @@
 .moduleSelect,
 .typeFilterSelect {
   --svg-color: #a7a7a7;
-  background: #e3e3e3;
-  height: 28px;
-  border-radius: 14px;
-  padding: 0 8px 0 10px;
+  height: 32px;
+  padding: 0 8px 0 12px;
+  border-radius: 8px;
   margin-left: 0;
   width: 94px;
   display: flex;
   justify-content: space-between;
-  font-weight: 500;
+  font-weight: 450;
+  transition: opacity 0.25s;
 
   @include darkTheme {
-    background: #242424;
+    background: var(--Grey25);
   }
 
   @include breakpoint(mobile) {
-    border-radius: 6px;
-    background: #fff;
     color: #4d4d4d;
-    font-family: Roboto Mono;
     line-height: 24px;
-    height: 40px;
+    height: 36px;
     width: calc(50vw - 36px);
     box-sizing: border-box;
     padding: 0 16px;
 
     @include darkTheme {
       color: #999;
+    }
+
+    .searchExpanded & {
+      opacity: 0;
     }
   }
 }
@@ -98,30 +96,30 @@
 
   & > svg {
     position: absolute;
-    left: 8px;
-    stroke: #bcbcbc;
+    left: 10px;
+    stroke: var(--Grey70);
     pointer-events: none;
   }
 
   input {
-    height: 28px;
-    background: #e3e3e3;
-    border-radius: 16px;
-    border: 0;
+    height: 32px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--panel_border);
     padding: 0;
     padding-left: 32px;
     margin: 0;
     outline: 0;
-    font-family: "Inter";
-    font-weight: 400;
+    font-family: inherit;
+    font-weight: 450;
     font-size: 14px;
-    color: #333;
+    color: var(--secondary_text_color);
     flex-grow: 1;
     min-width: 0;
 
     &:focus {
-      background: #6b6b6b;
-      color: #ededed;
+      outline: 2px solid #559fe2;
+      outline-offset: -1px;
 
       &::placeholder {
         color: transparent;
@@ -133,57 +131,46 @@
     align-self: stretch;
     display: flex;
     align-items: center;
-    padding: 0 8px;
+    width: 28px;
     margin-left: -28px;
     cursor: pointer;
     pointer-events: all;
 
     svg {
-      width: 12px;
-      height: 12px;
-      color: #bcbcbc;
+      width: 20px;
+      height: 20px;
+      color: var(--Grey50);
 
       @include darkTheme {
-        color: #6b6b6b;
+        color: var(--Grey65);
       }
     }
 
     @include breakpoint(mobile) {
       position: absolute;
-      right: 4px;
-      top: 14px;
-
-      svg {
-        color: #4d4d4d;
-      }
-
-      @include darkTheme {
-        svg {
-          color: #999;
-        }
-      }
+      right: 0px;
+      top: 0px;
+      height: 36px;
     }
   }
 
   @include darkTheme {
     & > svg {
-      stroke: #6b6b6b;
+      stroke: var(--Grey40);
     }
 
     input {
-      background: #242424;
-      color: #cacaca;
+      background: var(--Grey25);
 
       &:focus {
-        background: #b5b5b5;
-        color: #141414;
+        outline-color: #1267b4;
       }
     }
   }
 
   @include breakpoint(mobile) {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     position: absolute;
     right: 8px;
     box-sizing: border-box;
@@ -191,49 +178,25 @@
     transition: width 0.3s;
 
     &.expanded {
-      width: calc(100vw - 16px);
-      background-color: #fff;
-      border-radius: 6px;
-      padding: 0 12px;
+      width: calc(100vw - 32px);
+      right: 16px;
       justify-content: flex-start;
     }
 
     & > svg {
       position: absolute;
-      stroke: #4d4d4d;
     }
 
     input {
-      width: 40px;
+      width: 36px;
       opacity: 0;
       padding: 0;
-      color: #141414;
       position: absolute;
-      border-radius: 0;
 
       &.show {
-        background-color: #fff;
-        color: #141414;
         opacity: 1;
         position: static;
-        padding: 0 24px;
-      }
-    }
-
-    @include darkTheme {
-      & > svg {
-        stroke: #999;
-      }
-
-      &.expanded {
-        background-color: #242424;
-      }
-
-      input {
-        &.show {
-          background-color: #242424;
-          color: #999;
-        }
+        padding: 0 32px;
       }
     }
   }
@@ -359,7 +322,6 @@
     padding: 2px 0 1px 18px;
     position: sticky;
     top: -1px;
-    background: #f5f5f5;
     z-index: 1;
     pointer-events: all;
   }
@@ -372,21 +334,12 @@
   }
 
   &.isStuck {
-    background: #ededed;
+    background: var(--header_background);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.11);
-
-    @include breakpoint(mobile) {
-      background: #e6e6e6;
-    }
   }
 
   @include darkTheme {
-    &.stickyHeader {
-      background: #242424;
-    }
-
     &.isStuck {
-      background: #343434;
       box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.25);
     }
   }

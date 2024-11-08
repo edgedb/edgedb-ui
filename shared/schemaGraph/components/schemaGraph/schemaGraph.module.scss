@@ -70,11 +70,12 @@
 .object {
   background: var(--schemagraph-object-background);
   width: 240px;
-  border-radius: 4px;
-  font-family: "Roboto Mono";
+  border-radius: 6px;
+  font-family: "Roboto Mono Variable", monospace;
   overflow: hidden;
   color: var(--schemagraph-object-colour);
   padding-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   pointer-events: auto;
   opacity: 1;
   transition: opacity 0.2s, transform 0.3s;
@@ -90,7 +91,7 @@
     height: 32px;
     text-align: center;
     line-height: 32px;
-    font-weight: bold;
+    font-weight: 500;
     font-size: 14px;
     color: var(--schemagraph-object-header-colour);
     overflow: hidden;

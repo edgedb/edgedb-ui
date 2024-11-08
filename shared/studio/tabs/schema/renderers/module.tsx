@@ -33,13 +33,13 @@ export function ModuleRenderer({
         {threshold: [1]}
       );
 
-      observer.observe(ref.current!);
+      setTimeout(() => observer.observe(ref.current!), 0);
 
       return () => {
         observer.disconnect();
       };
     }
-  }, []);
+  }, [ref.current]);
 
   return (
     <div

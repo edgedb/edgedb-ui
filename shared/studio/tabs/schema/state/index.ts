@@ -29,11 +29,8 @@ export class Schema extends Model({
       const schemaData = dbCtx.get(this)!.schemaData;
       if (schemaData) {
         this.schemaState.updateSchema(
-          [...schemaData.objects.values()]
-            .filter(
-              (o) =>
-                !o.builtin && !o.insectionOf && !o.unionOf && !o.from_alias
-            )
+          this.textViewState.moduleGroupItems
+            .filter((type) => type.schemaType === "Object")
             .map((o) => ({
               name: o.name,
               is_abstract: o.abstract,

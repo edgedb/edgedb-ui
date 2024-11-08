@@ -4,7 +4,6 @@ import {observer} from "mobx-react-lite";
 import styles from "./schemaGraph.module.scss";
 import {useSchemaState} from "../../state/provider";
 import {useDragHandler, Position} from "@edgedb/common/hooks/useDragHandler";
-import {useDBRouter} from "@edgedb/studio/hooks/dbRoute";
 
 import SchemaNode from "./SchemaNode";
 import SchemaLink from "./SchemaLink";
@@ -98,8 +97,6 @@ export default observer(function SchemaGraph({
   const schemaState = useSchemaState();
   const schemaGraphState = schemaState.graph;
 
-  const {navigate, currentPath} = useDBRouter();
-
   const viewportRef = useRef<HTMLDivElement>(null);
 
   const viewport = schemaGraphState.viewport;
@@ -166,7 +163,6 @@ export default observer(function SchemaGraph({
   const handleClickOutside = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
       schemaState.deselectAll();
-      navigate(`${currentPath[0]}/schema`);
     }
   };
 

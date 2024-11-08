@@ -3,7 +3,7 @@
 .switcherButton {
   position: relative;
   z-index: 110;
-  --buttonBg: #e6e6e6;
+  --buttonBg: var(--Grey99);
   --buttonTextColour: #5e5e5e;
 
   @include darkTheme {
