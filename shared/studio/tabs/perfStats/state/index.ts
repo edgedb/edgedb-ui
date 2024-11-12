@@ -1,14 +1,10 @@
 import {action, computed, observable, runInAction} from "mobx";
-import {
-  findParent,
-  getTypeInfo,
-  Model,
-  model,
-  ModelTypeInfo,
-} from "mobx-keystone";
+import {Model, model} from "mobx-keystone";
 import {connCtx} from "../../../state";
-import {EditorKind, QueryEditor} from "../../queryEditor/state";
-import {DatabaseState} from "../../../state/database";
+import {
+  createExplainState,
+  ExplainState,
+} from "../../../components/explainVis/state";
 
 export type QueryType = "EdgeQL" | "SQL";
 
@@ -39,8 +35,14 @@ export interface QueryStats {
 }
 
 export interface OrderBy {
-  field: "calls" | "meanExecTime";
+  field: "calls" | "meanExecTime" | "totalExecTime";
   sortAsc: boolean;
+}
+
+export interface AnalyseQueryState {
+  query: string;
+  explainState: ExplainState | null;
+  controller: AbortController;
 }
 
 @model("PerfStats")
@@ -68,7 +70,7 @@ export class PerfStatsState extends Model({}) {
   }
 
   @observable
-  orderBy: OrderBy = {field: "meanExecTime", sortAsc: false};
+  orderBy: OrderBy = {field: "totalExecTime", sortAsc: false};
 
   @action
   setOrderBy(field: OrderBy["field"]) {
@@ -82,20 +84,42 @@ export class PerfStatsState extends Model({}) {
     }
   }
 
+  @observable
+  timeFilter: [number, number] | null = null;
+
+  @action
+  setTimeFilter(range: [number, number] | null, join: boolean = false) {
+    if (join && range && this.timeFilter) {
+      this.timeFilter = [
+        Math.min(this.timeFilter[0], range[0]),
+        Math.max(this.timeFilter[1], range[1]),
+      ];
+    } else {
+      this.timeFilter = range;
+    }
+  }
+
   @computed
   get filteredStats() {
-    const orderBy = this.orderBy;
-    return this.stats
-      ? [...this.stats]
-          .sort((a, b) => {
-            return Number(
-              orderBy.sortAsc
-                ? (a[orderBy.field] as number) - (b[orderBy.field] as number)
-                : (b[orderBy.field] as number) - (a[orderBy.field] as number)
-            );
-          })
-          .filter((stat) => stat.meanExecTime < 1000)
-      : null;
+    if (!this.stats) return null;
+
+    const {orderBy, timeFilter} = this;
+    let stats = [...this.stats];
+    if (timeFilter) {
+      stats = stats.filter(
+        (stat) =>
+          stat.meanExecTime >= timeFilter[0] &&
+          stat.meanExecTime < timeFilter[1]
+      );
+    }
+    return stats.sort((a, b) => {
+      return Number(
+        orderBy.sortAsc
+          ? (a[orderBy.field] as number) - (b[orderBy.field] as number)
+          : (b[orderBy.field] as number) - (a[orderBy.field] as number)
+      );
+    });
+    // .filter((stat) => stat.meanExecTime < 1000)
   }
 
   fetching = false;
@@ -154,16 +178,39 @@ export class PerfStatsState extends Model({}) {
     }
   }
 
-  setAnalyseQuery(query: string) {
-    const modelType = (getTypeInfo(QueryEditor) as ModelTypeInfo).modelType;
-    const editorState = findParent<DatabaseState>(
-      this,
-      (p) => p instanceof DatabaseState
-    )?.tabStates.get(modelType) as QueryEditor;
-    if (!editorState) return;
+  @observable
+  analyzeQuery: AnalyseQueryState | null = null;
 
-    editorState.setEdgeQLString(`analyze ${query}`);
-    editorState.setSelectedEditor(EditorKind.EdgeQL);
-    editorState.runQuery();
+  @action
+  setAnalyzeQuery(queryStr: string) {
+    const conn = connCtx.get(this)!;
+
+    const query = `analyze (execute := false)\n${queryStr}`;
+
+    this.analyzeQuery = {
+      query,
+      explainState: null,
+      controller: new AbortController(),
+    };
+
+    conn
+      .query(
+        query,
+        undefined,
+        {ignoreSessionConfig: true},
+        this.analyzeQuery.controller.signal
+      )
+      .then(({result}) => {
+        if (!this.analyzeQuery || !result) return;
+        runInAction(() => {
+          this.analyzeQuery!.explainState = createExplainState(result![0]);
+        });
+      });
+  }
+
+  @action
+  closeAnalyzeQuery() {
+    this.analyzeQuery?.controller.abort();
+    this.analyzeQuery = null;
   }
 }

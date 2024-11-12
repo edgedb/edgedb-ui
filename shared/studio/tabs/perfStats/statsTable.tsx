@@ -17,7 +17,6 @@ import {OrderBy, PerfStatsState, QueryStats} from "./state";
 
 import styles from "./perfStats.module.scss";
 import {CopyButton} from "@edgedb/common/newui/copyButton";
-import {useDBRouter} from "../../hooks/dbRoute";
 
 export const StatsTable = observer(function StatsTable({
   state,
@@ -28,6 +27,9 @@ export const StatsTable = observer(function StatsTable({
     <div className={styles.statsTable}>
       <div className={styles.tableHeader}>
         <div className={styles.headerItem}>Query</div>
+        <div className={styles.headerItem}>
+          Total exec <ColumnSort state={state} fieldName="totalExecTime" />
+        </div>
         <div className={styles.headerItem}>
           Call count <ColumnSort state={state} fieldName="calls" />
         </div>
@@ -78,8 +80,6 @@ export const QueryStatsRow = observer(function QueryStatsRow({
   queryStats: QueryStats;
   expanded: boolean;
 }) {
-  const {navigate, currentPath} = useDBRouter();
-
   const expandedRef = useRef<HTMLDivElement>(null);
   const [expandedHeight, setExpandedheight] = useState(0);
 
@@ -92,6 +92,9 @@ export const QueryStatsRow = observer(function QueryStatsRow({
   return (
     <div className={cn(styles.queryStatsRow, {[styles.expanded]: expanded})}>
       <div className={styles.query}>{queryStats.query.slice(0, 150)}</div>
+      <div className={styles.totalExec}>
+        {formatDuration(queryStats.totalExecTime)}
+      </div>
       <div className={styles.callCount}>{queryStats.calls.toString()}</div>
       <div className={styles.meanExec}>
         {formatDuration(queryStats.meanExecTime)}
@@ -165,6 +168,11 @@ export const QueryStatsRow = observer(function QueryStatsRow({
               </div>
 
               <div className={styles.dataItem}>
+                <FieldHeader label="Total exec time" />
+                {formatDuration(queryStats.totalExecTime)}
+              </div>
+
+              <div className={styles.dataItem}>
                 <FieldHeader label="Min plan time" />
                 {formatDuration(queryStats.minPlanTime)}
               </div>
@@ -189,6 +197,11 @@ export const QueryStatsRow = observer(function QueryStatsRow({
                 {queryStats.plans.toString()}
               </div>
 
+              <div className={styles.dataItem}>
+                <FieldHeader label="Total plan time" />
+                {formatDuration(queryStats.totalPlanTime)}
+              </div>
+
               <div
                 className={cn(styles.dataItem, styles.timeSince)}
                 style={{gridColumn: "1 / span 2"}}
@@ -209,10 +222,7 @@ export const QueryStatsRow = observer(function QueryStatsRow({
             <Button
               className={styles.analyseQueryButton}
               kind="outline"
-              onClick={() => {
-                state.setAnalyseQuery(queryStats.query);
-                navigate(`${currentPath[0]}/editor`);
-              }}
+              onClick={() => state.setAnalyzeQuery(queryStats.query)}
             >
               Analyze Query
             </Button>

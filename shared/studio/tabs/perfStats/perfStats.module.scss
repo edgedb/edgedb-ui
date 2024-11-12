@@ -12,6 +12,12 @@
   font-family: "Roboto Flex Variable", sans-serif;
   color: var(--main_text_color);
 
+  &.popupPanelOpen {
+    margin: 0 12px 12px 12px;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
   @include isMobile {
     border-radius: 0;
   }
@@ -25,14 +31,15 @@
 .content {
   padding: 48px;
   display: flex;
+  flex-direction: column;
   flex-grow: 1;
-  justify-content: center;
+  align-items: center;
   height: max-content;
 }
 
 .statsTable {
   display: grid;
-  grid-template-columns: 1fr auto auto 1fr auto;
+  grid-template-columns: 1fr repeat(3, auto) 1fr auto;
   width: 100%;
   max-width: 1200px;
   column-gap: 32px;
@@ -41,7 +48,7 @@
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    padding: 12px 24px;
+    padding: 12px 24px 8px 24px;
     font-weight: 500;
     color: var(--secondary_text_color);
   }
@@ -58,6 +65,7 @@
 
 .columnSort {
   display: flex;
+  margin-right: -16px;
   cursor: pointer;
 
   svg {
@@ -92,6 +100,7 @@
   }
 
   .query,
+  .totalExec,
   .meanExec,
   .callCount,
   .timeChart {
@@ -108,10 +117,12 @@
     text-overflow: ellipsis;
   }
 
+  .totalExec,
   .meanExec,
   .callCount {
     font-size: 14px;
     font-weight: 500;
+    text-align: end;
 
     span {
       color: var(--tertiary_text_color);
@@ -122,16 +133,12 @@
     }
   }
 
-  .callCount {
-    text-align: end;
-  }
-
   .timeChart {
     display: flex;
 
     svg {
       stroke-width: 1px;
-      stroke: var(--tertiary_text_color);
+      stroke: var(--Grey60);
       height: 24px;
       width: 100%;
 
@@ -166,6 +173,7 @@
     }
 
     .query,
+    .totalExec,
     .meanExec,
     .callCount,
     .timeChart {
@@ -209,10 +217,10 @@
 
   .fullData {
     display: grid;
-    grid-template-columns: repeat(5, auto);
+    grid-template-columns: repeat(6, auto);
     margin: 0 48px 0 12px;
     gap: 16px 24px;
-    max-width: 800px;
+    max-width: 880px;
 
     .dataItem {
       padding: 0 8px;
@@ -258,8 +266,8 @@
 
     .copyButton {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 4px;
+      right: 4px;
     }
   }
 
@@ -268,5 +276,204 @@
     margin-top: -32px;
     margin-bottom: 16px;
     margin-right: 8px;
+  }
+}
+
+.analyzePanel {
+  position: absolute;
+  inset: 0;
+  top: 12px;
+  background-color: var(--app_panel_background);
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .panelHeader {
+    display: flex;
+    height: 42px;
+    align-items: center;
+    background: var(--header_background);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    z-index: 1;
+
+    .closePanel {
+      width: 42px;
+      height: 42px;
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--Grey50);
+    }
+  }
+}
+
+.panelContent {
+  flex-grow: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  .query {
+    border-right: 1px solid var(--panel_border);
+    overflow: auto;
+
+    pre {
+      margin: 0;
+      padding: 16px 20px;
+      width: max-content;
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 14px;
+      line-height: 22px;
+      font-weight: 425;
+    }
+  }
+
+  .explain {
+    display: flex;
+    flex-direction: column;
+
+    .loading {
+      margin: auto;
+      color: var(--tertiary_text_color);
+    }
+  }
+}
+
+.statsChart {
+  display: flex;
+  height: 200px;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid var(--panel_border);
+  background: var(--header_background);
+  padding: 16px 32px 32px 18px;
+  margin-bottom: 24px;
+}
+
+.chartLayout {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
+
+  svg {
+    grid-area: 1 / 2;
+    fill: var(--Grey70);
+    stroke: var(--header_background);
+    width: 100%;
+    height: 100%;
+
+    .hoverRect {
+      stroke-width: 0;
+      fill: rgba(0, 0, 0, 0.03);
+    }
+    .hoverYLine {
+      stroke: var(--Grey85);
+    }
+
+    .selectedRect {
+      fill: #e8f0fa;
+      stroke-width: 0;
+    }
+  }
+
+  .axisLabel,
+  .hoverAxisLabel {
+    div {
+      font-size: 13px;
+      font-weight: 450;
+      color: var(--secondary_text_color);
+      white-space: nowrap;
+
+      span {
+        opacity: 0.7;
+        margin-left: 1px;
+      }
+    }
+  }
+
+  .axisLabel div {
+    transition: opacity 0.1s;
+
+    .chartHovered & {
+      opacity: 0;
+    }
+  }
+
+  .xaxis {
+    grid-area: 2 / 2;
+    position: relative;
+
+    .axisLabel,
+    .hoverAxisLabel {
+      position: absolute;
+      top: 2px;
+
+      &:after {
+        position: absolute;
+        top: 0;
+        content: "";
+        height: 6px;
+        border-left: 1px solid var(--Grey70);
+      }
+
+      div {
+        padding-top: 8px;
+        transform: translateX(-50%);
+      }
+    }
+
+    .hoverAxisLabel {
+      div {
+        background: var(--header_background);
+        padding: 8px 8px 0 8px;
+      }
+    }
+  }
+
+  .yaxis {
+    grid-area: 1 / 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+
+    .axisLabel,
+    .hoverAxisLabel {
+      position: relative;
+      height: 0;
+      margin-right: 2px;
+
+      &:after {
+        position: absolute;
+        top: 0;
+        right: 0;
+        content: "";
+        width: 6px;
+        border-top: 1px solid var(--Grey70);
+      }
+
+      div {
+        padding-right: 8px;
+        transform: translateY(-50%);
+        text-align: end;
+      }
+    }
+
+    .hoverAxisLabel {
+      position: absolute;
+      right: 0;
+
+      div {
+        background: var(--header_background);
+        padding: 8px 8px 8px 0;
+      }
+    }
   }
 }
