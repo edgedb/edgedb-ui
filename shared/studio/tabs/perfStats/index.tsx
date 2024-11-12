@@ -1,5 +1,7 @@
 import {observer} from "mobx-react-lite";
 
+import cn from "@edgedb/common/utils/classNames";
+
 import {PerfStatsState} from "./state";
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {TabDashboardIcon} from "../../icons";
@@ -9,6 +11,8 @@ import {useTabState} from "../../state";
 import styles from "./perfStats.module.scss";
 import {useEffect} from "react";
 import {StatsTable} from "./statsTable";
+import {AnalyzeQueryPanel} from "./analyze";
+import {StatsChart} from "./statsChart";
 
 export const PerformanceStats = observer(function PerformanceStats() {
   const state = useTabState(PerfStatsState);
@@ -18,11 +22,26 @@ export const PerformanceStats = observer(function PerformanceStats() {
   }, []);
 
   return (
-    <div className={styles.perfStats}>
-      <div className={styles.content}>
-        <StatsTable state={state} />
+    <>
+      <div
+        className={cn(styles.perfStats, {
+          [styles.popupPanelOpen]: state.analyzeQuery !== null,
+        })}
+      >
+        <div className={styles.content}>
+          <StatsChart state={state} />
+
+          <StatsTable state={state} />
+        </div>
       </div>
-    </div>
+
+      {state.analyzeQuery ? (
+        <AnalyzeQueryPanel
+          state={state.analyzeQuery}
+          onClose={() => state.closeAnalyzeQuery()}
+        />
+      ) : null}
+    </>
   );
 });
 
