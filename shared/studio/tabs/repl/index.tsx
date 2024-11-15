@@ -11,6 +11,8 @@ import {
 import {reaction, runInAction} from "mobx";
 import {observer} from "mobx-react-lite";
 
+import {PostgreSQL, sql} from "@codemirror/lang-sql";
+
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
@@ -53,6 +55,7 @@ import {
   defaultItemHeight,
   Repl,
   ReplHistoryItem as ReplHistoryItemState,
+  ReplLang,
 } from "./state";
 import {OutputMode, QueryEditor} from "../queryEditor/state";
 import {renderCommandResult} from "./commands";
@@ -276,16 +279,23 @@ const ReplInput = observer(function ReplInput() {
 
   const [_, theme] = useTheme();
 
-  const [CodeEditor] = useState(() =>
-    createCodeEditor({
+  const CodeEditor = useMemo(() => {
+    const prompt = `${dbState.name}${
+      replState.language === ReplLang.SQL ? "[sql]" : ""
+    }>`;
+    return createCodeEditor({
+      language:
+        replState.language === ReplLang.SQL
+          ? sql({
+              dialect: PostgreSQL,
+            })
+          : undefined,
       highlightActiveLine: false,
       terminalCursor: true,
       formatLineNo: (lineNo) =>
-        lineNo === 1
-          ? `${dbState.name}>`
-          : ".".repeat(dbState.name.length + 1),
-    })
-  );
+        lineNo === 1 ? prompt : ".".repeat(prompt.length),
+    });
+  }, [dbState.name, replState.language]);
 
   const ref = useRef<CodeEditorRef>();
 
@@ -775,12 +785,13 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
+  const prompt = `${dbName}${item.lang === ReplLang.SQL ? "[sql]" : ""}>`;
 
   const marginLeftRepl = isMobile
     ? "0px"
     : item.isExplain
     ? "16px"
-    : `${dbName.length + 2}ch`;
+    : `${prompt.length + 1}ch`;
 
   const expandButton = showExpandBtn ? (
     <div className={styles.showMore}>
@@ -819,9 +830,9 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
         <div className={styles.historyQuery}>
           <div className={styles.historyPrompt}>
             {[
-              `${dbName}>`,
+              prompt,
               ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
-                ".".repeat(dbName.length + 1)
+                ".".repeat(prompt.length)
               ),
             ].join("\n")}
           </div>

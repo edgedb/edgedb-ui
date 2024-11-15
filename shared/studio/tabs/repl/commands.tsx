@@ -17,6 +17,14 @@ export function renderCommandResult(result: CommandResult) {
           <div className={styles.command}>{ctrlKey}+ArrowUp/ArrowDown</div>
           <div className={styles.info}>Navigate query history</div>
 
+          <div className={styles.heading}>Settings</div>
+          <div className={styles.command}>
+            \set language {"("}edgeql | sql{")"},
+            <br />
+            \edgeql, \sql
+          </div>
+          <div className={styles.info}>Set the query language</div>
+
           <div className={styles.heading}>Introspection</div>
           <div className={styles.subheading}>
             (options: -s = show system objects, -I = case-insensitive match, -v

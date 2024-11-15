@@ -49,6 +49,7 @@ import {
 import LRU from "edgedb/dist/primitives/lru";
 import {Completer} from "../../../utils/completer";
 import {OutputMode} from "../../queryEditor/state";
+import {Language} from "edgedb/dist/ifaces";
 
 export const defaultItemHeight = 85;
 
@@ -64,9 +65,15 @@ function createInspector(
   return inspector;
 }
 
+export enum ReplLang {
+  EdgeQL,
+  SQL,
+}
+
 @model("Repl/HistoryItem")
 export class ReplHistoryItem extends Model({
   $modelId: idProp,
+  lang: prop<ReplLang>(ReplLang.EdgeQL),
   query: prop<string>(),
   timestamp: prop<number>(),
   implicitLimit: prop<number | null>(null),
@@ -103,7 +110,8 @@ export class ReplHistoryItem extends Model({
   }
 
   @observable
-  outputMode: OutputMode = OutputMode.Tree;
+  outputMode: OutputMode =
+    this.lang === ReplLang.SQL ? OutputMode.Grid : OutputMode.Tree;
 
   @action
   setOutputMode(mode: OutputMode) {
@@ -207,6 +215,14 @@ export class Repl extends Model({
   itemHeights = new ItemHeights();
 
   scrollRef: HTMLDivElement | null = null;
+
+  @observable
+  language = ReplLang.EdgeQL;
+
+  @action
+  setLanguage(lang: ReplLang) {
+    this.language = lang;
+  }
 
   @observable
   currentQuery = Text.empty;
@@ -403,6 +419,7 @@ export class Repl extends Model({
     }
 
     const historyItem = new ReplHistoryItem({
+      lang: this.language,
       query,
       timestamp: Date.now(),
     });
@@ -460,7 +477,8 @@ export class Repl extends Model({
                   ? implicitLimitConfig + BigInt(1)
                   : undefined,
             },
-            (this._runningQuery as AbortController).signal
+            (this._runningQuery as AbortController).signal,
+            this.language === ReplLang.SQL ? Language.SQL : Language.EDGEQL
           )
         );
 

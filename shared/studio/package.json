@@ -5,6 +5,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.5",
     "@codemirror/lang-json": "^6.0.0",
+    "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/lint": "^6.0.0",
     "@edgedb/code-editor": "workspace:*",
     "@edgedb/common": "workspace:*",

@@ -1,5 +1,5 @@
 import {SchemaObjectType, SchemaScalarType} from "@edgedb/common/schemaData";
-import {Repl, ReplHistoryItem} from ".";
+import {Repl, ReplHistoryItem, ReplLang} from ".";
 import {dbCtx} from "../../../state";
 import {instanceCtx} from "../../../state/instance";
 
@@ -33,7 +33,11 @@ export async function handleSlashCommand(
   repl: Repl,
   item: ReplHistoryItem
 ) {
-  const [command, ...args] = query.slice(1).split(" ");
+  const [command, ...args] = query
+    .slice(1)
+    .replace(/;$/, "")
+    .trim()
+    .split(" ");
 
   switch (command) {
     case "h":
@@ -71,7 +75,7 @@ export async function handleSlashCommand(
       break;
     case "c":
     case "connect": {
-      const dbName = args[0];
+      const dbName = args.join(" ");
       const instanceState = instanceCtx.get(repl)!;
       await instanceState.fetchInstanceInfo();
 
@@ -85,6 +89,32 @@ export async function handleSlashCommand(
         });
       }
 
+      break;
+    }
+    case "set": {
+      if (args[0] === "language") {
+        const lang = args.slice(1).join(" ");
+        if (lang === "edgeql" || lang === "sql") {
+          item.setCommandResult({kind: CommandOutputKind.none});
+          repl.setLanguage(lang === "sql" ? ReplLang.SQL : ReplLang.EdgeQL);
+        } else {
+          item.setCommandResult({
+            kind: CommandOutputKind.error,
+            msg: `unknown language: '${lang}'`,
+          });
+        }
+      } else {
+        item.setCommandResult({
+          kind: CommandOutputKind.error,
+          msg: `unknown \\set command: '${args.join(" ")}'`,
+        });
+      }
+      break;
+    }
+    case "edgeql":
+    case "sql": {
+      item.setCommandResult({kind: CommandOutputKind.none});
+      repl.setLanguage(command === "sql" ? ReplLang.SQL : ReplLang.EdgeQL);
       break;
     }
     case "retro": {

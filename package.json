@@ -6,5 +6,8 @@
       "web",
       "shared/*"
     ]
+  },
+  "resolutions": {
+    "edgedb": "file:../edgedb-js/packages/driver"
   }
 }

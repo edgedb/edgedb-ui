@@ -27,4 +27,10 @@ export const KnownScalarTypes = [
   "ext::pgvector::vector",
   "ext::pgvector::halfvec",
   "ext::pgvector::sparsevec",
+
+  "std::pg::json",
+  "std::pg::timestamptz",
+  "std::pg::timestamp",
+  "std::pg::date",
+  "std::pg::interval",
 ] as const;
