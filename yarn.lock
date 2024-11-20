@@ -1084,8 +1084,6 @@ __metadata:
     mobx: ^6.5.0
     mobx-keystone: ^1.11.0
     mobx-react-lite: ^4.0.0
-    pmtiles: ^3.0.7
-    protomaps-themes-base: ^3.1.0
     react-colorful: ^5.6.1
     react-error-boundary: ^3.1.4
     react-hook-form: ^7.32.2
@@ -2820,15 +2818,6 @@ __metadata:
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: 97ed0cb44d4070aecea772b7b2e2ed971e10c81ec87dd4ecc160322ffa55ff330dace1793489540e3e318d90942064bb697cc0f8989391797792d919737b3b98
-  languageName: node
-  linkType: hard
-
-"@types/leaflet@npm:^1.9.8":
-  version: 1.9.14
-  resolution: "@types/leaflet@npm:1.9.14"
-  dependencies:
-    "@types/geojson": "*"
-  checksum: 006e1fde1fa0ff513f9ef9bda7ce54dd3940f67148099c3740ce2dd6f9844a3d2a15ffe3b62c6bf5769cfb4358eb20431e9ab1876e054231ab5735bdcaeca26f
   languageName: node
   linkType: hard
 
@@ -4608,13 +4597,6 @@ __metadata:
   dependencies:
     bser: 2.1.1
   checksum: 8510230778ab3a51c27dffb1b76ef2c24fab672a42742d3c0a45c2e9d1e5f20210b1fbca33486088da4a9a3958bde96b5aec0a63aac9894b4e9df65c88b2cbd6
-  languageName: node
-  linkType: hard
-
-"fflate@npm:^0.8.0":
-  version: 0.8.2
-  resolution: "fflate@npm:0.8.2"
-  checksum: 29470337b85d3831826758e78f370e15cda3169c5cd4477c9b5eea2402261a74b2975bae816afabe1c15d21d98591e0d30a574f7103aa117bff60756fa3035d4
   languageName: node
   linkType: hard
 
@@ -7240,16 +7222,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pmtiles@npm:^3.0.7":
-  version: 3.2.1
-  resolution: "pmtiles@npm:3.2.1"
-  dependencies:
-    "@types/leaflet": ^1.9.8
-    fflate: ^0.8.0
-  checksum: 132c28ebc61fe77d0956cd24b60835ec2e68466e9479e5653893729369a61a81a53fb7cab40ff960c531117bb3efa663f2c36b7cb02988b3c7a7631c2785d1c4
-  languageName: node
-  linkType: hard
-
 "postcss@npm:^8.4.43":
   version: 8.4.47
   resolution: "postcss@npm:8.4.47"
@@ -7353,13 +7325,6 @@ __metadata:
   version: 3.6.0
   resolution: "protocol-buffers-schema@npm:3.6.0"
   checksum: 8713b5770f6745ddbcdf3bbd03ee020624d506233bb567927a6615a6f69a5bd620a5f49597f34f4115792b853a4c9cb9e2d5d6b930a1c04bf198023e45c1c349
-  languageName: node
-  linkType: hard
-
-"protomaps-themes-base@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "protomaps-themes-base@npm:3.1.0"
-  checksum: fe3ada5c9b6751e907faa79063288d0b92c14f974d977ad8fdb0ade98969eeb964e493b0287d7569c5053ade3963eb9b24b8ac4581cc70351499c851076ae107
   languageName: node
   linkType: hard
 

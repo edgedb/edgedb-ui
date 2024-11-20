@@ -4,8 +4,7 @@ import {model, Model, modelAction, prop} from "mobx-keystone";
 import maplibregl from "maplibre-gl";
 // @ts-ignore
 import maplibreglWorkerUrl from "maplibre-gl/dist/maplibre-gl-csp-worker?url";
-import {Protocol} from "pmtiles";
-import layers from "protomaps-themes-base";
+import {lightLayers, darkLayers} from "./styles/layers";
 
 import {Theme} from "@edgedb/common/hooks/useTheme";
 import {assertNever} from "@edgedb/common/utils/assertNever";
@@ -34,13 +33,7 @@ import {
 // @ts-ignore
 import controlPointImage from "./controlPoint.png";
 
-const PROTOMAPS_TILES_URL =
-  (import.meta as any).env?.VITE_PROTOMAPS_TILES_URL ||
-  process.env.REACT_APP_PROTOMAPS_TILES_URL;
-
 maplibregl.setWorkerUrl(maplibreglWorkerUrl);
-const protomapsProtocol = new Protocol();
-maplibregl.addProtocol("pmtiles", protomapsProtocol.tile);
 
 export const ListItemRowHeight = 32;
 
@@ -395,16 +388,12 @@ export class PostgisEditor extends Model({
       container: el,
       style: {
         version: 8,
-        glyphs:
-          "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-        sprite: "https://protomaps.github.io/basemaps-assets/sprites/v3/light",
+        glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+        sprite: "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
         sources: {
-          protomaps: {
+          openmaptiles: {
             type: "vector",
-            tiles: [PROTOMAPS_TILES_URL],
-            maxzoom: 15,
-            attribution:
-              '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
+            url: "https://tiles.openfreemap.org/planet",
           },
           [DATA_SOURCE]: {
             type: "geojson",
@@ -420,10 +409,7 @@ export class PostgisEditor extends Model({
           },
         },
         layers: [
-          ...layers(
-            "protomaps",
-            this.theme === Theme.dark ? "black" : "white"
-          ),
+          ...(this.theme === Theme.dark ? darkLayers : lightLayers),
           ...this.layers,
         ],
       },
@@ -460,7 +446,7 @@ export class PostgisEditor extends Model({
       this.map.setStyle({
         ...this.map.getStyle(),
         layers: [
-          ...layers("protomaps", theme === Theme.dark ? "black" : "white"),
+          ...(theme === Theme.dark ? darkLayers : lightLayers),
           ...this.layers,
         ],
       });
