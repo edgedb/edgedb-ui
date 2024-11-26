@@ -7,14 +7,7 @@ import {
   createContext,
   prop,
 } from "mobx-keystone";
-import {
-  reaction,
-  observable,
-  computed,
-  action,
-  autorun,
-  runInAction,
-} from "mobx";
+import {observable, computed, action, autorun} from "mobx";
 import {Text} from "@codemirror/state";
 
 import {Language} from "edgedb/dist/ifaces";

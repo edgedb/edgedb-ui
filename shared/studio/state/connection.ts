@@ -176,9 +176,16 @@ export class Connection extends Model({
 
   parse(
     query: string,
-    language: Language = Language.EDGEQL
+    language: Language = Language.EDGEQL,
+    abortSignal?: AbortSignal
   ): Promise<ParseResult> {
-    return this._addQueryToQueue("parse", language, query);
+    return this._addQueryToQueue(
+      "parse",
+      language,
+      query,
+      undefined,
+      abortSignal
+    );
   }
 
   execute(

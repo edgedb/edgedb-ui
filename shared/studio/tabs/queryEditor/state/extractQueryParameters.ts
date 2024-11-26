@@ -294,7 +294,7 @@ export async function extractSQLQueryParameters(
 
   if (maybeHasParams) {
     try {
-      const {inCodec} = await conn.parse(query, Language.SQL);
+      const {inCodec} = await conn.parse(query, Language.SQL, abortSignal);
       if (inCodec instanceof ObjectCodec) {
         const params = new Map<string, ResolvedParameter>();
 

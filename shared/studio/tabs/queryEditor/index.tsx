@@ -5,11 +5,7 @@ import {sql, PostgreSQL} from "@codemirror/lang-sql";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {
-  CodeEditor,
-  CodeEditorRef,
-  createCodeEditor,
-} from "@edgedb/code-editor";
+import {CodeEditorRef, createCodeEditor} from "@edgedb/code-editor";
 import {RunButton} from "@edgedb/common/ui/mobile";
 
 import styles from "./repl.module.scss";

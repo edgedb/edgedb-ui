@@ -2,8 +2,6 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {useTabState} from "../../../state";
-import {QueryEditor} from "../state";
 import {QueryParamsEditor, ResolvedParameter} from "../state/parameters";
 
 import {getInputComponent} from "../../../components/dataEditor";
