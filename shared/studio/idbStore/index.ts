@@ -179,6 +179,35 @@ async function _fetchHistory(
   return items;
 }
 
+async function _clearHistory(
+  storeId: "queryHistory" | "replHistory",
+  instanceId: string,
+  dbName: string,
+  getResultDataId: (item: QueryHistoryItem) => string | null
+) {
+  const tx = (await db).transaction([storeId, "queryResultData"], "readwrite");
+  let cursor = await tx
+    .objectStore(storeId)
+    .openCursor(
+      IDBKeyRange.bound(
+        [instanceId, dbName, -Infinity],
+        [instanceId, dbName, Infinity]
+      )
+    );
+  const deletes: Promise<any>[] = [];
+  while (cursor) {
+    const currentItem = cursor;
+    const resultDataId = getResultDataId(currentItem.value);
+    if (resultDataId) {
+      deletes.push(tx.objectStore("queryResultData").delete(resultDataId));
+    }
+    deletes.push(currentItem.delete());
+    cursor = await cursor.continue();
+  }
+  deletes.push(tx.done);
+  return await Promise.all(deletes);
+}
+
 export function fetchQueryHistory(
   instanceId: string,
   dbName: string,
@@ -207,6 +236,14 @@ export function fetchReplHistory(
     fromTimestamp,
     count
   );
+}
+
+export function clearReplHistory(
+  instanceId: string,
+  dbName: string,
+  getResultDataId: (item: QueryHistoryItem) => string | null
+) {
+  return _clearHistory("replHistory", instanceId, dbName, getResultDataId);
 }
 
 export async function fetchResultData(itemId: string) {

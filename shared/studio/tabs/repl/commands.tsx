@@ -87,6 +87,11 @@ export function renderCommandResult(result: CommandResult) {
 
           <div className={styles.command}>\?, \h, \help</div>
           <div className={styles.info}>Show help on backslash commands</div>
+
+          <div className={styles.spacer} />
+
+          <div className={styles.command}>\clear</div>
+          <div className={styles.info}>Clear query history</div>
         </div>
       );
     case CommandOutputKind.error:

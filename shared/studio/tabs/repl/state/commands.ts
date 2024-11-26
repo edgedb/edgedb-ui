@@ -28,11 +28,14 @@ export type CommandResult =
       content: string[][];
     };
 
+/**
+ * Returns true if history item should not be stored
+ */
 export async function handleSlashCommand(
   query: string,
   repl: Repl,
   item: ReplHistoryItem
-) {
+): Promise<boolean> {
   const [command, ...args] = query
     .slice(1)
     .replace(/;$/, "")
@@ -117,6 +120,10 @@ export async function handleSlashCommand(
       repl.setLanguage(command === "sql" ? ReplLang.SQL : ReplLang.EdgeQL);
       break;
     }
+    case "clear": {
+      repl.clearQueryHistory();
+      return true;
+    }
     case "retro": {
       item.setCommandResult({kind: CommandOutputKind.none});
       repl.updateSetting("retroMode", !repl.settings.retroMode);
@@ -128,6 +135,8 @@ export async function handleSlashCommand(
         msg: `unknown backslash command: '${query}'`,
       });
   }
+
+  return false;
 }
 
 async function handleListCommand(

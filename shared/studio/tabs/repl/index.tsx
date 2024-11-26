@@ -1034,7 +1034,9 @@ const ReplHeader = observer(function ReplHeader() {
         commands list
         <br />
         Shortcuts: <i>{ctrlKey}+Enter</i> to run query,{" "}
-        <i>{ctrlKey}+ArrowUp/Down</i> to navigate history
+        <i>{ctrlKey}+ArrowUp/Down</i> to navigate history,{" "}
+        <span onClick={() => replState.runQuery("\\clear")}>\clear</span> to
+        clear the history
       </div>
       {replState._hasUnfetchedHistory ? (
         <div className={styles.historyLoading}>

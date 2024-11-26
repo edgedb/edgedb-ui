@@ -485,6 +485,7 @@
 .commandHelp {
   display: grid;
   grid-template-columns: auto 1fr;
+  line-height: 18px;
 
   .heading,
   .subheading {
@@ -513,6 +514,11 @@
 
   .info {
     color: #808080;
+  }
+
+  .spacer {
+    grid-column: 1 / span 2;
+    height: 16px;
   }
 
   @include darkTheme {
