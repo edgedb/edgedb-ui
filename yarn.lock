@@ -1007,7 +1007,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1024,7 +1024,7 @@ __metadata:
     mobx-react-lite: ^4.0.0
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1053,7 +1053,7 @@ __metadata:
     react-transition-group: ^4.4.1
     webcola: ^3.4.0
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1088,7 +1088,7 @@ __metadata:
     react-markdown: ^9.0.1
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -4010,9 +4010,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@file:../edgedb-js/packages/driver::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 1.5.12
-  resolution: "edgedb@file:../edgedb-js/packages/driver#../edgedb-js/packages/driver::hash=fc5443&locator=root-workspace-0b6124%40workspace%3A."
+"edgedb@npm:1.6.0-canary.20241126T162412":
+  version: 1.6.0-canary.20241126T162412
+  resolution: "edgedb@npm:1.6.0-canary.20241126T162412"
   dependencies:
     "@petamoriken/float16": ^3.8.7
     debug: ^4.3.4
@@ -4021,8 +4021,8 @@ __metadata:
     shell-quote: ^1.8.1
     which: ^4.0.0
   bin:
-    edgedb: ./dist/cli.mjs
-  checksum: d98ce4c281bfdf43700908ea2f1ea3a2c0e539e70e755b45bf9a90bf186b855af860d497dbfd32d45471a237a6d616838ac399bb16e8ff5ea9ad998c7daace8d
+    edgedb: dist/cli.mjs
+  checksum: 50c95c3e3085c11f51ed9476a851fe2e52c6bcdfc74b0fde57d7b71ad0ea4ea632908d139a50e3455d08c24f0ac29de08904a408baa5d8779915f2b187d4d5ab
   languageName: node
   linkType: hard
 
@@ -8455,7 +8455,7 @@ __metadata:
     "@types/selenium-webdriver": ^4.1.27
     "@vitejs/plugin-react-swc": ^3.5.0
     buffer: ^6.0.3
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     eslint: ^9.13.0
     eslint-plugin-react-hooks: ^5.0.0
     eslint-plugin-react-refresh: ^0.4.14
