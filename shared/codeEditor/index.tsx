@@ -221,6 +221,7 @@ export function createCodeEditor({
   language,
   highlightActiveLine = true,
   formatLineNo,
+  disableLineNumbers,
   terminalCursor,
   customExtensions = [],
   showIndentationMarkers = true,
@@ -228,6 +229,7 @@ export function createCodeEditor({
   language?: LanguageSupport | null;
   highlightActiveLine?: boolean;
   formatLineNo?: (lineNo: number) => string;
+  disableLineNumbers?: boolean;
   terminalCursor?: boolean;
   customExtensions?: Extension;
   showIndentationMarkers?: boolean;
@@ -266,9 +268,11 @@ export function createCodeEditor({
           })
         ),
         highlightActiveLine ? highlightActiveLineExt() : [],
-        lineNumbers({
-          formatNumber: formatLineNo,
-        }),
+        !disableLineNumbers
+          ? lineNumbers({
+              formatNumber: formatLineNo,
+            })
+          : [],
         readOnlyComp.of([
           EditorState.readOnly.of(readonly),
           EditorView.editable.of(!readonly),

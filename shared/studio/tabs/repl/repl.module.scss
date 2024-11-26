@@ -194,6 +194,14 @@
   }
 }
 
+.replPromptGutter {
+  color: var(--tertiary_text_color);
+
+  span {
+    color: var(--main_text_color);
+  }
+}
+
 .replHistoryItem {
   position: absolute;
   background: var(--Grey95);
@@ -331,11 +339,11 @@
     user-select: none;
     pointer-events: none;
     padding-right: 1ch;
-    color: #808080;
+    color: var(--tertiary_text_color);
     padding-top: 12px;
 
-    @include darkTheme {
-      color: #7d7d7d;
+    span {
+      color: var(--main_text_color);
     }
   }
 

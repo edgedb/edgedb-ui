@@ -63,7 +63,7 @@ import {renderCommandResult} from "./commands";
 import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
-import {isEndOfStatement} from "./state/utils";
+import {isEndOfStatement, replPrompt} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {RunButton} from "@edgedb/common/ui/mobile";
 import {InspectorState} from "@edgedb/inspector/state";
@@ -280,9 +280,6 @@ const ReplInput = observer(function ReplInput() {
   const [_, theme] = useTheme();
 
   const CodeEditor = useMemo(() => {
-    const prompt = `${dbState.name}${
-      replState.language === ReplLang.SQL ? "[sql]" : ""
-    }>`;
     return createCodeEditor({
       language:
         replState.language === ReplLang.SQL
@@ -292,8 +289,13 @@ const ReplInput = observer(function ReplInput() {
           : undefined,
       highlightActiveLine: false,
       terminalCursor: true,
-      formatLineNo: (lineNo) =>
-        lineNo === 1 ? prompt : ".".repeat(prompt.length),
+      disableLineNumbers: true,
+      customExtensions: [
+        replPrompt({
+          dbName: dbState.name,
+          inputMode: replState.language === ReplLang.SQL ? "sql" : "edgeql",
+        }),
+      ],
     });
   }, [dbState.name, replState.language]);
 
@@ -785,13 +787,13 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
-  const prompt = `${dbName}${item.lang === ReplLang.SQL ? "[sql]" : ""}>`;
+  const promptLength = dbName.length + (item.lang === ReplLang.SQL ? 6 : 9);
 
   const marginLeftRepl = isMobile
     ? "0px"
     : item.isExplain
     ? "16px"
-    : `${prompt.length + 1}ch`;
+    : `${promptLength + 1}ch`;
 
   const expandButton = showExpandBtn ? (
     <div className={styles.showMore}>
@@ -829,12 +831,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       >
         <div className={styles.historyQuery}>
           <div className={styles.historyPrompt}>
-            {[
-              prompt,
-              ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
-                ".".repeat(prompt.length)
-              ),
-            ].join("\n")}
+            {dbName}
+            <span>{item.lang === ReplLang.SQL ? "[sql]" : "[edgeql]"}</span>
+            {">\n"}
+            {Array((truncateQuery ? 20 : queryLines) - 1)
+              .fill(".".repeat(promptLength))
+              .join("\n")}
           </div>
 
           <CustomScrollbars

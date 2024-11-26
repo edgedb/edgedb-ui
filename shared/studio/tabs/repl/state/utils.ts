@@ -1,5 +1,8 @@
-import {EditorSelection} from "@codemirror/state";
+import {EditorSelection, Extension, Facet} from "@codemirror/state";
+import {gutter, GutterMarker, gutters} from "@codemirror/view";
 import {parser} from "@edgedb/lang-edgeql";
+
+import styles from "../repl.module.scss";
 
 export function isEndOfStatement(
   query: string,
@@ -24,4 +27,64 @@ export function isEndOfStatement(
     }
   }
   return false;
+}
+
+interface ReplPromptConfig {
+  dbName: string;
+  inputMode: string;
+}
+
+const replPromptConfig = Facet.define<ReplPromptConfig, ReplPromptConfig>({
+  combine(val) {
+    return val[0] ?? {dbName: "", inputMode: ""};
+  },
+});
+
+class ReplPromptMarker extends GutterMarker {
+  constructor(
+    readonly firstLine: boolean,
+    readonly dbName: string,
+    readonly inputMode: string
+  ) {
+    super();
+  }
+
+  eq(other: ReplPromptMarker) {
+    return (
+      this.firstLine === other.firstLine &&
+      this.dbName === other.dbName &&
+      this.inputMode === other.inputMode
+    );
+  }
+
+  toDOM() {
+    if (!this.firstLine) {
+      return document.createTextNode(
+        ".".repeat(this.dbName.length + this.inputMode.length + 3)
+      );
+    }
+    const frag = document.createDocumentFragment();
+    frag.appendChild(document.createTextNode(this.dbName));
+    const mode = document.createElement("span");
+    mode.appendChild(document.createTextNode(`[${this.inputMode}]`));
+    frag.appendChild(mode);
+    frag.append(document.createTextNode(">"));
+    return frag;
+  }
+}
+
+const replPromptGutter = gutter({
+  class: styles.replPromptGutter,
+  lineMarker(view, line) {
+    const firstLine = view.state.doc.lineAt(line.from).number === 1;
+    const config = view.state.facet(replPromptConfig);
+    return new ReplPromptMarker(firstLine, config.dbName, config.inputMode);
+  },
+  lineMarkerChange: (update) =>
+    update.startState.facet(replPromptConfig) !=
+    update.state.facet(replPromptConfig),
+});
+
+export function replPrompt(config: ReplPromptConfig): Extension {
+  return [replPromptConfig.of(config), gutters(), replPromptGutter];
 }
