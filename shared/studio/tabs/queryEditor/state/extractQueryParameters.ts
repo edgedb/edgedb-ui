@@ -1,13 +1,21 @@
 import {SyntaxNode} from "@lezer/common";
 
-import {parser} from "@edgedb/lang-edgeql";
+import {parser as edgeqlParser} from "@edgedb/lang-edgeql";
+import {PostgreSQL, sql} from "@codemirror/lang-sql";
 import {KnownScalarTypes, SchemaScalarType} from "@edgedb/common/schemaData";
 
 import {getAllChildren, getNodeText} from "../../../utils/syntaxTree";
 import {
+  deserializePrimitiveType,
   EditorRangeType,
   PrimitiveType,
+  SerializedPrimitiveType,
+  serializePrimitiveType,
 } from "../../../components/dataEditor/utils";
+import {Connection} from "../../../state/connection";
+import {Cardinality, Language} from "edgedb/dist/ifaces";
+import {ObjectCodec} from "edgedb/dist/codecs/object";
+import {ICodec} from "edgedb/dist/codecs/ifaces";
 
 export type ResolvedParameter =
   | {
@@ -20,6 +28,41 @@ export type ResolvedParameter =
       name: string;
       error: string;
     };
+
+export type SerializedResolvedParameter =
+  | {
+      name: string;
+      type: SerializedPrimitiveType;
+      optional: boolean;
+      error: null;
+    }
+  | {
+      name: string;
+      error: string;
+    };
+
+export function serializeResolvedParameter(
+  param: ResolvedParameter
+): SerializedResolvedParameter {
+  return {
+    ...param,
+    type:
+      param.error === null ? serializePrimitiveType(param.type) : undefined,
+  } as SerializedResolvedParameter;
+}
+
+export function deserializeResolvedParameter(
+  param: SerializedResolvedParameter,
+  schemaScalars: Map<string, SchemaScalarType>
+): ResolvedParameter {
+  return {
+    ...param,
+    type:
+      param.error === null
+        ? deserializePrimitiveType(param.type, schemaScalars)
+        : undefined,
+  } as ResolvedParameter;
+}
 
 const validRangeScalars = new Set([
   "std::int32",
@@ -151,12 +194,12 @@ function resolveCastType(
   throw new Error("Invalid parameter cast");
 }
 
-export function extractQueryParameters(
+export function extractEdgeQLQueryParameters(
   query: string,
   schemaScalars: Map<string, SchemaScalarType>
-) {
+): Map<string, ResolvedParameter> | null {
   try {
-    const syntaxTree = parser.parse(query);
+    const syntaxTree = edgeqlParser.parse(query);
 
     const extractedParams: ResolvedParameter[] = getAllChildren(
       syntaxTree.topNode,
@@ -232,6 +275,94 @@ export function extractQueryParameters(
 
     return resolvedParams;
   } catch {
-    return;
+    return null;
+  }
+}
+
+export async function extractSQLQueryParameters(
+  query: string,
+  schemaScalars: Map<string, SchemaScalarType>,
+  conn: Connection,
+  abortSignal: AbortSignal
+): Promise<Map<string, ResolvedParameter> | null> {
+  const syntaxTree = sql({dialect: PostgreSQL}).language.parser.parse(query);
+
+  const maybeHasParams = getAllChildren(syntaxTree.topNode, "⚠").some(
+    (node) =>
+      getNodeText(query, node) === "$" && node.nextSibling?.type.is("Number")
+  );
+
+  if (maybeHasParams) {
+    try {
+      const {inCodec} = await conn.parse(query, Language.SQL, abortSignal);
+      if (inCodec instanceof ObjectCodec) {
+        const params = new Map<string, ResolvedParameter>();
+
+        const subcodecs = inCodec.getSubcodecs();
+        let i = 0;
+        for (const field of inCodec.getFields()) {
+          const subcodec = subcodecs[i++];
+          try {
+            const type = codecToPrimitiveType(subcodec, schemaScalars);
+            params.set(field.name, {
+              name: field.name,
+              optional: !(
+                field.cardinality === Cardinality.ONE ||
+                field.cardinality === Cardinality.AT_LEAST_ONE
+              ),
+              error: null,
+              type,
+            });
+          } catch (err) {
+            params.set(field.name, {
+              name: field.name,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+
+        return params;
+      }
+    } catch {
+      // ignore any parsing errors
+      return null;
+    }
+  }
+
+  return new Map();
+}
+
+function codecToPrimitiveType(
+  codec: ICodec,
+  schemaScalars: Map<string, SchemaScalarType>
+): PrimitiveType {
+  switch (codec.getKind()) {
+    case "scalar": {
+      const scalarType = schemaScalars.get(codec.getKnownTypeName());
+      if (
+        !scalarType ||
+        !KnownScalarTypes.includes(
+          (scalarType.knownBaseType ?? scalarType).name as any
+        )
+      ) {
+        throw new Error(
+          `unsupported scalar type: ${codec.getKnownTypeName()}`
+        );
+      }
+      return scalarType;
+    }
+    case "array": {
+      const elementType = codecToPrimitiveType(
+        codec.getSubcodecs()[0],
+        schemaScalars
+      );
+      return {
+        schemaType: "Array",
+        name: `array<${elementType.name}>`,
+        elementType,
+      };
+    }
+    default:
+      throw new Error(`unexpected input type: ${codec.getKind}`);
   }
 }

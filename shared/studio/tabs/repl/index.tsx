@@ -11,6 +11,8 @@ import {
 import {reaction, runInAction} from "mobx";
 import {observer} from "mobx-react-lite";
 
+import {PostgreSQL, sql} from "@codemirror/lang-sql";
+
 import {useInitialValue} from "@edgedb/common/hooks/useInitialValue";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
@@ -53,6 +55,7 @@ import {
   defaultItemHeight,
   Repl,
   ReplHistoryItem as ReplHistoryItemState,
+  ReplLang,
 } from "./state";
 import {OutputMode, QueryEditor} from "../queryEditor/state";
 import {renderCommandResult} from "./commands";
@@ -60,7 +63,7 @@ import {renderCommandResult} from "./commands";
 import {useDBRouter} from "../../hooks/dbRoute";
 
 import styles from "./repl.module.scss";
-import {isEndOfStatement} from "./state/utils";
+import {isEndOfStatement, replPrompt} from "./state/utils";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {RunButton} from "@edgedb/common/ui/mobile";
 import {InspectorState} from "@edgedb/inspector/state";
@@ -276,16 +279,25 @@ const ReplInput = observer(function ReplInput() {
 
   const [_, theme] = useTheme();
 
-  const [CodeEditor] = useState(() =>
-    createCodeEditor({
+  const CodeEditor = useMemo(() => {
+    return createCodeEditor({
+      language:
+        replState.language === ReplLang.SQL
+          ? sql({
+              dialect: PostgreSQL,
+            })
+          : undefined,
       highlightActiveLine: false,
       terminalCursor: true,
-      formatLineNo: (lineNo) =>
-        lineNo === 1
-          ? `${dbState.name}>`
-          : ".".repeat(dbState.name.length + 1),
-    })
-  );
+      disableLineNumbers: true,
+      customExtensions: [
+        replPrompt({
+          dbName: dbState.name,
+          inputMode: replState.language === ReplLang.SQL ? "sql" : "edgeql",
+        }),
+      ],
+    });
+  }, [dbState.name, replState.language]);
 
   const ref = useRef<CodeEditorRef>();
 
@@ -775,12 +787,13 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
 
   const queryLines = item.query.split("\n").length;
   const truncateQuery = !item.showFullQuery && queryLines > 20;
+  const promptLength = dbName.length + (item.lang === ReplLang.SQL ? 6 : 9);
 
   const marginLeftRepl = isMobile
     ? "0px"
     : item.isExplain
     ? "16px"
-    : `${dbName.length + 2}ch`;
+    : `${promptLength + 1}ch`;
 
   const expandButton = showExpandBtn ? (
     <div className={styles.showMore}>
@@ -818,12 +831,12 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       >
         <div className={styles.historyQuery}>
           <div className={styles.historyPrompt}>
-            {[
-              `${dbName}>`,
-              ...Array((truncateQuery ? 20 : queryLines) - 1).fill(
-                ".".repeat(dbName.length + 1)
-              ),
-            ].join("\n")}
+            {dbName}
+            <span>{item.lang === ReplLang.SQL ? "[sql]" : "[edgeql]"}</span>
+            {">\n"}
+            {Array((truncateQuery ? 20 : queryLines) - 1)
+              .fill(".".repeat(promptLength))
+              .join("\n")}
           </div>
 
           <CustomScrollbars
@@ -1023,7 +1036,9 @@ const ReplHeader = observer(function ReplHeader() {
         commands list
         <br />
         Shortcuts: <i>{ctrlKey}+Enter</i> to run query,{" "}
-        <i>{ctrlKey}+ArrowUp/Down</i> to navigate history
+        <i>{ctrlKey}+ArrowUp/Down</i> to navigate history,{" "}
+        <span onClick={() => replState.runQuery("\\clear")}>\clear</span> to
+        clear the history
       </div>
       {replState._hasUnfetchedHistory ? (
         <div className={styles.historyLoading}>

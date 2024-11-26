@@ -194,6 +194,14 @@
   }
 }
 
+.replPromptGutter {
+  color: var(--tertiary_text_color);
+
+  span {
+    color: var(--main_text_color);
+  }
+}
+
 .replHistoryItem {
   position: absolute;
   background: var(--Grey95);
@@ -331,11 +339,11 @@
     user-select: none;
     pointer-events: none;
     padding-right: 1ch;
-    color: #808080;
+    color: var(--tertiary_text_color);
     padding-top: 12px;
 
-    @include darkTheme {
-      color: #7d7d7d;
+    span {
+      color: var(--main_text_color);
     }
   }
 
@@ -485,6 +493,7 @@
 .commandHelp {
   display: grid;
   grid-template-columns: auto 1fr;
+  line-height: 18px;
 
   .heading,
   .subheading {
@@ -513,6 +522,11 @@
 
   .info {
     color: #808080;
+  }
+
+  .spacer {
+    grid-column: 1 / span 2;
+    height: 16px;
   }
 
   @include darkTheme {

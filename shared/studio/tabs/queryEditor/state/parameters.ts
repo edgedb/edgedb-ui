@@ -1,18 +1,33 @@
-import {Model, model, modelAction, Frozen, frozen} from "mobx-keystone";
-import {reaction, observable, computed, action} from "mobx";
+import {
+  Model,
+  model,
+  modelAction,
+  Frozen,
+  frozen,
+  createContext,
+  prop,
+} from "mobx-keystone";
+import {observable, computed, action, autorun} from "mobx";
+import {Text} from "@codemirror/state";
+
+import {Language} from "edgedb/dist/ifaces";
 
 import {
-  extractQueryParameters,
+  deserializeResolvedParameter,
+  extractEdgeQLQueryParameters,
+  extractSQLQueryParameters,
   ResolvedParameter,
+  SerializedResolvedParameter,
+  serializeResolvedParameter,
 } from "./extractQueryParameters";
 
-import {EditorKind, queryEditorCtx} from ".";
 import {dbCtx} from "../../../state/database";
 import {
   EditorValue,
   newPrimitiveValue,
   parseEditorValue,
 } from "../../../components/dataEditor/utils";
+import {connCtx} from "../../../state";
 
 export type {ResolvedParameter};
 
@@ -21,11 +36,16 @@ export type SerializedParamsData = {
     typeName: string;
     value: EditorValue;
     disabled: boolean;
+    type?: SerializedResolvedParameter;
   };
 };
 
+export const paramsQueryCtx = createContext<Text | null>();
+
 @model("Repl/QueryParamsEditor")
-export class QueryParamsEditor extends Model({}) {
+export class QueryParamsEditor extends Model({
+  lang: prop<Language>(),
+}) {
   @observable
   panelHeight = 160;
 
@@ -91,32 +111,39 @@ export class QueryParamsEditor extends Model({}) {
   }
 
   onAttachedToRootStore() {
-    const dbState = dbCtx.get(this)!;
-    const editor = queryEditorCtx.get(this)!;
-
-    const disposer = reaction(
-      () => [editor.currentQueryData[EditorKind.EdgeQL], dbState.schemaData],
-      () => this._extractQueryParameters(),
-      {delay: 200, fireImmediately: true}
-    );
+    const disposer = autorun(() => this._extractQueryParameters(), {
+      delay: 200,
+    });
 
     return () => {
       disposer();
     };
   }
 
-  _extractQueryParameters() {
-    const dbState = dbCtx.get(this)!;
-    const editor = queryEditorCtx.get(this)!;
+  _currentFetchParamsTask: AbortController | null = null;
+  async _extractQueryParameters() {
+    this._currentFetchParamsTask?.abort();
 
-    const query = editor.currentQueryData[EditorKind.EdgeQL];
-    const schemaScalars = dbState.schemaData?.scalars;
+    const schemaScalars = dbCtx.get(this)!.schemaData?.scalars;
+    const query = paramsQueryCtx.get(this)?.toString();
 
-    if (schemaScalars) {
-      const params = extractQueryParameters(query.toString(), schemaScalars);
-      if (params) {
-        this.updateCurrentParams(params);
-      }
+    if (!schemaScalars || query == null) return;
+
+    let params: Map<string, ResolvedParameter> | null = null;
+    if (this.lang === Language.EDGEQL) {
+      params = extractEdgeQLQueryParameters(query, schemaScalars);
+    } else {
+      const conn = connCtx.get(this)!;
+      this._currentFetchParamsTask = new AbortController();
+      params = await extractSQLQueryParameters(
+        query,
+        schemaScalars,
+        conn,
+        this._currentFetchParamsTask.signal
+      );
+    }
+    if (params) {
+      this.updateCurrentParams(params);
     }
   }
 
@@ -183,8 +210,6 @@ export class QueryParamsEditor extends Model({}) {
   }
 
   serializeParamsData(): SerializedParamsData | null {
-    this._extractQueryParameters();
-
     const paramDefs = this.paramDefs;
 
     if (!paramDefs.size) {
@@ -201,6 +226,7 @@ export class QueryParamsEditor extends Model({}) {
           typeName: param.type.name,
           disabled: paramData.disabled,
           value: paramData.data.value.data,
+          type: serializeResolvedParameter(param),
         };
       }
     }
@@ -213,7 +239,6 @@ export class QueryParamsEditor extends Model({}) {
     _paramsData?: SerializedParamsData | Frozen<SerializedParamsData> | null
   ) {
     this.clear();
-    this._extractQueryParameters();
 
     if (_paramsData) {
       const paramsData = (
@@ -221,6 +246,25 @@ export class QueryParamsEditor extends Model({}) {
           ? _paramsData.data
           : _paramsData
       ) as SerializedParamsData;
+
+      const params = Object.entries(paramsData);
+      if (params[0]?.[1].type != null) {
+        // serialised params data has param defs, so use those
+        const schemaScalars = dbCtx.get(this)!.schemaData?.scalars;
+        if (!schemaScalars) return;
+        const deserializedParams = new Map<string, ResolvedParameter>();
+        for (const [name, param] of params) {
+          deserializedParams.set(
+            name,
+            deserializeResolvedParameter(param.type!, schemaScalars)
+          );
+        }
+        this.updateCurrentParams(deserializedParams);
+      } else {
+        // should be edgeql query so this is not async
+        this._extractQueryParameters();
+      }
+
       for (const [name, paramDef] of this.paramDefs.entries()) {
         if (paramDef.error === null) {
           const data = paramsData[name];

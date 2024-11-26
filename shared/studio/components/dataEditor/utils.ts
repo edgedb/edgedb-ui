@@ -12,6 +12,11 @@ export interface EditorArrayType {
   elementType: PrimitiveType;
 }
 
+export interface SerializedEditorArrayType
+  extends Omit<EditorArrayType, "elementType"> {
+  elementType: SerializedPrimitiveType;
+}
+
 export interface EditorTupleType {
   schemaType: "Tuple";
   name: string;
@@ -22,10 +27,23 @@ export interface EditorTupleType {
   }[];
 }
 
+export interface SerializedEditorTupleType
+  extends Omit<EditorTupleType, "elements"> {
+  elements: {
+    name: string | null;
+    type: SerializedPrimitiveType;
+  }[];
+}
+
 export interface EditorRangeType {
   schemaType: "Range";
   name: string;
   elementType: SchemaScalarType;
+}
+
+export interface SerializedEditorRangeType
+  extends Omit<EditorRangeType, "elementType"> {
+  elementType: string;
 }
 
 export interface EditorMultirangeType {
@@ -34,12 +52,101 @@ export interface EditorMultirangeType {
   rangeType: EditorRangeType;
 }
 
+export interface SerializedEditorMultirangeType
+  extends Omit<EditorMultirangeType, "rangeType"> {
+  rangeType: SerializedEditorRangeType;
+}
+
 export type PrimitiveType =
   | SchemaScalarType
   | EditorRangeType
   | EditorMultirangeType
   | EditorArrayType
   | EditorTupleType;
+
+export type SerializedPrimitiveType =
+  | string
+  | SerializedEditorRangeType
+  | SerializedEditorMultirangeType
+  | SerializedEditorArrayType
+  | SerializedEditorTupleType;
+
+export function serializePrimitiveType(
+  type: PrimitiveType
+): SerializedPrimitiveType {
+  switch (type.schemaType) {
+    case "Scalar":
+      return type.name;
+    case "Array":
+      return {...type, elementType: serializePrimitiveType(type.elementType)};
+    case "Tuple":
+      return {
+        ...type,
+        elements: type.elements.map((el) => ({
+          ...el,
+          type: serializePrimitiveType(el.type),
+        })),
+      };
+    case "Range":
+      return {...type, elementType: type.elementType.name};
+    case "Multirange":
+      return {
+        ...type,
+        rangeType: serializePrimitiveType(
+          type.rangeType
+        ) as SerializedEditorRangeType,
+      };
+    default:
+      assertNever(type);
+  }
+}
+
+export function deserializePrimitiveType(
+  type: SerializedPrimitiveType,
+  schemaScalars: Map<string, SchemaScalarType>
+): PrimitiveType {
+  if (typeof type === "string") {
+    const scalar = schemaScalars.get(type);
+    if (!scalar)
+      throw new Error(
+        `failed to deserialize primitive type: could not find schema type for scalar '${type}'`
+      );
+    return scalar;
+  }
+  switch (type.schemaType) {
+    case "Array":
+      return {
+        ...type,
+        elementType: deserializePrimitiveType(type.elementType, schemaScalars),
+      };
+    case "Tuple":
+      return {
+        ...type,
+        elements: type.elements.map((el) => ({
+          ...el,
+          type: deserializePrimitiveType(el.type, schemaScalars),
+        })),
+      };
+    case "Range":
+      return {
+        ...type,
+        elementType: deserializePrimitiveType(
+          type.elementType,
+          schemaScalars
+        ) as SchemaScalarType,
+      };
+    case "Multirange":
+      return {
+        ...type,
+        rangeType: deserializePrimitiveType(
+          type.rangeType,
+          schemaScalars
+        ) as EditorRangeType,
+      };
+    default:
+      assertNever(type);
+  }
+}
 
 export interface EditorRangeValue {
   lower: string | null;

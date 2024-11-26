@@ -15,6 +15,7 @@ import {Capabilities} from "edgedb/dist/baseConn";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
 import {
   Cardinality,
+  Language,
   OutputFormat,
   ProtocolVersion,
   QueryOptions,
@@ -59,6 +60,7 @@ interface QueryResult {
 }
 
 interface ParseResult {
+  inCodec: ICodec;
   outCodecBuf: Uint8Array;
   protoVer: ProtocolVersion;
   duration: number;
@@ -74,6 +76,7 @@ type QueryOpts = {
 };
 
 type PendingQuery = {
+  language: Language;
   query: string;
   params?: QueryParams;
   opts: QueryOpts;
@@ -158,21 +161,43 @@ export class Connection extends Model({
     query: string,
     params?: QueryParams,
     opts: QueryOpts = {},
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    language: Language = Language.EDGEQL
   ): Promise<QueryResult> {
-    return this._addQueryToQueue("query", query, params, abortSignal, opts);
+    return this._addQueryToQueue(
+      "query",
+      language,
+      query,
+      params,
+      abortSignal,
+      opts
+    );
   }
 
-  parse(query: string): Promise<ParseResult> {
-    return this._addQueryToQueue("parse", query);
+  parse(
+    query: string,
+    language: Language = Language.EDGEQL,
+    abortSignal?: AbortSignal
+  ): Promise<ParseResult> {
+    return this._addQueryToQueue(
+      "parse",
+      language,
+      query,
+      undefined,
+      abortSignal
+    );
   }
 
-  execute(script: string): Promise<void> {
-    return this._addQueryToQueue("execute", script);
+  execute(
+    script: string,
+    language: Language = Language.EDGEQL
+  ): Promise<void> {
+    return this._addQueryToQueue("execute", language, script);
   }
 
   _addQueryToQueue(
     kind: QueryKind,
+    language: Language,
     query: string,
     params?: QueryParams,
     abortSignal: AbortSignal | null = null,
@@ -181,6 +206,7 @@ export class Connection extends Model({
     return new Promise<any>((resolve, reject) => {
       this._queryQueue.push({
         kind,
+        language,
         query,
         params,
         opts,
@@ -203,6 +229,7 @@ export class Connection extends Model({
       try {
         const result = await this._query(
           query.kind,
+          query.language,
           query.query,
           query.opts,
           query.params,
@@ -226,6 +253,7 @@ export class Connection extends Model({
 
   async _query(
     kind: QueryKind,
+    language: Language,
     queryString: string,
     opts: QueryOpts,
     params: QueryParams | undefined,
@@ -245,6 +273,7 @@ export class Connection extends Model({
 
       if (kind === "execute") {
         await this.conn.rawExecute(
+          language,
           queryString,
           state,
           undefined,
@@ -277,6 +306,7 @@ export class Connection extends Model({
       } else {
         [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
           await this.conn.rawParse(
+            language,
             queryString,
             state,
             isExplain ? {} : queryOptions,
@@ -294,6 +324,7 @@ export class Connection extends Model({
 
       if (kind === "parse") {
         return {
+          inCodec,
           outCodecBuf,
           protoVer: this.conn.protocolVersion,
           duration: Math.round(parseEndTime - startTime),
@@ -303,6 +334,7 @@ export class Connection extends Model({
       this.checkAborted(abortSignal);
 
       const resultBuf = await this.conn.rawExecute(
+        language,
         queryString,
         state,
         outCodec,
@@ -327,6 +359,7 @@ export class Connection extends Model({
         this.checkAborted(abortSignal);
         [inCodec, outCodec, _, outCodecBuf, _, capabilities] =
           await this.conn.rawParse(
+            language,
             queryString,
             state,
             isExplain ? {} : queryOptions,

@@ -25,6 +25,7 @@ import {InspectorState, Item} from "@edgedb/inspector/state";
 import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
 import {
+  clearReplHistory,
   fetchReplHistory,
   fetchResultData,
   QueryResultData,
@@ -49,6 +50,7 @@ import {
 import LRU from "edgedb/dist/primitives/lru";
 import {Completer} from "../../../utils/completer";
 import {OutputMode} from "../../queryEditor/state";
+import {Language} from "edgedb/dist/ifaces";
 
 export const defaultItemHeight = 85;
 
@@ -64,9 +66,15 @@ function createInspector(
   return inspector;
 }
 
+export enum ReplLang {
+  EdgeQL,
+  SQL,
+}
+
 @model("Repl/HistoryItem")
 export class ReplHistoryItem extends Model({
   $modelId: idProp,
+  lang: prop<ReplLang>(ReplLang.EdgeQL),
   query: prop<string>(),
   timestamp: prop<number>(),
   implicitLimit: prop<number | null>(null),
@@ -103,7 +111,8 @@ export class ReplHistoryItem extends Model({
   }
 
   @observable
-  outputMode: OutputMode = OutputMode.Tree;
+  outputMode: OutputMode =
+    this.lang === ReplLang.SQL ? OutputMode.Grid : OutputMode.Tree;
 
   @action
   setOutputMode(mode: OutputMode) {
@@ -207,6 +216,14 @@ export class Repl extends Model({
   itemHeights = new ItemHeights();
 
   scrollRef: HTMLDivElement | null = null;
+
+  @observable
+  language = ReplLang.EdgeQL;
+
+  @action
+  setLanguage(lang: ReplLang) {
+    this.language = lang;
+  }
 
   @observable
   currentQuery = Text.empty;
@@ -370,6 +387,22 @@ export class Repl extends Model({
     this._fetchingHistory = false;
   });
 
+  @action
+  clearQueryHistory() {
+    this.queryHistory = [];
+    this.dedupedQueryHistory = [];
+    this.itemHeights = new ItemHeights();
+    this._hasUnfetchedHistory = false;
+    clearReplHistory(
+      instanceCtx.get(this)!.instanceId!,
+      dbCtx.get(this)!.name,
+      (data) => {
+        const item = fromSnapshot<ReplHistoryItem>(data.data);
+        return item.hasResult ? item.$modelId : null;
+      }
+    );
+  }
+
   @observable
   settings: ReplSettings = {
     retroMode: false,
@@ -403,6 +436,7 @@ export class Repl extends Model({
     }
 
     const historyItem = new ReplHistoryItem({
+      lang: this.language,
       query,
       timestamp: Date.now(),
     });
@@ -433,9 +467,12 @@ export class Repl extends Model({
     dbState.setLoadingTab(Repl, true);
 
     let resultData: QueryResultData | undefined = undefined;
+    let skipStoreHistoryItem = false;
     try {
       if (isCommandQuery) {
-        yield* _await(handleSlashCommand(query, this, historyItem));
+        skipStoreHistoryItem =
+          (yield* _await(handleSlashCommand(query, this, historyItem))) ??
+          false;
       } else {
         const implicitLimitConfig = sessionStateCtx
           .get(this)!
@@ -460,7 +497,8 @@ export class Repl extends Model({
                   ? implicitLimitConfig + BigInt(1)
                   : undefined,
             },
-            (this._runningQuery as AbortController).signal
+            (this._runningQuery as AbortController).signal,
+            this.language === ReplLang.SQL ? Language.SQL : Language.EDGEQL
           )
         );
 
@@ -502,16 +540,18 @@ export class Repl extends Model({
       historyItem.setError(extractErrorDetails(err, query));
     }
 
-    storeReplHistoryItem(
-      historyItem.$modelId,
-      {
-        instanceId: instanceCtx.get(this)!.instanceId!,
-        dbName: dbCtx.get(this)!.name,
-        timestamp: historyItem.timestamp,
-        data: getSnapshot(historyItem),
-      },
-      resultData
-    );
+    if (!skipStoreHistoryItem) {
+      storeReplHistoryItem(
+        historyItem.$modelId,
+        {
+          instanceId: instanceCtx.get(this)!.instanceId!,
+          dbName: dbCtx.get(this)!.name,
+          timestamp: historyItem.timestamp,
+          data: getSnapshot(historyItem),
+        },
+        resultData
+      );
+    }
 
     dbState.setLoadingTab(Repl, false);
     this._runningQuery = null;

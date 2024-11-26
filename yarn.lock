@@ -930,6 +930,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/lang-sql@npm:^6.8.0":
+  version: 6.8.0
+  resolution: "@codemirror/lang-sql@npm:6.8.0"
+  dependencies:
+    "@codemirror/autocomplete": ^6.0.0
+    "@codemirror/language": ^6.0.0
+    "@codemirror/state": ^6.0.0
+    "@lezer/common": ^1.2.0
+    "@lezer/highlight": ^1.0.0
+    "@lezer/lr": ^1.0.0
+  checksum: 1b5a3c8129b09f24039d8c0906fc4cb8d0f706a424a1d56721057bd1e647797c2b1240bb53eed9bf2bac5806a4e0363e555a3963f04c478efa05829890c537f7
+  languageName: node
+  linkType: hard
+
 "@codemirror/language@npm:^6.0.0":
   version: 6.10.3
   resolution: "@codemirror/language@npm:6.10.3"
@@ -993,7 +1007,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1010,7 +1024,7 @@ __metadata:
     mobx-react-lite: ^4.0.0
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1039,7 +1053,7 @@ __metadata:
     react-transition-group: ^4.4.1
     webcola: ^3.4.0
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1051,6 +1065,7 @@ __metadata:
   dependencies:
     "@anthropic-ai/sdk": ^0.20.5
     "@codemirror/lang-json": ^6.0.0
+    "@codemirror/lang-sql": ^6.8.0
     "@codemirror/lint": ^6.0.0
     "@edgedb/code-editor": "workspace:*"
     "@edgedb/common": "workspace:*"
@@ -1073,7 +1088,7 @@ __metadata:
     react-markdown: ^9.0.1
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -3995,9 +4010,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:1.6.0-canary.20241030T172506":
-  version: 1.6.0-canary.20241030T172506
-  resolution: "edgedb@npm:1.6.0-canary.20241030T172506"
+"edgedb@npm:1.6.0-canary.20241126T162412":
+  version: 1.6.0-canary.20241126T162412
+  resolution: "edgedb@npm:1.6.0-canary.20241126T162412"
   dependencies:
     "@petamoriken/float16": ^3.8.7
     debug: ^4.3.4
@@ -4007,7 +4022,7 @@ __metadata:
     which: ^4.0.0
   bin:
     edgedb: dist/cli.mjs
-  checksum: db0c5adf4a2e3dacdf961678d4bcd1b1a96625d7899a5d097ca7598bf1f3c2f677c803595b0f27e0d3ce70ce5bd8001a747977fd48123e1f79e9c8e5bff72013
+  checksum: 50c95c3e3085c11f51ed9476a851fe2e52c6bcdfc74b0fde57d7b71ad0ea4ea632908d139a50e3455d08c24f0ac29de08904a408baa5d8779915f2b187d4d5ab
   languageName: node
   linkType: hard
 
@@ -8440,7 +8455,7 @@ __metadata:
     "@types/selenium-webdriver": ^4.1.27
     "@vitejs/plugin-react-swc": ^3.5.0
     buffer: ^6.0.3
-    edgedb: 1.6.0-canary.20241030T172506
+    edgedb: 1.6.0-canary.20241126T162412
     eslint: ^9.13.0
     eslint-plugin-react-hooks: ^5.0.0
     eslint-plugin-react-refresh: ^0.4.14

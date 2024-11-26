@@ -22,10 +22,12 @@ describe("REPL:", () => {
     );
 
     expect(
-      await (
-        await response.findElement(ByUIClass("repl_historyPrompt"))
-      ).getAttribute("innerText")
-    ).toBe("_test>");
+      (
+        await (
+          await response.findElement(ByUIClass("repl_historyPrompt"))
+        ).getAttribute("innerText")
+      ).trim()
+    ).toBe("_test[edgeql]>");
     expect(
       await (
         await response.findElement(ByUIClass("repl_code"))

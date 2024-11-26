@@ -5,6 +5,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.5",
     "@codemirror/lang-json": "^6.0.0",
+    "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/lint": "^6.0.0",
     "@edgedb/code-editor": "workspace:*",
     "@edgedb/common": "workspace:*",
@@ -28,7 +29,7 @@
     "react-window": "^1.8.10"
   },
   "peerDependencies": {
-    "edgedb": "1.6.0-canary.20241030T172506",
+    "edgedb": "1.6.0-canary.20241126T162412",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

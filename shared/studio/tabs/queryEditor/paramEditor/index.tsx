@@ -2,8 +2,6 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {useTabState} from "../../../state";
-import {QueryEditor} from "../state";
 import {QueryParamsEditor, ResolvedParameter} from "../state/parameters";
 
 import {getInputComponent} from "../../../components/dataEditor";
@@ -14,14 +12,22 @@ import {useGlobalDragCursor} from "@edgedb/common/hooks/globalDragCursor";
 import {RefObject, useRef} from "react";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
-export default observer(function ParamEditorPanel() {
-  const editorState = useTabState(QueryEditor);
-  const paramEditorState = editorState.queryParamsEditor;
+const isMac =
+  typeof navigator !== "undefined"
+    ? navigator.platform.toLowerCase().includes("mac")
+    : false;
 
+export const ParamsEditorPanel = observer(function ParamEditorPanel({
+  state,
+  runQuery,
+}: {
+  state: QueryParamsEditor;
+  runQuery?: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  if (paramEditorState.paramDefs.size === 0) {
+  if (state.paramDefs.size === 0) {
     return null;
   }
 
@@ -33,40 +39,39 @@ export default observer(function ParamEditorPanel() {
       <div
         ref={ref}
         className={styles.paramEditorPanel}
-        style={{height: paramEditorState.panelHeight}}
+        style={{height: state.panelHeight}}
       >
         <div className={styles.header}>
-          <DragHandle state={paramEditorState} parentRef={ref} />
+          <DragHandle state={state} parentRef={ref} />
           Query Parameters
         </div>
 
         <div
           ref={contentRef}
           onKeyDown={(e) => {
-            if (e.ctrlKey && e.key === "Enter") {
-              editorState.runQuery();
+            if ((isMac ? e.metaKey : e.ctrlKey) && e.key === "Enter") {
+              runQuery?.();
             }
           }}
         >
-          {paramEditorState.mixedParamsError ? (
+          {state.mixedParamsError ? (
             <div className={cn(styles.paramError, styles.topLevelError)}>
               Cannot have both positional and named parameters in query
             </div>
           ) : (
             <div className={styles.paramsList}>
-              {[...paramEditorState.paramDefs.values()].map(
-                (param, i, arr) => (
-                  <ParamEditor
-                    param={param}
-                    lastParam={i === arr.length - 1}
-                    key={
-                      param.name +
-                      "--" +
-                      (param.error === null ? param.type.name : "error")
-                    }
-                  />
-                )
-              )}
+              {[...state.paramDefs.values()].map((param, i, arr) => (
+                <ParamEditor
+                  editorState={state}
+                  param={param}
+                  lastParam={i === arr.length - 1}
+                  key={
+                    param.name +
+                    "--" +
+                    (param.error === null ? param.type.name : "error")
+                  }
+                />
+              ))}
             </div>
           )}
         </div>
@@ -109,15 +114,16 @@ const DragHandle = observer(function DragHandle({
 });
 
 interface ParamEditorProps {
+  editorState: QueryParamsEditor;
   param: ResolvedParameter;
   lastParam: boolean;
 }
 
 const ParamEditor = observer(function ParamEditor({
+  editorState,
   param,
   lastParam,
 }: ParamEditorProps) {
-  const editorState = useTabState(QueryEditor).queryParamsEditor;
   const paramData = editorState.currentParams[param.name];
 
   const Input = param.error === null ? getInputComponent(param.type) : null!;

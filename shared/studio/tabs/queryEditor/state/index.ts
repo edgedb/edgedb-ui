@@ -41,7 +41,11 @@ import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
 import {SplitViewState} from "@edgedb/common/ui/splitView/model";
-import {QueryParamsEditor, SerializedParamsData} from "./parameters";
+import {
+  paramsQueryCtx,
+  QueryParamsEditor,
+  SerializedParamsData,
+} from "./parameters";
 import {getThumbnailData, ThumbnailData} from "./thumbnailGen";
 import {QueryBuilderState} from "../../../components/visualQuerybuilder/state";
 import {ObservableLRU} from "../../../state/utils/lru";
@@ -51,7 +55,7 @@ import {
   createExplainState,
   ExplainState,
 } from "../../../components/explainVis/state";
-import {ProtocolVersion} from "edgedb/dist/ifaces";
+import {Language, ProtocolVersion} from "edgedb/dist/ifaces";
 import {
   createResultGridState,
   ResultGridState,
@@ -61,6 +65,7 @@ import LRU from "edgedb/dist/primitives/lru";
 export enum EditorKind {
   EdgeQL,
   VisualBuilder,
+  SQL,
 }
 
 export enum OutputMode {
@@ -70,7 +75,7 @@ export enum OutputMode {
 
 type HistoryItemQueryData =
   | {
-      kind: EditorKind.EdgeQL;
+      kind: EditorKind.EdgeQL | EditorKind.SQL;
       query: string;
       params: SerializedParamsData | null;
     }
@@ -162,6 +167,7 @@ function createInspector(
 
 type QueryData = {
   [EditorKind.EdgeQL]: Text;
+  [EditorKind.SQL]: Text;
   [EditorKind.VisualBuilder]: QueryBuilderState;
 };
 
@@ -169,13 +175,14 @@ export const queryEditorCtx = createMobxContext<QueryEditor>();
 
 @model("QueryEditor")
 export class QueryEditor extends Model({
-  queryParamsEditor: prop(() => new QueryParamsEditor({})),
+  _edgeqlParamsEditor: prop(
+    () => new QueryParamsEditor({lang: Language.EDGEQL})
+  ),
+  _sqlParamsEditor: prop(() => new QueryParamsEditor({lang: Language.SQL})),
 
   splitView: prop(() => new SplitViewState({})),
 
   selectedEditor: prop<EditorKind>(EditorKind.EdgeQL).withSetter(),
-
-  outputMode: prop<OutputMode>(OutputMode.Tree).withSetter(),
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
@@ -191,20 +198,32 @@ export class QueryEditor extends Model({
   @observable.shallow
   currentQueryData: QueryData = {
     [EditorKind.EdgeQL]: Text.empty,
+    [EditorKind.SQL]: Text.empty,
     [EditorKind.VisualBuilder]: new QueryBuilderState({}),
   };
 
   @observable
   queryIsEdited: {[key in EditorKind]: boolean} = {
     [EditorKind.EdgeQL]: false,
+    [EditorKind.SQL]: false,
     [EditorKind.VisualBuilder]: false,
   };
+
+  @computed
+  get paramsEditor() {
+    return this.selectedEditor === EditorKind.EdgeQL
+      ? this._edgeqlParamsEditor
+      : this.selectedEditor === EditorKind.SQL
+      ? this._sqlParamsEditor
+      : null;
+  }
 
   @observable.shallow
   currentResults: {
     [key in EditorKind]: QueryHistoryItem | null;
   } = {
     [EditorKind.EdgeQL]: null,
+    [EditorKind.SQL]: null,
     [EditorKind.VisualBuilder]: null,
   };
 
@@ -218,11 +237,35 @@ export class QueryEditor extends Model({
     return !this.queryIsEdited[EditorKind.EdgeQL];
   }
 
+  @observable
+  _outputMode: {[key in EditorKind]: OutputMode} = {
+    [EditorKind.EdgeQL]: OutputMode.Tree,
+    [EditorKind.SQL]: OutputMode.Grid,
+    [EditorKind.VisualBuilder]: OutputMode.Tree,
+  };
+
+  @computed
+  get outputMode() {
+    return this._outputMode[this.selectedEditor];
+  }
+
   @action
-  setEdgeQL(data: Text) {
-    this.currentQueryData[EditorKind.EdgeQL] = data;
-    this.queryIsEdited[EditorKind.EdgeQL] = true;
+  setOutputMode(mode: OutputMode) {
+    this._outputMode[this.selectedEditor] = mode;
+  }
+
+  @action
+  setQueryText(data: Text) {
+    if (this.selectedEditor === EditorKind.VisualBuilder) return;
+    this.currentQueryData[this.selectedEditor] = data;
+    this.queryIsEdited[this.selectedEditor] = true;
     this.historyCursor = -1;
+  }
+
+  @computed
+  get currentQueryText() {
+    if (this.selectedEditor === EditorKind.VisualBuilder) return null;
+    return this.currentQueryData[this.selectedEditor];
   }
 
   onAttachedToRootStore() {
@@ -244,15 +287,25 @@ export class QueryEditor extends Model({
   get canRunQuery() {
     return (
       !this.queryRunning &&
-      (this.selectedEditor === EditorKind.EdgeQL
-        ? !this.queryParamsEditor.hasErrors &&
-          !!this.currentQueryData[EditorKind.EdgeQL].toString().trim()
+      (this.selectedEditor === EditorKind.EdgeQL ||
+      this.selectedEditor === EditorKind.SQL
+        ? !this.paramsEditor!.hasErrors &&
+          !!this.currentQueryText?.toString().trim()
         : this.currentQueryData[EditorKind.VisualBuilder].canRunQuery)
     );
   }
 
   onInit() {
     queryEditorCtx.set(this, this);
+
+    paramsQueryCtx.setComputed(
+      this._edgeqlParamsEditor,
+      () => this.currentQueryData[EditorKind.EdgeQL]
+    );
+    paramsQueryCtx.setComputed(
+      this._sqlParamsEditor,
+      () => this.currentQueryData[EditorKind.SQL]
+    );
   }
 
   _fetchingHistory = false;
@@ -358,6 +411,12 @@ export class QueryEditor extends Model({
       isEdited: boolean;
       result: QueryHistoryItem | null;
     };
+    [EditorKind.SQL]: {
+      query: Text;
+      params: Frozen<SerializedParamsData | null>;
+      isEdited: boolean;
+      result: QueryHistoryItem | null;
+    };
     [EditorKind.VisualBuilder]: {
       state: QueryBuilderState;
       isEdited: boolean;
@@ -372,9 +431,15 @@ export class QueryEditor extends Model({
       selectedEditor: this.selectedEditor,
       [EditorKind.EdgeQL]: {
         query: current[EditorKind.EdgeQL],
-        params: frozen(this.queryParamsEditor.serializeParamsData()),
+        params: frozen(this._edgeqlParamsEditor.serializeParamsData()),
         isEdited: this.queryIsEdited[EditorKind.EdgeQL],
         result: this.currentResults[EditorKind.EdgeQL],
+      },
+      [EditorKind.SQL]: {
+        query: current[EditorKind.SQL],
+        params: frozen(this._sqlParamsEditor.serializeParamsData()),
+        isEdited: this.queryIsEdited[EditorKind.SQL],
+        result: this.currentResults[EditorKind.SQL],
       },
       [EditorKind.VisualBuilder]: {
         state: current[EditorKind.VisualBuilder],
@@ -391,20 +456,26 @@ export class QueryEditor extends Model({
     if (draft) {
       this.currentQueryData = {
         [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].query,
+        [EditorKind.SQL]: draft[EditorKind.SQL].query,
         [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].state,
       };
 
-      this.queryParamsEditor.restoreParamsData(
+      this._edgeqlParamsEditor.restoreParamsData(
         draft[EditorKind.EdgeQL].params?.data
+      );
+      this._sqlParamsEditor.restoreParamsData(
+        draft[EditorKind.SQL].params?.data
       );
 
       this.setSelectedEditor(draft.selectedEditor);
       this.currentResults = {
         [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].result,
+        [EditorKind.SQL]: draft[EditorKind.SQL].result,
         [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].result,
       };
       this.queryIsEdited = {
         [EditorKind.EdgeQL]: draft[EditorKind.EdgeQL].isEdited,
+        [EditorKind.SQL]: draft[EditorKind.SQL].isEdited,
         [EditorKind.VisualBuilder]: draft[EditorKind.VisualBuilder].isEdited,
       };
     }
@@ -464,10 +535,14 @@ export class QueryEditor extends Model({
 
       switch (queryData.data.kind) {
         case EditorKind.EdgeQL:
-          this.currentQueryData[EditorKind.EdgeQL] = Text.of(
+        case EditorKind.SQL:
+          this.currentQueryData[queryData.data.kind] = Text.of(
             queryData.data.query.split("\n")
           );
-          this.queryParamsEditor.restoreParamsData(queryData.data.params);
+          (queryData.data.kind === EditorKind.SQL
+            ? this._sqlParamsEditor
+            : this._edgeqlParamsEditor
+          ).restoreParamsData(queryData.data.params);
           break;
         case EditorKind.VisualBuilder:
           this.currentQueryData[EditorKind.VisualBuilder] =
@@ -479,6 +554,7 @@ export class QueryEditor extends Model({
       this.setSelectedEditor(queryData.data.kind);
       this.queryIsEdited = {
         [EditorKind.EdgeQL]: false,
+        [EditorKind.SQL]: false,
         [EditorKind.VisualBuilder]: false,
       };
     }
@@ -607,20 +683,21 @@ export class QueryEditor extends Model({
     let queryData: HistoryItemQueryData;
 
     const query =
-      kind === EditorKind.EdgeQL
-        ? draftQuery[EditorKind.EdgeQL].query.toString().trim()
+      kind === EditorKind.EdgeQL || kind === EditorKind.SQL
+        ? draftQuery[kind].query.toString().trim()
         : kind === EditorKind.VisualBuilder
         ? draftQuery[EditorKind.VisualBuilder].state.query
         : null;
 
     switch (kind) {
-      case EditorKind.EdgeQL: {
-        const paramsData = draftQuery[EditorKind.EdgeQL].params;
+      case EditorKind.EdgeQL:
+      case EditorKind.SQL: {
+        const paramsData = draftQuery[kind].params;
 
         if (!query && !paramsData) return;
 
         queryData = {
-          kind: EditorKind.EdgeQL,
+          kind: kind,
           query: query!,
           params: paramsData?.data ?? null,
         };
@@ -649,11 +726,12 @@ export class QueryEditor extends Model({
     const conn = connCtx.get(this)!;
 
     const queryData: HistoryItemQueryData =
-      this.selectedEditor === EditorKind.EdgeQL
+      this.selectedEditor === EditorKind.EdgeQL ||
+      this.selectedEditor === EditorKind.SQL
         ? {
-            kind: EditorKind.EdgeQL,
+            kind: this.selectedEditor,
             query,
-            params: this.queryParamsEditor.serializeParamsData(),
+            params: this.paramsEditor!.serializeParamsData(),
           }
         : {
             kind: EditorKind.VisualBuilder,
@@ -672,14 +750,18 @@ export class QueryEditor extends Model({
         yield* _await(
           conn.query(
             query,
-            this.selectedEditor === EditorKind.EdgeQL
-              ? this.queryParamsEditor.getQueryArgs()
+            this.selectedEditor === EditorKind.EdgeQL ||
+              this.selectedEditor === EditorKind.SQL
+              ? this.paramsEditor!.getQueryArgs()
               : undefined,
             {
               implicitLimit:
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
             },
-            this.runningQueryAbort?.signal
+            this.runningQueryAbort?.signal,
+            this.selectedEditor === EditorKind.SQL
+              ? Language.SQL
+              : Language.EDGEQL
           )
         );
 
@@ -716,8 +798,8 @@ export class QueryEditor extends Model({
     const selectedEditor = this.selectedEditor;
 
     const query =
-      selectedEditor === EditorKind.EdgeQL
-        ? this.currentQueryData[EditorKind.EdgeQL].toString().trim()
+      selectedEditor === EditorKind.EdgeQL || selectedEditor === EditorKind.SQL
+        ? this.currentQueryText?.toString().trim()
         : selectedEditor === EditorKind.VisualBuilder
         ? this.currentQueryData[EditorKind.VisualBuilder].query
         : null;

@@ -1,10 +1,11 @@
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
 import {Text} from "@codemirror/state";
+import {sql, PostgreSQL} from "@codemirror/lang-sql";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {CodeEditor, CodeEditorRef} from "@edgedb/code-editor";
+import {CodeEditorRef, createCodeEditor} from "@edgedb/code-editor";
 import {RunButton} from "@edgedb/common/ui/mobile";
 
 import styles from "./repl.module.scss";
@@ -30,7 +31,7 @@ import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import {Button} from "@edgedb/common/newui";
 
 import {HistoryPanel} from "./history";
-import ParamEditorPanel from "./paramEditor";
+import {ParamsEditorPanel} from "./paramEditor";
 import {TabEditorIcon, MobileHistoryIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
@@ -114,6 +115,16 @@ export const QueryEditorView = observer(function QueryEditorView() {
               <span>Builder</span>
               <BuilderTabIcon />
             </div>
+            <div
+              className={cn(styles.tab, {
+                [styles.selected]:
+                  editorState.selectedEditor === EditorKind.SQL,
+              })}
+              onClick={() => editorState.setSelectedEditor(EditorKind.SQL)}
+            >
+              <span>SQL</span>
+              {/* <BuilderTabIcon /> */}
+            </div>
           </div>
 
           <div
@@ -131,10 +142,11 @@ export const QueryEditorView = observer(function QueryEditorView() {
         className={styles.main}
         views={[
           <div className={styles.editorBlock}>
-            {editorState.selectedEditor === EditorKind.EdgeQL ? (
+            {editorState.selectedEditor === EditorKind.EdgeQL ||
+            editorState.selectedEditor === EditorKind.SQL ? (
               <>
                 <div className={styles.editorBlockInner}>
-                  <QueryCodeEditor />
+                  <QueryCodeEditor key={editorState.selectedEditor} />
                   <div className={styles.replEditorOverlays}>
                     <div className={styles.controls}>
                       {!editorState.queryRunning ? (
@@ -163,7 +175,10 @@ export const QueryEditorView = observer(function QueryEditorView() {
                     </div>
                   </div>
                 </div>
-                <ParamEditorPanel />
+                <ParamsEditorPanel
+                  state={editorState.paramsEditor!}
+                  runQuery={() => editorState.runQuery()}
+                />
               </>
             ) : (
               <VisualQuerybuilder
@@ -253,6 +268,17 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
 
   const [_, theme] = useTheme();
 
+  const CodeEditor = useMemo(() => {
+    return createCodeEditor({
+      language:
+        editorState.selectedEditor === EditorKind.SQL
+          ? sql({
+              dialect: PostgreSQL,
+            })
+          : undefined,
+    });
+  }, [editorState.selectedEditor]);
+
   useEffect(() => {
     if (!editorState.showHistory) {
       ref?.focus();
@@ -274,7 +300,7 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
   );
 
   const onChange = useCallback(
-    (value: Text) => editorState.setEdgeQL(value),
+    (value: Text) => editorState.setQueryText(value),
     [editorState]
   );
 
@@ -298,7 +324,7 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
       >
         <CodeEditor
           ref={codeEditorRef}
-          code={editorState.currentQueryData[EditorKind.EdgeQL]}
+          code={editorState.currentQueryText!}
           onChange={onChange}
           keybindings={keybindings}
           useDarkTheme={theme === Theme.dark}
