@@ -28,6 +28,7 @@ import {
   Select,
   SelectItem,
   TextInput,
+  WarningIcon,
 } from "@edgedb/common/newui";
 
 import styles from "./authAdmin.module.scss";
@@ -50,11 +51,28 @@ export const ProvidersTab = observer(function ProvidersTab() {
       {state.providers ? (
         <>
           {state.providers.length ? (
-            <div className={styles.cardList}>
-              {state.providers.map((provider) => (
-                <ProviderCard key={provider.name} provider={provider} />
-              ))}
-            </div>
+            <>
+              {state.noEmailProviderWarning ? (
+                <div className={styles.emailProviderWarning}>
+                  <WarningIcon />
+                  <span>Warning:</span> You have enabled auth providers
+                  requiring email, but no SMTP provider is configured.
+                  <br />
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("smtp")}
+                  >
+                    Enable an SMTP provider
+                  </span>
+                </div>
+              ) : null}
+
+              <div className={styles.cardList}>
+                {state.providers.map((provider) => (
+                  <ProviderCard key={provider.name} provider={provider} />
+                ))}
+              </div>
+            </>
           ) : null}
 
           {state.draftProviderConfig ? (

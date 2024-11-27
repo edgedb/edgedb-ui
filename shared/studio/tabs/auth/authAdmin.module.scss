@@ -475,6 +475,141 @@
   resize: vertical;
 }
 
+.newDraftSMTPProvider {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  .configGrid {
+    margin-top: 0;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    flex-direction: row;
+  }
+}
+
+.emailProvidersUpdating {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.emailProviderCard {
+  .details {
+    display: flex;
+    flex-direction: column;
+    color: var(--main_text_color);
+    line-height: 22px;
+
+    .name {
+      font-weight: 500;
+    }
+
+    .senderhost {
+      color: var(--tertiary_text_color);
+
+      span {
+        font-size: 11px;
+        margin: 0 6px;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .selectCurrentProvider {
+    width: 32px;
+    height: 32px;
+    stroke-width: 1px;
+    stroke: var(--Grey75);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &.selected {
+      fill: #a565cd;
+      stroke: #9c56b4 !important;
+      pointer-events: none;
+    }
+
+    @include darkTheme {
+      stroke: var(--Grey40);
+    }
+  }
+
+  .updatingSpinner {
+    color: var(--Grey50);
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    flex-direction: row;
+    padding: 4px 16px 16px 16px;
+  }
+}
+
+.expandedEmailProviderConfig {
+  margin: -2px 12px 12px 12px;
+  background: var(--Grey97);
+  border-radius: 8px;
+  border: 1px solid var(--Grey93);
+
+  @include darkTheme {
+    background: var(--Grey16);
+    border-color: var(--Grey25);
+  }
+
+  .configGrid {
+    margin-top: 20px;
+    margin-bottom: 12px;
+
+    @include isMobile {
+      margin: 16px;
+    }
+  }
+}
+
+.emailProviderWarning {
+  position: relative;
+  padding: 16px 20px;
+  padding-left: 48px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  font-weight: 450;
+  line-height: 20px;
+  margin-top: 16px;
+
+  & > svg {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+  }
+
+  & > span {
+    font-weight: 500;
+  }
+
+  .link {
+    font-weight: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  @include darkTheme {
+    background: #453d2c;
+    border: 1px solid #72623b;
+    color: #d1bd8f;
+  }
+}
+
 .docsNote {
   display: flex;
   align-items: flex-start;

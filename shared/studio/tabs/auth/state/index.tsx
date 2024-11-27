@@ -6,6 +6,7 @@ import {
   Model,
   model,
   modelAction,
+  objectMap,
   prop,
 } from "mobx-keystone";
 import {parsers} from "../../../components/dataEditor/parsers";
@@ -88,6 +89,8 @@ export const smtpSecurity = [
 export type SMTPSecurity = (typeof smtpSecurity)[number];
 
 export interface SMTPConfigData {
+  _typename: "cfg::SMTPProviderConfig";
+  name: string;
   sender: string;
   host: string;
   port: string;
@@ -98,6 +101,8 @@ export interface SMTPConfigData {
   timeout_per_email: string;
   timeout_per_attempt: string;
 }
+
+export type EmailProviderConfig = SMTPConfigData;
 
 export const webhookEvents = [
   "IdentityCreated",
@@ -191,7 +196,7 @@ export class AuthAdminState extends Model({
   draftProviderConfig: prop<DraftProviderConfig | null>(null),
   draftWebhookConfig: prop<DraftWebhookConfig | null>(null),
   draftUIConfig: prop<DraftUIConfig | null>(null),
-  draftSMTPConfig: prop(() => new DraftSMTPConfig({})),
+  draftSMTPConfigs: prop(() => objectMap<DraftSMTPConfig>()),
 }) {
   @computed
   get extEnabled() {
@@ -206,6 +211,14 @@ export class AuthAdminState extends Model({
     return (
       dbCtx.get(this)!.schemaData?.objectsByName.get("ext::auth::AuthConfig")
         ?.properties["app_name"] != null
+    );
+  }
+  @computed
+  get newSMTPSchema() {
+    return (
+      dbCtx
+        .get(this)!
+        .schemaData?.objectsByName.get("cfg::EmailProviderConfig") != null
     );
   }
 
@@ -314,6 +327,86 @@ export class AuthAdminState extends Model({
     this.draftUIConfig = null;
   }
 
+  @modelAction
+  addDraftSMTPProvider(provider?: EmailProviderConfig) {
+    if (provider) {
+      this.draftSMTPConfigs.set(
+        provider.name,
+        new DraftSMTPConfig({currentConfig: provider})
+      );
+    } else {
+      this.draftSMTPConfigs.set(
+        "",
+        new DraftSMTPConfig({
+          currentConfig: {
+            security: "STARTTLSOrPlainText",
+            validate_certs: true,
+            timeout_per_email: "60",
+            timeout_per_attempt: "15",
+          },
+        })
+      );
+    }
+  }
+  @modelAction
+  cancelDraftSMTPProvider(name?: string) {
+    this.draftSMTPConfigs.delete(name ?? "");
+  }
+
+  @observable
+  updatingEmailProviders = false;
+
+  @action
+  async removeEmailProvider(name: string) {
+    this.updatingEmailProviders = true;
+
+    const conn = connCtx.get(this)!;
+
+    try {
+      await conn.execute(
+        `configure current branch reset cfg::EmailProviderConfig filter .name = ${JSON.stringify(
+          name
+        )}`
+      );
+      await this.refreshConfig();
+    } finally {
+      runInAction(() => (this.updatingEmailProviders = false));
+    }
+  }
+
+  @action
+  async setCurrentEmailProvider(name: string) {
+    this.updatingEmailProviders = true;
+
+    const conn = connCtx.get(this)!;
+
+    try {
+      await conn.execute(
+        `configure current branch set current_email_provider_name := ${JSON.stringify(
+          name
+        )}`
+      );
+      await this.refreshConfig();
+    } finally {
+      runInAction(() => (this.updatingEmailProviders = false));
+    }
+  }
+
+  @computed
+  get noEmailProviderWarning() {
+    return (
+      this.providers?.some(
+        (provider) =>
+          provider._typename === "ext::auth::MagicLinkProviderConfig" ||
+          provider._typename === "ext::auth::EmailPasswordProviderConfig" ||
+          provider._typename === "ext::auth::WebAuthnProviderConfig"
+      ) &&
+      !this.emailProviders?.some(
+        (provider) => provider.name === this.currentEmailProvider
+      )
+    );
+  }
+
   onAttachedToRootStore() {}
 
   @observable.ref
@@ -326,7 +419,10 @@ export class AuthAdminState extends Model({
   uiConfig: AuthUIConfigData | false | null = null;
 
   @observable.ref
-  smtpConfig: SMTPConfigData | null = null;
+  emailProviders: EmailProviderConfig[] | null = null;
+
+  @observable
+  currentEmailProvider: string | null = null;
 
   @observable.ref
   webhooks: WebhookConfigData[] | null = null;
@@ -338,7 +434,14 @@ export class AuthAdminState extends Model({
 
   async refreshConfig() {
     const conn = connCtx.get(this)!;
-    const {newAppAuthSchema} = this;
+    const {newAppAuthSchema, newSMTPSchema} = this;
+
+    if (!newSMTPSchema && !this.draftSMTPConfigs.has("")) {
+      this.draftSMTPConfigs.set(
+        "",
+        new DraftSMTPConfig({currentConfig: null})
+      );
+    }
 
     const appConfigQuery = `
     app_name,
@@ -410,7 +513,20 @@ export class AuthAdminState extends Model({
               : ""
           }
         }),
-        smtp := assert_single(cfg::Config.extensions[is SMTPConfig] {
+        emailProviders := ${
+          newSMTPSchema
+            ? `cfg::Config.email_providers {
+          _typename := .__type__.name,
+          name,
+          [is cfg::SMTPProviderConfig].sender,
+          [is cfg::SMTPProviderConfig].host,
+          [is cfg::SMTPProviderConfig].port,
+          [is cfg::SMTPProviderConfig].username,
+          [is cfg::SMTPProviderConfig].security,
+          timeout_per_email_seconds := <str>duration_get([is cfg::SMTPProviderConfig].timeout_per_email, 'totalseconds'),
+          timeout_per_attempt_seconds := <str>duration_get([is cfg::SMTPProviderConfig].timeout_per_attempt, 'totalseconds'),
+        }`
+            : `{ assert_single(cfg::Config.extensions[is SMTPConfig] {
           sender,
           host,
           port,
@@ -419,7 +535,13 @@ export class AuthAdminState extends Model({
           validate_certs,
           timeout_per_email_seconds := <str>duration_get(.timeout_per_email, 'totalseconds'),
           timeout_per_attempt_seconds := <str>duration_get(.timeout_per_attempt, 'totalseconds'),
-        })
+        }) }`
+        },
+        currentEmailProvider := ${
+          newSMTPSchema
+            ? `assert_single(cfg::Config.current_email_provider_name)`
+            : `<str>{}`
+        }
       }`,
       undefined,
       {ignoreSessionConfig: true}
@@ -427,7 +549,7 @@ export class AuthAdminState extends Model({
 
     if (result === null) return;
 
-    const {auth, smtp} = result[0];
+    const {auth, emailProviders, currentEmailProvider} = result[0];
 
     runInAction(() => {
       this.configData = {
@@ -459,12 +581,29 @@ export class AuthAdminState extends Model({
       } else {
         this._removeDraftUIConfig();
       }
-      this.smtpConfig = {
-        ...smtp,
-        port: smtp.port?.toString(),
-        timeout_per_email: smtp.timeout_per_email_seconds,
-        timeout_per_attempt: smtp.timeout_per_attempt_seconds,
-      };
+      this.emailProviders = emailProviders.map((provider: any) => ({
+        ...provider,
+        port: provider.port?.toString(),
+        timeout_per_email: provider.timeout_per_email_seconds,
+        timeout_per_attempt: provider.timeout_per_attempt_seconds,
+      }));
+      this.currentEmailProvider = currentEmailProvider;
+      if (newSMTPSchema) {
+        for (const [draftName] of this.draftSMTPConfigs) {
+          if (
+            !this.emailProviders?.some(
+              (provider) => provider.name === draftName
+            )
+          ) {
+            this.draftSMTPConfigs.delete(draftName);
+          }
+        }
+      } else {
+        this.draftSMTPConfigs
+          .get("")!
+          .setCurrentConfig(this.emailProviders![0]);
+      }
+
       this.webhooks = auth.webhooks ?? [];
     });
   }
@@ -829,6 +968,8 @@ export class DraftUIConfig extends Model({
 @model("AuthAdmin/DraftSMTPConfig")
 export class DraftSMTPConfig
   extends Model({
+    currentConfig: prop<Partial<SMTPConfigData> | null>().withSetter(),
+    _name: prop<string | null>(null),
     _sender: prop<string | null>(null),
     _host: prop<string | null>(null),
     _port: prop<string | null>(null),
@@ -841,12 +982,18 @@ export class DraftSMTPConfig
   })
   implements AbstractDraftConfig
 {
-  getConfigValue(name: Exclude<keyof SMTPConfigData, "validate_certs">) {
-    return (
-      this[`_${name}`] ??
-      (getParent<AuthAdminState>(this)?.smtpConfig || null)?.[name] ??
-      ""
-    );
+  @observable
+  expanded = true;
+
+  @action
+  toggleExpanded() {
+    this.expanded = !this.expanded;
+  }
+
+  getConfigValue(
+    name: Exclude<keyof SMTPConfigData, "_typename" | "validate_certs">
+  ) {
+    return this[`_${name}`] ?? this.currentConfig?.[name] ?? "";
   }
 
   @modelAction
@@ -855,6 +1002,42 @@ export class DraftSMTPConfig
     val: SMTPConfigData[Name]
   ) {
     (this as any)[`_${name}`] = val;
+  }
+
+  @computed
+  get parentState() {
+    return findParent<AuthAdminState>(
+      this,
+      (parent) => parent instanceof AuthAdminState
+    )!;
+  }
+
+  @computed
+  get nameError() {
+    if (!this.parentState.newSMTPSchema) return null;
+    const val = this.getConfigValue("name").trim();
+    if (val == "") {
+      return "Name is required";
+    }
+    if (
+      val !== this.currentConfig?.name &&
+      this.parentState.emailProviders?.some(
+        (provider) => provider.name === val
+      )
+    ) {
+      return "Name already exists";
+    }
+    return null;
+  }
+
+  @computed
+  get senderError() {
+    if (!this.parentState.newSMTPSchema) return null;
+    const val = this.getConfigValue("sender").trim();
+    if (val == "") {
+      return "Sender is required";
+    }
+    return null;
   }
 
   @computed
@@ -903,6 +1086,8 @@ export class DraftSMTPConfig
   @computed
   get formError() {
     return (
+      !!this.nameError ||
+      !!this.senderError ||
       !!this.portError ||
       !!this.timeoutPerEmailError ||
       !!this.timeoutPerAttemptError
@@ -912,6 +1097,7 @@ export class DraftSMTPConfig
   @computed
   get formChanged() {
     return (
+      this._name != null ||
       this._sender != null ||
       this._host != null ||
       this._port != null ||
@@ -926,6 +1112,7 @@ export class DraftSMTPConfig
 
   @modelAction
   clearForm() {
+    this._name = null;
     this._sender = null;
     this._host = null;
     this._port = null;
@@ -948,41 +1135,78 @@ export class DraftSMTPConfig
     if (this.formError || !this.formChanged) return;
 
     const conn = connCtx.get(this)!;
-    const state = getParent<AuthAdminState>(this)!;
+    const state = this.parentState;
+
+    const {newSMTPSchema} = state;
 
     this.updating = true;
     this.error = null;
 
-    const query = (
-      [
-        {name: "sender", cast: null},
-        {name: "host", cast: null},
-        {name: "port", cast: "int32"},
-        {name: "username", cast: null},
-        {name: "password", cast: null},
-        {name: "security", cast: "ext::auth::SMTPSecurity"},
-        {name: "validate_certs", cast: null},
-        {name: "timeout_per_email", cast: "std::duration"},
-        {name: "timeout_per_attempt", cast: "std::duration"},
-      ] as const
-    )
-      .map(({name, cast}) => {
-        const val = this[`_${name}`];
-        if (val == null) return null;
-        if (typeof val === "string" && val.trim() === "") {
-          return `configure current database reset ext::auth::SMTPConfig::${name};`;
-        }
-        return `configure current database set ext::auth::SMTPConfig::${name} := ${
-          cast ? `<${cast}>` : ""
-        }${JSON.stringify(val)};`;
-      })
-      .filter((s) => s != null)
-      .join("\n");
+    const fields = [
+      ...(newSMTPSchema ? ([{name: "name", cast: null}] as const) : []),
+      {name: "sender", cast: null},
+      {name: "host", cast: null},
+      {name: "port", cast: "int32"},
+      {name: "username", cast: null},
+      {name: "password", cast: null},
+      {
+        name: "security",
+        cast: newSMTPSchema ? "cfg::SMTPSecurity" : "ext::auth::SMTPSecurity",
+      },
+      {name: "validate_certs", cast: null},
+      {name: "timeout_per_email", cast: "std::duration"},
+      {name: "timeout_per_attempt", cast: "std::duration"},
+    ] as const;
+
+    const query = newSMTPSchema
+      ? `
+      ${
+        this.currentConfig?.name
+          ? `configure current branch reset cfg::SMTPProviderConfig filter .name = ${JSON.stringify(
+              this.currentConfig.name
+            )};`
+          : ""
+      }
+      configure current branch insert cfg::SMTPProviderConfig {
+        ${fields
+          .map(({name, cast}) => {
+            let val = this[`_${name}`] ?? this.currentConfig?.[name];
+            if (typeof val === "string") {
+              val = val.trim();
+            }
+            if (val == null || val == "") {
+              return null;
+            }
+            return `${name} := ${cast ? `<${cast}>` : ""}${JSON.stringify(
+              val
+            )},`;
+          })
+          .filter((s) => s != null)
+          .join("\n")}
+      }
+    `
+      : fields
+          .map(({name, cast}) => {
+            const val = this[`_${name}`];
+            if (val == null) return null;
+            if (typeof val === "string" && val.trim() === "") {
+              return `configure current database reset ext::auth::SMTPConfig::${name};`;
+            }
+            return `configure current database set ext::auth::SMTPConfig::${name} := ${
+              cast ? `<${cast}>` : ""
+            }${JSON.stringify(val)};`;
+          })
+          .filter((s) => s != null)
+          .join("\n");
 
     try {
       await conn.execute(query);
       await state.refreshConfig();
-      this.clearForm();
+      if (newSMTPSchema) {
+        state.cancelDraftSMTPProvider();
+      } else {
+        this.clearForm();
+      }
     } catch (e) {
       console.log(e);
       runInAction(
