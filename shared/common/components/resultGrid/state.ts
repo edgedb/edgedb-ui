@@ -76,7 +76,7 @@ export class ResultGridState {
       ? tops.findIndex((top) => top > offsetRowIndex) - 1
       : offsetRowIndex;
     return {
-      data: parentData[dataIndex][header.parent.name!],
+      data: parentData[dataIndex]?.[header.parent.name!] ?? [],
       indexOffset: indexOffset + (tops ? tops[dataIndex] : dataIndex),
       endIndex: indexOffset + (tops ? tops[dataIndex + 1] : dataIndex + 1),
     };
