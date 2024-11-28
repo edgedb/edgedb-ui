@@ -20,9 +20,11 @@ const isMac =
 export const ParamsEditorPanel = observer(function ParamEditorPanel({
   state,
   runQuery,
+  horizontalSplit,
 }: {
   state: QueryParamsEditor;
   runQuery?: () => void;
+  horizontalSplit?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -32,83 +34,97 @@ export const ParamsEditorPanel = observer(function ParamEditorPanel({
   }
 
   return (
-    <CustomScrollbars
-      innerClass={contentRef.current}
-      className={styles.scrollWrapper}
+    <div
+      ref={ref}
+      className={cn(styles.paramEditorPanel, {
+        [styles.horizontal]: !!horizontalSplit,
+      })}
+      style={{[horizontalSplit ? "width" : "height"]: state.panelHeight}}
     >
-      <div
-        ref={ref}
-        className={styles.paramEditorPanel}
-        style={{height: state.panelHeight}}
+      <DragHandle
+        state={state}
+        parentRef={ref}
+        horizontalSplit={!!horizontalSplit}
+      />
+      <CustomScrollbars
+        innerClass={contentRef.current}
+        className={styles.scrollWrapper}
       >
-        <div className={styles.header}>
-          <DragHandle state={state} parentRef={ref} />
-          Query Parameters
-        </div>
+        <div className={styles.panelInner}>
+          <div className={styles.header}>Query Parameters</div>
 
-        <div
-          ref={contentRef}
-          onKeyDown={(e) => {
-            if ((isMac ? e.metaKey : e.ctrlKey) && e.key === "Enter") {
-              runQuery?.();
-            }
-          }}
-        >
-          {state.mixedParamsError ? (
-            <div className={cn(styles.paramError, styles.topLevelError)}>
-              Cannot have both positional and named parameters in query
-            </div>
-          ) : (
-            <div className={styles.paramsList}>
-              {[...state.paramDefs.values()].map((param, i, arr) => (
-                <ParamEditor
-                  editorState={state}
-                  param={param}
-                  lastParam={i === arr.length - 1}
-                  key={
-                    param.name +
-                    "--" +
-                    (param.error === null ? param.type.name : "error")
-                  }
-                />
-              ))}
-            </div>
-          )}
+          <div
+            ref={contentRef}
+            onKeyDown={(e) => {
+              if ((isMac ? e.metaKey : e.ctrlKey) && e.key === "Enter") {
+                runQuery?.();
+              }
+            }}
+          >
+            {state.mixedParamsError ? (
+              <div className={cn(styles.paramError, styles.topLevelError)}>
+                Cannot have both positional and named parameters in query
+              </div>
+            ) : (
+              <div className={styles.paramsList}>
+                {[...state.paramDefs.values()].map((param, i, arr) => (
+                  <ParamEditor
+                    editorState={state}
+                    param={param}
+                    lastParam={i === arr.length - 1}
+                    key={
+                      param.name +
+                      "--" +
+                      (param.error === null ? param.type.name : "error")
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </CustomScrollbars>
+      </CustomScrollbars>
+    </div>
   );
 });
 
 const DragHandle = observer(function DragHandle({
   state,
   parentRef,
+  horizontalSplit,
 }: {
   state: QueryParamsEditor;
   parentRef: RefObject<HTMLDivElement>;
+  horizontalSplit: boolean;
 }) {
   const [_, setGlobalDragCursor] = useGlobalDragCursor();
 
   const resizeHandler = useDragHandler(() => {
-    let initialHeight: number;
+    let initialSize: number;
     let initialPos: Position;
 
     return {
       onStart(initialMousePos: Position, _: React.MouseEvent) {
-        setGlobalDragCursor("ns-resize");
+        setGlobalDragCursor(horizontalSplit ? "ew-resize" : "ns-resize");
         initialPos = initialMousePos;
-        initialHeight = parentRef.current!.getBoundingClientRect().height;
+        initialSize =
+          parentRef.current!.getBoundingClientRect()[
+            horizontalSplit ? "width" : "height"
+          ];
       },
       onMove(currentMousePos: Position, _: boolean) {
         state.setPanelHeight(
-          initialHeight + (initialPos.y - currentMousePos.y)
+          initialSize +
+            (horizontalSplit
+              ? initialPos.x - currentMousePos.x
+              : initialPos.y - currentMousePos.y)
         );
       },
       onEnd() {
         setGlobalDragCursor(null);
       },
     };
-  }, [state, parentRef.current]);
+  }, [state, parentRef.current, horizontalSplit]);
 
   return <div className={styles.dragHandle} onMouseDown={resizeHandler} />;
 });

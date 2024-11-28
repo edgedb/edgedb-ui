@@ -40,7 +40,10 @@ import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
-import {SplitViewState} from "@edgedb/common/ui/splitView/model";
+import {
+  SplitViewDirection,
+  SplitViewState,
+} from "@edgedb/common/ui/splitView/model";
 import {
   paramsQueryCtx,
   QueryParamsEditor,
@@ -180,8 +183,6 @@ export class QueryEditor extends Model({
   ),
   _sqlParamsEditor: prop(() => new QueryParamsEditor({lang: Language.SQL})),
 
-  splitView: prop(() => new SplitViewState({})),
-
   selectedEditor: prop<EditorKind>(EditorKind.EdgeQL).withSetter(),
 
   showHistory: prop(false),
@@ -208,6 +209,24 @@ export class QueryEditor extends Model({
     [EditorKind.SQL]: false,
     [EditorKind.VisualBuilder]: false,
   };
+
+  @computed
+  get currentQueryEdited() {
+    return this.queryIsEdited[this.selectedEditor];
+  }
+
+  _splitViews: {[key in EditorKind]: SplitViewState} = {
+    [EditorKind.EdgeQL]: new SplitViewState({}),
+    [EditorKind.SQL]: new SplitViewState({
+      direction: SplitViewDirection.vertical,
+    }),
+    [EditorKind.VisualBuilder]: new SplitViewState({}),
+  };
+
+  @computed
+  get splitView() {
+    return this._splitViews[this.selectedEditor];
+  }
 
   @computed
   get paramsEditor() {
@@ -287,6 +306,7 @@ export class QueryEditor extends Model({
   get canRunQuery() {
     return (
       !this.queryRunning &&
+      !this.showHistory &&
       (this.selectedEditor === EditorKind.EdgeQL ||
       this.selectedEditor === EditorKind.SQL
         ? !this.paramsEditor!.hasErrors &&

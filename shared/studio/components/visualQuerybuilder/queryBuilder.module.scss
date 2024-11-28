@@ -38,36 +38,17 @@
     position: absolute;
     right: 8px;
     top: 8px;
-    display: flex;
-    align-items: center;
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 500;
-    font-size: 11px;
-    line-height: 24px;
-    text-transform: uppercase;
-    color: #777;
-    background: #ededed;
-    cursor: pointer;
-    padding: 2px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-
-    svg {
-      fill: currentColor;
-      margin-right: 6px;
-    }
-
-    &:hover {
-      color: #1f8aed;
-      background: #e8e8e8;
-    }
+    padding: 6px;
+    background: var(--Grey99);
+    border: 1px solid var(--Grey90);
 
     @include darkTheme {
-      background: #2b2b2b;
+      background: var(--Grey18);
+      border: 1px solid var(--Grey25);
+      color: var(--Grey40);
 
       &:hover {
-        background: #353535;
+        color: var(--Grey50);
       }
     }
   }
@@ -93,22 +74,6 @@
 
   .select {
     color: var(--app-code);
-  }
-}
-
-.controls {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  margin: 8px;
-  pointer-events: none;
-
-  .runButton {
-    --buttonBg: var(--app-accent-green);
-    --buttonTextColour: #0a4634;
-    align-self: flex-start;
-    flex-shrink: 0;
-    pointer-events: auto;
   }
 }
 

@@ -8,7 +8,7 @@ import {Button} from "../button";
 
 export interface CopyButtonProps {
   className?: string;
-  content: string;
+  content: string | (() => string);
   mini?: boolean;
 }
 
@@ -25,7 +25,7 @@ export function CopyButton({className, content, mini}: CopyButtonProps) {
   }, [copied]);
 
   const onCopy = () => {
-    navigator.clipboard?.writeText(content);
+    navigator.clipboard?.writeText(typeof content === 'string' ? content : content());
     setCopied(true);
   };
 

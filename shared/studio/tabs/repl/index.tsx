@@ -886,11 +886,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
               ) : null}
             </div>
           </CustomScrollbars>
+          {headerExtra}
           <div className={styles.historyTime}>
             {new Date(item.timestamp).toLocaleTimeString()}
           </div>
         </div>
-        {headerExtra}
       </div>
       {output ? (
         !hasScroll ? (
