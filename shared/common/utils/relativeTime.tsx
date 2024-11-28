@@ -67,7 +67,7 @@ export const RelativeTime = observer(function RelativeTime({
     return (
       <>
         {sec}
-        {fullNames ? (sec != 0 ? " seconds" : " second") : "s"} ago
+        {fullNames ? (sec != 1 ? " seconds" : " second") : "s"} ago
       </>
     );
   }
@@ -76,7 +76,7 @@ export const RelativeTime = observer(function RelativeTime({
     return (
       <>
         {min}
-        {fullNames ? (min != 0 ? " minutes" : " minute") : "m"} ago
+        {fullNames ? (min != 1 ? " minutes" : " minute") : "m"} ago
       </>
     );
   }
