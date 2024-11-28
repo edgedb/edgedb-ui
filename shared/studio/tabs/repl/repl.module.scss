@@ -315,9 +315,10 @@
 }
 
 .resultModeHeader {
-  display: flex;
-  justify-content: end;
-  padding-bottom: 8px;
+  padding: 4px;
+  margin-left: 8px;
+  margin-right: -8px;
+  z-index: 1;
 }
 
 .historyQuery {

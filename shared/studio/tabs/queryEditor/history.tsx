@@ -18,7 +18,7 @@ import {QueryEditor, QueryHistoryItem} from "./state";
 import {renderThumbnail} from "./state/thumbnailGen";
 import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 
-import styles from "./repl.module.scss";
+import styles from "./queryeditor.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";

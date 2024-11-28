@@ -98,8 +98,7 @@ export default observer(function SplitView({
     >
       {views.map((view, viewIndex) => {
         const lastView = viewIndex === views.length - 1;
-        const margins =
-          3 + (viewIndex === 0 ? -1.5 : 0) + (lastView ? -1.5 : 0);
+        const margins = 2 + (viewIndex === 0 ? -1 : 0) + (lastView ? -1 : 0);
         const size = {
           [childSizeKey]: `calc(${state.sizes[viewIndex]}%${
             margins ? ` - ${margins}px` : ""
@@ -117,7 +116,6 @@ export default observer(function SplitView({
             {!lastView ? (
               <Resizer
                 direction={state.direction}
-                onFlip={() => state.flipSplitDirection()}
                 onResizeStart={(e) =>
                   resizeHandler(e, {
                     viewIndex,
@@ -134,7 +132,6 @@ export default observer(function SplitView({
 
 interface ResizerProps {
   direction: SplitViewDirection;
-  onFlip: () => void;
   onResizeStart: (event: React.MouseEvent) => void;
 }
 
@@ -142,7 +139,6 @@ function Resizer({onResizeStart}: ResizerProps) {
   return (
     <div className={styles.resizer}>
       <div className={styles.grabHandle} onMouseDown={onResizeStart}></div>
-      {/* <div className={styles.resizerFlip} onClick={onFlip}></div> */}
       <div className={styles.resizerIndicator} />
     </div>
   );

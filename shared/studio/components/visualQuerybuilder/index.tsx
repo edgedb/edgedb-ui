@@ -19,7 +19,8 @@ import {CopyIcon, DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Button from "@edgedb/common/ui/button";
 import {ObjectTypeSelect, sortObjectTypes} from "../objectTypeSelect";
-import {useEffect, useState} from "react";
+import {useEffect, useLayoutEffect, useState} from "react";
+import {CopyButton} from "@edgedb/common/newui/copyButton";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({
   state,
@@ -28,26 +29,26 @@ export const VisualQuerybuilder = observer(function VisualQuerybuilder({
 }) {
   const schemaData = useDatabaseState().schemaData;
 
-  if (!schemaData) {
-    return <div>loading schema...</div>;
-  }
-
   const schemaObjectTypes = sortObjectTypes(
-    [...schemaData.objects.values()].filter(
+    [...(schemaData?.objects.values() ?? [])].filter(
       (type) =>
         !type.builtin && !type.unionOf && !type.insectionOf && !type.from_alias
     )
   );
 
-  if (state.root.typename === null) {
-    state.setRoot(
-      new QueryBuilderShape({
-        typename: schemaObjectTypes[0]?.name,
-      })
-    );
-  }
+  useLayoutEffect(() => {
+    if (state.root.typename === null) {
+      state.setRoot(
+        new QueryBuilderShape({
+          typename: schemaObjectTypes[0]?.name,
+        })
+      );
+    }
+  }, [schemaObjectTypes]);
 
-  return (
+  return !schemaData ? (
+    <div>loading schema...</div>
+  ) : (
     <QuerybuilderRoot
       schemaData={schemaData}
       state={state}
@@ -67,23 +68,6 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
 }) {
   const editorState = useTabState(QueryEditor);
 
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (copied) {
-      const timeout = setTimeout(() => setCopied(false), 1000);
-      return () => {
-        clearTimeout(timeout);
-      };
-    }
-  }, [copied]);
-
-  const copyQuery = () => {
-    const query = editorState.currentQueryData[EditorKind.VisualBuilder].query;
-    navigator.clipboard?.writeText(query);
-    setCopied(true);
-  };
-
   return (
     <>
       <CustomScrollbars
@@ -96,7 +80,7 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
             [styles.flexCenter]: !schemaObjectTypes.length,
           })}
         >
-          {schemaObjectTypes.length ? (
+          {schemaObjectTypes.length && state.root.typename ? (
             <>
               <div className={styles.scrollInner}>
                 <div className={styles.shapeBlock}>
@@ -126,9 +110,11 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
                   />
                 </div>
               </div>
-              <div className={styles.copyButton} onClick={copyQuery}>
-                <CopyIcon /> {copied ? "Copied" : "Copy"}
-              </div>
+              <CopyButton
+                className={styles.copyButton}
+                content={() => state.query}
+                mini
+              />
             </>
           ) : (
             <p className={styles.emptySchemaText}>
@@ -145,18 +131,6 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
           )}
         </div>
       </CustomScrollbars>
-
-      {editorState.showHistory ? null : (
-        <div className={styles.controls}>
-          <Button
-            className={styles.runButton}
-            label="Run"
-            disabled={!editorState.canRunQuery}
-            loading={editorState.queryRunning}
-            onClick={() => editorState.runQuery()}
-          />
-        </div>
-      )}
     </>
   );
 });
