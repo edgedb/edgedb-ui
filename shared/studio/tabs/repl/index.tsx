@@ -159,7 +159,7 @@ const ReplList = observer(function ReplList({
   const isMobile = useIsMobile();
 
   const headerHeight =
-    (isMobile ? 320 : 288) + (replState._hasUnfetchedHistory ? 34 : 0);
+    (isMobile ? 360 : 275) + (replState._hasUnfetchedHistory ? 34 : 0);
 
   useEffect(() => {
     replState.scrollRef = ref.current;
