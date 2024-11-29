@@ -4,6 +4,7 @@ import {Builder, Browser, By, until, Key, error} from "selenium-webdriver";
 import chrome from "selenium-webdriver/chrome.js";
 
 let opts = new chrome.Options();
+opts.windowSize({width: 1200, height: 900});
 
 if (process.env["CI"] || !process.argv.slice(2).includes("--no-headless")) {
   opts.addArguments("--headless=new");
