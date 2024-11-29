@@ -2,7 +2,7 @@ import {observer} from "mobx-react-lite";
 import cn from "@edgedb/common/utils/classNames";
 import {useDatabaseState, useTabState} from "../../state";
 import {SchemaData} from "../../state/database";
-import {EditorKind, QueryEditor} from "../../tabs/queryEditor/state";
+import {QueryEditor} from "../../tabs/queryEditor/state";
 import {
   QueryBuilderShape,
   FilterExpr,
@@ -15,11 +15,10 @@ import {SchemaObjectType, SchemaProperty} from "@edgedb/common/schemaData";
 
 import styles from "./queryBuilder.module.scss";
 import {Select} from "@edgedb/common/ui/select";
-import {CopyIcon, DeleteIcon} from "../../icons";
+import {DeleteIcon} from "../../icons";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
-import Button from "@edgedb/common/ui/button";
 import {ObjectTypeSelect, sortObjectTypes} from "../objectTypeSelect";
-import {useEffect, useLayoutEffect, useState} from "react";
+import {useLayoutEffect} from "react";
 import {CopyButton} from "@edgedb/common/newui/copyButton";
 
 export const VisualQuerybuilder = observer(function VisualQuerybuilder({

@@ -29,13 +29,14 @@ export default observer(function SplitView({
   ...otherProps
 }: React.HTMLAttributes<HTMLDivElement> & SplitViewProps) {
   const [_, setGlobalDragCursor] = useGlobalDragCursor();
-
-  const childSizeKey =
-    state.direction === SplitViewDirection.vertical ? "height" : "width";
+  const isMobile = useIsMobile();
 
   const ref = useRef<HTMLDivElement>(null);
 
-  const isMobile = useIsMobile();
+  const childSizeKey =
+    !isMobile && state.direction === SplitViewDirection.vertical
+      ? "height"
+      : "width";
 
   const resizeHandler = useDragHandler<ResizeDragHandlerParams>(() => {
     let initialPos: Position;
@@ -93,7 +94,7 @@ export default observer(function SplitView({
       ref={ref}
       className={cn(className, styles.splitViewContainer, {
         [styles.splitVertical]:
-          state.direction === SplitViewDirection.vertical,
+          !isMobile && state.direction === SplitViewDirection.vertical,
       })}
     >
       {views.map((view, viewIndex) => {

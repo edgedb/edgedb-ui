@@ -13,7 +13,6 @@ import {sql, PostgreSQL} from "@codemirror/lang-sql";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditorRef, createCodeEditor} from "@edgedb/code-editor";
-import {RunButton} from "@edgedb/common/ui/mobile";
 
 import styles from "./queryeditor.module.scss";
 
@@ -47,7 +46,7 @@ import {
 
 import {HistoryPanel} from "./history";
 import {ParamsEditorPanel} from "./paramEditor";
-import {TabEditorIcon, MobileHistoryIcon} from "../../icons";
+import {TabEditorIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
@@ -73,6 +72,7 @@ import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
+  const isMobile = useIsMobile();
 
   const outputModeTargetRef = useRef<HTMLDivElement>(null);
 
@@ -159,9 +159,49 @@ export const QueryEditorView = observer(function QueryEditorView() {
           </div>
 
           <div className={styles.controls}>
-            <div ref={outputModeTargetRef} style={{display: "contents"}} />
+            {!isMobile && editorState.currentResult ? (
+              editorState.currentQueryEdited ? (
+                <div className={styles.resultOutdatedNote}>
+                  Result outdated
+                </div>
+              ) : (
+                <div
+                  className={styles.resultTimestampNote}
+                  title={new Date(
+                    editorState.currentResult.timestamp
+                  ).toLocaleString()}
+                >
+                  <RelativeTime
+                    timestamp={editorState.currentResult.timestamp}
+                    fullNames
+                  />
+                </div>
+              )
+            ) : null}
+
+            <div
+              ref={outputModeTargetRef}
+              className={styles.outputModeTargetRef}
+            />
+
+            {isMobile ? (
+              <LabelsSwitch
+                labels={["Query", "Result"]}
+                value={
+                  editorState.splitView.activeViewIndex
+                    ? switchState.right
+                    : switchState.left
+                }
+                onChange={() =>
+                  editorState.splitView.setActiveViewIndex(
+                    editorState.splitView.activeViewIndex ? 0 : 1
+                  )
+                }
+              />
+            ) : null}
 
             <IconToggle
+              className={styles.splitViewToggle}
               options={[
                 {
                   key: SplitViewDirection.horizontal,
@@ -180,14 +220,20 @@ export const QueryEditorView = observer(function QueryEditorView() {
               }
             />
 
-            {!editorState.queryRunning ? (
+            {isMobile &&
+            editorState.splitView.activeViewIndex ==
+              1 ? null : !editorState.queryRunning ? (
               <Button
                 kind="primary"
                 className={styles.runBtn}
-                shortcut={{
-                  default: "Ctrl+Enter",
-                  macos: "⌘+Enter",
-                }}
+                shortcut={
+                  !isMobile
+                    ? {
+                        default: "Ctrl+Enter",
+                        macos: "⌘+Enter",
+                      }
+                    : undefined
+                }
                 leftIcon={<RunIcon />}
                 disabled={!editorState.canRunQuery}
                 onClick={() => editorState.runQuery()}
@@ -197,7 +243,7 @@ export const QueryEditorView = observer(function QueryEditorView() {
             ) : (
               <Button
                 className={styles.cancelBtn}
-                shortcut="Ctrl+C"
+                shortcut={!isMobile ? "Ctrl+C" : undefined}
                 leftIcon={<Spinner size={16} strokeWidth={1.5} />}
                 onClick={() => editorState.runningQueryAbort?.abort()}
               >
@@ -214,8 +260,9 @@ export const QueryEditorView = observer(function QueryEditorView() {
             <div
               className={cn(styles.editorBlock, {
                 [styles.horizontalSplit]:
+                  !isMobile &&
                   editorState.splitView.direction ===
-                  SplitViewDirection.vertical,
+                    SplitViewDirection.vertical,
               })}
             >
               {editorState.selectedEditor === EditorKind.EdgeQL ||
@@ -228,8 +275,9 @@ export const QueryEditorView = observer(function QueryEditorView() {
                     state={editorState.paramsEditor!}
                     runQuery={() => editorState.runQuery()}
                     horizontalSplit={
+                      !isMobile &&
                       editorState.splitView.direction ===
-                      SplitViewDirection.vertical
+                        SplitViewDirection.vertical
                     }
                   />
                 </>
@@ -360,11 +408,12 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
 
 const ResultInspector = observer(function ResultInspector({
   state,
+  isMobile,
 }: {
   state: InspectorState;
+  isMobile: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
@@ -399,6 +448,7 @@ const QueryResult = observer(function QueryResult({
   result: QueryHistoryItem | null;
   outputModeTargetRef: RefObject<HTMLDivElement>;
 }) {
+  const isMobile = useIsMobile();
   const [data, setData] = useState<EdgeDBSet | null>(null);
 
   useEffect(() => {
@@ -416,16 +466,7 @@ const QueryResult = observer(function QueryResult({
   }
 
   let content: JSX.Element | null = null;
-  let headerContent = state.currentQueryEdited ? (
-    <div className={styles.resultOutdatedNote}>Result outdated</div>
-  ) : (
-    <div
-      className={styles.resultTimestampNote}
-      title={new Date(result.timestamp).toLocaleString()}
-    >
-      <RelativeTime timestamp={result.timestamp} fullNames />
-    </div>
-  );
+  let headerContent: JSX.Element | null = null;
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
@@ -447,19 +488,20 @@ const QueryResult = observer(function QueryResult({
           state.setOutputMode.bind(state)
         );
 
-        headerContent = (
-          <>
-            {headerContent}
-            {toggleEl}
-          </>
-        );
+        headerContent = toggleEl;
 
         content = (
           <>
             {mode === OutputMode.Grid ? (
-              <ResultGrid state={result.getResultGridState(data)} />
+              <ResultGrid
+                state={result.getResultGridState(data)}
+                bottomPadding={isMobile ? 60 : undefined}
+              />
             ) : (
-              <ResultInspector state={result.getInspectorState(data)} />
+              <ResultInspector
+                state={result.getInspectorState(data)}
+                isMobile={isMobile}
+              />
             )}
           </>
         );
@@ -513,6 +555,7 @@ export function outputModeToggle(
     mode,
     toggleEl: (
       <IconToggle
+        className={styles.outputModeToggle}
         options={[
           {
             key: OutputMode.Tree,
@@ -542,38 +585,38 @@ export const editorTabSpec: DatabaseTabSpec = {
   element: <QueryEditorView />,
 };
 
-function EditorTabIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM12.7071 4.70711C13.0976 4.31658 13.0976 3.68342 12.7071 3.29289C12.3166 2.90237 11.6834 2.90237 11.2929 3.29289L5.29289 9.29289C4.90237 9.68342 4.90237 10.3166 5.29289 10.7071C5.68342 11.0976 6.31658 11.0976 6.70711 10.7071L12.7071 4.70711ZM4 13C4.55228 13 5 12.5523 5 12C5 11.4477 4.55228 11 4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13Z"
-      />
-    </svg>
-  );
-}
+// function EditorTabIcon() {
+//   return (
+//     <svg
+//       width="16"
+//       height="16"
+//       viewBox="0 0 16 16"
+//       fill="none"
+//       xmlns="http://www.w3.org/2000/svg"
+//     >
+//       <path
+//         fillRule="evenodd"
+//         clipRule="evenodd"
+//         d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM12.7071 4.70711C13.0976 4.31658 13.0976 3.68342 12.7071 3.29289C12.3166 2.90237 11.6834 2.90237 11.2929 3.29289L5.29289 9.29289C4.90237 9.68342 4.90237 10.3166 5.29289 10.7071C5.68342 11.0976 6.31658 11.0976 6.70711 10.7071L12.7071 4.70711ZM4 13C4.55228 13 5 12.5523 5 12C5 11.4477 4.55228 11 4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13Z"
+//       />
+//     </svg>
+//   );
+// }
 
-function BuilderTabIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM3 4C3 3.44772 3.44772 3 4 3H9C9.55228 3 10 3.44772 10 4C10 4.55228 9.55228 5 9 5H4C3.44772 5 3 4.55228 3 4ZM3 8C3 7.44772 3.44772 7 4 7H12C12.5523 7 13 7.44772 13 8C13 8.55229 12.5523 9 12 9H4C3.44772 9 3 8.55229 3 8ZM4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13H10C10.5523 13 11 12.5523 11 12C11 11.4477 10.5523 11 10 11H4Z"
-      />
-    </svg>
-  );
-}
+// function BuilderTabIcon() {
+//   return (
+//     <svg
+//       width="16"
+//       height="16"
+//       viewBox="0 0 16 16"
+//       fill="none"
+//       xmlns="http://www.w3.org/2000/svg"
+//     >
+//       <path
+//         fillRule="evenodd"
+//         clipRule="evenodd"
+//         d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM3 4C3 3.44772 3.44772 3 4 3H9C9.55228 3 10 3.44772 10 4C10 4.55228 9.55228 5 9 5H4C3.44772 5 3 4.55228 3 4ZM3 8C3 7.44772 3.44772 7 4 7H12C12.5523 7 13 7.44772 13 8C13 8.55229 12.5523 9 12 9H4C3.44772 9 3 8.55229 3 8ZM4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13H10C10.5523 13 11 12.5523 11 12C11 11.4477 10.5523 11 10 11H4Z"
+//       />
+//     </svg>
+//   );
+// }

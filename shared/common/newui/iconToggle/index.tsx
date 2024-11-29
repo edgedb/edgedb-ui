@@ -3,6 +3,7 @@ import cn from "@edgedb/common/utils/classNames";
 import styles from "./iconToggle.module.scss";
 
 export interface IconToggleProps<OptionKey extends string | number> {
+  className?: string;
   options: {
     key: OptionKey;
     label: string;
@@ -15,13 +16,14 @@ export interface IconToggleProps<OptionKey extends string | number> {
 }
 
 export function IconToggle<OptionKey extends string | number = any>({
+  className,
   options,
   selectedOption,
   onSelectOption,
   disabled,
 }: IconToggleProps<OptionKey>) {
   return (
-    <div className={cn(styles.iconToggle, {[styles.disabled]: !!disabled})}>
+    <div className={cn(styles.iconToggle, className, {[styles.disabled]: !!disabled})}>
       {options.map((option) => (
         <div
           key={option.key}
