@@ -23,12 +23,12 @@ export default async function globalTeardown() {
     );
   }
 
-  const edbServerProc: ChildProcess = globalThis.edgedbServerProc;
+  const gelServerProc: ChildProcess = globalThis.gelServerProc;
 
-  if (edbServerProc) {
+  if (gelServerProc) {
     console.log("Closing Gel server...");
     waits.push(
-      killProcess(edbServerProc).then(() =>
+      killProcess(gelServerProc).then(() =>
         console.log("...Gel server closed")
       )
     );
