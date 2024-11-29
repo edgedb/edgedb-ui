@@ -65,11 +65,12 @@
 
 .replHeader {
   padding: 0 32px;
+  padding-bottom: 16px;
 
   .headerAscii {
     white-space: pre;
     font-size: 14px;
-    line-height: 16px;
+    line-height: 15px;
     color: #cc960a;
 
     span {
@@ -78,14 +79,16 @@
   }
 
   .headerMsg {
-    margin-top: 32px;
-    line-height: 26px;
-    color: var(--grey60);
+    margin-top: 15px * -3;
+    margin-left: 16ch;
+    padding-bottom: 16px;
+    line-height: 20px;
+    color: var(--tertiary_text_color);
 
     span {
       text-decoration: underline;
       cursor: pointer;
-      color: var(--baseTextLightTheme);
+      color: var(--main_text_color);
     }
 
     @include darkTheme {
@@ -95,31 +98,20 @@
         color: var(--grey75);
       }
     }
-
-    @include breakpoint(mobile) {
-      margin-top: 24px;
-      color: var(--baseTextLightTheme);
-
-      span {
-        color: var(--grey50);
-      }
-
-      @include darkTheme {
-        color: var(--grey60);
-
-        span {
-          color: var(--baseTextDarkTheme);
-        }
-      }
-    }
   }
 
   @include breakpoint(mobile) {
-    padding: 24px;
+    padding: 0 16px;
 
     .headerAscii {
-      font-size: 8px;
-      line-height: 9px;
+      font-size: 12px;
+      line-height: 13px;
+    }
+
+    .headerMsg {
+      margin-left: 8px;
+      margin-top: 16px;
+      line-height: 20px;
     }
   }
 }

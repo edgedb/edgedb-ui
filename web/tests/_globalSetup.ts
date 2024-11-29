@@ -15,7 +15,7 @@ const sleep = (ms: number) =>
     }, ms)
   );
 
-function checkEdgeDBServerAlive() {
+function checkGelServerAlive() {
   return new Promise<boolean>((resolve) => {
     const req = http.get(
       "http://localhost:5656/server/status/alive",
@@ -87,16 +87,16 @@ async function checkConfigApplied() {
 export default async function globalSetup() {
   console.log("\n");
 
-  let edbServerProc: ChildProcess | null = null;
-  const edbServerAlive = new Event();
+  let gelServerProc: ChildProcess | null = null;
+  const gelServerAlive = new Event();
   let usingExistingDevServer = false;
 
-  if (await checkEdgeDBServerAlive()) {
-    console.log("Re-using EdgeDB server already running on 5656");
+  if (await checkGelServerAlive()) {
+    console.log("Re-using Gel server already running on 5656");
     usingExistingDevServer = true;
-    edbServerAlive.set();
+    gelServerAlive.set();
   } else {
-    console.log("Starting EdgeDB server...");
+    console.log("Starting Gel server...");
 
     const srvcmd = process.env.EDGEDB_SERVER_BIN ?? "edgedb-server";
 
@@ -109,18 +109,18 @@ export default async function globalSetup() {
         ]
       : ["--devmode"];
 
-    edbServerProc = spawn(srvcmd, args) as ChildProcess;
-    edbServerProc.once("close", (code) => {
-      if (!edbServerAlive.done) {
-        edbServerAlive.setError(
-          `EdgeDB server failed to start with exit code: ${code}`
+    gelServerProc = spawn(srvcmd, args) as ChildProcess;
+    gelServerProc.once("close", (code) => {
+      if (!gelServerAlive.done) {
+        gelServerAlive.setError(
+          `Gel server failed to start with exit code: ${code}`
         );
       }
     });
     waitUntilAlive(
-      checkEdgeDBServerAlive,
-      "EdgeDB server startup timed out",
-      edbServerAlive
+      checkGelServerAlive,
+      "Gel server startup timed out",
+      gelServerAlive
     );
   }
 
@@ -153,8 +153,8 @@ export default async function globalSetup() {
     uiServerAlive.wait().then(() => {
       if (uiServerProc) console.log("...UI server running");
     }),
-    edbServerAlive.wait().then(() => {
-      if (edbServerProc) console.log("...EdgeDB server running");
+    gelServerAlive.wait().then(() => {
+      if (gelServerProc) console.log("...Gel server running");
     }),
   ]);
 
@@ -192,7 +192,7 @@ export default async function globalSetup() {
   console.log("... Done");
 
   globalThis.uiServerProc = uiServerProc;
-  globalThis.edgedbServerProc = edbServerProc;
+  globalThis.gelServerProc = gelServerProc;
 
   console.log("\n");
 }

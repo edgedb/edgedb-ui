@@ -1,0 +1,25 @@
+@import "@edgedb/common/mixins.scss";
+
+.cloudLogo {
+  @include isMobile {
+    width: 37px;
+  }
+}
+.gel {
+  fill: var(--Grey30);
+  @include darkTheme {
+    fill: var(--Grey65);
+  }
+}
+.cloud {
+  fill: var(--Grey65);
+  @include darkTheme {
+    fill: var(--Grey40);
+  }
+}
+.beta {
+  fill: #08b985;
+  @include darkTheme {
+    fill: #358b6c;
+  }
+}

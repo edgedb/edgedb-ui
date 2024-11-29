@@ -1,7 +1,7 @@
-# EdgeDB UI web app
+# Gel UI web app
 
-Note: If you are just looking to use EdgeDB UI, then you don't need to do any of
-these steps, just run the `edgedb ui` command from your project directory.
+Note: If you are just looking to use Gel UI, then you don't need to do any of
+these steps, just run the `gel ui` command from your project directory.
 
 ## Development
 
@@ -16,7 +16,7 @@ yarn dev
 
 The app is served at `http://localhost:3002/ui`.
 
-The EdgeDB server needs to be run separately with `cors_allow_origins`
+The Gel server needs to be run separately with `cors_allow_origins`
 configured to allow the UI's `localhost:3002` origin:
 
 ```sh
@@ -27,11 +27,11 @@ edb cli configure set cors_allow_origins '*'
 
 ```
 
-To customize the EdgeDB server address (if it's not running at the
+To customize the Gel server address (if it's not running at the
 default of `localhost:5656`):
 
 ```sh
-env VITE_EDGEDB_SERVER_URL="192.168.0.123:5656" yarn dev
+env VITE_GEL_SERVER_URL="192.168.0.123:5656" yarn dev
 ```
 
 ## UI Tests
@@ -48,7 +48,7 @@ To run the UI tests:
 yarn test
 ```
 
-If there is already an instance of an EdgeDB dev server running on port 5656,
+If there is already an instance of an Gel dev server running on port 5656,
 or the UI dev server running on port 3000, then they will be used by the tests.
 If not (or the tests are running in CI), the test runner will start temporary
 instances of them for the duration of the tests.

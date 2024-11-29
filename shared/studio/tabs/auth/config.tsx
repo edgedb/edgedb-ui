@@ -30,7 +30,7 @@ export const ConfigTab = observer(function ConfigTab() {
       <div className={styles.docsNote}>
         <BookIcon />
         <div>
-          <b>Need help integrating EdgeDB Auth into your app?</b>
+          <b>Need help integrating Gel Auth into your app?</b>
           <br />
           Check out the{" "}
           <a href="https://www.edgedb.com/p/auth-ext-docs" target="_blank">

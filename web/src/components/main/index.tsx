@@ -23,8 +23,8 @@ const Main = observer(function Main() {
     document.title = instanceName
       ? `${instanceName}${
           match ? ` / ${match.params.databaseName}` : ""
-        } | EdgeDB Local`
-      : "EdgeDB Local";
+        } | Gel Local`
+      : "Gel Local";
   }, [instanceName, match]);
 
   return (

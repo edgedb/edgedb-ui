@@ -197,7 +197,7 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
           </div>
 
           <div className={styles.importData}>
-            <h3>First time using EdgeDB?</h3>
+            <h3>First time using Gel?</h3>
             <p>
               {exampleDBExists ? "Switch to the" : "Create an"} example{" "}
               {dbOrBranch} with our "movies" schema and data set, and play with
@@ -209,8 +209,8 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
                   instanceState.creatingExampleDB
                     ? `Creating example ${dbOrBranch}...`
                     : exampleDBExists
-                      ? `Switch to example ${dbOrBranch}`
-                      : `Create example ${dbOrBranch}`
+                    ? `Switch to example ${dbOrBranch}`
+                    : `Create example ${dbOrBranch}`
                 }
                 loading={instanceState.creatingExampleDB}
                 disabled={instanceState.creatingExampleDB}

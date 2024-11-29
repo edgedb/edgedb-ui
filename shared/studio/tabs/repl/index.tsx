@@ -159,7 +159,7 @@ const ReplList = observer(function ReplList({
   const isMobile = useIsMobile();
 
   const headerHeight =
-    (isMobile ? 320 : 330) + (replState._hasUnfetchedHistory ? 34 : 0);
+    (isMobile ? 360 : 275) + (replState._hasUnfetchedHistory ? 34 : 0);
 
   useEffect(() => {
     replState.scrollRef = ref.current;
@@ -995,20 +995,21 @@ const QueryCodeBlock = observer(function QueryCodeBlock({
 });
 
 const headerASCII = `
-                                          /$$
-                                         | $$
-                                         | $$
- /$$$$$$$$ /$$$$$$$   /$$$$$$  /$$$$$$$$ | $$  /$$$$$$$  /$$$$$$$
-| $$_____/| $$__  $$ /$$__  $$| $$_____/ | $$ | $$__  $$| $$__  $$
-| $$      | $$  \\ $$| $$  \\__/| $$       | $$ | $$  \\ $$| $$  \\ $$
-| $$$$$$  | $$  | $$| $$ /$$$$| $$$$$$   | $$ | $$  | $$| $$$$$$$
-| $$___/  | $$  | $$| $$|_  $$| $$___/   | $$ | $$  | $$| $$__  $$
-| $$      | $$  | $$| $$  \\ $$| $$       | $$ | $$  | $$| $$  \\ $$
-| $$$$$$$$| $$$$$$$/|  $$$$$$/| $$$$$$$$ | $$ | $$$$$$$/| $$$$$$$/
-|________/|_______/  \\______/ |________/ | $$ |_______/ |_______/
-                                         | $$
-                                         | $$
-                                         |__/
+                               /$$$
+                              /$$$$$
+                             | $$$$$
+   /$$$$$$$$$     /$$$$$$$$  | $$$$$
+  /$$$$$$$$$$$   /$$$$$$$$$$$| $$$$$
+ /$$$$$$$$$$$$$ /$$$$$$$$$$$$| $$$$$
+| $$$$$$$$$$$$$| $$$$$$$$$$/ | $$$$$
+| $$$$$$$$$$$$$| $$$$$$$$/   | $$$$$
+|  $$$$$$$$$$$ |  $$$$$$$$$  | $$$$$
+ \\   $$$$$$$    \\   $$$$$$   |  $$$
+  / $$$$$$$$$     \\______/    \\___/
+ |  $$$$$$$$$
+ |  $$$$$$$$$   
+  \\  $$$$$$$   
+   \\_______/   
 `.replace(/\$+/g, "<span>$&</span>");
 
 const ReplHeader = observer(function ReplHeader() {
@@ -1031,9 +1032,10 @@ const ReplHeader = observer(function ReplHeader() {
         dangerouslySetInnerHTML={{__html: headerASCII}}
       />
       <div className={styles.headerMsg}>
-        Welcome to EdgeDB repl, type{" "}
+        Welcome to Gel repl, type{" "}
         <span onClick={() => replState.runQuery("\\help")}>\help</span> for
         commands list
+        <br />
         <br />
         Shortcuts: <i>{ctrlKey}+Enter</i> to run query,{" "}
         <i>{ctrlKey}+ArrowUp/Down</i> to navigate history,{" "}

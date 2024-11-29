@@ -3,8 +3,8 @@ import {createContext, Model, model, prop} from "mobx-keystone";
 import {InstanceState} from "@edgedb/studio/state/instance";
 
 export const serverUrl = import.meta.env.DEV
-  ? import.meta.env.VITE_EDGEDB_SERVER_URL
-    ? `http://${import.meta.env.VITE_EDGEDB_SERVER_URL}`
+  ? import.meta.env.VITE_GEL_SERVER_URL
+    ? `http://${import.meta.env.VITE_GEL_SERVER_URL}`
     : "http://localhost:5656"
   : window.location.origin;
 
