@@ -384,6 +384,16 @@
     user-select: none;
     margin: 14px 12px 0 16px;
   }
+
+  @include isMobile {
+    .historyPrompt,
+    .historyQueryCode {
+      padding-top: 14px;
+    }
+    .historyTime {
+      margin-top: 16px;
+    }
+  }
 }
 
 .explain .historyHeader {

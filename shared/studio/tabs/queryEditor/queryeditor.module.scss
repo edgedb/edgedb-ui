@@ -9,23 +9,6 @@ $historyTransitionTime: 0.15s;
   display: flex;
   font-family: "Roboto Flex Variable", sans-serif;
 
-  .main {
-    height: auto;
-    transition: margin $historyTransitionTime;
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
-    border-radius: 0 12px 12px 0;
-
-    & > div:first-child {
-      border-top-left-radius: 0;
-      border-bottom-left-radius: 0;
-    }
-
-    @include darkTheme {
-      box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
-        0px 0px 4px 0px rgba(0, 0, 0, 0.3);
-    }
-  }
-
   &.showExtendedResult {
     margin: 0 8px;
 
@@ -62,9 +45,20 @@ $historyTransitionTime: 0.15s;
     }
   }
 
-  // @include breakpoint(mobile) {
-  //   display: none;
-  // }
+  @include isMobile {
+    position: fixed;
+    width: 100vw !important;
+    height: 100dvh;
+    top: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+    transform: translateX(-100%);
+    transition: transform $historyTransitionTime;
+
+    .showHistory & {
+      transform: none;
+    }
+  }
 }
 
 .mainPanel {
@@ -88,15 +82,20 @@ $historyTransitionTime: 0.15s;
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
       0px 0px 4px 0px rgba(0, 0, 0, 0.3);
   }
+
+  @include isMobile {
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
 }
 
 .header {
   background: var(--header_background);
-  height: 40px;
   border-bottom: 1px solid var(--panel_border);
   box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.06);
   display: grid;
   grid-template-columns: 1fr auto 1fr minmax(max-content, 50%);
+  grid-template-rows: 40px;
   z-index: 5;
 
   @include darkTheme {
@@ -196,6 +195,66 @@ $historyTransitionTime: 0.15s;
       --buttonPrimaryBackground: var(--app-accent-green);
     }
   }
+
+  .outputModeTargetRef {
+    display: contents;
+  }
+
+  @include breakpoint(tablet) {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: 40px 41px;
+
+    .controls {
+      grid-column: 1 / span 3;
+      grid-row: 2;
+      justify-self: auto;
+      justify-content: end;
+      border-top: 1px solid var(--panel_border);
+    }
+  }
+
+  @include isMobile {
+    grid-template-rows: 40px;
+
+    .controls {
+      position: absolute;
+      bottom: 0;
+      border: 0;
+      left: 0;
+      right: 0;
+      padding: 8px;
+      background: linear-gradient(
+        transparent,
+        var(--app_panel_background) 32px
+      );
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+
+      .runBtn,
+      .cancelBtn {
+        justify-self: end;
+        height: 38px;
+        border-radius: 10px;
+      }
+    }
+
+    .outputModeTargetRef {
+      display: flex;
+    }
+
+    .splitViewToggle {
+      display: none;
+    }
+
+    .outputModeToggle {
+      background: var(--Grey93);
+
+      @include darkTheme {
+        background: var(--Grey10);
+        border-color: var(--Grey18);
+      }
+    }
+  }
 }
 
 .extendedViewerContainer {
@@ -262,182 +321,12 @@ $historyTransitionTime: 0.15s;
   padding: 16px;
 }
 
-.resultHeader {
-  background: var(--header_background);
-  border-bottom: 1px solid var(--panel_border);
-  display: flex;
-  align-items: center;
-  justify-content: end;
-  height: 36px;
-  flex-shrink: 0;
-  padding: 0 8px;
-
-  &.noBorder {
-    border-bottom: 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-
-    @include darkTheme {
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
-  }
-}
-
-.outputModeToggle {
-  display: flex;
-
-  .label {
-    font-family: "Roboto Flex Variable", sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 24px;
-    padding: 0 12px;
-    color: var(--tertiary_text_color);
-    cursor: pointer;
-
-    &.selected {
-      color: var(--main_text_color);
-    }
-
-    &.disabled {
-      pointer-events: none;
-      opacity: 0.5;
-    }
-  }
-
-  .toggle {
-    position: relative;
-    width: 38px;
-    height: 24px;
-    border-radius: 12px;
-    background: var(--Grey90);
-    cursor: pointer;
-
-    &:after {
-      position: absolute;
-      content: "";
-      width: 20px;
-      height: 20px;
-      top: 2px;
-      left: 2px;
-      border-radius: 10px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-      transition: transform 0.25s;
-    }
-
-    &.rightSelected:after {
-      transform: translateX(14px); // 36 - 20 - 2
-    }
-
-    &.disabled {
-      pointer-events: none;
-      opacity: 0.5;
-    }
-
-    @include darkTheme {
-      background: var(--Grey14);
-
-      &:after {
-        background: var(--Grey45);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-      }
-    }
-  }
-}
-
 .inspectorLoading {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #888;
-}
-
-.toolbar {
-  position: absolute;
-  width: 36px;
-  height: 100%;
-  display: grid;
-  grid-template-rows: 1fr auto 1fr;
-  transition: opacity $historyTransitionTime;
-
-  .showHistory & {
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  .tabs {
-    grid-row: 2;
-  }
-
-  .tab {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 0;
-    color: #737373;
-    cursor: pointer;
-
-    &:not(:last-child) {
-      border-bottom: 2px solid var(--app-bg);
-    }
-
-    span {
-      font-size: 12px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-    }
-
-    svg {
-      fill: #a6a6a6;
-      margin-top: 12px;
-    }
-
-    &:hover {
-      color: #333;
-    }
-
-    &.selected {
-      background: #f5f5f5;
-
-      color: #6b6b6b;
-
-      svg {
-        fill: #b3b3b3;
-      }
-    }
-
-    @include darkTheme {
-      color: #939393;
-
-      svg {
-        fill: #7e7e7e;
-      }
-
-      &:hover {
-        color: #b3b3b3;
-      }
-
-      &.selected {
-        background: #242424;
-        color: #6b6b6b;
-
-        svg {
-          fill: #626262;
-        }
-      }
-    }
-  }
-}
-
-.historyButton {
-  &.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
 }
 
 .history {
@@ -458,6 +347,10 @@ $historyTransitionTime: 0.15s;
     bottom: 24px;
     right: 24px;
     z-index: 1;
+  }
+
+  @include isMobile {
+    width: 100%;
   }
 }
 
@@ -619,6 +512,10 @@ $historyTransitionTime: 0.15s;
         background-image: dashedBorderBg(#279474, 2px);
       }
     }
+
+    @include isMobile {
+      margin-top: 24px;
+    }
   }
 
   .dateHeader {
@@ -724,131 +621,5 @@ $historyTransitionTime: 0.15s;
 
   :global(.cm-line) {
     padding-right: 12px;
-  }
-}
-
-.replEditorOverlays {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  max-height: 50%;
-  pointer-events: none;
-  transition: opacity 0.1s;
-
-  .showHistory & {
-    opacity: 0;
-  }
-
-  @include breakpoint(mobile) {
-    pointer-events: unset;
-  }
-}
-
-.mobileOverlayControls {
-  display: none;
-
-  @include breakpoint(mobile) {
-    display: flex;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    justify-content: space-between;
-    z-index: 2;
-    padding: 8px 24px;
-    background: linear-gradient(
-      180deg,
-      rgba(247, 247, 247, 0) 0%,
-      #f7f7f7 100%
-    );
-
-    .mobileBtn {
-      padding: 0;
-      border: none;
-      height: 40px;
-      width: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      &:disabled {
-        opacity: 0.4;
-      }
-
-      &.running {
-        background-color: var(--accentGreen);
-        color: #fff;
-      }
-    }
-
-    .mobileHistoryIcon {
-      color: var(--grey40);
-      stroke: var(--grey97);
-    }
-
-    .mobileRunIcon {
-      path {
-        fill: #fff;
-      }
-
-      circle {
-        fill: #2cb88e;
-      }
-    }
-
-    @include darkTheme {
-      background: linear-gradient(
-        180deg,
-        rgba(20, 20, 20, 0) 0%,
-        #141414 100%
-      );
-
-      .mobileHistoryIcon {
-        color: var(--grey70);
-        stroke: var(--grey8);
-      }
-
-      .mobileRunIcon {
-        path {
-          fill: #141414;
-        }
-
-        circle {
-          fill: var(--accentGreen);
-        }
-      }
-    }
-  }
-}
-
-.mobileHistory {
-  display: none;
-
-  @include breakpoint(mobile) {
-    display: block;
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10;
-    background-color: var(--fullscreenOverlayBg);
-
-    .title {
-      @include breakpoint(mobile) {
-        text-align: center;
-        font-family: Roboto;
-        font-size: 20px;
-        font-weight: 700;
-        line-height: 24px;
-      }
-    }
-
-    .historyPanel {
-      width: 100%;
-    }
   }
 }

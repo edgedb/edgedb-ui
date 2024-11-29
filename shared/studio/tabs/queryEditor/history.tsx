@@ -161,9 +161,10 @@ const HistoryList = observer(function HistoryList({
         width="100%"
         estimatedItemSize={estimatedItemSize}
         itemSize={(index) =>
-          historyList[index - 1]?.showDateHeader
+          (isMobile && index == 0 ? 24 : 0) +
+          (historyList[index - 1]?.showDateHeader
             ? estimatedItemSize + 16
-            : estimatedItemSize
+            : estimatedItemSize)
         }
       >
         {({index, style}) => (
