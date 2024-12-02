@@ -9,10 +9,17 @@
 .dashboard,
 .firstDashboard {
   flex-grow: 1;
-  background-color: var(--app-panel-bg);
-  border-radius: 8px;
+  background-color: var(--app_panel_background);
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
   overflow: auto;
+  font-family: "Roboto Flex Variable", sans-serif;
   @include hideScrollbar;
+
+  @include darkTheme {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
 
   @include breakpoint(mobile) {
     border-radius: 0;
@@ -24,7 +31,7 @@
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  color: #555;
+  color: var(--main_text_color);
 
   .loading {
     display: flex;
@@ -34,10 +41,6 @@
     justify-content: center;
     margin: auto;
   }
-
-  @include darkTheme {
-    color: #aaa;
-  }
 }
 
 .dashboardLayout,
@@ -46,14 +49,11 @@
   flex-direction: column;
   align-items: center;
 
-  --buttonBg: var(--app-accent-green);
-  --buttonTextColour: #fff;
-
   .dbName {
-    font-size: 28px;
+    font-size: 26px;
     margin-top: 54px;
-    font-family: Roboto Mono;
-    font-weight: bold;
+    font-family: "Roboto Mono Variable", monospace;
+    font-weight: 650;
     text-align: center;
 
     display: flex;
@@ -76,24 +76,20 @@
 .dashboard {
   .buttons {
     margin: 30px;
+    margin-top: 42px;
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
-
-    @include darkTheme {
-      --buttonTextColour: #1d1d1d;
-    }
   }
 
-  .button.button {
-    margin: 4px;
-    width: 228px;
-
-    & > div {
-      padding: 24px 34px;
-      border-radius: 4px;
-      justify-content: center;
-    }
+  .button {
+    margin: 8px;
+    width: 200px;
+    height: 80px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 550;
+    --buttonPrimaryBackground: var(--app-accent-green);
 
     svg {
       fill: currentColor;
@@ -101,29 +97,21 @@
       width: 24px;
       height: 24px;
     }
-
-    span {
-      margin: unset;
-    }
   }
 
   .docButtons {
     padding: 40px;
-
     display: flex;
     flex-flow: row wrap;
     justify-content: center;
-
-    color: --app-text-colour;
 
     a {
       padding: 20px;
       margin: 10px;
       min-width: 175px;
-
       text-decoration: none;
+      color: inherit;
       outline: none;
-
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -135,10 +123,9 @@
 
       span {
         display: inline-block;
-        font-size: 18px;
+        font-size: 16px;
         line-height: 32px;
-        font-weight: bold;
-        color: var(--app-text-colour);
+        font-weight: 550;
       }
 
       &:hover {
@@ -167,16 +154,16 @@
   }
 
   .statValue {
-    font-weight: 700;
-    font-size: 48px;
+    font-weight: 650;
+    font-size: 42px;
     line-height: 48px;
   }
 
   .statLabel {
-    font-family: "Roboto Mono", monospace;
+    font-family: "Roboto Mono Variable", monospace;
     font-style: normal;
-    font-weight: 400;
-    font-size: 18px;
+    font-weight: 450;
+    font-size: 16px;
     line-height: 24px;
     opacity: 0.55;
   }
@@ -210,14 +197,21 @@
     }
 
     p {
-      font-size: 18px;
+      font-size: 16px;
+      line-height: 20px;
       margin: 20px 0;
     }
 
     & > div {
       margin: 30px 0;
+
       button {
-        padding: 0;
+        --buttonPrimaryBackground: var(--app-accent-green);
+        margin: auto;
+        padding: 24px;
+        font-weight: 550;
+        font-size: 15px;
+        border-radius: 8px;
       }
     }
   }

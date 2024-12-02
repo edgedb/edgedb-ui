@@ -15,7 +15,7 @@ import {
   DocsIcon,
 } from "../../icons/docs";
 
-import Button from "@edgedb/common/ui/button";
+import {ArrowRightIcon, Button} from "@edgedb/common/newui";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 import Spinner from "@edgedb/common/ui/spinner";
 
@@ -70,40 +70,40 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
 
           <div className={styles.buttons}>
             <Button
+              kind="primary"
               className={styles.button}
-              label="Open REPL"
-              size="large"
-              icon={<TabReplIcon />}
-              leftIcon
+              leftIcon={<TabReplIcon />}
               onClick={() => navigateToTab("repl")}
-            ></Button>
+            >
+              Open REPL
+            </Button>
 
             <Button
+              kind="primary"
               className={styles.button}
-              label="Open Editor"
-              size="large"
-              icon={<TabEditorIcon />}
-              leftIcon
+              leftIcon={<TabEditorIcon />}
               onClick={() => navigateToTab("editor")}
-            ></Button>
+            >
+              Open Editor
+            </Button>
 
             <Button
+              kind="primary"
               className={styles.button}
-              label="Schema Viewer"
-              size="large"
-              icon={<TabSchemaIcon />}
-              leftIcon
+              leftIcon={<TabSchemaIcon />}
               onClick={() => navigateToTab("schema")}
-            ></Button>
+            >
+              Schema Viewer
+            </Button>
 
             <Button
+              kind="primary"
               className={styles.button}
-              label="Data Viewer"
-              size="large"
-              icon={<TabDataExplorerIcon />}
-              leftIcon
+              leftIcon={<TabDataExplorerIcon />}
               onClick={() => navigateToTab("data")}
-            ></Button>
+            >
+              Data Viewer
+            </Button>
           </div>
 
           <div className={styles.stats}>
@@ -205,17 +205,9 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
             </p>
             <div>
               <Button
-                label={
-                  instanceState.creatingExampleDB
-                    ? `Creating example ${dbOrBranch}...`
-                    : exampleDBExists
-                    ? `Switch to example ${dbOrBranch}`
-                    : `Create example ${dbOrBranch}`
-                }
+                kind="primary"
                 loading={instanceState.creatingExampleDB}
-                disabled={instanceState.creatingExampleDB}
-                size="large"
-                style="square"
+                rightIcon={exampleDBExists ? <ArrowRightIcon /> : undefined}
                 onClick={
                   exampleDBExists
                     ? () => navigate("_example")
@@ -226,7 +218,13 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
                         navigate("_example");
                       }
                 }
-              ></Button>
+              >
+                {instanceState.creatingExampleDB
+                  ? `Creating example ${dbOrBranch}...`
+                  : exampleDBExists
+                  ? `Switch to example ${dbOrBranch}`
+                  : `Create example ${dbOrBranch}`}
+              </Button>
             </div>
           </div>
         </div>
