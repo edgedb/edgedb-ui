@@ -12,6 +12,7 @@ import {
   ModelCreationData,
   getTypeInfo,
   ModelTypeInfo,
+  frozen,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -29,9 +30,11 @@ import {Connection, createAuthenticatedFetch} from "./connection";
 export const instanceCtx = createMobxContext<InstanceState>();
 
 export async function createInstanceState(
-  props: ModelCreationData<InstanceState>
+  props: ModelCreationData<InstanceState>,
+  serverVersion: {major: number; minor: number}
 ) {
   const instance = new InstanceState(props);
+  runInAction(() => (instance.serverVersion = serverVersion));
 
   await instance.fetchInstanceInfo();
 
@@ -41,9 +44,6 @@ export async function createInstanceState(
 export interface ServerVersion {
   major: number;
   minor: number;
-  stage: string;
-  stage_no: number;
-  local: string[];
 }
 
 @model("InstanceState")
@@ -56,7 +56,7 @@ export class InstanceState extends Model({
   databasePageStates: prop(() => objectMap<DatabaseState>()),
 }) {
   @observable instanceName: string | null = null;
-  @observable serverVersion: ServerVersion | null = null;
+  @observable.ref serverVersion: ServerVersion | null = null;
   @observable databases: string[] | null = null;
   @observable roles: string[] | null = null;
 
@@ -77,7 +77,10 @@ export class InstanceState extends Model({
         user: this.authUsername ?? "edgedb",
         authToken: this.authToken!,
       }),
-      codecsRegistry
+      codecsRegistry,
+      this.serverVersion
+        ? [this.serverVersion.major, this.serverVersion.minor]
+        : undefined
     );
     try {
       const data = (
@@ -98,7 +101,8 @@ export class InstanceState extends Model({
 
       runInAction(() => {
         this.instanceName = data.instanceName ?? "_localdev";
-        (this.serverVersion = data.version), (this.databases = data.databases);
+        this.serverVersion = data.version;
+        this.databases = data.databases;
         this.roles = data.roles;
       });
 
@@ -122,18 +126,25 @@ export class InstanceState extends Model({
         (this.databases?.length ?? 0) > 0,
       () => {
         this.defaultConnection = new Connection({
-          config: {
+          config: frozen({
             serverUrl: this.serverUrl,
             authToken: this.authToken!,
             database: this.databases![0],
             user: this.authUsername ?? this.roles![0],
-          },
+          }),
+          serverVersion: frozen(this.serverVersion),
         });
       }
     );
 
     return reaction(
-      () => [this.serverUrl, this.authToken, this.authUsername, this.roles],
+      () => [
+        this.serverUrl,
+        this.authToken,
+        this.authUsername,
+        this.roles,
+        this.serverVersion,
+      ],
       () => (this._connections = new Map())
     );
   }
@@ -143,12 +154,13 @@ export class InstanceState extends Model({
     let conn = this._connections.get(dbName);
     if (!conn) {
       conn = new Connection({
-        config: {
+        config: frozen({
           serverUrl: this.serverUrl,
           authToken: this.authToken!,
           database: dbName,
           user: this.authUsername ?? this.roles![0],
-        },
+        }),
+        serverVersion: frozen(this.serverVersion),
       });
       this._connections.set(dbName, conn);
     }
@@ -195,12 +207,13 @@ export class InstanceState extends Model({
       const schemaScript = await exampleSchema;
       await this.defaultConnection!.execute(`create database _example`);
       const exampleConn = new Connection({
-        config: {
+        config: frozen({
           serverUrl: this.serverUrl,
           authToken: this.authToken!,
           database: "_example",
           user: this.authUsername ?? this.roles![0],
-        },
+        }),
+        serverVersion: frozen(this.serverVersion),
       });
       await exampleConn.execute(schemaScript);
       await this.fetchInstanceInfo();

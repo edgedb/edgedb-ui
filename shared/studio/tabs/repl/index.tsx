@@ -762,7 +762,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
     }
   } else if (item.commandResult) {
-    output = renderCommandResult(item.commandResult.data);
+    output = renderCommandResult(state, item.commandResult.data);
   } else {
     output = (
       <>

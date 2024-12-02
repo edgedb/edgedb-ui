@@ -147,15 +147,17 @@ export const QueryEditorView = observer(function QueryEditorView() {
               <span>EdgeQL Builder</span>
               {/* <BuilderTabIcon /> */}
             </div>
-            <div
-              className={cn(styles.tab, {
-                [styles.selected]:
-                  editorState.selectedEditor === EditorKind.SQL,
-              })}
-              onClick={() => editorState.setSelectedEditor(EditorKind.SQL)}
-            >
-              <span>SQL</span>
-            </div>
+            {editorState.sqlModeSupported ? (
+              <div
+                className={cn(styles.tab, {
+                  [styles.selected]:
+                    editorState.selectedEditor === EditorKind.SQL,
+                })}
+                onClick={() => editorState.setSelectedEditor(EditorKind.SQL)}
+              >
+                <span>SQL</span>
+              </div>
+            ) : null}
           </div>
 
           <div className={styles.controls}>
