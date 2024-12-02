@@ -183,7 +183,7 @@ export class QueryEditor extends Model({
   ),
   _sqlParamsEditor: prop(() => new QueryParamsEditor({lang: Language.SQL})),
 
-  selectedEditor: prop<EditorKind>(EditorKind.EdgeQL).withSetter(),
+  selectedEditor: prop<EditorKind>(EditorKind.EdgeQL),
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
@@ -194,6 +194,20 @@ export class QueryEditor extends Model({
 
   @computed get queryRunning() {
     return this.runningQueryAbort != null;
+  }
+
+  @computed
+  get sqlModeSupported(): boolean {
+    const serverVersion = instanceCtx.get(this)!.serverVersion;
+    return !serverVersion || serverVersion.major >= 6;
+  }
+
+  @modelAction
+  setSelectedEditor(kind: EditorKind) {
+    if (kind === EditorKind.SQL && !this.sqlModeSupported) {
+      return;
+    }
+    this.selectedEditor = kind;
   }
 
   @observable.shallow

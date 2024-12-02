@@ -6,6 +6,7 @@ import {
   prop,
   _async,
   _await,
+  Frozen,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -118,11 +119,15 @@ export function createAuthenticatedFetch({
 
 @model("Connection")
 export class Connection extends Model({
-  config: prop<ConnectConfig>(),
+  config: prop<Frozen<ConnectConfig>>(),
+  serverVersion: prop<Frozen<{major: number; minor: number} | null>>(),
 }) {
   conn = AdminUIFetchConnection.create(
-    createAuthenticatedFetch(this.config),
-    codecsRegistry
+    createAuthenticatedFetch(this.config.data),
+    codecsRegistry,
+    this.serverVersion.data
+      ? [this.serverVersion.data.major, this.serverVersion.data.minor]
+      : undefined
   );
 
   private _runningQuery = false;

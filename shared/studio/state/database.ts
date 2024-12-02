@@ -15,6 +15,7 @@ import {
   prop,
   _async,
   _await,
+  frozen,
 } from "mobx-keystone";
 
 import {
@@ -148,12 +149,13 @@ export class DatabaseState extends Model({
       if (this.currentRole) {
         this.setConnection(
           new Connection({
-            config: {
+            config: frozen({
               serverUrl: instanceState.serverUrl,
               authToken: instanceState.authToken!,
               database: this.name,
               user: this.currentRole,
-            },
+            }),
+            serverVersion: frozen(instanceState.serverVersion),
           })
         );
       }
