@@ -457,6 +457,18 @@
 
 .securitySelect {
   font-family: "Roboto Mono Variable", monospace;
+
+  &[data-disabled="true"] {
+    background: #f7f7f7;
+    border-color: var(--Grey90);
+    box-shadow: none;
+    opacity: 1;
+
+    @include darkTheme {
+      background: #464646;
+      border-color: #4d4d4d;
+    }
+  }
 }
 
 .redirectUrlsLabel {
@@ -556,14 +568,14 @@
 
 .expandedEmailProviderConfig {
   margin: -2px 12px 12px 12px;
-  background: var(--Grey97);
+  // background: var(--Grey97);
   border-radius: 8px;
-  border: 1px solid var(--Grey93);
+  // border: 1px solid var(--Grey93);
 
-  @include darkTheme {
-    background: var(--Grey16);
-    border-color: var(--Grey25);
-  }
+  // @include darkTheme {
+  //   background: var(--Grey16);
+  //   border-color: var(--Grey25);
+  // }
 
   .configGrid {
     margin-top: 20px;

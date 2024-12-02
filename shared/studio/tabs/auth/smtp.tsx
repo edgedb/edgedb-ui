@@ -191,18 +191,26 @@ const EmailProviderCard = observer(function EmailProviderCard({
       {draftState?.expanded ? (
         <>
           <div className={styles.expandedEmailProviderConfig}>
-            <SMTPConfigForm loaded hasName smtp={draftState} />
+            <SMTPConfigForm
+              smtp={draftState}
+              loaded
+              hasName
+              newProvider
+              readonly
+            />
           </div>
 
           <div className={styles.buttons}>
             <ConfirmButton
-              style={{marginRight: "auto"}}
               onClick={() => state.removeEmailProvider(provider.name)}
             >
               Remove
             </ConfirmButton>
 
-            {draftState.formChanged ? (
+            {/* Hide this for now since the config system doesn't have a good way
+            to update objects, other than delete+insert which loses the secret
+            password field (unless the user re-enters it) */}
+            {/* {draftState.formChanged ? (
               <Button
                 disabled={draftState.updating}
                 onClick={() => draftState.clearForm()}
@@ -217,7 +225,7 @@ const EmailProviderCard = observer(function EmailProviderCard({
               loading={draftState.updating}
             >
               {draftState.updating ? "Updating..." : "Update"}
-            </Button>
+            </Button> */}
           </div>
         </>
       ) : null}
@@ -263,11 +271,13 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
   newProvider,
   loaded,
   smtp,
+  readonly,
 }: {
   hasName?: boolean;
   newProvider?: boolean;
   loaded: boolean;
   smtp: DraftSMTPConfig;
+  readonly?: boolean;
 }) {
   const security = smtp.getConfigValue("security") as unknown as SMTPSecurity;
 
@@ -285,6 +295,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
                 value={smtp.getConfigValue("name")}
                 onChange={(e) => smtp.setConfigValue("name", e.target.value)}
                 error={smtp.nameError}
+                readOnly={readonly}
               />
             ) : (
               <InputSkeleton />
@@ -307,6 +318,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
               value={smtp.getConfigValue("sender")}
               onChange={(e) => smtp.setConfigValue("sender", e.target.value)}
               error={smtp.senderError}
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -328,6 +340,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
               value={smtp.getConfigValue("host")}
               onChange={(e) => smtp.setConfigValue("host", e.target.value)}
               placeholder="localhost"
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -359,6 +372,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
                   : "25"
               }
               error={smtp.portError}
+              readOnly={readonly}
               size={10}
             />
           ) : (
@@ -382,6 +396,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
             <TextInput
               value={smtp.getConfigValue("username")}
               onChange={(e) => smtp.setConfigValue("username", e.target.value)}
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -402,6 +417,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
             <TextInput
               value={smtp.getConfigValue("password")}
               onChange={(e) => smtp.setConfigValue("password", e.target.value)}
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -427,6 +443,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
               selectedItemId={smtp.getConfigValue("security") as any}
               onChange={(item) => smtp.setConfigValue("security", item.id)}
               items={smtpSecurity.map((val) => ({id: val, label: val}))}
+              disabled={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -455,6 +472,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
               onChange={(checked) =>
                 smtp.setConfigValue("validate_certs", checked)
               }
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -481,6 +499,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
                 )
               }
               error={smtp.timeoutPerEmailError}
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
@@ -507,6 +526,7 @@ const SMTPConfigForm = observer(function SMTPConfigForm({
                 )
               }
               error={smtp.timeoutPerAttemptError}
+              readOnly={readonly}
             />
           ) : (
             <InputSkeleton />
