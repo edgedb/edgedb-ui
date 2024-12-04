@@ -120,6 +120,20 @@
   }
 }
 
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+
+  h2 {
+    margin-right: 24px;
+  }
+
+  button {
+    margin-left: auto;
+  }
+}
+
 .cardList {
   display: flex;
   flex-direction: column;
@@ -543,7 +557,6 @@
     &.selected {
       fill: #a565cd;
       stroke: #9c56b4 !important;
-      pointer-events: none;
     }
 
     @include darkTheme {

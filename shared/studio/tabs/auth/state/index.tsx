@@ -392,6 +392,22 @@ export class AuthAdminState extends Model({
     }
   }
 
+  @action
+  async resetCurrentEmailProvider() {
+    this.updatingEmailProviders = true;
+
+    const conn = connCtx.get(this)!;
+
+    try {
+      await conn.execute(
+        `configure current branch reset current_email_provider_name`
+      );
+      await this.refreshConfig();
+    } finally {
+      runInAction(() => (this.updatingEmailProviders = false));
+    }
+  }
+
   @computed
   get noEmailProviderWarning() {
     return (

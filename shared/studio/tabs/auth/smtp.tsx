@@ -103,12 +103,37 @@ export const SMTPConfigTab = observer(function SMTPConfigTab() {
 
   return (
     <div className={styles.tabContentWrapper}>
-      <h2>SMTP Configuration</h2>
+      <div className={styles.titleWrapper}>
+        <h2>SMTP Configuration</h2>
+
+        <ResetCurrentProviderButton state={state} />
+      </div>
 
       {content}
     </div>
   );
 });
+
+function ResetCurrentProviderButton({state}: {state: AuthAdminState}) {
+  const [loading, setLoading] = useState(false);
+
+  return state.currentEmailProvider === null ? null : (
+    <Button
+      kind="outline"
+      loading={loading}
+      onClick={async () => {
+        setLoading(true);
+        try {
+          await state.resetCurrentEmailProvider();
+        } finally {
+          setLoading(false);
+        }
+      }}
+    >
+      Disable all SMTP providers
+    </Button>
+  );
+}
 
 const EmailProviderCard = observer(function EmailProviderCard({
   state,
@@ -141,9 +166,10 @@ const EmailProviderCard = observer(function EmailProviderCard({
             fill="none"
             onClick={() => {
               setUpdating(true);
-              state
-                .setCurrentEmailProvider(provider.name)
-                .finally(() => setUpdating(false));
+              (isSelectedProvider
+                ? state.resetCurrentEmailProvider()
+                : state.setCurrentEmailProvider(provider.name)
+              ).finally(() => setUpdating(false));
             }}
           >
             <circle cx="10" cy="10" r="9.5" />
