@@ -581,14 +581,14 @@
 
 .expandedEmailProviderConfig {
   margin: -2px 12px 12px 12px;
-  // background: var(--Grey97);
+  background: var(--Grey97);
   border-radius: 8px;
-  // border: 1px solid var(--Grey93);
+  border: 1px solid var(--Grey93);
 
-  // @include darkTheme {
-  //   background: var(--Grey16);
-  //   border-color: var(--Grey25);
-  // }
+  @include darkTheme {
+    background: var(--Grey16);
+    border-color: var(--Grey25);
+  }
 
   .configGrid {
     margin-top: 20px;
@@ -600,9 +600,46 @@
   }
 }
 
+.passwordWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  color: var(--secondary_text_color);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  padding: 8px 12px 10px 12px;
+  margin: 0 12px;
+  margin-bottom: 0px;
+  margin-bottom: 12px;
+
+  > div {
+    margin-top: 2px;
+
+    > span {
+      font-weight: 500;
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  @include darkTheme {
+    background: #453d2c;
+    border: 1px solid #72623b;
+    color: #d1bd8f;
+  }
+}
+
 .emailProviderWarning {
   position: relative;
-  padding: 16px 20px;
+  padding: 12px 20px;
   padding-left: 48px;
   background: #f7e9c8;
   border-radius: 8px;

@@ -217,26 +217,30 @@ const EmailProviderCard = observer(function EmailProviderCard({
       {draftState?.expanded ? (
         <>
           <div className={styles.expandedEmailProviderConfig}>
-            <SMTPConfigForm
-              smtp={draftState}
-              loaded
-              hasName
-              newProvider
-              readonly
-            />
+            <SMTPConfigForm smtp={draftState} loaded hasName />
           </div>
+
+          {draftState.formChanged &&
+          draftState.getConfigValue("password").trim() === "" ? (
+            <div className={styles.passwordWarning}>
+              <WarningIcon />
+              <div>
+                <span>Warning:</span> You have not entered a password. If there
+                is an existing password, it will be deleted when you update
+                this SMTP provider unless you re-enter the password above.
+              </div>
+            </div>
+          ) : null}
 
           <div className={styles.buttons}>
             <ConfirmButton
+              style={{marginRight: "auto"}}
               onClick={() => state.removeEmailProvider(provider.name)}
             >
               Remove
             </ConfirmButton>
 
-            {/* Hide this for now since the config system doesn't have a good way
-            to update objects, other than delete+insert which loses the secret
-            password field (unless the user re-enters it) */}
-            {/* {draftState.formChanged ? (
+            {draftState.formChanged ? (
               <Button
                 disabled={draftState.updating}
                 onClick={() => draftState.clearForm()}
@@ -251,7 +255,7 @@ const EmailProviderCard = observer(function EmailProviderCard({
               loading={draftState.updating}
             >
               {draftState.updating ? "Updating..." : "Update"}
-            </Button> */}
+            </Button>
           </div>
         </>
       ) : null}
