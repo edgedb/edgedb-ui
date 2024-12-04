@@ -28,7 +28,6 @@ import {
   Select,
   SelectItem,
   TextInput,
-  WarningIcon,
 } from "@edgedb/common/newui";
 
 import styles from "./authAdmin.module.scss";
