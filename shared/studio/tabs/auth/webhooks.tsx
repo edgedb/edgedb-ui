@@ -22,6 +22,7 @@ import {
 import styles from "./authAdmin.module.scss";
 import {useState} from "react";
 import {LoadingSkeleton} from "@edgedb/common/newui/loadingSkeleton";
+import {EmailProviderWarning} from "./shared";
 
 export const WebhooksTab = observer(function WebhooksTab() {
   const state = useTabState(AuthAdminState);
@@ -29,6 +30,33 @@ export const WebhooksTab = observer(function WebhooksTab() {
   return (
     <div className={styles.tabContentWrapper}>
       <h2>Webhooks</h2>
+
+      {state.emailProviderWarnings.passwordNoReset ? (
+        <EmailProviderWarning>
+          You have the 'Email + Password' auth provider enabled. Create a
+          webhook below to handle the 'PasswordResetRequested' event, or{" "}
+          <span
+            className={styles.link}
+            onClick={() => state.setSelectedTab("smtp")}
+          >
+            enable an SMTP provider
+          </span>{" "}
+          to send password resets.
+        </EmailProviderWarning>
+      ) : state.emailProviderWarnings.magicLinkNoMethods ? (
+        <EmailProviderWarning>
+          You have the 'Magic Link' auth provider enabled. Create a webhook
+          below to handle the 'MagicLinkRequested' event, or{" "}
+          <span
+            className={styles.link}
+            onClick={() => state.setSelectedTab("smtp")}
+          >
+            enable an SMTP provider
+          </span>{" "}
+          to send magic links.
+        </EmailProviderWarning>
+      ) : null}
+
       {state.webhooks ? (
         <>
           {state.webhooks.length ? (

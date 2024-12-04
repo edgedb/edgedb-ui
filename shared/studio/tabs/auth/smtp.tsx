@@ -24,7 +24,11 @@ import {
 import {LoadingSkeleton} from "@edgedb/common/newui/loadingSkeleton";
 
 import styles from "./authAdmin.module.scss";
-import {InputSkeleton, StickyFormControls} from "./shared";
+import {
+  EmailProviderWarning,
+  InputSkeleton,
+  StickyFormControls,
+} from "./shared";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useState} from "react";
 
@@ -39,14 +43,35 @@ export const SMTPConfigTab = observer(function SMTPConfigTab() {
       <>
         {state.emailProviders.length ? (
           <>
-            {state.noEmailProviderWarning ? (
-              <div className={styles.emailProviderWarning}>
-                <WarningIcon />
-                <span>Warning:</span> None of the configured SMTP providers
-                have been selected. Select a provider below to enable email
-                sending (eg. email verification, password reset emails, etc.)
-                in the auth extension.
-              </div>
+            {state.emailProviderWarnings.verificationNoSmtp ? (
+              <EmailProviderWarning>
+                You have auth providers requiring email verification enabled.
+                Select a provider below to enable sending verification emails.
+              </EmailProviderWarning>
+            ) : state.emailProviderWarnings.passwordNoReset ? (
+              <EmailProviderWarning>
+                You have the 'Email + Password' auth provider enabled. Select a
+                provider below to enable sending password reset emails, or{" "}
+                <span
+                  className={styles.link}
+                  onClick={() => state.setSelectedTab("webhooks")}
+                >
+                  create a webhook
+                </span>{" "}
+                for handling password resets.
+              </EmailProviderWarning>
+            ) : state.emailProviderWarnings.magicLinkNoMethods ? (
+              <EmailProviderWarning>
+                You have the 'Magic Link' auth provider enabled. Select a
+                provider below to enable sending magic links via email, or{" "}
+                <span
+                  className={styles.link}
+                  onClick={() => state.setSelectedTab("webhooks")}
+                >
+                  create a webhook
+                </span>{" "}
+                for handling magic links.
+              </EmailProviderWarning>
             ) : null}
 
             <div

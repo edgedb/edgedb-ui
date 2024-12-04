@@ -409,18 +409,40 @@ export class AuthAdminState extends Model({
   }
 
   @computed
-  get noEmailProviderWarning() {
-    return (
-      this.providers?.some(
-        (provider) =>
-          provider._typename === "ext::auth::MagicLinkProviderConfig" ||
-          provider._typename === "ext::auth::EmailPasswordProviderConfig" ||
-          provider._typename === "ext::auth::WebAuthnProviderConfig"
-      ) &&
-      !this.emailProviders?.some(
-        (provider) => provider.name === this.currentEmailProvider
-      )
+  get emailProviderWarnings() {
+    const passwordProvider = this.providers?.find(
+      (p) => p._typename === "ext::auth::EmailPasswordProviderConfig"
     );
+    const webauthnProvider = this.providers?.find(
+      (p) => p._typename === "ext::auth::WebAuthnProviderConfig"
+    );
+    const magicLinkProvider = this.providers?.find(
+      (p) => p._typename === "ext::auth::MagicLinkProviderConfig"
+    );
+
+    const emailVerification =
+      passwordProvider?.require_verification ||
+      webauthnProvider?.require_verification ||
+      false;
+
+    const passwordResetWebhook = this.webhooks?.some((wh) =>
+      wh.events.includes("PasswordResetRequested")
+    );
+    const magicLinkWebhook = this.webhooks?.some((wh) =>
+      wh.events.includes("MagicLinkRequested")
+    );
+
+    const smtpConfigured = this.emailProviders?.some(
+      (provider) => provider.name === this.currentEmailProvider
+    );
+
+    return {
+      verificationNoSmtp: emailVerification && !smtpConfigured,
+      passwordNoReset:
+        !!passwordProvider && !passwordResetWebhook && !smtpConfigured,
+      magicLinkNoMethods:
+        !!magicLinkProvider && !magicLinkWebhook && !smtpConfigured,
+    };
   }
 
   onAttachedToRootStore() {}

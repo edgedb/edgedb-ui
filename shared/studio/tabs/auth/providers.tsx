@@ -32,7 +32,7 @@ import {
 } from "@edgedb/common/newui";
 
 import styles from "./authAdmin.module.scss";
-import {StickyBottomBar} from "./shared";
+import {EmailProviderWarning, StickyBottomBar} from "./shared";
 import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {AppConfigForm} from "./config";
 import {
@@ -52,11 +52,10 @@ export const ProvidersTab = observer(function ProvidersTab() {
         <>
           {state.providers.length ? (
             <>
-              {state.noEmailProviderWarning ? (
-                <div className={styles.emailProviderWarning}>
-                  <WarningIcon />
-                  <span>Warning:</span> You have enabled auth providers
-                  requiring email, but no SMTP provider is configured.
+              {state.emailProviderWarnings.verificationNoSmtp ? (
+                <EmailProviderWarning>
+                  You have auth providers requiring email verification enabled,
+                  but no SMTP provider is configured.
                   <br />
                   <span
                     className={styles.link}
@@ -64,7 +63,47 @@ export const ProvidersTab = observer(function ProvidersTab() {
                   >
                     Enable an SMTP provider
                   </span>
-                </div>
+                </EmailProviderWarning>
+              ) : state.emailProviderWarnings.passwordNoReset ? (
+                <EmailProviderWarning>
+                  You have the 'Email + Password' auth provider enabled, but no
+                  method for sending password resets is configured.
+                  <br />
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("smtp")}
+                  >
+                    Enable an SMTP provider
+                  </span>{" "}
+                  or{" "}
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("webhooks")}
+                  >
+                    create a webhook
+                  </span>{" "}
+                  to handle password resets.
+                </EmailProviderWarning>
+              ) : state.emailProviderWarnings.magicLinkNoMethods ? (
+                <EmailProviderWarning>
+                  You have the 'Magic Link' auth provider enabled, but no
+                  method for sending magic links is configured.
+                  <br />
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("smtp")}
+                  >
+                    Enable an SMTP provider
+                  </span>{" "}
+                  or{" "}
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("webhooks")}
+                  >
+                    create a webhook
+                  </span>{" "}
+                  to handle magic links.
+                </EmailProviderWarning>
               ) : null}
 
               <div className={styles.cardList}>
