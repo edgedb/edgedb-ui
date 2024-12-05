@@ -12,7 +12,6 @@ import {assertNever} from "@edgedb/common/utils/assertNever";
 import * as PostGIS from "edgedb/dist/datatypes/postgis";
 import * as geojson from "./editableGeom/geojsonTypes";
 import {
-  Bounds,
   EditableGeometry,
   Geometry,
   MultiGeometry,
@@ -1085,7 +1084,7 @@ export class PostgisEditor extends Model({
       }
     };
 
-    const mouseUpHandler = (ev: MouseEvent) => {
+    const mouseUpHandler = (_ev: MouseEvent) => {
       window.removeEventListener("mousemove", mouseMoveHandler, {
         capture: true,
       });

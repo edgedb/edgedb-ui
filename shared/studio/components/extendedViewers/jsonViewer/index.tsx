@@ -7,7 +7,7 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import {prettyPrintJSON} from "@edgedb/inspector/buildScalar";
 
 import styles from "./jsonViewer.module.scss";
-import {ActionsBar} from "../shared";
+import {HeaderBar} from "../shared";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 interface JsonViewerProps {
@@ -55,7 +55,7 @@ export const JsonViewer = memo(function JsonViewer({data}: JsonViewerProps) {
 
   return (
     <div className={styles.jsonViewer}>
-      <ActionsBar></ActionsBar>
+      <HeaderBar />
       <CustomScrollbars
         className={styles.scrollWrapper}
         scrollClass="cm-scroller"

@@ -8,7 +8,7 @@ import {usePersistedState} from "@edgedb/common/hooks/usePersistedState";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
 import styles from "./textViewer.module.scss";
-import {ActionButton, ActionsBar} from "../shared";
+import {ToggleButton, HeaderBar} from "../shared";
 import {LinewrapIcon, WhitespaceIcon} from "../../../icons";
 
 interface TextViewerProps {
@@ -54,15 +54,15 @@ export const TextViewer = memo(function TextViewer({data}: TextViewerProps) {
 
   return (
     <div className={styles.textViewer}>
-      <ActionsBar>
-        <ActionButton
+      <HeaderBar>
+        <ToggleButton
           icon={<LinewrapIcon />}
           active={state.linewrap}
           onClick={() => setState({...state, linewrap: !state.linewrap})}
         >
           Linewrap
-        </ActionButton>
-        <ActionButton
+        </ToggleButton>
+        <ToggleButton
           icon={<WhitespaceIcon />}
           active={state.renderWhitespace}
           onClick={() =>
@@ -70,8 +70,8 @@ export const TextViewer = memo(function TextViewer({data}: TextViewerProps) {
           }
         >
           Show Whitespace
-        </ActionButton>
-      </ActionsBar>
+        </ToggleButton>
+      </HeaderBar>
       <CustomScrollbars
         className={styles.scrollWrapper}
         scrollClass="cm-scroller"
