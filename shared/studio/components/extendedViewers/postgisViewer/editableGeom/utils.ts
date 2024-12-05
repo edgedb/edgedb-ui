@@ -8,12 +8,14 @@ import {
   PlainPoint,
   Point,
   Polygon,
+  CurvePolygon,
+  Box,
 } from "./types";
 import * as geojson from "./geojsonTypes";
 import {assertNever} from "@edgedb/common/utils/assertNever";
 
 export function getBoundingBoxFeature(
-  geoms: Set<Geometry>
+  geoms: Set<Geometry | Box>
 ): geojson.Feature[] {
   if (geoms.size === 0) return [];
   let bounds: Bounds | null = null;
@@ -46,9 +48,10 @@ export function getBoundingBoxFeature(
   ];
 }
 
-export function groupGeomsByParent(geoms: Set<Geometry>) {
+export function groupGeomsByParent(geoms: Set<Geometry | Box>) {
   const groups = new Map<Geometry | null, Geometry[]>();
   for (const geom of geoms) {
+    if (geom instanceof Box) continue;
     if (!groups.has(geom.parent)) {
       groups.set(geom.parent, []);
     }
@@ -69,9 +72,12 @@ export function getSelectableChildGeoms(geom: EditableGeometry): Geometry[] {
   if (geom instanceof LineString) {
     return geom.points.filter((p) => !p.controlPoint);
   }
-  if (geom instanceof CompoundCurve) {
-    return geom._points.filter((p) => !p.controlPoint);
-  }
+  // if (geom instanceof CompoundCurve) {
+  //   return geom._points.filter((p) => !p.controlPoint);
+  // }
+  // if (geom instanceof CurvePolygon) {
+  //   return [];
+  // }
   assertNever(geom);
 }
 

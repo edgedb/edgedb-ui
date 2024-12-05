@@ -16,131 +16,148 @@ import {
   ToolbarTriangleIcon,
 } from "./icons";
 import {ChevronDownIcon} from "@edgedb/common/newui";
+import {Box} from "./editableGeom/types";
 
 export const FloatingToolbar = observer(function FloatingToolbar({
   state,
 }: {
   state: PostgisEditor;
 }) {
-  return (
-    <div className={styles.floatingToolbarWrapper}>
+  if (state.data instanceof Box) return null;
+
+  if (state.readonly) {
+    return state.editingGeom ? (
       <div className={styles.floatingToolbar}>
         <ToolbarButton
           icon={<CloseIcon />}
-          label="Finish Editing"
+          label="Exit Geometry"
           shortcut="Esc"
           selected={false}
-          hidden={!state.editingGeom}
+          hidden={false}
+          expanded
           onClick={() => state.endEditingGeom()}
         />
-        {state.editingGeom ? <div className={styles.spacer} /> : null}
-        <ToolbarButton
-          icon={<ToolbarSelectIcon />}
-          label="Select/Move"
-          shortcut="V"
-          selected={state.editingMode === null}
-          hidden={!state.availableModes.has(null)}
-          onClick={() => state.setEditingMode(null)}
-        />
-        <ToolbarButton
-          icon={<ToolbarPointIcon />}
-          label="Add Point"
-          shortcut="P"
-          selected={state.editingMode === "point"}
-          hidden={!state.availableModes.has("point")}
-          onClick={() => state.setEditingMode("point")}
-        />
-        <ToolbarButtonGroup
-          buttons={[
-            {
-              id: "line",
-              icon: <ToolbarLineIcon />,
-              label: "Add LineString",
-              shortcut: "L",
-              selected: state.editingMode === "line",
-              hidden: !state.availableModes.has("line"),
-              onClick: () => state.setEditingMode("line"),
-            },
-            {
-              id: "circular",
-              icon: <ToolbarCircularIcon />,
-              label: "Add CircularString",
-              shortcut: "C",
-              selected: state.editingMode === "circular",
-              hidden: !state.availableModes.has("circular"),
-              onClick: () => state.setEditingMode("circular"),
-            },
-          ]}
-          selectedButton={state.selectedLineButtonMode}
-        />
-        <ToolbarButtonGroup
-          buttons={[
-            {
-              id: "polygon",
-              icon: <ToolbarPolygonIcon />,
-              label: "Add Polygon",
-              shortcut: "S",
-              selected: state.editingMode === "polygon",
-              hidden: !state.availableModes.has("polygon"),
-              onClick: () => state.setEditingMode("polygon"),
-            },
-            {
-              id: "triangle",
-              icon: <ToolbarTriangleIcon />,
-              label: "Add Triangle",
-              shortcut: "T",
-              selected: state.editingMode === "triangle",
-              hidden: !state.availableModes.has("triangle"),
-              onClick: () => state.setEditingMode("triangle"),
-            },
-          ]}
-          selectedButton={state.selectedPolyButtonMode}
-        />
-        <ToolbarButton
-          icon={<ToolbarPolygonIcon />}
-          label="Add Ring"
-          shortcut="R"
-          selected={state.editingMode === "ring"}
-          hidden={!state.availableModes.has("ring")}
-          onClick={() => state.setEditingMode("ring")}
-        />
-        {state.availableGeomActions.size ? (
-          <div className={styles.spacer} />
-        ) : null}
-        <ToolbarButton
-          icon={<ToolbarPolygonIcon />}
-          label="Ungroup Selection"
-          shortcut="⌘ + U"
-          selected={false}
-          hidden={!state.availableGeomActions.has("ungroup")}
-          onClick={() => state.applyGeomAction("ungroup")}
-        />
-        <ToolbarButtonGroup
-          buttons={[
-            {
-              id: "group-multi",
-              icon: <ToolbarPolygonIcon />,
-              label: `Group into Multi${
-                [...state.selectedGeoms][0]?.kind ?? ""
-              }`,
-              shortcut: "⌘ + G",
-              selected: false,
-              hidden: !state.availableGeomActions.has("group-multi"),
-              onClick: () => state.applyGeomAction("group-multi"),
-            },
-            {
-              id: "",
-              icon: <ToolbarPolygonIcon />,
-              label: "Group into GeometryCollection",
-              shortcut: "⌘ + ⌥ + G",
-              selected: false,
-              hidden: !state.availableGeomActions.has("group-collection"),
-              onClick: () => state.applyGeomAction("group-collection"),
-            },
-          ]}
-          selectedButton={state.selectedPolyButtonMode}
-        />
       </div>
+    ) : null;
+  }
+
+  return (
+    <div className={styles.floatingToolbar}>
+      <ToolbarButton
+        icon={<CloseIcon />}
+        label="Finish Editing"
+        shortcut="Esc"
+        selected={false}
+        hidden={!state.editingGeom}
+        onClick={() => state.endEditingGeom()}
+      />
+      {state.editingGeom ? <div className={styles.spacer} /> : null}
+      <ToolbarButton
+        icon={<ToolbarSelectIcon />}
+        label="Select/Move"
+        shortcut="V"
+        selected={state.editingMode === null}
+        hidden={!state.availableModes.has(null)}
+        onClick={() => state.setEditingMode(null)}
+      />
+      <ToolbarButton
+        icon={<ToolbarPointIcon />}
+        label="Add Point"
+        shortcut="P"
+        selected={state.editingMode === "point"}
+        hidden={!state.availableModes.has("point")}
+        onClick={() => state.setEditingMode("point")}
+      />
+      <ToolbarButtonGroup
+        buttons={[
+          {
+            id: "line",
+            icon: <ToolbarLineIcon />,
+            label: "Add LineString",
+            shortcut: "L",
+            selected: state.editingMode === "line",
+            hidden: !state.availableModes.has("line"),
+            onClick: () => state.setEditingMode("line"),
+          },
+          {
+            id: "circular",
+            icon: <ToolbarCircularIcon />,
+            label: "Add CircularString",
+            shortcut: "C",
+            selected: state.editingMode === "circular",
+            hidden: !state.availableModes.has("circular"),
+            onClick: () => state.setEditingMode("circular"),
+          },
+        ]}
+        selectedButton={state.selectedLineButtonMode}
+      />
+      <ToolbarButtonGroup
+        buttons={[
+          {
+            id: "polygon",
+            icon: <ToolbarPolygonIcon />,
+            label: "Add Polygon",
+            shortcut: "S",
+            selected: state.editingMode === "polygon",
+            hidden: !state.availableModes.has("polygon"),
+            onClick: () => state.setEditingMode("polygon"),
+          },
+          {
+            id: "triangle",
+            icon: <ToolbarTriangleIcon />,
+            label: "Add Triangle",
+            shortcut: "T",
+            selected: state.editingMode === "triangle",
+            hidden: !state.availableModes.has("triangle"),
+            onClick: () => state.setEditingMode("triangle"),
+          },
+        ]}
+        selectedButton={state.selectedPolyButtonMode}
+      />
+      <ToolbarButton
+        icon={<ToolbarPolygonIcon />}
+        label="Add Ring"
+        shortcut="R"
+        selected={state.editingMode === "ring"}
+        hidden={!state.availableModes.has("ring")}
+        onClick={() => state.setEditingMode("ring")}
+      />
+      {state.availableGeomActions.size ? (
+        <div className={styles.spacer} />
+      ) : null}
+      <ToolbarButton
+        icon={<ToolbarPolygonIcon />}
+        label="Ungroup Selection"
+        shortcut="⌘ + U"
+        selected={false}
+        hidden={!state.availableGeomActions.has("ungroup")}
+        onClick={() => state.applyGeomAction("ungroup")}
+      />
+      <ToolbarButtonGroup
+        buttons={[
+          {
+            id: "group-multi",
+            icon: <ToolbarPolygonIcon />,
+            label: `Group into Multi${
+              [...state.selectedGeoms][0]?.kind ?? ""
+            }`,
+            shortcut: "⌘ + G",
+            selected: false,
+            hidden: !state.availableGeomActions.has("group-multi"),
+            onClick: () => state.applyGeomAction("group-multi"),
+          },
+          {
+            id: "",
+            icon: <ToolbarPolygonIcon />,
+            label: "Group into GeometryCollection",
+            shortcut: "⌘ + ⌥ + G",
+            selected: false,
+            hidden: !state.availableGeomActions.has("group-collection"),
+            onClick: () => state.applyGeomAction("group-collection"),
+          },
+        ]}
+        selectedButton={state.selectedPolyButtonMode}
+      />
     </div>
   );
 });
@@ -151,6 +168,7 @@ interface ToolbarButtonProps {
   shortcut: string;
   selected: boolean;
   hidden: boolean;
+  expanded?: boolean;
   onClick: () => void;
 }
 
@@ -161,12 +179,14 @@ function ToolbarButton({
   onClick,
   label,
   shortcut,
+  expanded,
 }: ToolbarButtonProps) {
   return (
     <div
       className={cn(styles.toolbarButton, {
         [styles.selected]: selected,
         [styles.hidden]: hidden,
+        [styles.expanded]: !!expanded,
       })}
       onClick={onClick}
     >

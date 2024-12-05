@@ -5,11 +5,19 @@ import {curveToLines} from "./curves";
 
 export interface ListItemWrapper {
   id: number;
-  kind: "__Point" | "__ListItemEndPlaceholder";
-  geom: Geometry;
+  kind: "__PointHeader" | "__ListItemEndPlaceholder";
+  geom: Geometry | Box;
 }
 
-export type ListItem = Geometry | ListItemWrapper;
+export interface ListItemPointWrapper {
+  id: string;
+  kind: "__PointWrapper";
+  geom: Point;
+  parent: Geometry;
+  closingPoint: boolean;
+}
+
+export type ListItem = Geometry | Box | ListItemWrapper | ListItemPointWrapper;
 
 interface BaseGeometry {
   readonly id: number;
@@ -65,44 +73,54 @@ export class Point implements BaseGeometry {
     public readonly id: number,
     public point: PlainPoint,
     public m: number | null,
-    public controlPoint: boolean = false
+    public controlPoint: boolean = false,
+    public isEmpty: boolean = false
   ) {
     makeObservable(this, {
       parent: observable.shallow,
       point: observable,
       m: observable,
+      listItemExpanded: observable,
+      listDepth: computed,
+      listItems: computed,
     });
-    this.geojson = [
-      {
-        type: "Feature",
-        id,
-        properties: {
-          ...(m != null
-            ? {
-                mag: m,
-              }
-            : null),
-          ...(controlPoint ? {isControlPoint: true} : null),
-        },
-        geometry: {
-          type: "Point",
-          coordinates: this.point,
-        },
-      },
-    ];
+    this.geojson = isEmpty
+      ? []
+      : [
+          {
+            type: "Feature",
+            id,
+            properties: {
+              ...(m != null
+                ? {
+                    mag: m,
+                  }
+                : null),
+              ...(controlPoint ? {isControlPoint: true} : null),
+            },
+            geometry: {
+              type: "Point",
+              coordinates: this.point,
+            },
+          },
+        ];
     this.featureIds = [id];
   }
 
-  get bounds(): Bounds {
-    return new Bounds([
-      [this.point[0], this.point[1]],
-      [this.point[0], this.point[1]],
-    ]);
+  get bounds(): Bounds | null {
+    return this.isEmpty
+      ? null
+      : new Bounds([
+          [this.point[0], this.point[1]],
+          [this.point[0], this.point[1]],
+        ]);
   }
 
   recalculateBounds() {}
 
   translate(by: [number, number], updateParent = true) {
+    if (this.isEmpty) return;
+
     this.point[0] += by[0];
     this.point[1] += by[1];
     if (updateParent && this.parent instanceof LineString) {
@@ -115,7 +133,13 @@ export class Point implements BaseGeometry {
   }
 
   get listItems(): ListItem[] {
-    return [this];
+    return this.listItemExpanded && !this.isEmpty
+      ? [
+          {id: this.id + 0.1, kind: "__PointHeader", geom: this},
+          this,
+          {id: this.id + 0.5, kind: "__ListItemEndPlaceholder", geom: this},
+        ]
+      : [{id: this.id + 0.1, kind: "__PointHeader", geom: this}];
   }
 }
 
@@ -400,6 +424,10 @@ export class LineString implements BaseGeometry, EditableGeom {
         }
       }
     }
+    if (this.points.length <= 2) {
+      this.isClosed = false;
+    }
+    // todo: remove from parent if not valid anymore
     this._renderPoints = this.calculateRenderPoints();
     this._geojson = this._makeGeojson();
     if (this.parent instanceof Polygon) {
@@ -408,10 +436,12 @@ export class LineString implements BaseGeometry, EditableGeom {
     this.recalculateBounds();
   }
 
-  translate(by: [number, number]) {
+  translate(by: [number, number], skipPoints?: Set<Point>) {
     const points = new Set<PlainPoint>();
     for (const point of this.points) {
-      point.translate(by, false);
+      if (!skipPoints?.has(point)) {
+        point.translate(by, false);
+      }
       points.add(point.point);
     }
     for (const point of this._renderPoints) {
@@ -431,14 +461,29 @@ export class LineString implements BaseGeometry, EditableGeom {
     return this.listItemExpanded
       ? [
           this,
-          ...this.points,
+          ...((this.parent instanceof Polygon ||
+            this.parent instanceof CompoundCurve) &&
+          this.parent.sharedPoints
+            ? this.points.map(
+                (p) =>
+                  ({
+                    id: `${this.id}-${p.id}`,
+                    kind: "__PointWrapper",
+                    geom: p,
+                    parent: this,
+                    closingPoint: false,
+                  } satisfies ListItemPointWrapper)
+              )
+            : this.points),
           ...(this.isClosed && this.points.length
             ? [
                 {
-                  id: this.id + 0.1,
-                  kind: "__Point",
+                  id: `${this.id}-closing`,
+                  kind: "__PointWrapper",
                   geom: this.points[0],
-                } as const,
+                  parent: this,
+                  closingPoint: true,
+                } satisfies ListItemPointWrapper,
               ]
             : []),
           {id: this.id + 0.5, kind: "__ListItemEndPlaceholder", geom: this},
@@ -447,10 +492,12 @@ export class LineString implements BaseGeometry, EditableGeom {
   }
 }
 
-export class CompoundCurve implements BaseGeometry, EditableGeom {
+export class CompoundCurve implements BaseGeometry /*, EditableGeom*/ {
   parent: Geometry | null = null;
   bounds: Bounds | null = null;
-  listItemExpanded: boolean = false;
+  _renderPoints: PlainPoint[];
+  listItemExpanded: boolean = true;
+  readonly sharedPoints = true;
 
   get kind() {
     return "CompoundCurve" as const;
@@ -471,11 +518,20 @@ export class CompoundCurve implements BaseGeometry, EditableGeom {
     for (const line of lines) {
       line.parent = this;
     }
+    this._renderPoints = this.calculateRenderPoints();
     this.recalculateBounds();
   }
 
   get featureIds() {
     return [this.id];
+  }
+
+  private calculateRenderPoints(): PlainPoint[] {
+    return this.lines.flatMap((line, i) =>
+      i < this.lines.length - 1
+        ? line._renderPoints.slice(0, -1)
+        : line._renderPoints
+    );
   }
 
   recalculateBounds() {
@@ -499,11 +555,7 @@ export class CompoundCurve implements BaseGeometry, EditableGeom {
         id: this.id,
         geometry: {
           type: "LineString",
-          coordinates: this.lines.flatMap((line, i) =>
-            i < this.lines.length - 1
-              ? line._renderPoints.slice(0, -1)
-              : line._renderPoints
-          ),
+          coordinates: this._renderPoints,
         },
       },
     ];
@@ -521,18 +573,23 @@ export class CompoundCurve implements BaseGeometry, EditableGeom {
     this._geojson = this._makeGeojson();
   }
 
-  get _points() {
-    return this.lines.flatMap((line, i) =>
-      i < this.lines.length - 1 ? line.points.slice(0, -1) : line.points
-    );
-  }
+  // get _points() {
+  //   return this.lines.flatMap((line, i) =>
+  //     i < this.lines.length - 1 ? line.points.slice(0, -1) : line.points
+  //   );
+  // }
 
-  editingGeojson(activeEdit: ActiveLineEdit | null): geojson.Feature[] {
-    throw new Error("Method not implemented.");
-  }
+  // editingGeojson(activeEdit: ActiveLineEdit | null): geojson.Feature[] {
+  //   throw new Error("Method not implemented.");
+  // }
 
   translate(by: [number, number]): void {
-    throw new Error("Method not implemented.");
+    let skipPoint: Point | null = null;
+    for (const line of this.lines) {
+      line.translate(by, skipPoint ? new Set([skipPoint]) : undefined);
+      skipPoint = line.points[line.points.length - 1];
+    }
+    this.bounds?.translate(by);
   }
 
   get listDepth(): number {
@@ -553,7 +610,7 @@ export class CompoundCurve implements BaseGeometry, EditableGeom {
 export class Polygon implements BaseGeometry, EditableGeom {
   parent: Geometry | null = null;
   bounds: Bounds | null = null;
-  listItemExpanded: boolean = true; //false;
+  listItemExpanded: boolean = true;
 
   constructor(
     public readonly id: number,
@@ -575,6 +632,10 @@ export class Polygon implements BaseGeometry, EditableGeom {
 
   get featureIds() {
     return [this.id];
+  }
+
+  get sharedPoints() {
+    return this.parent instanceof MultiGeometry && this.parent.sharedPoints;
   }
 
   recalculateBounds() {
@@ -668,12 +729,105 @@ export class Polygon implements BaseGeometry, EditableGeom {
   }
 }
 
+export class CurvePolygon implements BaseGeometry {
+  parent: Geometry | null = null;
+  bounds: Bounds | null = null;
+  listItemExpanded: boolean = true;
+
+  get kind() {
+    return "CurvePolygon" as const;
+  }
+
+  constructor(
+    public readonly id: number,
+    public rings: (LineString | CompoundCurve)[]
+  ) {
+    makeObservable(this, {
+      parent: observable.shallow,
+      rings: observable.shallow,
+      listItemExpanded: observable,
+      listDepth: computed,
+      listItems: computed,
+    });
+    for (const ring of rings) {
+      ring.parent = this;
+    }
+    this.recalculateBounds();
+  }
+
+  get featureIds() {
+    return [this.id];
+  }
+
+  recalculateBounds() {
+    let bounds: Bounds | null = null;
+    for (const ring of this.rings) {
+      if (!ring.bounds) continue;
+      if (!bounds) {
+        bounds = ring.bounds.copy();
+      } else {
+        bounds.join(ring.bounds);
+      }
+    }
+    this.bounds = bounds;
+    this.parent?.recalculateBounds();
+  }
+
+  private _makeGeojson(): geojson.Feature[] {
+    return [
+      {
+        type: "Feature",
+        id: this.id,
+        geometry: {
+          type: "Polygon",
+          coordinates: this.rings.map((ring) => ring._renderPoints),
+        },
+      },
+    ];
+  }
+
+  private _geojson: geojson.Feature[] | null = null;
+  get geojson() {
+    if (!this._geojson) {
+      this._geojson = this._makeGeojson();
+    }
+    return this._geojson;
+  }
+
+  _updateGeojson() {
+    this._geojson = this._makeGeojson();
+  }
+
+  translate(by: [number, number]) {
+    for (const ring of this.rings) {
+      ring.translate(by);
+    }
+    this.bounds?.translate(by);
+  }
+
+  get listDepth(): number {
+    return (this.parent?.listDepth ?? -1) + 1;
+  }
+
+  get listItems(): ListItem[] {
+    console.log("calculating curvepolygon list items");
+    return this.listItemExpanded
+      ? [
+          this,
+          ...this.rings.flatMap((ring) => ring.listItems),
+          {id: this.id + 0.5, kind: "__ListItemEndPlaceholder", geom: this},
+        ]
+      : [this];
+  }
+}
+
 export class MultiGeometry<ChildGeometry extends Geometry = Geometry>
   implements BaseGeometry, EditableGeom
 {
   parent: Geometry | null = null;
   bounds: Bounds | null = null;
   listItemExpanded: boolean = true;
+  readonly sharedPoints: boolean = false;
 
   constructor(
     public readonly id: number,
@@ -681,7 +835,11 @@ export class MultiGeometry<ChildGeometry extends Geometry = Geometry>
       | "GeometryCollection"
       | "MultiPoint"
       | "MultiLineString"
-      | "MultiPolygon",
+      | "MultiPolygon"
+      | "PolyhedralSurface"
+      | "TIN"
+      | "MultiCurve"
+      | "MultiSurface",
     public geoms: ChildGeometry[]
   ) {
     makeObservable(this, {
@@ -691,6 +849,9 @@ export class MultiGeometry<ChildGeometry extends Geometry = Geometry>
       listDepth: computed,
       listItems: computed,
     });
+    if (kind === "PolyhedralSurface" || kind === "TIN") {
+      this.sharedPoints = true;
+    }
     for (const geom of geoms) {
       geom.parent = this;
     }
@@ -783,7 +944,85 @@ export class MultiGeometry<ChildGeometry extends Geometry = Geometry>
     return this.listItemExpanded
       ? [
           this,
-          ...this.geoms.flatMap((geom) => geom.listItems),
+          ...(this.kind === "MultiPoint"
+            ? this.geoms
+            : this.geoms.flatMap((geom) => geom.listItems)),
+          {id: this.id + 0.5, kind: "__ListItemEndPlaceholder", geom: this},
+        ]
+      : [this];
+  }
+}
+
+export class Box implements BaseGeometry {
+  parent: Geometry | null = null;
+  geojson: geojson.Feature[];
+  featureIds: number[];
+  listItemExpanded: boolean = true;
+
+  get kind() {
+    return "Box" as const;
+  }
+
+  constructor(
+    public readonly id: number,
+    public min: Point,
+    public max: Point
+  ) {
+    makeObservable(this, {
+      min: observable,
+      max: observable,
+      listItemExpanded: observable,
+      listDepth: computed,
+      listItems: computed,
+    });
+    this.geojson = [
+      {
+        type: "Feature",
+        id,
+        properties: {
+          isBoxType: true,
+        },
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              this.min.point,
+              [this.min.point[0], this.max.point[1]],
+              this.max.point,
+              [this.max.point[0], this.min.point[1]],
+              this.min.point,
+            ],
+          ],
+        },
+      },
+    ];
+    this.featureIds = [id];
+  }
+
+  get bounds(): Bounds {
+    return new Bounds([
+      [this.min.point[0], this.min.point[1]],
+      [this.max.point[0], this.max.point[1]],
+    ]);
+  }
+
+  recalculateBounds() {}
+
+  translate(by: [number, number]) {
+    this.min.translate(by, false);
+    this.max.translate(by, false);
+  }
+
+  get listDepth(): number {
+    return (this.parent?.listDepth ?? -1) + 1;
+  }
+
+  get listItems(): ListItem[] {
+    return this.listItemExpanded
+      ? [
+          this,
+          this.min,
+          this.max,
           {id: this.id + 0.5, kind: "__ListItemEndPlaceholder", geom: this},
         ]
       : [this];
@@ -795,8 +1034,12 @@ export type Geometry =
   | LineString
   | CompoundCurve
   | Polygon
+  | CurvePolygon
   | MultiGeometry;
-export type EditableGeometry = Exclude<Geometry, Point>;
+export type EditableGeometry = Exclude<
+  Geometry,
+  Point | CompoundCurve | CurvePolygon
+>;
 
 export class Bounds {
   constructor(
