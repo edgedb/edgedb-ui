@@ -314,10 +314,6 @@ const PointHeaderRender = (({
   </StickyHeader>
 )) as GeometryRenderer;
 
-const ClosingPointRender: GeometryRenderer = ({state, geom}) => (
-  <PointRenderer state={state} geom={(geom as ListItemWrapper).geom} />
-);
-
 const EndPlaceholderRenderer = observer(function _EndPlaceholderRenderer({
   state,
   geom: item,

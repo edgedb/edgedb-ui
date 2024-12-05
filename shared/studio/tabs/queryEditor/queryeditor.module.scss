@@ -22,6 +22,10 @@ $historyTransitionTime: 0.15s;
     .history {
       pointer-events: none;
     }
+
+    @include isMobile {
+      margin: 0;
+    }
   }
 }
 
@@ -273,6 +277,10 @@ $historyTransitionTime: 0.15s;
   @include darkTheme {
     box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
       0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  @include isMobile {
+    border-radius: 0;
   }
 }
 

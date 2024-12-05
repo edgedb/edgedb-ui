@@ -8,8 +8,9 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {createHexViewerState, HexViewer as HexViewerState} from "./state";
 import {observer} from "mobx-react-lite";
 import {computed} from "mobx";
-import {ActionButton, ActionsBar} from "../shared";
+import {ToggleButton, HeaderBar} from "../shared";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
+import {Button} from "@edgedb/common/newui";
 
 export interface HexViewerProps {
   data: Uint8Array;
@@ -88,28 +89,30 @@ export const HexViewer = observer(function HexViewer({data}: HexViewerProps) {
   );
 });
 
+export default HexViewer;
+
 const HexViewerStatus = observer(function HexViewerStatus({
   state,
 }: {
   state: HexViewerState;
 }) {
   return (
-    <ActionsBar>
-      <ActionButton
+    <HeaderBar>
+      <ToggleButton
         icon={<></>}
         active={state.asciiMode}
         onClick={() => state.setAsciiMode(!state.asciiMode)}
       >
-        ASCII Mode
-      </ActionButton>
-      <ActionButton
+        {state.asciiMode ? "ASCII" : "Hex"} Mode
+      </ToggleButton>
+      <Button
+        kind="outline"
         className={styles.downloadButton}
-        icon={<></>}
         onClick={() => state.downloadData()}
       >
         Download{state.endOffset !== null ? " range" : ""}
-      </ActionButton>
-    </ActionsBar>
+      </Button>
+    </HeaderBar>
   );
 });
 

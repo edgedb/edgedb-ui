@@ -47,6 +47,10 @@
 
   @include breakpoint(mobile) {
     border-radius: 0;
+
+    &.showExtendedResult {
+      margin: 0;
+    }
   }
 }
 
@@ -57,10 +61,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--app-panel-bg);
-  border-radius: 8px;
+  background: var(--app_panel_background);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
   z-index: 1;
   overflow: hidden;
+
+  @include darkTheme {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  @include isMobile {
+    border-radius: 0;
+  }
 }
 
 .replHeader {

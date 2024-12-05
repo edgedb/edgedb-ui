@@ -1,8 +1,9 @@
 @import "@edgedb/common/mixins.scss";
 
 .hexViewer {
-  font-family: Roboto Mono, monospace;
+  font-family: "Roboto Mono Variable", monospace;
   font-size: 14px;
+  color: var(--main_text_color);
   height: 100%;
   width: 100%;
   max-height: 100%;
@@ -20,6 +21,11 @@
 
   & > div > div:first-child {
     @include hideScrollbar;
+
+    > div {
+      margin: 8px 0;
+      position: relative;
+    }
   }
 }
 
@@ -58,7 +64,7 @@
 }
 
 .rowOffset {
-  color: rgb(77, 77, 77, 0.6);
+  color: var(--tertiary_text_color);
   margin-right: 12px;
 }
 
@@ -72,7 +78,7 @@
     padding: 0 0.5ch;
 
     &:nth-child(2n) {
-      color: rgb(77, 77, 77, 0.8);
+      color: var(--tertiary_text_color);
     }
 
     &:nth-child(8) {

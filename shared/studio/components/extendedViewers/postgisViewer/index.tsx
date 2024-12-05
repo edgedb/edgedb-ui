@@ -1,14 +1,12 @@
-import {useContext, useEffect, useMemo, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
-import "@fontsource-variable/roboto-flex";
-import "@fontsource-variable/roboto-mono";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./postgisViewer.module.scss";
-import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
+import {useTheme} from "@edgedb/common/hooks/useTheme";
 import {Geometry, Box2D, Box3D} from "edgedb/dist/datatypes/postgis";
 import {
   createPostgisEditorState,
@@ -60,6 +58,8 @@ export const PostgisViewer = observer(function PostgisViewer({
     </div>
   );
 });
+
+export default PostgisViewer;
 
 const Sidepanel = observer(function Sidepanel({
   state,
