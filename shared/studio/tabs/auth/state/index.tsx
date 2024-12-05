@@ -104,16 +104,20 @@ export interface SMTPConfigData {
 
 export type EmailProviderConfig = SMTPConfigData;
 
-export const webhookEvents = [
-  "IdentityCreated",
-  "IdentityAuthenticated",
-  "EmailFactorCreated",
-  "EmailVerified",
-  "PasswordResetRequested",
-  "MagicLinkRequested",
-] as const;
+export const webhookEvents = (
+  [
+    ["IdentityCreated", "IdentityAuthenticated"],
+    ["EmailFactorCreated", "EmailVerified", "EmailVerificationRequested"],
+    ["PasswordResetRequested", "MagicLinkRequested"],
+  ] as const
+).map((col) =>
+  col.map((name) => ({
+    name: name,
+    label: name.replace(/[A-Z]/g, "\u200b$&"), // insert zero width space between words
+  }))
+);
 
-export type WebhookEvent = (typeof webhookEvents)[number];
+export type WebhookEvent = (typeof webhookEvents)[number][number]["name"];
 
 export interface WebhookConfigData {
   url: string;
@@ -431,13 +435,17 @@ export class AuthAdminState extends Model({
     const magicLinkWebhook = this.webhooks?.some((wh) =>
       wh.events.includes("MagicLinkRequested")
     );
+    const emailVerificationWebhook = this.webhooks?.some((wh) =>
+      wh.events.includes("EmailVerificationRequested")
+    );
 
     const smtpConfigured = this.emailProviders?.some(
       (provider) => provider.name === this.currentEmailProvider
     );
 
     return {
-      verificationNoSmtp: emailVerification && !smtpConfigured,
+      verificationNoSmtp:
+        emailVerification && !emailVerificationWebhook && !smtpConfigured,
       passwordNoReset:
         !!passwordProvider && !passwordResetWebhook && !smtpConfigured,
       magicLinkNoMethods:

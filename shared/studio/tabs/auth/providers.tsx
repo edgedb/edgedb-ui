@@ -54,14 +54,22 @@ export const ProvidersTab = observer(function ProvidersTab() {
               {state.emailProviderWarnings.verificationNoSmtp ? (
                 <EmailProviderWarning>
                   You have auth providers requiring email verification enabled,
-                  but no SMTP provider is configured.
+                  but no method for verifying emails is configured.
                   <br />
                   <span
                     className={styles.link}
                     onClick={() => state.setSelectedTab("smtp")}
                   >
                     Enable an SMTP provider
-                  </span>
+                  </span>{" "}
+                  or{" "}
+                  <span
+                    className={styles.link}
+                    onClick={() => state.setSelectedTab("webhooks")}
+                  >
+                    create a webhook
+                  </span>{" "}
+                  to handle email verification.
                 </EmailProviderWarning>
               ) : state.emailProviderWarnings.passwordNoReset ? (
                 <EmailProviderWarning>

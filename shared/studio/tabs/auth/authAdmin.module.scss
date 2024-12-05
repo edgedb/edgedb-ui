@@ -255,19 +255,32 @@
 
   .grid {
     display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: repeat(calc(var(--itemCount) / var(--colCount)), auto);
-    gap: 4px;
+    grid-template-columns: repeat(var(--colCount), auto);
+    gap: 6px 24px;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
     label {
       font-family: "Roboto Mono Variable", monospace;
       font-weight: 425;
       font-size: 13px;
+      align-items: start;
+      height: auto;
+      line-height: 20px;
+      padding: 6px 0;
     }
   }
 
   @media (max-width: 960px) {
     --colCount: 2;
+
+    .grid > div:nth-child(2) {
+      grid-row: span 2;
+    }
   }
   @media (max-width: 512px) {
     --colCount: 1;
