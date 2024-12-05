@@ -6,7 +6,7 @@ import styles from "./shared.module.scss";
 import {CloseIcon} from "../../icons";
 
 export const ExtendedViewerContext = createContext<{
-  closeExtendedView: () => void;
+  closeExtendedView: (editedData?: any) => void;
 }>(null!);
 
 export function ActionsBar({children}: PropsWithChildren<{}>) {

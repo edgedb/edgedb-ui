@@ -1,5 +1,5 @@
-export function assertNever(value: never): never {
+export function assertNever(value: never, message?: string): never {
   throw new Error(
-    `Unhandled discriminated union member: ${JSON.stringify(value)}`
+    message ?? `Unhandled discriminated union member: ${JSON.stringify(value)}`
   );
 }
