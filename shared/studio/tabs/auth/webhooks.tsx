@@ -22,6 +22,7 @@ import {
 import styles from "./authAdmin.module.scss";
 import {useState} from "react";
 import {LoadingSkeleton} from "@edgedb/common/newui/loadingSkeleton";
+import {EmailProviderWarning} from "./shared";
 
 export const WebhooksTab = observer(function WebhooksTab() {
   const state = useTabState(AuthAdminState);
@@ -29,6 +30,45 @@ export const WebhooksTab = observer(function WebhooksTab() {
   return (
     <div className={styles.tabContentWrapper}>
       <h2>Webhooks</h2>
+
+      {state.emailProviderWarnings.verificationNoSmtp ? (
+        <EmailProviderWarning>
+          You have auth providers requiring email verification enabled. Create
+          a webhook below to handle the 'EmailVerificationRequested' event, or{" "}
+          <span
+            className={styles.link}
+            onClick={() => state.setSelectedTab("smtp")}
+          >
+            enable an SMTP provider
+          </span>{" "}
+          to send verification emails.
+        </EmailProviderWarning>
+      ) : state.emailProviderWarnings.passwordNoReset ? (
+        <EmailProviderWarning>
+          You have the 'Email + Password' auth provider enabled. Create a
+          webhook below to handle the 'PasswordResetRequested' event, or{" "}
+          <span
+            className={styles.link}
+            onClick={() => state.setSelectedTab("smtp")}
+          >
+            enable an SMTP provider
+          </span>{" "}
+          to send password resets.
+        </EmailProviderWarning>
+      ) : state.emailProviderWarnings.magicLinkNoMethods ? (
+        <EmailProviderWarning>
+          You have the 'Magic Link' auth provider enabled. Create a webhook
+          below to handle the 'MagicLinkRequested' event, or{" "}
+          <span
+            className={styles.link}
+            onClick={() => state.setSelectedTab("smtp")}
+          >
+            enable an SMTP provider
+          </span>{" "}
+          to send magic links.
+        </EmailProviderWarning>
+      ) : null}
+
       {state.webhooks ? (
         <>
           {state.webhooks.length ? (
@@ -99,17 +139,18 @@ function WebhookConfigCard({config}: {config: WebhookConfigData}) {
           </div>
           <div className={styles.webhookEvents}>
             <FieldHeader label="Events" />
-            <div
-              className={styles.grid}
-              style={{"--itemCount": webhookEvents.length} as any}
-            >
-              {webhookEvents.map((event) => (
-                <Checkbox
-                  readOnly
-                  key={event}
-                  label={event}
-                  checked={config.events.includes(event)}
-                />
+            <div className={styles.grid}>
+              {webhookEvents.map((col, i) => (
+                <div key={i}>
+                  {col.map(({name, label}) => (
+                    <Checkbox
+                      readOnly
+                      key={name}
+                      label={label}
+                      checked={config.events.includes(name)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           </div>
@@ -159,23 +200,24 @@ const WebhookDraftForm = observer(function WebhookDraftForm({
           label="Events"
           headerNote="At least one event must be selected"
         />
-        <div
-          className={styles.grid}
-          style={{"--itemCount": webhookEvents.length} as any}
-        >
-          {webhookEvents.map((event) => (
-            <Checkbox
-              key={event}
-              label={event}
-              checked={draft.events.has(event)}
-              onChange={(checked) => {
-                if (checked) {
-                  draft.events.add(event);
-                } else {
-                  draft.events.delete(event);
-                }
-              }}
-            />
+        <div className={styles.grid}>
+          {webhookEvents.map((col, i) => (
+            <div key={i}>
+              {col.map(({name, label}) => (
+                <Checkbox
+                  key={name}
+                  label={label}
+                  checked={draft.events.has(name)}
+                  onChange={(checked) => {
+                    if (checked) {
+                      draft.events.add(name);
+                    } else {
+                      draft.events.delete(name);
+                    }
+                  }}
+                />
+              ))}
+            </div>
           ))}
         </div>
       </div>

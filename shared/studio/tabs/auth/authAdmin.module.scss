@@ -120,6 +120,20 @@
   }
 }
 
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+
+  h2 {
+    margin-right: 24px;
+  }
+
+  button {
+    margin-left: auto;
+  }
+}
+
 .cardList {
   display: flex;
   flex-direction: column;
@@ -241,19 +255,32 @@
 
   .grid {
     display: grid;
-    grid-auto-flow: column;
-    grid-template-rows: repeat(calc(var(--itemCount) / var(--colCount)), auto);
-    gap: 4px;
+    grid-template-columns: repeat(var(--colCount), auto);
+    gap: 6px 24px;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
     label {
       font-family: "Roboto Mono Variable", monospace;
       font-weight: 425;
       font-size: 13px;
+      align-items: start;
+      height: auto;
+      line-height: 20px;
+      padding: 6px 0;
     }
   }
 
   @media (max-width: 960px) {
     --colCount: 2;
+
+    .grid > div:nth-child(2) {
+      grid-row: span 2;
+    }
   }
   @media (max-width: 512px) {
     --colCount: 1;
@@ -457,6 +484,18 @@
 
 .securitySelect {
   font-family: "Roboto Mono Variable", monospace;
+
+  &[data-disabled="true"] {
+    background: #f7f7f7;
+    border-color: var(--Grey90);
+    box-shadow: none;
+    opacity: 1;
+
+    @include darkTheme {
+      background: #464646;
+      border-color: #4d4d4d;
+    }
+  }
 }
 
 .redirectUrlsLabel {
@@ -473,6 +512,177 @@
 
 .redirectUrlsInput textarea {
   resize: vertical;
+}
+
+.newDraftSMTPProvider {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  .configGrid {
+    margin-top: 0;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    flex-direction: row;
+  }
+}
+
+.emailProvidersUpdating {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.emailProviderCard {
+  .details {
+    display: flex;
+    flex-direction: column;
+    color: var(--main_text_color);
+    line-height: 22px;
+
+    .name {
+      font-weight: 500;
+    }
+
+    .senderhost {
+      color: var(--tertiary_text_color);
+
+      span {
+        font-size: 11px;
+        margin: 0 6px;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .selectCurrentProvider {
+    width: 32px;
+    height: 32px;
+    stroke-width: 1px;
+    stroke: var(--Grey75);
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &.selected {
+      fill: #a565cd;
+      stroke: #9c56b4 !important;
+    }
+
+    @include darkTheme {
+      stroke: var(--Grey40);
+    }
+  }
+
+  .updatingSpinner {
+    color: var(--Grey50);
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    flex-direction: row;
+    padding: 4px 16px 16px 16px;
+  }
+}
+
+.expandedEmailProviderConfig {
+  margin: -2px 12px 12px 12px;
+  background: var(--Grey97);
+  border-radius: 8px;
+  border: 1px solid var(--Grey93);
+
+  @include darkTheme {
+    background: var(--Grey16);
+    border-color: var(--Grey25);
+  }
+
+  .configGrid {
+    margin-top: 20px;
+    margin-bottom: 12px;
+
+    @include isMobile {
+      margin: 16px;
+    }
+  }
+}
+
+.passwordWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  color: var(--secondary_text_color);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  padding: 8px 12px 10px 12px;
+  margin: 0 12px;
+  margin-bottom: 0px;
+  margin-bottom: 12px;
+
+  > div {
+    margin-top: 2px;
+
+    > span {
+      font-weight: 500;
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  @include darkTheme {
+    background: #453d2c;
+    border: 1px solid #72623b;
+    color: #d1bd8f;
+  }
+}
+
+.emailProviderWarning {
+  position: relative;
+  padding: 12px 20px;
+  padding-left: 48px;
+  background: #f7e9c8;
+  border-radius: 8px;
+  border: 1px solid #c1a970;
+  color: #7b6226;
+  font-weight: 450;
+  line-height: 20px;
+  margin-top: 16px;
+
+  & > svg {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+  }
+
+  & > span {
+    font-weight: 500;
+  }
+
+  .link {
+    font-weight: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  @include darkTheme {
+    background: #453d2c;
+    border: 1px solid #72623b;
+    color: #d1bd8f;
+  }
 }
 
 .docsNote {

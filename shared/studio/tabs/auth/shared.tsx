@@ -2,7 +2,7 @@ import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 
-import {Button} from "@edgedb/common/newui";
+import {Button, WarningIcon} from "@edgedb/common/newui";
 
 import {AbstractDraftConfig} from "./state";
 
@@ -53,3 +53,12 @@ export const StickyFormControls = observer(function StickyFormControls({
 export const InputSkeleton = () => (
   <LoadingSkeleton className={styles.inputSkeleton} />
 );
+
+export function EmailProviderWarning({children}: PropsWithChildren<{}>) {
+  return (
+    <div className={styles.emailProviderWarning}>
+      <WarningIcon />
+      <span>Warning:</span> {children}
+    </div>
+  );
+}
