@@ -1,6 +1,5 @@
 import {
   Bounds,
-  CompoundCurve,
   EditableGeometry,
   Geometry,
   LineString,
@@ -8,7 +7,6 @@ import {
   PlainPoint,
   Point,
   Polygon,
-  CurvePolygon,
   Box,
 } from "./types";
 import * as geojson from "./geojsonTypes";

@@ -1,22 +1,26 @@
+import {lazy, Suspense} from "react";
+
 import {Item, ItemType} from "@edgedb/inspector/buildItem";
-import {HexViewer} from "./hexViewer";
 import {JsonViewer} from "./jsonViewer";
 import {TextViewer} from "./textViewer";
-import {PostgisViewer} from "./postgisViewer";
 
 import styles from "./shared.module.scss";
-import {ActionsBar, ExtendedViewerContext} from "./shared";
+import {HeaderBar, ExtendedViewerContext} from "./shared";
+import Spinner from "@edgedb/common/ui/spinner";
 
 export {ExtendedViewerContext};
+
+const PostgisViewer = lazy(() => import("./postgisViewer"));
+const HexViewer = lazy(() => import("./hexViewer"));
 
 type Renderer = (props: {data: any}) => JSX.Element | null;
 
 export const extendedViewerRenderers: {
   [key: string]: Renderer;
 } = {
-  "std::str": TextViewer as Renderer,
-  "std::bytes": HexViewer as Renderer,
-  "std::json": JsonViewer as Renderer,
+  "std::str": TextViewer,
+  "std::bytes": HexViewer,
+  "std::json": JsonViewer,
   "ext::postgis::geometry": PostgisViewer,
   "ext::postgis::box2d": PostgisViewer,
 };
@@ -32,13 +36,19 @@ export function ExtendedViewerRenderer({item}: ExtendedViewerRendererProps) {
     const Renderer = extendedViewerRenderers[item.codec.getKnownTypeName()];
 
     if (Renderer) {
-      return <Renderer data={(item.parent as any).data[item.index]} />;
+      return (
+        <Suspense
+          fallback={<Spinner className={styles.lazyLoading} size={20} />}
+        >
+          <Renderer data={(item.parent as any).data[item.index]} />
+        </Suspense>
+      );
     }
   }
 
   return (
     <div className={styles.noViewer}>
-      <ActionsBar />
+      <HeaderBar />
       <div className={styles.message}>No extended viewer for this type</div>
     </div>
   );
