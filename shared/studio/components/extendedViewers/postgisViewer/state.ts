@@ -20,6 +20,7 @@ import {
   PlainPoint,
   Point,
   Polygon,
+  Box,
 } from "./editableGeom/types";
 import {convertToEditableGeometry, GeomMapping} from "./editableGeom/convert";
 import {
@@ -68,9 +69,10 @@ const actionShortcuts = new Map<
 
 export function createPostgisEditorState(
   data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D | null,
+  editable: boolean,
   theme: Theme
 ): PostgisEditor {
-  const state = new PostgisEditor({theme});
+  const state = new PostgisEditor({readonly: !editable, theme});
 
   state._setData(data);
 
@@ -80,6 +82,9 @@ export function createPostgisEditorState(
 
   return state;
 }
+
+export const MIN_M_RADIUS = 2;
+export const MAX_M_RADIUS = 12;
 
 const DRAG_THRESHOLD = 3;
 
@@ -107,10 +112,12 @@ const emptyDataSource: geojson.FeatureCollection = {
 
 @model("PostgisEditor")
 export class PostgisEditor extends Model({
+  readonly: prop<boolean>(),
   theme: prop<Theme>(),
 
   sidePanelHeight: prop(0).withSetter(),
   sidePanelScrollTop: prop(0).withSetter(),
+  sidePanelWidth: prop(420).withSetter(),
 }) {
   @computed.struct
   get visibleListItemIndexes(): [number, number] {
@@ -123,13 +130,63 @@ export class PostgisEditor extends Model({
   }
 
   @observable.ref
-  data: Geometry | null = null;
+  data: Geometry | Box | null = null;
 
   @observable
   hasZ: boolean = false;
 
   @observable
   hasM: boolean = false;
+
+  @action
+  toggleHasZ() {
+    this.hasZ = !this.hasZ;
+    this.isEdited = true;
+  }
+
+  @action
+  toggleHasM() {
+    this.hasM = !this.hasM;
+    this.isEdited = true;
+  }
+
+  @observable.ref
+  minMaxM: [number, number] = [0, 0];
+
+  @action
+  updateMinMaxM() {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const geom of this.geomMapping.getAllGeoms()) {
+      if (geom instanceof Point) {
+        const m = geom.m ?? 0;
+        min = m < min ? m : min;
+        max = m > max ? m : max;
+      }
+    }
+    if (min !== this.minMaxM[0] || max !== this.minMaxM[1]) {
+      this.minMaxM = [min, max];
+    }
+  }
+
+  @observable
+  srid: number | null = null;
+
+  @observable
+  isEdited = false;
+
+  @action
+  setEdited() {
+    this.isEdited = true;
+  }
+
+  @observable
+  cleanupEmptyGeom = true;
+
+  @action
+  toggleCleanupEmptyGeom() {
+    this.cleanupEmptyGeom = !this.cleanupEmptyGeom;
+  }
 
   geomMapping: GeomMapping = new GeomMapping();
 
@@ -143,14 +200,18 @@ export class PostgisEditor extends Model({
   @action
   _setData(data: PostGIS.Geometry | PostGIS.Box2D | PostGIS.Box3D | null) {
     if (data) {
-      const {geometry, mapping, hasZ, hasM} = convertToEditableGeometry(
-        data as PostGIS.Geometry
-      );
+      const {geometry, mapping, hasZ, hasM, srid} =
+        convertToEditableGeometry(data);
 
       this.data = geometry;
       this.geomMapping = mapping;
       this.hasZ = hasZ;
       this.hasM = hasM;
+      this.srid = srid;
+
+      if (hasM) {
+        this.updateMinMaxM();
+      }
     } else {
       this.data = null;
       this.geomMapping.clear();
@@ -159,221 +220,226 @@ export class PostgisEditor extends Model({
     this._updateMapDataSource();
   }
 
-  @action
-  toggleHasZ() {
-    this.hasZ = !this.hasZ;
-  }
-
-  @action
-  toggleHasM() {
-    this.hasM = !this.hasM;
-  }
-
   @observable.ref
   map: maplibregl.Map | null = null;
 
-  layers: maplibregl.LayerSpecification[] = [
-    {
-      id: LAYER_DATA_BG,
-      source: DATA_SOURCE,
-      type: "fill",
-      filter: ["all", ["==", "$type", "Polygon"], ["!=", "isBoxType", true]],
-      paint: {
-        "fill-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "#ffbc3d",
-          "#007cbf",
-        ],
-        "fill-opacity": [
-          "case",
-          ["boolean", ["feature-state", "editing"], false],
-          0,
-          0.4,
-        ],
+  @computed
+  get layers(): maplibregl.LayerSpecification[] {
+    return [
+      ...(this.theme === Theme.dark ? darkLayers : lightLayers),
+      {
+        id: LAYER_DATA_BG,
+        source: DATA_SOURCE,
+        type: "fill",
+        filter: ["all", ["==", "$type", "Polygon"], ["!=", "isBoxType", true]],
+        paint: {
+          "fill-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#ffbc3d",
+            "#007cbf",
+          ],
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "editing"], false],
+            0,
+            0.4,
+          ],
+        },
       },
-    },
-    {
-      id: LAYER_DATA_RENDER_LINES,
-      source: DATA_SOURCE,
-      type: "line",
-      filter: ["!=", "isBoxType", true],
-      paint: {
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "#ffbc3d",
-          "#007cbf",
+      {
+        id: LAYER_DATA_RENDER_LINES,
+        source: DATA_SOURCE,
+        type: "line",
+        filter: ["!=", "isBoxType", true],
+        paint: {
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#ffbc3d",
+            "#007cbf",
+          ],
+          "line-width": 1.5,
+          "line-opacity": [
+            "case",
+            ["boolean", ["feature-state", "editing"], false],
+            0,
+            0.6,
+          ],
+        },
+      },
+      {
+        id: LAYER_DATA_LINES,
+        source: DATA_SOURCE,
+        type: "line",
+        filter: ["!=", "isBoxType", true],
+        paint: {
+          "line-width": 10,
+          "line-opacity": 0,
+        },
+      },
+      {
+        id: LAYER_DATA_POINTS,
+        source: DATA_SOURCE,
+        type: "circle",
+        filter: ["==", "$type", "Point"],
+        paint: {
+          "circle-radius":
+            this.hasM && this.minMaxM[0] != this.minMaxM[1]
+              ? [
+                  "interpolate",
+                  ["linear"],
+                  ["get", "mag"],
+                  this.minMaxM[0],
+                  MIN_M_RADIUS,
+                  this.minMaxM[1],
+                  MAX_M_RADIUS,
+                ]
+              : 5,
+          "circle-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#007cbf",
+            "#ffffff",
+          ],
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#ffffff",
+            "#007cbf",
+          ],
+          "circle-opacity": [
+            "case",
+            ["boolean", ["feature-state", "editing"], false],
+            0,
+            1,
+          ],
+          "circle-stroke-opacity": [
+            "case",
+            ["boolean", ["feature-state", "editing"], false],
+            0,
+            1,
+          ],
+        },
+      },
+      {
+        id: LAYER_DATA_BBOX,
+        source: DATA_SOURCE,
+        type: "line",
+        filter: ["get", "isBoxType"],
+        paint: {
+          "line-color": "#007cbf",
+          "line-width": 1.5,
+          "line-opacity": 0.6,
+          "line-dasharray": [4, 2],
+        },
+      },
+      // editing layers
+      {
+        id: LAYER_EDIT_BG,
+        source: EDITING_SOURCE,
+        type: "fill",
+        filter: ["==", "$type", "Polygon"],
+        paint: {
+          "fill-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "purple",
+            "green",
+          ],
+          "fill-opacity": 0.4,
+        },
+      },
+      {
+        id: LAYER_EDIT_RENDER_LINES,
+        source: EDITING_SOURCE,
+        type: "line",
+        filter: ["!=", ["get", "pendingLine"], true],
+        paint: {
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "purple",
+            "green",
+          ],
+          "line-width": 1.5,
+          "line-opacity": 0.6,
+        },
+      },
+      {
+        id: LAYER_EDIT_LINES,
+        source: DATA_SOURCE,
+        type: "line",
+        filter: ["!=", ["get", "pendingLine"], true],
+        paint: {
+          "line-width": 10,
+          "line-opacity": 0,
+        },
+      },
+      {
+        id: LAYER_EDIT_PENDING_LINES,
+        source: EDITING_SOURCE,
+        type: "line",
+        filter: ["get", "pendingLine"],
+        paint: {
+          "line-color": "purple",
+          "line-width": 1.5,
+          "line-opacity": 0.6,
+          "line-dasharray": [2, 1],
+        },
+      },
+      {
+        id: LAYER_EDIT_CONTROL_POINTS,
+        source: EDITING_SOURCE,
+        type: "symbol",
+        filter: ["get", "isControlPoint"],
+        layout: {
+          "icon-image": "control-point-icon",
+          "icon-allow-overlap": true,
+        },
+      },
+      {
+        id: LAYER_EDIT_POINTS,
+        source: EDITING_SOURCE,
+        type: "circle",
+        filter: [
+          "all",
+          ["==", "$type", "Point"],
+          ["!=", "isControlPoint", true],
         ],
-        "line-width": 1.5,
-        "line-opacity": [
-          "case",
-          ["boolean", ["feature-state", "editing"], false],
-          0,
-          0.6,
-        ],
+        paint: {
+          "circle-radius": 5,
+          "circle-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "blue",
+            "#ffffff",
+          ],
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#ffffff",
+            "blue",
+          ],
+        },
       },
-    },
-    {
-      id: LAYER_DATA_LINES,
-      source: DATA_SOURCE,
-      type: "line",
-      filter: ["!=", "isBoxType", true],
-      paint: {
-        "line-width": 10,
-        "line-opacity": 0,
+      // selection
+      {
+        id: "selection-bounding-box",
+        source: SELECTION_SOURCE,
+        type: "line",
+        filter: ["get", "selectionBoundingBox"],
+        paint: {
+          "line-color": "#007cbf",
+          "line-width": 1,
+          "line-opacity": 0.6,
+          "line-dasharray": [4, 2],
+        },
       },
-    },
-    {
-      id: LAYER_DATA_POINTS,
-      source: DATA_SOURCE,
-      type: "circle",
-      filter: ["==", "$type", "Point"],
-      paint: {
-        "circle-radius": 5,
-        "circle-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "#007cbf",
-          "#ffffff",
-        ],
-        "circle-stroke-width": 1.5,
-        "circle-stroke-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "#ffffff",
-          "#007cbf",
-        ],
-        "circle-opacity": [
-          "case",
-          ["boolean", ["feature-state", "editing"], false],
-          0,
-          1,
-        ],
-        "circle-stroke-opacity": [
-          "case",
-          ["boolean", ["feature-state", "editing"], false],
-          0,
-          1,
-        ],
-      },
-    },
-    {
-      id: LAYER_DATA_BBOX,
-      source: DATA_SOURCE,
-      type: "line",
-      filter: ["get", "isBoxType"],
-      paint: {
-        "line-color": "#007cbf",
-        "line-width": 1.5,
-        "line-opacity": 0.6,
-        "line-dasharray": [4, 2],
-      },
-    },
-    // editing layers
-    {
-      id: LAYER_EDIT_BG,
-      source: EDITING_SOURCE,
-      type: "fill",
-      filter: ["==", "$type", "Polygon"],
-      paint: {
-        "fill-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "purple",
-          "green",
-        ],
-        "fill-opacity": 0.4,
-      },
-    },
-    {
-      id: LAYER_EDIT_RENDER_LINES,
-      source: EDITING_SOURCE,
-      type: "line",
-      filter: ["!=", ["get", "pendingLine"], true],
-      paint: {
-        "line-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "purple",
-          "green",
-        ],
-        "line-width": 1.5,
-        "line-opacity": 0.6,
-      },
-    },
-    {
-      id: LAYER_EDIT_LINES,
-      source: DATA_SOURCE,
-      type: "line",
-      filter: ["!=", ["get", "pendingLine"], true],
-      paint: {
-        "line-width": 10,
-        "line-opacity": 0,
-      },
-    },
-    {
-      id: LAYER_EDIT_PENDING_LINES,
-      source: EDITING_SOURCE,
-      type: "line",
-      filter: ["get", "pendingLine"],
-      paint: {
-        "line-color": "purple",
-        "line-width": 1.5,
-        "line-opacity": 0.6,
-        "line-dasharray": [2, 1],
-      },
-    },
-    {
-      id: LAYER_EDIT_CONTROL_POINTS,
-      source: EDITING_SOURCE,
-      type: "symbol",
-      filter: ["get", "isControlPoint"],
-      layout: {
-        "icon-image": "control-point-icon",
-        "icon-allow-overlap": true,
-      },
-    },
-    {
-      id: LAYER_EDIT_POINTS,
-      source: EDITING_SOURCE,
-      type: "circle",
-      filter: [
-        "all",
-        ["==", "$type", "Point"],
-        ["!=", "isControlPoint", true],
-      ],
-      paint: {
-        "circle-radius": 5,
-        "circle-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "blue",
-          "#ffffff",
-        ],
-        "circle-stroke-width": 1.5,
-        "circle-stroke-color": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          "#ffffff",
-          "blue",
-        ],
-      },
-    },
-    // selection
-    {
-      id: "selection-bounding-box",
-      source: SELECTION_SOURCE,
-      type: "line",
-      filter: ["get", "selectionBoundingBox"],
-      paint: {
-        "line-color": "#007cbf",
-        "line-width": 1,
-        "line-opacity": 0.6,
-        "line-dasharray": [4, 2],
-      },
-    },
-  ];
+    ];
+  }
 
   _mapElRef: HTMLDivElement | null = null;
   mapElRef(el: HTMLDivElement | null) {
@@ -408,10 +474,7 @@ export class PostgisEditor extends Model({
             data: {type: "FeatureCollection", features: []},
           },
         },
-        layers: [
-          ...(this.theme === Theme.dark ? darkLayers : lightLayers),
-          ...this.layers,
-        ],
+        layers: this.layers,
       },
       center: [0, 0],
       zoom: 1,
@@ -423,7 +486,11 @@ export class PostgisEditor extends Model({
     // map.showTileBoundaries = true;
     map.setPadding({right: 12, top: 0, bottom: 0, left: 0});
     if (this.data?.bounds) {
-      map.fitBounds(this.data.bounds.bounds, {padding: 80, animate: false});
+      map.fitBounds(this.data.bounds.bounds, {
+        padding: 80,
+        animate: false,
+        maxZoom: 18,
+      });
     }
 
     map
@@ -441,24 +508,26 @@ export class PostgisEditor extends Model({
   @modelAction
   setTheme(theme: Theme) {
     this.theme = theme;
-
-    if (this.map) {
-      this.map.setStyle({
-        ...this.map.getStyle(),
-        layers: [
-          ...(theme === Theme.dark ? darkLayers : lightLayers),
-          ...this.layers,
-        ],
-      });
-    }
   }
 
   @computed
   get cursor() {
-    return this.activeLineEdit ? "crosshair" : null;
+    return this.activeLineEdit || this.editingMode ? "crosshair" : null;
   }
 
   init() {
+    const layersUpdateDisposer = reaction(
+      () => this.map != null && this.layers,
+      (layers) => {
+        if (layers) {
+          this.map!.setStyle({
+            ...this.map!.getStyle(),
+            layers,
+          });
+        }
+      }
+    );
+
     const selectionUpdateDisposer = reaction(
       () => this.map != null && [...this.selectedGeoms],
       () => this._updateSelectionSource()
@@ -476,16 +545,25 @@ export class PostgisEditor extends Model({
     const keyListener = (ev: KeyboardEvent) => {
       if (ev.key === "Enter" && this.selectedGeoms.size === 1) {
         const geom = [...this.selectedGeoms][0];
-        if (geom.kind === "Point") return;
+        if (
+          geom.kind === "Box" ||
+          geom.kind === "Point" ||
+          geom.kind === "CompoundCurve" ||
+          geom.kind === "CurvePolygon"
+        ) {
+          return;
+        }
 
         ev.preventDefault();
         ev.stopPropagation();
         this.startEditingGeom(geom);
       } else if (
+        !this.readonly &&
         (ev.key === "Delete" || ev.key === "Backspace") &&
         this.selectedGeoms.size > 0
       ) {
         ev.preventDefault();
+        this.setEdited();
 
         const groupedGeoms = groupGeomsByParent(this.selectedGeoms);
 
@@ -533,7 +611,6 @@ export class PostgisEditor extends Model({
         }
       }
     };
-
     window.addEventListener("keydown", keyListener);
 
     const escListener = (ev: KeyboardEvent) => {
@@ -546,10 +623,10 @@ export class PostgisEditor extends Model({
         }
       }
     };
-
     window.addEventListener("keydown", escListener, {capture: true});
 
     return () => {
+      layersUpdateDisposer();
       selectionUpdateDisposer();
       cursorUpdateDisposer();
       window.removeEventListener("keydown", keyListener);
@@ -592,6 +669,7 @@ export class PostgisEditor extends Model({
       this.map.fitBounds(this.data.bounds.bounds, {
         padding: 80,
         animate: true,
+        maxZoom: 18,
       });
     }
   }
@@ -600,17 +678,7 @@ export class PostgisEditor extends Model({
   //   if (!this.map) return;
   //   if (this.data instanceof Geometry) {
   //     const pointsCircleRadius: maplibregl.DataDrivenPropertyValueSpecification<number> =
-  //       this.data.hasM && metadata.maxM != metadata.minM
-  //         ? [
-  //             "interpolate",
-  //             ["linear"],
-  //             ["get", "mag"],
-  //             metadata.minM,
-  //             2,
-  //             metadata.maxM,
-  //             16,
-  //           ]
-  //         : 5;
+  //       this.data.hasM && ;
   //     (
   //       this.layers.find(
   //         (layer) => layer.id === LAYER_DATA_POINTS
@@ -625,7 +693,7 @@ export class PostgisEditor extends Model({
   // }
 
   @observable.shallow
-  selectedGeoms = new Set<Geometry>();
+  selectedGeoms = new Set<Geometry | Box>();
 
   @observable.ref
   editingGeom: EditableGeometry | null = null;
@@ -641,6 +709,7 @@ export class PostgisEditor extends Model({
 
   @action
   updatePointCoord(point: Point, index: 0 | 1 | 2, value: number) {
+    this.isEdited = true;
     point.point[index] = value;
     point.parent?.recalculateBounds();
     if (this.editingGeom) {
@@ -652,8 +721,10 @@ export class PostgisEditor extends Model({
 
   @action
   updatePointMValue(point: Point, value: number) {
+    this.isEdited = true;
     point.m = value;
-    // todo: update m min/max
+    // update data
+    this.updateMinMaxM();
   }
 
   @observable
@@ -667,6 +738,9 @@ export class PostgisEditor extends Model({
 
   @computed
   get availableModes() {
+    if (this.data instanceof Box) {
+      return new Set([]);
+    }
     const modes: (EditingMode | null)[] = [null];
     if (this.editingGeom == null) {
       modes.push("point", "line", "circular", "polygon", "triangle");
@@ -717,7 +791,7 @@ export class PostgisEditor extends Model({
         this.editingGeom.kind === "GeometryCollection")
     ) {
       actions.push("group-collection");
-      const geomKinds = new Set<Geometry["kind"]>();
+      const geomKinds = new Set<Geometry["kind"] | "Box">();
       for (const geom of this.selectedGeoms) {
         geomKinds.add(geom.kind);
       }
@@ -734,8 +808,9 @@ export class PostgisEditor extends Model({
   @action
   applyGeomAction(action: GeomAction) {
     if (!this.availableGeomActions.has(action)) return;
+    this.isEdited = true;
     if (action === "ungroup") {
-      const geom = [...this.selectedGeoms][0];
+      const geom = [...this.selectedGeoms][0] as Geometry;
       this.deselectAllGeoms();
       const childGeoms = (geom as MultiGeometry).geoms;
       this.geomMapping.removeGeom(geom.id);
@@ -749,7 +824,7 @@ export class PostgisEditor extends Model({
         geomParent.replaceGeoms([geom], childGeoms);
       }
     } else if (action === "group-multi" || action === "group-collection") {
-      const geoms = [...this.selectedGeoms];
+      const geoms = [...this.selectedGeoms] as Geometry[];
       this.deselectAllGeoms();
       const parentGeom = this.editingGeom as MultiGeometry;
       const newKind =
@@ -782,6 +857,7 @@ export class PostgisEditor extends Model({
 
   @action
   startLineEdit(edit: this["activeLineEdit"]) {
+    this.isEdited = true;
     this.activeLineEdit = edit;
     window.addEventListener("mousemove", this._updateLineEditMousePoint);
   }
@@ -851,7 +927,7 @@ export class PostgisEditor extends Model({
     return geom;
   }
 
-  _findGeomParent(geom: Geometry) {
+  _findGeomParent(geom: Geometry | Box) {
     while (geom.parent) {
       if (geom.parent === this.editingGeom) {
         break;
@@ -872,7 +948,11 @@ export class PostgisEditor extends Model({
   _initEvents(map: maplibregl.Map) {
     let mouseState:
       | ((
-          | {geom: Geometry; editSource: boolean; lastLatLng: [number, number]}
+          | {
+              geom: Geometry | Box;
+              editSource: boolean;
+              lastLatLng: [number, number];
+            }
           | {geom: null}
         ) & {startPos: maplibregl.Point; dragging: boolean; shiftKey: boolean})
       | null = null;
@@ -944,7 +1024,7 @@ export class PostgisEditor extends Model({
           if (mouseState.shiftKey) {
             // shift key + drag = box selection
             this.startDragSelection(mouseState.startPos);
-          } else if (mouseState.geom) {
+          } else if (!this.readonly && mouseState.geom) {
             // started dragging on geometry
             if (
               this.selectedGeoms.has(mouseState.geom) ||
@@ -966,7 +1046,7 @@ export class PostgisEditor extends Model({
               return;
             }
           } else {
-            // dragging on map so ignore further mousemove
+            // dragging on map or readonly so ignore further mousemove
             window.removeEventListener("mousemove", mouseMoveHandler, {
               capture: true,
             });
@@ -991,6 +1071,7 @@ export class PostgisEditor extends Model({
         ] as [number, number];
         mouseState.lastLatLng = lngLat.toArray();
         runInAction(() => {
+          this.isEdited = true;
           for (const geom of this.selectedGeoms) {
             geom.translate(diff);
           }
@@ -1063,7 +1144,7 @@ export class PostgisEditor extends Model({
   }
 
   @action
-  selectGeom(geom: Geometry) {
+  selectGeom(geom: Geometry | Box) {
     if (this.selectedGeoms.has(geom)) {
       return;
     }
@@ -1080,7 +1161,7 @@ export class PostgisEditor extends Model({
   }
 
   @action
-  toggleGeomSelection(geom: Geometry) {
+  toggleGeomSelection(geom: Geometry | Box) {
     if (this.selectedGeoms.has(geom)) {
       for (const id of geom.featureIds) {
         this.map!.removeFeatureState(
@@ -1123,7 +1204,7 @@ export class PostgisEditor extends Model({
   }
 
   dragSelectItemBounds:
-    | {geom: Geometry; bounds: PlainPoint | PlainPoint[]}[]
+    | {geom: Geometry | Box; bounds: PlainPoint | PlainPoint[]}[]
     | null = null;
 
   @observable
@@ -1264,7 +1345,10 @@ export class PostgisEditor extends Model({
     } else {
       const containerGeom = this.geomMapping.addGeom(
         (id) =>
-          new MultiGeometry(id, "GeometryCollection", [this.data!, newGeom])
+          new MultiGeometry(id, "GeometryCollection", [
+            this.data as Geometry,
+            newGeom,
+          ])
       );
       this.data = containerGeom;
       return containerGeom;

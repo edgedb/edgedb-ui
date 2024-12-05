@@ -1,14 +1,22 @@
-import {Fragment, FunctionComponent, useRef, useState} from "react";
+import {
+  FunctionComponent,
+  PropsWithChildren,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {observer} from "mobx-react-lite";
 
+import * as PostGIS from "edgedb/dist/datatypes/postgis";
 import {
   Geometry,
-  MultiGeometry,
   LineString,
   Point,
   Polygon,
   ListItem,
   ListItemWrapper,
+  Box,
+  ListItemPointWrapper,
 } from "./editableGeom/types";
 import {ListItemRowHeight, PostgisEditor} from "./state";
 
@@ -16,32 +24,22 @@ import cn from "@edgedb/common/utils/classNames";
 
 import styles from "./postgisViewer.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
-import {ChevronDownIcon, OverflowMenuIcon} from "@edgedb/common/newui";
+import {
+  ChevronDownIcon,
+  CopyIcon,
+  OverflowMenuIcon,
+} from "@edgedb/common/newui";
 import {runInAction} from "mobx";
-
-function getExpandItemToggle(geom: Geometry) {
-  return (
-    <div
-      className={cn(styles.expandToggle, {
-        [styles.expanded]: geom.listItemExpanded,
-      })}
-      onClick={() =>
-        runInAction(() => {
-          geom.listItemExpanded = !geom.listItemExpanded;
-        })
-      }
-    >
-      <ChevronDownIcon />
-    </div>
-  );
-}
+import {convertFromEditableGeometry} from "./editableGeom/convert";
 
 function PointInput({
   value,
   onChange,
+  readonly,
 }: {
   value: number;
   onChange: (val: number) => void;
+  readonly: boolean;
 }) {
   const [editingValue, setEditingValue] = useState<string | null>(null);
 
@@ -57,6 +55,7 @@ function PointInput({
         }
       }}
       size={14}
+      readOnly={readonly}
     />
   );
 }
@@ -66,27 +65,46 @@ const PointRenderer = observer(function _PointRenderer({
   geom,
 }: {
   state: PostgisEditor;
-  geom: Point;
+  geom: Point | ListItemPointWrapper;
 }) {
+  const point = geom instanceof Point ? geom : geom.geom;
+  const selectedParentDepth = getSelectedParentDepth(state, geom);
+  const selfSelected = state.selectedGeoms.has(point);
+
   return (
-    <div className={cn(styles.listItemPoint, {})}>
+    <div
+      className={cn(styles.listPointItem, {
+        [styles.selected]: selfSelected || selectedParentDepth !== null,
+        [styles.selfSelected]:
+          selfSelected &&
+          (geom.parent instanceof LineString ||
+            geom.parent?.kind === "MultiPoint"),
+      })}
+      style={
+        {"--selectedDepth": selectedParentDepth ?? point.listDepth} as any
+      }
+    >
+      <div className={styles.leftFade} />
       <div className={styles.points}>
         <div className={styles.pointLabel}>x</div>
         <PointInput
-          value={geom.point[0]}
-          onChange={(val) => state.updatePointCoord(geom, 0, val)}
+          value={point.point[0]}
+          onChange={(val) => state.updatePointCoord(point, 0, val)}
+          readonly={state.readonly}
         />
         <div className={styles.pointLabel}>y</div>
         <PointInput
-          value={geom.point[1]}
-          onChange={(val) => state.updatePointCoord(geom, 1, val)}
+          value={point.point[1]}
+          onChange={(val) => state.updatePointCoord(point, 1, val)}
+          readonly={state.readonly}
         />
         {state.hasZ ? (
           <>
             <div className={styles.pointLabel}>z</div>
             <PointInput
-              value={geom.point.length > 2 ? geom.point[2]! : 0}
-              onChange={(val) => state.updatePointCoord(geom, 2, val)}
+              value={point.point.length > 2 ? point.point[2]! : 0}
+              onChange={(val) => state.updatePointCoord(point, 2, val)}
+              readonly={state.readonly}
             />
           </>
         ) : null}
@@ -94,24 +112,154 @@ const PointRenderer = observer(function _PointRenderer({
           <>
             <div className={styles.pointLabel}>m</div>
             <PointInput
-              value={geom.m ?? 0}
-              onChange={(val) => state.updatePointMValue(geom, val)}
+              value={point.m ?? 0}
+              onChange={(val) => state.updatePointMValue(point, val)}
+              readonly={state.readonly}
             />
           </>
         ) : null}
       </div>
+      <div className={styles.rightFade} />
     </div>
   );
 }) as GeometryRenderer;
 
-function isParentSelected(state: PostgisEditor, geom: Geometry): boolean {
-  if (!state.selectedGeoms.size) return false;
+function getSelectedParentDepth(
+  state: PostgisEditor,
+  geom: {parent: Geometry | null}
+): number | null {
+  if (!state.selectedGeoms.size) return null;
   let parent = geom.parent;
   while (parent) {
-    if (state.selectedGeoms.has(parent)) return true;
+    if (state.selectedGeoms.has(parent)) return parent.listDepth;
     parent = parent.parent;
   }
-  return false;
+  return null;
+}
+
+const StickyHeader = observer(function StickyHeader({
+  state,
+  geom,
+  noExpand,
+  isEmpty,
+  children,
+}: PropsWithChildren<{
+  state: PostgisEditor;
+  geom: Geometry | Box;
+  noExpand?: boolean;
+  isEmpty?: boolean;
+}>) {
+  const selectedParentDepth = getSelectedParentDepth(state, geom);
+
+  return (
+    <div
+      className={cn(styles.listHeaderItem, {
+        [styles.selected]: state.selectedGeoms.has(geom),
+        [styles.expanded]: !noExpand && !isEmpty && geom.listItemExpanded,
+        [styles.parentSelected]: selectedParentDepth !== null,
+      })}
+      style={{"--selectedParentDepth": selectedParentDepth} as any}
+    >
+      <div className={styles.inner}>
+        {!noExpand && !isEmpty ? (
+          <div
+            className={cn(styles.expandToggle, {
+              [styles.expanded]: geom.listItemExpanded,
+            })}
+            onClick={() =>
+              runInAction(() => {
+                geom.listItemExpanded = !geom.listItemExpanded;
+              })
+            }
+          >
+            <ChevronDownIcon />
+          </div>
+        ) : null}
+
+        <div className={styles.name}>
+          {children}{" "}
+          {isEmpty ? (
+            <>
+              {"( "}
+              <span>empty</span>
+              {" )"}
+            </>
+          ) : geom.listItemExpanded ? (
+            "("
+          ) : (
+            <>
+              {"("}
+              <span>...</span>
+              {")"}
+            </>
+          )}
+        </div>
+
+        <OverflowMenu
+          items={[
+            {
+              label: "Copy",
+              icon: <CopyIcon />,
+              action: () => {
+                const converted = convertFromEditableGeometry(geom, state)!;
+                const wkt =
+                  converted instanceof PostGIS.Geometry
+                    ? converted.toWKT(2)
+                    : converted.toString();
+                navigator.clipboard?.writeText(wkt);
+              },
+            },
+          ]}
+        />
+      </div>
+    </div>
+  );
+});
+
+function OverflowMenu({
+  items,
+}: {
+  items: {label: string; icon: JSX.Element; action: () => void}[];
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const listener = (e: MouseEvent) => {
+        if (!ref.current?.contains(e.target as Node)) {
+          setOpen(false);
+        }
+      };
+
+      window.addEventListener("mousedown", listener, {capture: true});
+
+      return () => {
+        window.removeEventListener("mousedown", listener, {capture: true});
+      };
+    }
+  }, [open]);
+
+  return (
+    <div
+      ref={ref}
+      className={cn(styles.overflowMenu, {[styles.open]: open})}
+      onClick={() => setOpen(!open)}
+    >
+      <OverflowMenuIcon />
+
+      {open ? (
+        <div className={styles.popup}>
+          {items.map((item, i) => (
+            <div key={i} className={styles.item} onClick={() => item.action()}>
+              {item.icon}
+              {item.label}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 const LineStringRenderer = observer(function _LineStringRenderer({
@@ -122,148 +270,51 @@ const LineStringRenderer = observer(function _LineStringRenderer({
   geom: LineString;
 }) {
   return (
-    <>
-      <div
-        className={cn(styles.listItem, {
-          [styles.selected]: state.selectedGeoms.has(geom),
-          [styles.expanded]: geom.listItemExpanded,
-          [styles.parentSelected]: isParentSelected(state, geom),
-        })}
-      >
-        <div className={styles.inner}>
-          {getExpandItemToggle(geom)}
-          <div className={styles.header}>
-            {geom.kind === "LineString" && geom.parent instanceof Polygon
-              ? "LinearRing"
-              : geom.kind}{" "}
-            {"("}
-            {!geom.listItemExpanded ? (
-              <>
-                <span>...</span>
-                {")"}
-              </>
-            ) : null}
-          </div>
-          <div className={styles.actions}>
-            <OverflowMenuIcon />
-          </div>
-        </div>
-      </div>
-      {state.selectedGeoms.has(geom) && geom.listItemExpanded ? (
-        <div className={styles.selectedBackground} />
-      ) : null}
-    </>
+    <StickyHeader state={state} geom={geom}>
+      {geom.kind === "LineString" && geom.parent instanceof Polygon ? (
+        <span>LinearRing</span>
+      ) : (
+        geom.kind
+      )}
+    </StickyHeader>
   );
 }) as GeometryRenderer;
 
-const CompoundCurveRenderer = observer(function _CompoundCurveRenderer({
+const BaseGeometryRenderer = (({
   state,
   geom,
 }: {
   state: PostgisEditor;
-  geom: LineString;
-}) {
-  return (
-    <div
-      className={cn(styles.listItem, {})}
-      style={{"--itemDepth": geom.listDepth} as any}
-    >
-      {getExpandItemToggle(geom)}
-      <div className={styles.header}>
-        {geom.kind === "LineString" && geom.parent instanceof Polygon
-          ? "LinearRing"
-          : geom.kind}{" "}
-        {"("}
-        {!geom.listItemExpanded ? (
-          <>
-            <span>...</span>
-            {")"}
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
-}) as GeometryRenderer;
+  geom: Geometry;
+}) => (
+  <StickyHeader state={state} geom={geom}>
+    {geom.kind}
+  </StickyHeader>
+)) as GeometryRenderer;
 
-const PolygonRenderer = observer(function _PolygonRenderer({
+const BoxRenderer = (({state, geom}: {state: PostgisEditor; geom: Box}) => (
+  <StickyHeader state={state} geom={geom} noExpand>
+    {geom.kind}
+  </StickyHeader>
+)) as GeometryRenderer;
+
+const PointHeaderRender = (({
   state,
   geom,
 }: {
   state: PostgisEditor;
-  geom: Polygon;
-}) {
-  return (
-    <>
-      <div
-        className={cn(styles.listItem, {
-          [styles.selected]: state.selectedGeoms.has(geom),
-          [styles.expanded]: geom.listItemExpanded,
-          [styles.parentSelected]: isParentSelected(state, geom),
-        })}
-      >
-        <div className={styles.inner}>
-          {getExpandItemToggle(geom)}
-          <div className={styles.header}>
-            {geom.kind} {"("}
-            {!geom.listItemExpanded ? (
-              <>
-                <span>...</span>
-                {")"}
-              </>
-            ) : null}
-          </div>
-          <div className={styles.actions}>
-            <OverflowMenuIcon />
-          </div>
-        </div>
-      </div>
-      {state.selectedGeoms.has(geom) && geom.listItemExpanded ? (
-        <div className={styles.selectedBackground} />
-      ) : null}
-    </>
-  );
-}) as GeometryRenderer;
+  geom: ListItemWrapper;
+}) => (
+  <StickyHeader
+    state={state}
+    geom={geom.geom}
+    isEmpty={(geom.geom as Point).isEmpty}
+  >
+    Point
+  </StickyHeader>
+)) as GeometryRenderer;
 
-const MultiGeometryRenderer = observer(function _MultiGeometryRenderer({
-  state,
-  geom,
-}: {
-  state: PostgisEditor;
-  geom: MultiGeometry;
-}) {
-  return (
-    <>
-      <div
-        className={cn(styles.listItem, {
-          [styles.selected]: state.selectedGeoms.has(geom),
-          [styles.expanded]: geom.listItemExpanded,
-          [styles.parentSelected]: isParentSelected(state, geom),
-        })}
-      >
-        <div className={styles.inner}>
-          {getExpandItemToggle(geom)}
-          <div className={styles.header}>
-            {geom.kind} {"("}
-            {!geom.listItemExpanded ? (
-              <>
-                <span>...</span>
-                {")"}
-              </>
-            ) : null}
-          </div>
-          <div className={styles.actions}>
-            <OverflowMenuIcon />
-          </div>
-        </div>
-      </div>
-      {state.selectedGeoms.has(geom) && geom.listItemExpanded ? (
-        <div className={styles.selectedBackground} />
-      ) : null}
-    </>
-  );
-}) as GeometryRenderer;
-
-const DuplicatePointRender: GeometryRenderer = ({state, geom}) => (
+const ClosingPointRender: GeometryRenderer = ({state, geom}) => (
   <PointRenderer state={state} geom={(geom as ListItemWrapper).geom} />
 );
 
@@ -274,15 +325,17 @@ const EndPlaceholderRenderer = observer(function _EndPlaceholderRenderer({
   state: PostgisEditor;
   geom: ListItemWrapper;
 }) {
+  const selectedParentDepth = getSelectedParentDepth(state, item.geom);
+
   return (
     <div
-      className={cn(styles.listItem, styles.endBracket, {
+      className={cn(styles.endBracket, {
         [styles.startSelected]: state.selectedGeoms.has(item.geom),
-        [styles.parentSelected]: isParentSelected(state, item.geom),
+        [styles.parentSelected]: selectedParentDepth !== null,
       })}
-      style={{"--parentLength": item.geom.listItems.length - 2} as any}
+      style={{"--selectedParentDepth": selectedParentDepth} as any}
     >
-      <div className={styles.header}>{")"}</div>
+      {")"}
     </div>
   );
 }) as GeometryRenderer;
@@ -292,18 +345,13 @@ type GeometryRenderer = FunctionComponent<{
   geom: ListItem;
 }>;
 
-const renderers: {[key in ListItem["kind"]]: GeometryRenderer} = {
+const renderers: {[key in ListItem["kind"]]?: GeometryRenderer} = {
+  Box: BoxRenderer,
   Point: PointRenderer,
   LineString: LineStringRenderer,
-  CompoundCurve: CompoundCurveRenderer,
   CircularString: LineStringRenderer,
-  Polygon: PolygonRenderer,
-  Triangle: PolygonRenderer,
-  MultiPoint: MultiGeometryRenderer,
-  MultiLineString: MultiGeometryRenderer,
-  MultiPolygon: MultiGeometryRenderer,
-  GeometryCollection: MultiGeometryRenderer,
-  __Point: DuplicatePointRender,
+  __PointHeader: PointHeaderRender,
+  __PointWrapper: PointRenderer,
   __ListItemEndPlaceholder: EndPlaceholderRenderer,
 };
 
@@ -319,6 +367,71 @@ export const WKTRenderer = observer(function _WKTRenderer({
   const listItems = state.data?.listItems ?? [];
   const [startIndex, endIndex] = state.visibleListItemIndexes;
 
+  const seenParents = new Set<Geometry | Box>();
+  const parents: JSX.Element[] = [];
+  const items: JSX.Element[] = [];
+
+  let i = 0;
+  for (const item of listItems.slice(startIndex, endIndex)) {
+    const isWrapper =
+      item.kind === "__PointHeader" ||
+      item.kind === "__ListItemEndPlaceholder" ||
+      item.kind === "__PointWrapper";
+    const geom = isWrapper ? item.geom : (item as Geometry);
+
+    const Renderer = renderers[item.kind] ?? BaseGeometryRenderer;
+    items.push(
+      <div
+        key={item.id}
+        className={styles.listItemWrapper}
+        style={
+          {
+            gridRow: `${startIndex + 1 + i++} / span ${
+              (isWrapper && item.kind !== "__PointHeader") ||
+              item.kind === "Point"
+                ? 1
+                : Math.max(1, geom.listItems.length - 1)
+            }`,
+            "--itemDepth":
+              geom.listDepth +
+              (item.kind === "Point" && !(item.parent instanceof LineString)
+                ? 1
+                : 0),
+          } as any
+        }
+      >
+        <Renderer state={state} geom={item} />
+      </div>
+    );
+    seenParents.add(geom);
+
+    if (item.kind === "__PointWrapper" ? item.parent : geom.parent) {
+      let parent: Geometry | null = geom.parent;
+      while (parent && !seenParents.has(parent)) {
+        const Renderer = renderers[parent.kind] ?? BaseGeometryRenderer;
+        parents.unshift(
+          <div
+            key={parent.id}
+            className={styles.listItemWrapper}
+            style={
+              {
+                gridRow: `${listItems.indexOf(parent) + 1} / span ${Math.max(
+                  1,
+                  parent.listItems.length - 1
+                )}`,
+                "--itemDepth": parent.listDepth,
+              } as any
+            }
+          >
+            <Renderer state={state} geom={parent} />
+          </div>
+        );
+        seenParents.add(parent);
+        parent = parent.parent;
+      }
+    }
+  }
+
   return (
     <div
       ref={ref}
@@ -331,42 +444,8 @@ export const WKTRenderer = observer(function _WKTRenderer({
         className={styles.listInner}
         style={{height: listItems.length * ListItemRowHeight}}
       >
-        {listItems.map((item, i) => {
-          if (
-            (i < startIndex || i > endIndex) &&
-            !(
-              item.kind !== "__ListItemEndPlaceholder" &&
-              item.kind !== "__Point" &&
-              i < endIndex &&
-              i + (item as Geometry).listItems.length > startIndex
-            )
-          ) {
-            return null;
-          }
-
-          const isWrapper =
-            item.kind === "__ListItemEndPlaceholder" ||
-            item.kind === "__Point";
-          const geom = isWrapper ? item.geom : (item as Geometry);
-
-          const Renderer = renderers[item.kind];
-          return (
-            <div
-              key={item.id}
-              className={styles.listItemWrapper}
-              style={
-                {
-                  gridRow: `${i + 1} / span ${
-                    isWrapper ? 1 : Math.max(1, geom.listItems.length - 1)
-                  }`,
-                  "--itemDepth": geom.listDepth,
-                } as any
-              }
-            >
-              <Renderer state={state} geom={item} />
-            </div>
-          );
-        })}
+        {parents}
+        {items}
       </div>
     </div>
   );
