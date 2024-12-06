@@ -7,17 +7,18 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {PerfStatsState, QueryStats} from "./state";
 
 import styles from "./perfStats.module.scss";
+import {formatDurationLabel} from "./utils";
 
 export const StatsChart = observer(function StatsChart({
   state,
 }: {
   state: PerfStatsState;
 }) {
-  const stats = state.stats;
+  const stats = state.tagFilteredStats;
 
   const chart = useMemo(() => calculateHistogram(stats), [stats]);
 
-  const [hoveredBucketIndex, setHoveredBucketIndex] = useState<number>(10);
+  const [hoveredBucketIndex, setHoveredBucketIndex] = useState<number>(-1);
   const hoveredBucket = chart?.data[hoveredBucketIndex] ?? null;
 
   const [height, setHeight] = useState(150);
@@ -51,6 +52,7 @@ export const StatsChart = observer(function StatsChart({
     >
       {chart ? (
         <div className={styles.chartLayout}>
+          <div className={styles.yAxisName}>Call count</div>
           <div
             className={styles.yaxis}
             style={{margin: `${height / 102}px 0`}}
@@ -162,7 +164,7 @@ export const StatsChart = observer(function StatsChart({
                 className={styles.axisLabel}
                 style={{left: `${left}%`}}
               >
-                <div>{formatDurationAxisLabel({start: value})}</div>
+                <div>{formatDurationLabel({start: value})}</div>
               </div>
             ))}
             {hoveredBucket ? (
@@ -174,10 +176,11 @@ export const StatsChart = observer(function StatsChart({
                   }%`,
                 }}
               >
-                <div>{formatDurationAxisLabel(hoveredBucket)}</div>
+                <div>{formatDurationLabel(hoveredBucket)}</div>
               </div>
             ) : null}
           </div>
+          <div className={styles.xAxisName}>Mean exec time</div>
         </div>
       ) : null}
     </div>
@@ -335,57 +338,4 @@ function formatCount(value: number) {
       <span>{units[mag]}</span>
     </>
   );
-}
-
-function formatDurationAxisLabel({start, end}: {start: number; end?: number}) {
-  if ((end ?? start) < 1) {
-    return (
-      <>
-        {start.toPrecision(1)}
-        {end ? ` - ${end.toPrecision(1)}` : null}
-        <span>ms</span>
-      </>
-    );
-  }
-  if ((end ?? start) <= 100) {
-    return (
-      <>
-        {start}
-        {end ? ` - ${end}` : null}
-        <span>ms</span>
-      </>
-    );
-  }
-  if ((end ?? start) <= 1000) {
-    return (
-      <>
-        {start / 1000}
-        {end ? ` - ${end / 1000}` : null}
-        <span>s</span>
-      </>
-    );
-  }
-  // if (duration < 60_000) {
-  //   return (
-  //     <>
-  //       {(duration / 1000).toFixed(2)}
-  //       <span>s</span>
-  //     </>
-  //   );
-  // }
-  // if (duration < 3_600_000) {
-  //   return (
-  //     <>
-  //       {(duration / 60_000).toFixed(2)}
-  //       <span>m</span>
-  //     </>
-  //   );
-  // }
-  // return (
-  //   <>
-  //     {(duration / 3_600_000).toFixed(2)}
-  //     <span>h</span>
-  //   </>
-  // );
-  return null;
 }

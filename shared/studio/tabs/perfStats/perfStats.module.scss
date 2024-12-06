@@ -91,12 +91,14 @@
   transition: margin 0.25s, border-radius 0.25s;
 
   &:first-child {
-    border-radius: 12px 12px 0 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
   }
 
   &:last-child {
     border-bottom-width: 1px;
-    border-radius: 0 0 12px 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
   }
 
   .query,
@@ -317,8 +319,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
 
-  .query {
+  .queryWrapper {
     border-right: 1px solid var(--panel_border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  .query {
+    flex-grow: 1;
     overflow: auto;
 
     pre {
@@ -341,18 +351,26 @@
       color: var(--tertiary_text_color);
     }
   }
+
+  .runAnalyzeQuery {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    --buttonPrimaryBackground: var(--app-accent-green);
+  }
 }
 
 .statsChart {
   display: flex;
-  height: 200px;
+  height: 240px;
   width: 100%;
   max-width: 1200px;
   box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid var(--panel_border);
   background: var(--header_background);
-  padding: 16px 32px 32px 18px;
+  padding: 8px 32px 8px 18px;
   margin-bottom: 24px;
 }
 
@@ -360,10 +378,31 @@
   flex-grow: 1;
   display: grid;
   grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto 1fr 24px auto;
+
+  .xAxisName,
+  .yAxisName {
+    font-size: 13px;
+    color: var(--tertiary_text_color);
+    font-weight: 450;
+  }
+
+  .xAxisName {
+    grid-area: 4 / 2;
+    justify-self: end;
+    margin-top: 4px;
+    margin-right: -22px;
+  }
+  .yAxisName {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+    margin-bottom: 12px;
+    margin-left: -6px;
+    z-index: 1;
+  }
 
   svg {
-    grid-area: 1 / 2;
+    grid-area: 2 / 2;
     fill: var(--Grey70);
     stroke: var(--header_background);
     width: 100%;
@@ -407,7 +446,7 @@
   }
 
   .xaxis {
-    grid-area: 2 / 2;
+    grid-area: 3 / 2;
     position: relative;
 
     .axisLabel,
@@ -438,7 +477,7 @@
   }
 
   .yaxis {
-    grid-area: 1 / 1;
+    grid-area: 2 / 1;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -475,5 +514,139 @@
         padding: 8px 8px 8px 0;
       }
     }
+  }
+}
+
+.filters {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.tagFilter,
+.execTimeFilter {
+  display: flex;
+  column-gap: 8px;
+  align-items: center;
+}
+.tagFilter {
+  flex-grow: 1;
+}
+
+.tagFilterField {
+  position: relative;
+  flex-grow: 1;
+
+  .input {
+    background: var(--panel_background);
+    border: 1px solid var(--panel_border);
+    display: flex;
+    align-items: center;
+    height: 38px;
+    border-radius: 8px;
+    padding: 0 8px 0 6px;
+    cursor: pointer;
+  }
+
+  .tagsList {
+    flex-grow: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .tag {
+      background: var(--Grey95);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 13px;
+      font-weight: 450;
+
+      &.group,
+      &.untagged {
+        font-family: "Roboto Flex Variable", sans-serif;
+        font-size: 14px;
+      }
+      &.untagged {
+        color: var(--tertiary_text_color);
+        font-style: italic;
+      }
+    }
+  }
+
+  .dropdown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel_background);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    padding: 8px 10px;
+    z-index: 10;
+    opacity: 0;
+    transform: translateY(16px);
+    pointer-events: none;
+    transition: transform 0.2s, opacity 0.2s;
+
+    &.open {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .header:not(:first-child) {
+      margin-top: 12px;
+      color: var(--secondary_text_color);
+    }
+
+    .item {
+      margin-left: 16px;
+      font-family: "Roboto Mono Variable", monospace;
+      font-size: 13px;
+      font-weight: 425;
+
+      span {
+        font-style: italic;
+        font-family: "Roboto Flex Variable", sans-serif;
+        font-size: 14px;
+        color: var(--tertiary_text_color);
+      }
+    }
+  }
+}
+
+.execTimeFilterField {
+  background: var(--panel_background);
+  border: 1px solid var(--panel_border);
+  display: flex;
+  align-items: center;
+  height: 38px;
+  border-radius: 8px;
+  padding-left: 12px;
+  white-space: pre;
+
+  span {
+    opacity: 0.7;
+    margin-left: 1px;
+  }
+
+  .resetFilter {
+    height: 38px;
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .noFilter {
+    margin-right: 16px;
+    color: var(--tertiary_text_color);
+    font-style: italic;
   }
 }

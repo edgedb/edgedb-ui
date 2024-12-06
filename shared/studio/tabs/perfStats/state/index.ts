@@ -1,10 +1,16 @@
 import {action, computed, observable, runInAction} from "mobx";
-import {Model, model} from "mobx-keystone";
+import {Model, model, prop} from "mobx-keystone";
+import {Text} from "@codemirror/state";
 import {connCtx} from "../../../state";
 import {
   createExplainState,
   ExplainState,
 } from "../../../components/explainVis/state";
+import {
+  paramsQueryCtx,
+  QueryParamsEditor,
+} from "../../queryEditor/state/parameters";
+import {Language} from "edgedb/dist/ifaces";
 
 export type QueryType = "EdgeQL" | "SQL";
 
@@ -12,8 +18,8 @@ export interface QueryStats {
   id: string;
   branchName: string;
   query: string;
-  query_id: number;
   query_type: QueryType;
+  tag: string | null;
 
   plans: BigInt;
   totalPlanTime: number;
@@ -42,11 +48,27 @@ export interface OrderBy {
 export interface AnalyseQueryState {
   query: string;
   explainState: ExplainState | null;
-  controller: AbortController;
+  controller: AbortController | null;
+}
+
+export enum TagFilterGroup {
+  App,
+  Repl,
+  Internal,
+}
+
+function getTagGroup(tag: string | null): TagFilterGroup {
+  return tag === "gel/repl" || tag === "gel/webrepl"
+    ? TagFilterGroup.Repl
+    : tag?.startsWith("gel/")
+    ? TagFilterGroup.Internal
+    : TagFilterGroup.App;
 }
 
 @model("PerfStats")
-export class PerfStatsState extends Model({}) {
+export class PerfStatsState extends Model({
+  paramsEditor: prop(() => new QueryParamsEditor({lang: Language.EDGEQL})),
+}) {
   @observable.ref
   stats: QueryStats[] | null = null;
 
@@ -65,7 +87,7 @@ export class PerfStatsState extends Model({}) {
   @computed
   get maxExecTime() {
     return Math.max(
-      ...(this.filteredStats?.map((stat) => stat.maxExecTime) ?? [])
+      ...(this.tableFilteredStats?.map((stat) => stat.maxExecTime) ?? [])
     );
   }
 
@@ -100,11 +122,66 @@ export class PerfStatsState extends Model({}) {
   }
 
   @computed
-  get filteredStats() {
+  get allTags() {
+    const groups: {[key in TagFilterGroup]: string[]} = {
+      [TagFilterGroup.App]: [""],
+      [TagFilterGroup.Repl]: ["gel/repl", "gel/webrepl"],
+      [TagFilterGroup.Internal]: [],
+    };
+    const tags = new Set(this.stats?.map((stat) => stat.tag));
+    for (const tag of [null, "gel/repl", "gel/webrepl"]) {
+      tags.delete(tag);
+    }
+    for (const tag of [...tags]) {
+      groups[getTagGroup(tag)].push(tag ?? "");
+    }
+    return groups;
+  }
+
+  @observable
+  tagsFilter = new Set<string | TagFilterGroup>([TagFilterGroup.App]);
+
+  @action
+  toggleTagFilter(tag: string | TagFilterGroup) {
+    if (typeof tag === "string") {
+      const group = getTagGroup(tag);
+      if (this.tagsFilter.has(group)) {
+        this.tagsFilter.delete(group);
+        for (const subtag of this.allTags[group]) {
+          this.tagsFilter.add(subtag);
+        }
+      }
+    } else {
+      for (const subtag of this.allTags[tag]) {
+        this.tagsFilter.delete(subtag);
+      }
+    }
+    if (this.tagsFilter.has(tag)) {
+      this.tagsFilter.delete(tag);
+    } else {
+      this.tagsFilter.add(tag);
+    }
+  }
+
+  @computed
+  get tagFilteredStats() {
     if (!this.stats) return null;
 
+    const selectedTags = new Set(
+      [...this.tagsFilter].flatMap((tag) =>
+        typeof tag === "string" ? tag : this.allTags[tag]
+      )
+    );
+
+    return this.stats.filter((stat) => selectedTags.has(stat.tag ?? ""));
+  }
+
+  @computed
+  get tableFilteredStats() {
+    if (!this.tagFilteredStats) return null;
+
     const {orderBy, timeFilter} = this;
-    let stats = [...this.stats];
+    let stats = [...this.tagFilteredStats];
     if (timeFilter) {
       stats = stats.filter(
         (stat) =>
@@ -119,7 +196,6 @@ export class PerfStatsState extends Model({}) {
           : (b[orderBy.field] as number) - (a[orderBy.field] as number)
       );
     });
-    // .filter((stat) => stat.meanExecTime < 1000)
   }
 
   fetching = false;
@@ -134,8 +210,8 @@ export class PerfStatsState extends Model({}) {
       select sys::QueryStats {
         branchName := .branch.name,
         query,
-        query_id,
         query_type,
+        tag,
 
         plans,
         totalPlanTime := duration_get(.total_plan_time, 'milliseconds'),
@@ -178,25 +254,49 @@ export class PerfStatsState extends Model({}) {
     }
   }
 
+  onInit() {
+    paramsQueryCtx.setComputed(this.paramsEditor, () =>
+      this.analyzeQuery ? Text.of(this.analyzeQuery.query.split("\n")) : null
+    );
+  }
+
   @observable
   analyzeQuery: AnalyseQueryState | null = null;
 
   @action
   setAnalyzeQuery(queryStr: string) {
-    const conn = connCtx.get(this)!;
+    const query = `analyze (execute := false)\n${queryStr.replace(
+      /<(__std__)::.*>\$/g,
+      (match) => "<std" + match.slice(8)
+    )}`;
 
-    const query = `analyze (execute := false)\n${queryStr}`;
+    this.paramsEditor.clear();
 
     this.analyzeQuery = {
       query,
       explainState: null,
-      controller: new AbortController(),
+      controller: null,
     };
+
+    this.paramsEditor._extractQueryParameters().then(() => {
+      if (this.paramsEditor.paramDefs.size === 0) {
+        this.runAnalyzeQuery();
+      }
+    });
+  }
+
+  @action
+  runAnalyzeQuery() {
+    if (!this.analyzeQuery) return;
+
+    const conn = connCtx.get(this)!;
+
+    this.analyzeQuery.controller = new AbortController();
 
     conn
       .query(
-        query,
-        undefined,
+        this.analyzeQuery.query,
+        this.paramsEditor.getQueryArgs(),
         {ignoreSessionConfig: true},
         this.analyzeQuery.controller.signal
       )
@@ -210,7 +310,7 @@ export class PerfStatsState extends Model({}) {
 
   @action
   closeAnalyzeQuery() {
-    this.analyzeQuery?.controller.abort();
+    this.analyzeQuery?.controller?.abort();
     this.analyzeQuery = null;
   }
 }

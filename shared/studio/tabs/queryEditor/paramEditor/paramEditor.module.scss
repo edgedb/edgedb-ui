@@ -92,6 +92,10 @@
 
 .paramEditorItem {
   display: contents;
+
+  &.inputDisabled {
+    pointer-events: none;
+  }
 }
 
 .paramDisabled {

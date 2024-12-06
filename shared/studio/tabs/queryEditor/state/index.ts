@@ -796,6 +796,7 @@ export class QueryEditor extends Model({
             {
               implicitLimit:
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+              replQueryTag: true,
             },
             this.runningQueryAbort?.signal,
             this.selectedEditor === EditorKind.SQL
