@@ -21,10 +21,12 @@ export const ParamsEditorPanel = observer(function ParamEditorPanel({
   state,
   runQuery,
   horizontalSplit,
+  disabled,
 }: {
   state: QueryParamsEditor;
   runQuery?: () => void;
   horizontalSplit?: boolean;
+  disabled?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,7 @@ export const ParamsEditorPanel = observer(function ParamEditorPanel({
                       "--" +
                       (param.error === null ? param.type.name : "error")
                     }
+                    disabled={disabled}
                   />
                 ))}
               </div>
@@ -133,12 +136,14 @@ interface ParamEditorProps {
   editorState: QueryParamsEditor;
   param: ResolvedParameter;
   lastParam: boolean;
+  disabled?: boolean;
 }
 
 const ParamEditor = observer(function ParamEditor({
   editorState,
   param,
   lastParam,
+  disabled,
 }: ParamEditorProps) {
   const paramData = editorState.currentParams[param.name];
 
@@ -147,6 +152,7 @@ const ParamEditor = observer(function ParamEditor({
   return (
     <div
       className={cn(styles.paramEditorItem, {
+        [styles.inputDisabled]: !!disabled,
         [styles.paramDisabled]:
           param.error == null && param.optional && paramData.disabled,
       })}
@@ -159,6 +165,7 @@ const ParamEditor = observer(function ParamEditor({
             onChange={(e) =>
               editorState.setDisabled(param.name, !e.target.checked)
             }
+            disabled={disabled}
           />
         ) : null}
       </div>

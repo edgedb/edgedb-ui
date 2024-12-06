@@ -505,6 +505,7 @@ export class Repl extends Model({
                 implicitLimitConfig != null
                   ? implicitLimitConfig + BigInt(1)
                   : undefined,
+              replQueryTag: true,
             },
             (this._runningQuery as AbortController).signal,
             this.language === ReplLang.SQL ? Language.SQL : Language.EDGEQL

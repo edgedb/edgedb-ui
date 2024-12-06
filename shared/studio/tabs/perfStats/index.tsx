@@ -13,6 +13,7 @@ import {useEffect} from "react";
 import {StatsTable} from "./statsTable";
 import {AnalyzeQueryPanel} from "./analyze";
 import {StatsChart} from "./statsChart";
+import {StatsFilters} from "./filters";
 
 export const PerformanceStats = observer(function PerformanceStats() {
   const state = useTabState(PerfStatsState);
@@ -29,6 +30,8 @@ export const PerformanceStats = observer(function PerformanceStats() {
         })}
       >
         <div className={styles.content}>
+          <StatsFilters state={state} />
+
           <StatsChart state={state} />
 
           <StatsTable state={state} />
@@ -37,6 +40,7 @@ export const PerformanceStats = observer(function PerformanceStats() {
 
       {state.analyzeQuery ? (
         <AnalyzeQueryPanel
+          perfStatsState={state}
           state={state.analyzeQuery}
           onClose={() => state.closeAnalyzeQuery()}
         />

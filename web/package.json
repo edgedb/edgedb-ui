@@ -19,7 +19,7 @@
     "@fontsource-variable/roboto-flex": "^5.1.0",
     "@fontsource-variable/roboto-mono": "^5.1.0",
     "buffer": "^6.0.3",
-    "edgedb": "1.6.0-canary.20241126T162412",
+    "edgedb": "1.6.0-canary.20241206T104839",
     "hash.js": "^1.1.7",
     "mobx": "^6.5.0",
     "mobx-keystone": "^1.11.0",

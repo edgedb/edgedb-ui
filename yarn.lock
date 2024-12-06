@@ -1007,7 +1007,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: 1.6.0-canary.20241126T162412
+    edgedb: 1.6.0-canary.20241206T104839
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1024,7 +1024,7 @@ __metadata:
     mobx-react-lite: ^4.0.0
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241126T162412
+    edgedb: 1.6.0-canary.20241206T104839
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1053,7 +1053,7 @@ __metadata:
     react-transition-group: ^4.4.1
     webcola: ^3.4.0
   peerDependencies:
-    edgedb: 1.6.0-canary.20241126T162412
+    edgedb: 1.6.0-canary.20241206T104839
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1088,7 +1088,7 @@ __metadata:
     react-markdown: ^9.0.1
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20241126T162412
+    edgedb: 1.6.0-canary.20241206T104839
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -4010,9 +4010,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:1.6.0-canary.20241126T162412":
-  version: 1.6.0-canary.20241126T162412
-  resolution: "edgedb@npm:1.6.0-canary.20241126T162412"
+"edgedb@npm:1.6.0-canary.20241206T104839":
+  version: 1.6.0-canary.20241206T104839
+  resolution: "edgedb@npm:1.6.0-canary.20241206T104839"
   dependencies:
     "@petamoriken/float16": ^3.8.7
     debug: ^4.3.4
@@ -4022,7 +4022,7 @@ __metadata:
     which: ^4.0.0
   bin:
     edgedb: dist/cli.mjs
-  checksum: 50c95c3e3085c11f51ed9476a851fe2e52c6bcdfc74b0fde57d7b71ad0ea4ea632908d139a50e3455d08c24f0ac29de08904a408baa5d8779915f2b187d4d5ab
+  checksum: 4fdf275ce1b01fab9d75011c4505b4de5cbb14c05f2fc2c5c658330818ab2d5fc60b91fbd4c5abdbbba6d66641094848f405c1f42b28e3eb3d46362bdebea5b4
   languageName: node
   linkType: hard
 
@@ -8455,7 +8455,7 @@ __metadata:
     "@types/selenium-webdriver": ^4.1.27
     "@vitejs/plugin-react-swc": ^3.5.0
     buffer: ^6.0.3
-    edgedb: 1.6.0-canary.20241126T162412
+    edgedb: 1.6.0-canary.20241206T104839
     eslint: ^9.13.0
     eslint-plugin-react-hooks: ^5.0.0
     eslint-plugin-react-refresh: ^0.4.14

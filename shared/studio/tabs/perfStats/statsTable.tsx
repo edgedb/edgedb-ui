@@ -38,7 +38,7 @@ export const StatsTable = observer(function StatsTable({
         </div>
       </div>
       <div className={styles.tableBody}>
-        {state.filteredStats?.map((stat) => (
+        {state.tableFilteredStats?.map((stat) => (
           <QueryStatsRow
             key={stat.id}
             state={state}
