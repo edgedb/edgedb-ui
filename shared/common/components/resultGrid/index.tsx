@@ -24,10 +24,12 @@ export {createResultGridState, ResultGridState} from "./state";
 
 export interface ResultGridProps extends Omit<DataGridProps, "state"> {
   state: ResultGridState;
+  bottomPadding?: number;
 }
 
 export const ResultGrid = observer(function ResultGrid({
   state,
+  bottomPadding,
   ...props
 }: ResultGridProps) {
   useEffect(() => {
@@ -51,7 +53,7 @@ export const ResultGrid = observer(function ResultGrid({
   return (
     <DataGrid state={state.grid} {...props}>
       <ResultGridHeaders state={state} />
-      <ResultGridContent state={state} />
+      <ResultGridContent state={state} bottomPadding={bottomPadding} />
     </DataGrid>
   );
 });
@@ -131,6 +133,7 @@ export const ResultGridHeaders = observer(function ResultGridHeaders({
 
 export const ResultGridContent = observer(function ResultGridContent({
   state,
+  bottomPadding,
 }: ResultGridProps) {
   const ranges = state.grid.visibleRanges;
   const rowTops = state.rowTops;
@@ -191,6 +194,7 @@ export const ResultGridContent = observer(function ResultGridContent({
       style={{"--gridHeaderHeight": state.grid.headerHeight + "px"} as any}
       state={state.grid}
       cells={cells}
+      bottomPadding={bottomPadding}
     />
   );
 });

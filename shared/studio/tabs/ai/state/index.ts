@@ -523,7 +523,7 @@ export class AIAdminState extends Model({
     try {
       const stream: SSEStream = yield* _await(
         runRAGQuery(
-          connectConfig,
+          connectConfig.data,
           request,
           this._runningPlaygroundAbortController
         )

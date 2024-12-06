@@ -217,11 +217,20 @@ export class Repl extends Model({
 
   scrollRef: HTMLDivElement | null = null;
 
+  @computed
+  get sqlModeSupported(): boolean {
+    const serverVersion = instanceCtx.get(this)!.serverVersion;
+    return !serverVersion || serverVersion.major >= 6;
+  }
+
   @observable
   language = ReplLang.EdgeQL;
 
   @action
   setLanguage(lang: ReplLang) {
+    if (lang === ReplLang.SQL && !this.sqlModeSupported) {
+      return;
+    }
     this.language = lang;
   }
 
