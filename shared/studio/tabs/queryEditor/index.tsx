@@ -8,6 +8,8 @@ import {
 } from "react";
 import {observer} from "mobx-react-lite";
 import {Text} from "@codemirror/state";
+import {KeyBinding} from "@codemirror/view";
+import {deleteLine} from "@codemirror/commands";
 import {sql, PostgreSQL} from "@codemirror/lang-sql";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -341,16 +343,22 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
   }, [ref, editorState.showHistory]);
 
   const keybindings = useMemo(
-    () => [
-      {
-        key: "Mod-Enter",
-        run: () => {
-          editorState.runQuery();
-          return true;
+    () =>
+      [
+        {
+          key: "Mod-Enter",
+          run: () => {
+            editorState.runQuery();
+            return true;
+          },
+          preventDefault: true,
         },
-        preventDefault: true,
-      },
-    ],
+        {
+          key: "Mod-d",
+          run: deleteLine,
+          preventDefault: true,
+        },
+      ] satisfies KeyBinding[],
     [editorState]
   );
 
