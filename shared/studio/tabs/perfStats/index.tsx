@@ -4,7 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {PerfStatsState} from "./state";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {TabDashboardIcon} from "../../icons";
+import {TabDashboardIcon, TabQueryStats} from "../../icons";
 
 import {useTabState} from "../../state";
 
@@ -52,7 +52,7 @@ export const PerformanceStats = observer(function PerformanceStats() {
 export const perfStatsTabSpec: DatabaseTabSpec = {
   path: "perf-stats",
   label: "Perf Stats",
-  icon: (active) => <TabDashboardIcon active={active} />,
+  icon: (active) => <TabQueryStats active={active} />,
   usesSessionState: false,
   element: <PerformanceStats />,
   state: PerfStatsState,

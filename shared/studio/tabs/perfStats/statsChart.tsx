@@ -1,4 +1,11 @@
-import {useEffect, useMemo, useRef, useState} from "react";
+import {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
@@ -7,19 +14,20 @@ import {useResize} from "@edgedb/common/hooks/useResize";
 import {PerfStatsState, QueryStats} from "./state";
 
 import styles from "./perfStats.module.scss";
-import {formatDurationLabel} from "./utils";
+import {formatDurationLabel, gradient} from "./utils";
+import {useGlobalDragCursor} from "@edgedb/common/hooks/globalDragCursor";
 
 export const StatsChart = observer(function StatsChart({
   state,
 }: {
   state: PerfStatsState;
 }) {
-  const stats = state.tagFilteredStats;
-
-  const chart = useMemo(() => calculateHistogram(stats), [stats]);
+  const chart = state.histogram;
 
   const [hoveredBucketIndex, setHoveredBucketIndex] = useState<number>(-1);
   const hoveredBucket = chart?.data[hoveredBucketIndex] ?? null;
+  const [_, setCursor] = useGlobalDragCursor();
+  const [dragHandlesHidden, setDragHandlesHidden] = useState(false);
 
   const [height, setHeight] = useState(150);
   const chartRef = useRef<SVGSVGElement>(null);
@@ -29,20 +37,62 @@ export const StatsChart = observer(function StatsChart({
     if (!chart) return [];
     const maxLog = Math.log10(chart.yAxisMax);
     const labels: {bottom: number; value: number}[] = [];
-    for (let i = 0; i < maxLog; i++) {
-      labels.push({bottom: (i / maxLog) * 95 + 5, value: 10 ** i});
+    if (maxLog > 0) {
+      for (let i = 0; i < maxLog; i++) {
+        labels.push({bottom: (i / maxLog) * 95 + 5, value: 10 ** i});
+      }
+    } else {
+      labels.push({bottom: 100, value: 1});
     }
     return labels;
   }, [chart?.yAxisMax, height]);
 
   const selectedBuckets = useMemo(() => {
     const filter = state.timeFilter;
-    return filter && chart
-      ? chart.data.filter(
-          (bucket) => bucket.start >= filter[0] && bucket.start < filter[1]
-        )
-      : null;
+    if (!filter || !chart) return null;
+    const buckets = chart.data.filter(
+      (bucket) => bucket.start >= filter[0] && bucket.start < filter[1]
+    );
+    return buckets.length ? buckets : null;
   }, [state.timeFilter, chart]);
+
+  const dragHandleMousedown = (start: boolean) => (e: React.MouseEvent) => {
+    if (!chart || !state.timeFilter) return;
+
+    const dragStart = state.timeFilter[start ? 1 : 0];
+    setCursor("ew-resize");
+
+    const moveListener = (e: MouseEvent) => {
+      const bbox = chartRef.current!.getBoundingClientRect();
+      const bucketIndex = Math.max(
+        0,
+        Math.min(
+          chart.data.length,
+          Math.round(
+            ((e.clientX - bbox.left) / bbox.width) * chart!.data.length
+          )
+        )
+      );
+      const time =
+        chart.data[bucketIndex]?.start ??
+        chart.data[chart.data.length - 1].end;
+      if (time !== dragStart) {
+        state.setTimeFilter(
+          time > dragStart ? [dragStart, time] : [time, dragStart]
+        );
+      }
+    };
+    moveListener(e.nativeEvent);
+    window.addEventListener("mousemove", moveListener);
+    window.addEventListener(
+      "mouseup",
+      () => {
+        window.removeEventListener("mousemove", moveListener);
+        setCursor(null);
+      },
+      {once: true}
+    );
+  };
 
   return (
     <div
@@ -73,10 +123,12 @@ export const StatsChart = observer(function StatsChart({
                 style={{
                   bottom: `${
                     hoveredBucket.count
-                      ? (Math.log10(hoveredBucket.count) /
-                          Math.log10(chart.yAxisMax)) *
-                          95 +
-                        5
+                      ? chart.yAxisMax > 1
+                        ? (Math.log10(hoveredBucket.count) /
+                            Math.log10(chart.yAxisMax)) *
+                            95 +
+                          5
+                        : 100
                       : 0
                   }%`,
                 }}
@@ -90,35 +142,65 @@ export const StatsChart = observer(function StatsChart({
             viewBox="0 -1 100 102"
             preserveAspectRatio="none"
             onMouseMove={(e) => {
-              const bbox = e.currentTarget.getBoundingClientRect();
+              const bbox = chartRef.current!.getBoundingClientRect();
               const bucketIndex = Math.floor(
                 ((e.clientX - bbox.left) / bbox.width) * chart.data.length
               );
               setHoveredBucketIndex(bucketIndex);
             }}
             onMouseLeave={() => setHoveredBucketIndex(-1)}
-            onClick={(e) => {
+            onMouseDown={(e) => {
               if (hoveredBucket) {
-                state.setTimeFilter(
-                  [hoveredBucket.start, hoveredBucket.end],
-                  e.shiftKey
+                const dragStart =
+                  e.shiftKey && state.timeFilter
+                    ? Math.abs(state.timeFilter[0] - hoveredBucket.start) >
+                      Math.abs(state.timeFilter[1] - hoveredBucket.start)
+                      ? state.timeFilter[0]
+                      : state.timeFilter[1]
+                    : null;
+                setCursor("ew-resize");
+                setDragHandlesHidden(true);
+
+                const moveListener = (e: MouseEvent) => {
+                  const bbox = chartRef.current!.getBoundingClientRect();
+                  const bucketIndex = Math.max(
+                    0,
+                    Math.min(
+                      chart.data.length - 1,
+                      Math.floor(
+                        ((e.clientX - bbox.left) / bbox.width) *
+                          chart.data.length
+                      )
+                    )
+                  );
+                  const bucket = chart.data[bucketIndex];
+                  if (dragStart !== null) {
+                    state.setTimeFilter(
+                      bucket.start >= dragStart
+                        ? [dragStart, bucket.end]
+                        : [bucket.start, dragStart]
+                    );
+                  } else {
+                    state.setTimeFilter([
+                      Math.min(hoveredBucket.start, bucket.start),
+                      Math.max(hoveredBucket.end, bucket.end),
+                    ]);
+                  }
+                };
+                moveListener(e.nativeEvent);
+                window.addEventListener("mousemove", moveListener);
+                window.addEventListener(
+                  "mouseup",
+                  () => {
+                    window.removeEventListener("mousemove", moveListener);
+                    setCursor(null);
+                    setDragHandlesHidden(false);
+                  },
+                  {once: true}
                 );
               }
             }}
           >
-            {selectedBuckets ? (
-              <rect
-                className={styles.selectedRect}
-                width={
-                  selectedBuckets[selectedBuckets.length - 1].rect.x -
-                  selectedBuckets[0].rect.x +
-                  selectedBuckets[0].rect.width
-                }
-                height={100}
-                x={selectedBuckets[0].rect.x}
-                y={0}
-              />
-            ) : null}
             {hoveredBucket ? (
               <>
                 <rect
@@ -157,6 +239,56 @@ export const StatsChart = observer(function StatsChart({
               ) : null
             )}
           </svg>
+          {selectedBuckets ? (
+            <>
+              <div className={styles.selectedBackground}>
+                <div
+                  style={{
+                    left: `${selectedBuckets[0].rect.x}%`,
+                    width: `${
+                      selectedBuckets[selectedBuckets.length - 1].rect.x -
+                      selectedBuckets[0].rect.x +
+                      selectedBuckets[0].rect.width
+                    }%`,
+                  }}
+                />
+              </div>
+              <div className={styles.selectedOutline}>
+                <div
+                  className={styles.outline}
+                  style={{
+                    left: `${selectedBuckets[0].rect.x}%`,
+                    width: `${
+                      selectedBuckets[selectedBuckets.length - 1].rect.x -
+                      selectedBuckets[0].rect.x +
+                      selectedBuckets[0].rect.width
+                    }%`,
+                  }}
+                />
+                {dragHandlesHidden ? null : (
+                  <>
+                    <div
+                      className={styles.handle}
+                      style={{
+                        left: `${selectedBuckets[0].rect.x}%`,
+                      }}
+                      onMouseDown={dragHandleMousedown(true)}
+                    />
+                    <div
+                      className={styles.handle}
+                      style={{
+                        left: `${
+                          selectedBuckets[selectedBuckets.length - 1].rect.x +
+                          selectedBuckets[0].rect.width
+                        }%`,
+                      }}
+                      onMouseDown={dragHandleMousedown(false)}
+                    />
+                  </>
+                )}
+              </div>
+            </>
+          ) : null}
           <div className={styles.xaxis}>
             {chart.xAxisLabels.map(({left, value}) => (
               <div
@@ -186,146 +318,6 @@ export const StatsChart = observer(function StatsChart({
     </div>
   );
 });
-
-const regions: {start: number; end: number}[] = [
-  {start: 0, end: 1},
-  {start: 1, end: 10},
-  {start: 10, end: 100},
-  {start: 100, end: 1000},
-  {start: 1000, end: 60_000},
-  {start: 60_000, end: 3_600_000},
-  {start: 3_600_000, end: Infinity},
-];
-
-const gradient = [
-  "#99c76b",
-  "#b0c15d",
-  "#c6b954",
-  "#dbb053",
-  "#eea659",
-  "#f09454",
-  "#f18253",
-  "#f06e54",
-  "#ee5959",
-];
-
-interface Bucket {
-  start: number;
-  end: number;
-  count: number;
-  regionIndex: number;
-}
-
-function calculateHistogram(stats: QueryStats[] | null) {
-  if (!stats || !stats.length) return null;
-
-  const sortedStats = [...stats].sort(
-    (a, b) => a.meanExecTime - b.meanExecTime
-  );
-  let regionIndex = 0;
-  let region = regions[regionIndex];
-
-  const buckets: Bucket[] = [];
-  let bucket: Bucket | null = null;
-
-  let maxCount = 0;
-  for (const stat of sortedStats) {
-    while (stat.meanExecTime >= region.end) {
-      regionIndex++;
-      region = regions[regionIndex];
-    }
-
-    const bucketStart =
-      region.start +
-      Math.floor((stat.meanExecTime - region.start) / (region.start || 0.1)) *
-        (region.start || 0.1);
-    if (!bucket || bucket.start !== bucketStart) {
-      bucket = {
-        start: bucketStart,
-        end: bucketStart + (region.start || 0.1),
-        count: 0,
-        regionIndex,
-      };
-      buckets.push(bucket);
-    }
-    bucket.count += Number(stat.calls);
-    maxCount = maxCount < bucket.count ? bucket.count : maxCount;
-  }
-
-  const lastBucket = bucket!;
-
-  // const yAxisInc = 10 ** Math.max(0, Math.floor(Math.log10(maxCount)) - 1);
-  // const yAxisMax = Math.ceil(maxCount / yAxisInc) * yAxisInc;
-  const yAxisMaxLog = Math.log10(maxCount);
-
-  const regionCounts = regions
-    .slice(buckets[0].regionIndex, lastBucket.regionIndex + 1)
-    .map(
-      ({start, end}) =>
-        ((end === Infinity ? lastBucket.end : end) - start) / (start || 0.1)
-    );
-  const bucketsCount = regionCounts.reduce((sum, count) => sum + count, 0);
-  const bucketWidth = 100 / bucketsCount;
-
-  const data: (Bucket & {
-    colorIndex: number;
-    rect: {width: number; height: number; x: number; y: number};
-  })[] = Array(bucketsCount);
-  const xAxisLabels: {left: number; value: number}[] = [];
-
-  let i = 0;
-  let bi = 0;
-  for (let ri = 0; ri < regionCounts.length; ri++) {
-    const region = regions[buckets[0].regionIndex + ri];
-    if (ri == 0) {
-      xAxisLabels.push({left: 0, value: region.start});
-    }
-    xAxisLabels.push({
-      left: (i + regionCounts[ri]) * bucketWidth,
-      value: region.end,
-    });
-
-    for (let ci = 0; ci < regionCounts[ri]; ci++) {
-      const bucket = buckets[bi];
-      const start = region.start + ci * (region.start || 0.1);
-      if (bucket?.start === start) {
-        const height = (Math.log10(bucket.count) / yAxisMaxLog) * 95 + 5;
-        data[i] = {
-          ...bucket,
-          rect: {
-            width: bucketWidth,
-            height: height,
-            x: i * bucketWidth,
-            y: 100 - height,
-          },
-          colorIndex: Math.floor(
-            Math.max(0, Math.min(1, Math.log10(bucket.start) / 6)) *
-              gradient.length
-          ),
-        };
-
-        bi++;
-      } else {
-        data[i] = {
-          start,
-          end: start + (region.start || 0.1),
-          count: 0,
-          regionIndex: buckets[0].regionIndex + ri,
-          rect: {
-            width: bucketWidth,
-            height: 0,
-            x: i * bucketWidth,
-            y: 100,
-          },
-          colorIndex: 0,
-        };
-      }
-      i++;
-    }
-  }
-
-  return {data, yAxisMax: maxCount, xAxisLabels};
-}
 
 const units = ["", "k", "M", "B", "T"];
 function formatCount(value: number) {

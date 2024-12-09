@@ -61,6 +61,7 @@ export const TagFilter = observer(function TagFilter({
           <div className={styles.tagsList}>
             {[...state.tagsFilter].map((tag) => (
               <div
+                key={tag}
                 className={cn(styles.tag, {
                   [styles.untagged]: tag === "",
                   [styles.group]: typeof tag !== "string",
@@ -84,6 +85,7 @@ export const TagFilter = observer(function TagFilter({
           />
           {state.allTags[TagFilterGroup.App].map((tag) => (
             <Checkbox
+              key={tag}
               className={styles.item}
               label={tag || <span>untagged</span>}
               checked={
@@ -102,6 +104,7 @@ export const TagFilter = observer(function TagFilter({
           />
           {state.allTags[TagFilterGroup.Repl].map((tag) => (
             <Checkbox
+              key={tag}
               className={styles.item}
               label={tag}
               checked={
@@ -120,6 +123,7 @@ export const TagFilter = observer(function TagFilter({
           />
           {state.allTags[TagFilterGroup.Internal].map((tag) => (
             <Checkbox
+              key={tag}
               className={styles.item}
               label={tag}
               checked={
@@ -142,7 +146,7 @@ export const ExecTimeFilter = observer(function ExecTimeFilter({
 }) {
   return (
     <div className={styles.execTimeFilter}>
-      <FieldHeader label="Mean exec time" />
+      <FieldHeader className={styles.fieldHeader} label="Mean exec time" />
       <div className={styles.execTimeFilterField}>
         {state.timeFilter ? (
           <>
@@ -155,8 +159,15 @@ export const ExecTimeFilter = observer(function ExecTimeFilter({
               <CrossIcon />
             </div>
           </>
+        ) : state.histogram ? (
+          <>
+            {formatDurationLabel({start: state.histogram.data[0].start})} -{" "}
+            {formatDurationLabel({
+              start: state.histogram.data[state.histogram.data.length - 1].end,
+            })}
+          </>
         ) : (
-          <div className={styles.noFilter}>use chart to filter</div>
+          <div className={styles.noFilter}>no data</div>
         )}
       </div>
     </div>
