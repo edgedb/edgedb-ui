@@ -4,7 +4,6 @@ import {observer} from "mobx-react-lite";
 import cn from "@edgedb/common/utils/classNames";
 
 import {
-  ArrowRightIcon,
   Button,
   ChevronDownIcon,
   FieldHeader,
@@ -55,7 +54,9 @@ export const StatsTable = observer(function StatsTable({
               <div className={styles.noResults}>No results</div>
             )
           ) : (
-            <Spinner size={20} />
+            <div className={styles.spinner}>
+              <Spinner size={20} />
+            </div>
           )}
         </div>
       </div>

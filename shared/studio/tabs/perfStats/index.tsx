@@ -4,7 +4,7 @@ import cn from "@edgedb/common/utils/classNames";
 
 import {PerfStatsState} from "./state";
 import {DatabaseTabSpec} from "../../components/databasePage";
-import {TabDashboardIcon, TabQueryStats} from "../../icons";
+import {TabQueryStats} from "../../icons";
 
 import {useTabState} from "../../state";
 

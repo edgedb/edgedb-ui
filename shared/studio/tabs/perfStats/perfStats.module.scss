@@ -87,6 +87,14 @@
     }
   }
 
+  .spinner {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    color: var(--tertiary_text_color);
+    padding: 24px;
+  }
+
   @include isMobile {
     grid-template-columns: 1fr repeat(3, auto) 0px auto;
     min-width: 100%;
