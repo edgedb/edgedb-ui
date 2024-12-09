@@ -1,17 +1,10 @@
-import {
-  MouseEventHandler,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import {useMemo, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
 
 import cn from "@edgedb/common/utils/classNames";
 import {useResize} from "@edgedb/common/hooks/useResize";
 
-import {PerfStatsState, QueryStats} from "./state";
+import {PerfStatsState} from "./state";
 
 import styles from "./perfStats.module.scss";
 import {formatDurationLabel, gradient} from "./utils";
