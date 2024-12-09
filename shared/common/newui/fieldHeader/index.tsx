@@ -1,14 +1,22 @@
+import cn from "@edgedb/common/utils/classNames";
+
 import styles from "./fieldHeader.module.scss";
 
 export interface FieldHeaderProps {
+  className?: string;
   label?: string | JSX.Element;
   optional?: boolean;
   headerNote?: string;
 }
 
-export function FieldHeader({label, optional, headerNote}: FieldHeaderProps) {
+export function FieldHeader({
+  className,
+  label,
+  optional,
+  headerNote,
+}: FieldHeaderProps) {
   return (
-    <div className={styles.fieldHeader}>
+    <div className={cn(styles.fieldHeader, className)}>
       {label}
       {optional ? <span className={styles.optional}>(optional)</span> : null}
       {headerNote ? (

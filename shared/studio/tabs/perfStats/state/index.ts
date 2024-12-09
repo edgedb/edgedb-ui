@@ -11,6 +11,7 @@ import {
   QueryParamsEditor,
 } from "../../queryEditor/state/parameters";
 import {Language} from "edgedb/dist/ifaces";
+import {calculateHistogram} from "../utils";
 
 export type QueryType = "EdgeQL" | "SQL";
 
@@ -110,15 +111,8 @@ export class PerfStatsState extends Model({
   timeFilter: [number, number] | null = null;
 
   @action
-  setTimeFilter(range: [number, number] | null, join: boolean = false) {
-    if (join && range && this.timeFilter) {
-      this.timeFilter = [
-        Math.min(this.timeFilter[0], range[0]),
-        Math.max(this.timeFilter[1], range[1]),
-      ];
-    } else {
-      this.timeFilter = range;
-    }
+  setTimeFilter(range: [number, number] | null) {
+    this.timeFilter = range;
   }
 
   @computed
@@ -174,6 +168,11 @@ export class PerfStatsState extends Model({
     );
 
     return this.stats.filter((stat) => selectedTags.has(stat.tag ?? ""));
+  }
+
+  @computed
+  get histogram() {
+    return calculateHistogram(this.tagFilteredStats);
   }
 
   @computed

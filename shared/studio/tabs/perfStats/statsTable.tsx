@@ -11,12 +11,14 @@ import {
   SortDescIcon,
   SortIcon,
 } from "@edgedb/common/newui";
+import {CopyButton} from "@edgedb/common/newui/copyButton";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
+import Spinner from "@edgedb/common/ui/spinner";
+import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 
 import {OrderBy, PerfStatsState, QueryStats} from "./state";
 
 import styles from "./perfStats.module.scss";
-import {CopyButton} from "@edgedb/common/newui/copyButton";
 
 export const StatsTable = observer(function StatsTable({
   state,
@@ -24,28 +26,38 @@ export const StatsTable = observer(function StatsTable({
   state: PerfStatsState;
 }) {
   return (
-    <div className={styles.statsTable}>
-      <div className={styles.tableHeader}>
-        <div className={styles.headerItem}>Query</div>
-        <div className={styles.headerItem}>
-          Total exec <ColumnSort state={state} fieldName="totalExecTime" />
+    <div className={styles.statsTableWrapper}>
+      <div className={styles.statsTable}>
+        <div className={styles.tableHeader}>
+          <div className={styles.headerItem}>Query</div>
+          <div className={styles.headerItem}>
+            Total exec <ColumnSort state={state} fieldName="totalExecTime" />
+          </div>
+          <div className={styles.headerItem}>
+            Call count <ColumnSort state={state} fieldName="calls" />
+          </div>
+          <div className={styles.headerItem}>
+            Mean exec <ColumnSort state={state} fieldName="meanExecTime" />
+          </div>
         </div>
-        <div className={styles.headerItem}>
-          Call count <ColumnSort state={state} fieldName="calls" />
+        <div className={styles.tableBody}>
+          {state.tableFilteredStats ? (
+            state.tableFilteredStats.length ? (
+              state.tableFilteredStats.map((stat) => (
+                <QueryStatsRow
+                  key={stat.id}
+                  state={state}
+                  queryStats={stat}
+                  expanded={state.expandedIds.has(stat.id)}
+                />
+              ))
+            ) : (
+              <div className={styles.noResults}>No results</div>
+            )
+          ) : (
+            <Spinner size={20} />
+          )}
         </div>
-        <div className={styles.headerItem}>
-          Mean exec <ColumnSort state={state} fieldName="meanExecTime" />
-        </div>
-      </div>
-      <div className={styles.tableBody}>
-        {state.tableFilteredStats?.map((stat) => (
-          <QueryStatsRow
-            key={stat.id}
-            state={state}
-            queryStats={stat}
-            expanded={state.expandedIds.has(stat.id)}
-          />
-        ))}
       </div>
     </div>
   );
@@ -82,6 +94,7 @@ export const QueryStatsRow = observer(function QueryStatsRow({
 }) {
   const expandedRef = useRef<HTMLDivElement>(null);
   const [expandedHeight, setExpandedheight] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (expanded && expandedRef.current) {
@@ -101,32 +114,35 @@ export const QueryStatsRow = observer(function QueryStatsRow({
       </div>
 
       <div className={styles.timeChart}>
-        <svg viewBox="-2 -2 104 24" preserveAspectRatio="none">
-          {queryStats.stddevExecTime / state.maxExecTime > 0.005 ? (
+        {!isMobile ? (
+          <svg viewBox="-2 -2 104 24" preserveAspectRatio="none">
+            {queryStats.stddevExecTime / state.maxExecTime > 0.005 ? (
+              <path
+                className={styles.distribution}
+                vectorEffect="non-scaling-stroke"
+                d={generateDistributionChart(
+                  0,
+                  100,
+                  (queryStats.meanExecTime / state.maxExecTime) * 100,
+                  (queryStats.stddevExecTime / state.maxExecTime) * 100,
+                  200
+                )}
+              />
+            ) : null}
             <path
-              className={styles.distribution}
               vectorEffect="non-scaling-stroke"
-              d={generateDistributionChart(
-                0,
-                100,
-                (queryStats.meanExecTime / state.maxExecTime) * 100,
-                (queryStats.stddevExecTime / state.maxExecTime) * 100,
-                200
-              )}
+              d={`M ${
+                (queryStats.minExecTime / state.maxExecTime) * 100
+              } 0 V 20 M ${
+                (queryStats.meanExecTime / state.maxExecTime) * 100
+              } 0 V 20 M ${
+                (queryStats.maxExecTime / state.maxExecTime) * 100
+              } 0 V 20`}
             />
-          ) : null}
-          <path
-            vectorEffect="non-scaling-stroke"
-            d={`M ${
-              (queryStats.minExecTime / state.maxExecTime) * 100
-            } 0 V 20 M ${
-              (queryStats.meanExecTime / state.maxExecTime) * 100
-            } 0 V 20 M ${
-              (queryStats.maxExecTime / state.maxExecTime) * 100
-            } 0 V 20`}
-          />
-        </svg>
+          </svg>
+        ) : null}
       </div>
+
       <div
         className={styles.expandRow}
         onClick={() => state.toggleExpanded(queryStats.id)}
