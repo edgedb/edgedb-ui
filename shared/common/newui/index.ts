@@ -7,3 +7,4 @@ export * from "./icons";
 export * from "./logos";
 export * from "./infoTooltip";
 export * from "./modal";
+export * from "./iconToggle";

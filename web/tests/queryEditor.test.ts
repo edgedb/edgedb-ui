@@ -23,15 +23,17 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
+      const runButton = await driver.findElement(
+        ByUIClass("queryeditor_runBtn")
+      );
       await runButton.click();
 
       const errorElement = await driver.wait(
-        until.elementLocated(ByUIClass("repl_queryError"))
+        until.elementLocated(ByUIClass("queryeditor_queryError"))
       );
 
       const error = await errorElement.findElement(
-        ByUIClass("repl_errorName")
+        ByUIClass("queryeditor_errorName")
       );
 
       expect((await error.getText()).includes("InvalidReferenceError")).toBe(
@@ -39,7 +41,7 @@ describe("queryEditor:", () => {
       );
 
       const errorHint = await errorElement.findElement(
-        ByUIClass("repl_errorHint")
+        ByUIClass("queryeditor_errorHint")
       );
 
       expect(await errorHint.getText()).toBe(
@@ -59,15 +61,17 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
+      const runButton = await driver.findElement(
+        ByUIClass("queryeditor_runBtn")
+      );
       await runButton.click();
 
       const errorElement = await driver.wait(
-        until.elementLocated(ByUIClass("repl_queryError"))
+        until.elementLocated(ByUIClass("queryeditor_queryError"))
       );
 
       const error = await errorElement.findElement(
-        ByUIClass("repl_errorName")
+        ByUIClass("queryeditor_errorName")
       );
 
       expect((await error.getText()).includes("EdgeQLSyntaxError")).toBe(true);
@@ -85,11 +89,13 @@ describe("queryEditor:", () => {
       );
 
       // run the query
-      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
+      const runButton = await driver.findElement(
+        ByUIClass("queryeditor_runBtn")
+      );
       await runButton.click();
 
       const inspector = await driver.wait(
-        until.elementLocated(ByUIClass("repl_inspector"))
+        until.elementLocated(ByUIClass("queryeditor_inspector"))
       );
 
       const results = await inspector.findElements(
@@ -123,7 +129,7 @@ describe("queryEditor:", () => {
 
       // wait for the view window to open
       const viewWindow = await driver.wait(
-        until.elementLocated(ByUIClass("repl_extendedViewerContainer"))
+        until.elementLocated(ByUIClass("queryeditor_extendedViewerContainer"))
       );
 
       // linewrap / show whitespace
@@ -142,7 +148,7 @@ describe("queryEditor:", () => {
       (await viewWindow.findElement(ByUIClass("shared_closeAction"))).click();
 
       await waitUntilElementNotLocated(
-        ByUIClass("repl_extendedViewerContainer")
+        ByUIClass("queryeditor_extendedViewerContainer")
       );
     });
 
@@ -154,7 +160,9 @@ describe("queryEditor:", () => {
       await editor.sendKeys("select 1 + 1");
 
       // run the query and populate the history
-      const runButton = await driver.findElement(ByUIClass("repl_runBtn"));
+      const runButton = await driver.findElement(
+        ByUIClass("queryeditor_runBtn")
+      );
       await runButton.click();
 
       // write something else in the editor
@@ -164,21 +172,27 @@ describe("queryEditor:", () => {
       // save the current editor text to be able to compare it later with the other one from history
       const draftQuery = await editor.getText();
 
-      (await driver.findElement(ByUIClass("repl_historyButton"))).click();
+      (
+        await driver.findElement(ByUIClass("queryeditor_historyButton"))
+      ).click();
 
-      await driver.wait(until.elementLocated(ByUIClass("repl_history")));
+      await driver.wait(
+        until.elementLocated(ByUIClass("queryeditor_history"))
+      );
       // the element get rerendered and we need to get it again in order to avoid stale reference err
-      await driver.wait(until.elementLocated(ByUIClass("repl_history")));
+      await driver.wait(
+        until.elementLocated(ByUIClass("queryeditor_history"))
+      );
 
       // click on first history query (that is not draft query)
       const firstItem = await driver.findElements(
-        ByUIClass("repl_historyItem")
+        ByUIClass("queryeditor_historyItem")
       );
       await firstItem[1].click();
       // click on edit button
       (
         await driver.wait(
-          until.elementLocated(ByUIClass("repl_loadButton")),
+          until.elementLocated(ByUIClass("queryeditor_loadButton")),
           2000
         )
       ).click();
@@ -186,17 +200,17 @@ describe("queryEditor:", () => {
       expect(await editor.getText()).not.toBe(draftQuery);
 
       // history sidebar is closed
-      await waitUntilElementNotLocated(ByUIClass("repl_history"));
+      await waitUntilElementNotLocated(ByUIClass("queryeditor_history"));
     });
   });
 
   describe("builder", () => {
     beforeAll(async () => {
       const editorTabs = await driver.wait(
-        until.elementLocated(ByUIClass("repl_tabs"))
+        until.elementLocated(ByUIClass("queryeditor_tabs"))
       );
 
-      const tabs = await editorTabs.findElements(ByUIClass("repl_tab"));
+      const tabs = await editorTabs.findElements(ByUIClass("queryeditor_tab"));
       // click on builder tab
       await driver.actions({async: true}).click(tabs[1]).perform();
       // wait for builder window to show

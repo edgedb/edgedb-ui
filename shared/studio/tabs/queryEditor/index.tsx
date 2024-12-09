@@ -1,4 +1,11 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {observer} from "mobx-react-lite";
 import {Text} from "@codemirror/state";
 import {sql, PostgreSQL} from "@codemirror/lang-sql";
@@ -6,9 +13,8 @@ import {sql, PostgreSQL} from "@codemirror/lang-sql";
 import cn from "@edgedb/common/utils/classNames";
 
 import {CodeEditorRef, createCodeEditor} from "@edgedb/code-editor";
-import {RunButton} from "@edgedb/common/ui/mobile";
 
-import styles from "./repl.module.scss";
+import styles from "./queryeditor.module.scss";
 
 import {useDatabaseState, useTabState} from "../../state";
 import {
@@ -28,11 +34,19 @@ import {Theme, useTheme} from "@edgedb/common/hooks/useTheme";
 import SplitView from "@edgedb/common/ui/splitView";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
 
-import {Button} from "@edgedb/common/newui";
+import {
+  Button,
+  HistoryIcon,
+  IconToggle,
+  RunIcon,
+  SplitViewIcon,
+  TableViewIcon,
+  TreeViewIcon,
+} from "@edgedb/common/newui";
 
 import {HistoryPanel} from "./history";
 import {ParamsEditorPanel} from "./paramEditor";
-import {TabEditorIcon, MobileHistoryIcon} from "../../icons";
+import {TabEditorIcon} from "../../icons";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import {VisualQuerybuilder} from "../../components/visualQuerybuilder";
 import Inspector from "@edgedb/inspector";
@@ -52,10 +66,15 @@ import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {EdgeDBSet} from "@edgedb/common/decodeRawBuffer";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 import {ICodec} from "edgedb/dist/codecs/ifaces";
+import {SplitViewDirection} from "@edgedb/common/ui/splitView/model";
+import {createPortal} from "react-dom";
+import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
-  const splitViewState = editorState.splitView;
+  const isMobile = useIsMobile();
+
+  const outputModeTargetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -90,8 +109,21 @@ export const QueryEditorView = observer(function QueryEditorView() {
         [styles.showHistory]: editorState.showHistory,
       })}
     >
-      <div className={styles.sidebar}>
-        <div className={styles.toolbar}>
+      <div className={styles.historyPanelWrapper}>
+        <HistoryPanel className={styles.historyPanel} />
+      </div>
+
+      <div className={styles.mainPanel}>
+        <div className={styles.header}>
+          <div
+            className={cn(styles.historyButton, {
+              [styles.disabled]: editorState.queryHistory.length === 0,
+            })}
+            onClick={() => editorState.setShowHistory(true)}
+          >
+            <HistoryIcon />
+          </div>
+
           <div className={styles.tabs}>
             <div
               className={cn(styles.tab, {
@@ -100,8 +132,8 @@ export const QueryEditorView = observer(function QueryEditorView() {
               })}
               onClick={() => editorState.setSelectedEditor(EditorKind.EdgeQL)}
             >
-              <span>Editor</span>
-              <EditorTabIcon />
+              <span>EdgeQL</span>
+              {/* <EditorTabIcon /> */}
             </div>
             <div
               className={cn(styles.tab, {
@@ -112,130 +144,163 @@ export const QueryEditorView = observer(function QueryEditorView() {
                 editorState.setSelectedEditor(EditorKind.VisualBuilder)
               }
             >
-              <span>Builder</span>
-              <BuilderTabIcon />
-            </div>
-            <div
-              className={cn(styles.tab, {
-                [styles.selected]:
-                  editorState.selectedEditor === EditorKind.SQL,
-              })}
-              onClick={() => editorState.setSelectedEditor(EditorKind.SQL)}
-            >
-              <span>SQL</span>
+              <span>EdgeQL Builder</span>
               {/* <BuilderTabIcon /> */}
             </div>
+            {editorState.sqlModeSupported ? (
+              <div
+                className={cn(styles.tab, {
+                  [styles.selected]:
+                    editorState.selectedEditor === EditorKind.SQL,
+                })}
+                onClick={() => editorState.setSelectedEditor(EditorKind.SQL)}
+              >
+                <span>SQL</span>
+              </div>
+            ) : null}
           </div>
 
-          <div
-            className={cn(styles.tab, styles.historyButton, {
-              [styles.disabled]: editorState.queryHistory.length === 0,
-            })}
-            onClick={() => editorState.setShowHistory(true)}
-          >
-            <span>History</span>
+          <div className={styles.controls}>
+            {!isMobile && editorState.currentResult ? (
+              editorState.currentQueryEdited ? (
+                <div className={styles.resultOutdatedNote}>
+                  Result outdated
+                </div>
+              ) : (
+                <div
+                  className={styles.resultTimestampNote}
+                  title={new Date(
+                    editorState.currentResult.timestamp
+                  ).toLocaleString()}
+                >
+                  <RelativeTime
+                    timestamp={editorState.currentResult.timestamp}
+                    fullNames
+                  />
+                </div>
+              )
+            ) : null}
+
+            <div
+              ref={outputModeTargetRef}
+              className={styles.outputModeTargetRef}
+            />
+
+            {isMobile ? (
+              <LabelsSwitch
+                labels={["Query", "Result"]}
+                value={
+                  editorState.splitView.activeViewIndex
+                    ? switchState.right
+                    : switchState.left
+                }
+                onChange={() =>
+                  editorState.splitView.setActiveViewIndex(
+                    editorState.splitView.activeViewIndex ? 0 : 1
+                  )
+                }
+              />
+            ) : null}
+
+            <IconToggle
+              className={styles.splitViewToggle}
+              options={[
+                {
+                  key: SplitViewDirection.horizontal,
+                  icon: <SplitViewIcon style={{transform: "rotate(90deg)"}} />,
+                  label: "Split vertical",
+                },
+                {
+                  key: SplitViewDirection.vertical,
+                  icon: <SplitViewIcon />,
+                  label: "Split horizontal",
+                },
+              ]}
+              selectedOption={editorState.splitView.direction}
+              onSelectOption={(direction) =>
+                editorState.splitView.setDirection(direction)
+              }
+            />
+
+            {isMobile &&
+            editorState.splitView.activeViewIndex ==
+              1 ? null : !editorState.queryRunning ? (
+              <Button
+                kind="primary"
+                className={styles.runBtn}
+                shortcut={
+                  !isMobile
+                    ? {
+                        default: "Ctrl+Enter",
+                        macos: "⌘+Enter",
+                      }
+                    : undefined
+                }
+                leftIcon={<RunIcon />}
+                disabled={!editorState.canRunQuery}
+                onClick={() => editorState.runQuery()}
+              >
+                Run
+              </Button>
+            ) : (
+              <Button
+                className={styles.cancelBtn}
+                shortcut={!isMobile ? "Ctrl+C" : undefined}
+                leftIcon={<Spinner size={16} strokeWidth={1.5} />}
+                onClick={() => editorState.runningQueryAbort?.abort()}
+              >
+                Cancel
+              </Button>
+            )}
           </div>
         </div>
-        <HistoryPanel />
-      </div>
-      <SplitView
-        className={styles.main}
-        views={[
-          <div className={styles.editorBlock}>
-            {editorState.selectedEditor === EditorKind.EdgeQL ||
-            editorState.selectedEditor === EditorKind.SQL ? (
-              <>
-                <div className={styles.editorBlockInner}>
-                  <QueryCodeEditor key={editorState.selectedEditor} />
-                  <div className={styles.replEditorOverlays}>
-                    <div className={styles.controls}>
-                      {!editorState.queryRunning ? (
-                        <Button
-                          kind="primary"
-                          className={styles.runBtn}
-                          shortcut={{default: "Ctrl+Enter", macos: "⌘+Enter"}}
-                          disabled={!editorState.canRunQuery}
-                          onClick={() => editorState.runQuery()}
-                        >
-                          Run
-                        </Button>
-                      ) : (
-                        <Button
-                          kind="primary"
-                          className={styles.runBtn}
-                          shortcut="Ctrl+C"
-                          loading={true}
-                          onClick={() =>
-                            editorState.runningQueryAbort?.abort()
-                          }
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
+
+        <SplitView
+          state={editorState.splitView}
+          minViewSize={20}
+          views={[
+            <div
+              className={cn(styles.editorBlock, {
+                [styles.horizontalSplit]:
+                  !isMobile &&
+                  editorState.splitView.direction ===
+                    SplitViewDirection.vertical,
+              })}
+            >
+              {editorState.selectedEditor === EditorKind.EdgeQL ||
+              editorState.selectedEditor === EditorKind.SQL ? (
+                <>
+                  <div className={styles.editorBlockInner}>
+                    <QueryCodeEditor key={editorState.selectedEditor} />
                   </div>
-                </div>
-                <ParamsEditorPanel
-                  state={editorState.paramsEditor!}
-                  runQuery={() => editorState.runQuery()}
+                  <ParamsEditorPanel
+                    state={editorState.paramsEditor!}
+                    runQuery={() => editorState.runQuery()}
+                    horizontalSplit={
+                      !isMobile &&
+                      editorState.splitView.direction ===
+                        SplitViewDirection.vertical
+                    }
+                  />
+                </>
+              ) : (
+                <VisualQuerybuilder
+                  state={
+                    editorState.currentQueryData[EditorKind.VisualBuilder]
+                  }
                 />
-              </>
-            ) : (
-              <VisualQuerybuilder
-                state={editorState.currentQueryData[EditorKind.VisualBuilder]}
-              />
-            )}
-          </div>,
-          editorState.currentResult ? (
+              )}
+            </div>,
             <QueryResult
-              key={editorState.currentResult.$modelId}
+              key={editorState.currentResult?.$modelId}
               state={editorState}
               result={editorState.currentResult}
-            />
-          ) : (
-            <></>
-          ),
-        ]}
-        state={editorState.splitView}
-        minViewSize={20}
-      />
-      <div className={styles.mobileOverlayControls}>
-        <button
-          className={styles.mobileBtn}
-          onClick={() => editorState.setShowHistory(true)}
-        >
-          <MobileHistoryIcon className={styles.mobileHistoryIcon} />
-        </button>
-
-        <LabelsSwitch
-          labels={["query", "result"]}
-          value={
-            splitViewState.activeViewIndex
-              ? switchState.right
-              : switchState.left
-          }
-          onChange={() =>
-            splitViewState.setActiveViewIndex(
-              splitViewState.activeViewIndex ? 0 : 1
-            )
-          }
-        />
-        <RunButton
-          onClick={() => editorState.runQuery()}
-          isLoading={editorState.queryRunning}
-          onCancel={() => editorState.runningQueryAbort?.abort()}
-          disabled={
-            (!editorState.canRunQuery && !editorState.queryRunning) ||
-            !!splitViewState.activeViewIndex
-          }
+              outputModeTargetRef={outputModeTargetRef}
+            />,
+          ]}
         />
       </div>
-      {editorState.showHistory && (
-        <div className={styles.mobileHistory}>
-          <p className={styles.title}>History</p>
-          <HistoryPanel className={styles.historyPanel} />
-        </div>
-      )}
+
       {editorState.extendedViewerItem ? (
         <div className={styles.extendedViewerContainer}>
           <ExtendedViewerContext.Provider
@@ -247,16 +312,6 @@ export const QueryEditorView = observer(function QueryEditorView() {
           </ExtendedViewerContext.Provider>
         </div>
       ) : null}
-      {/* {editorState.showExplain &&
-      (editorState.currentResult as QueryHistoryResultItem).explainState ? (
-        <TestExplainVis
-          closeExplain={() => editorState.setShowExplain(false)}
-          explainOutput={
-            (editorState.currentResult as QueryHistoryResultItem).explainState!
-              .rawData
-          }
-        />
-      ) : null} */}
     </div>
   );
 });
@@ -355,11 +410,12 @@ const QueryCodeEditor = observer(function QueryCodeEditor() {
 
 const ResultInspector = observer(function ResultInspector({
   state,
+  isMobile,
 }: {
   state: InspectorState;
+  isMobile: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
   const [height, setHeight] = useState(0);
   useResize(ref, ({height}) => setHeight(height));
 
@@ -388,10 +444,13 @@ const ResultInspector = observer(function ResultInspector({
 const QueryResult = observer(function QueryResult({
   state,
   result,
+  outputModeTargetRef,
 }: {
   state: QueryEditor;
-  result: QueryHistoryItem;
+  result: QueryHistoryItem | null;
+  outputModeTargetRef: RefObject<HTMLDivElement>;
 }) {
+  const isMobile = useIsMobile();
   const [data, setData] = useState<EdgeDBSet | null>(null);
 
   useEffect(() => {
@@ -404,7 +463,12 @@ const QueryResult = observer(function QueryResult({
     }
   }, [data]);
 
+  if (!result) {
+    return null;
+  }
+
   let content: JSX.Element | null = null;
+  let headerContent: JSX.Element | null = null;
 
   if (result instanceof QueryHistoryResultItem) {
     if (result.hasResult) {
@@ -426,19 +490,20 @@ const QueryResult = observer(function QueryResult({
           state.setOutputMode.bind(state)
         );
 
+        headerContent = toggleEl;
+
         content = (
           <>
-            <div
-              className={cn(styles.resultHeader, {
-                [styles.noBorder]: mode === OutputMode.Tree,
-              })}
-            >
-              {toggleEl}
-            </div>
             {mode === OutputMode.Grid ? (
-              <ResultGrid state={result.getResultGridState(data)} />
+              <ResultGrid
+                state={result.getResultGridState(data)}
+                bottomPadding={isMobile ? 60 : undefined}
+              />
             ) : (
-              <ResultInspector state={result.getInspectorState(data)} />
+              <ResultInspector
+                state={result.getInspectorState(data)}
+                isMobile={isMobile}
+              />
             )}
           </>
         );
@@ -470,7 +535,14 @@ const QueryResult = observer(function QueryResult({
     );
   }
 
-  return <div className={styles.queryResult}>{content}</div>;
+  return (
+    <div className={styles.queryResult}>
+      {outputModeTargetRef.current
+        ? createPortal(headerContent, outputModeTargetRef.current)
+        : null}
+      {content}
+    </div>
+  );
 });
 
 export function outputModeToggle(
@@ -484,38 +556,24 @@ export function outputModeToggle(
   return {
     mode,
     toggleEl: (
-      <div className={styles.outputModeToggle}>
-        <div
-          className={cn(styles.label, {
-            [styles.selected]: mode === OutputMode.Tree,
-          })}
-          onClick={() => setOutputMode(OutputMode.Tree)}
-        >
-          Tree
-        </div>
-        <div
-          className={cn(styles.toggle, {
-            [styles.rightSelected]: mode === OutputMode.Grid,
-            [styles.disabled]: !tableOutputAvailable,
-          })}
-          onClick={() =>
-            setOutputMode(
-              outputMode === OutputMode.Grid
-                ? OutputMode.Tree
-                : OutputMode.Grid
-            )
-          }
-        />
-        <div
-          className={cn(styles.label, {
-            [styles.selected]: mode === OutputMode.Grid,
-            [styles.disabled]: !tableOutputAvailable,
-          })}
-          onClick={() => setOutputMode(OutputMode.Grid)}
-        >
-          Table
-        </div>
-      </div>
+      <IconToggle
+        className={styles.outputModeToggle}
+        options={[
+          {
+            key: OutputMode.Tree,
+            icon: <TreeViewIcon />,
+            label: "Tree",
+          },
+          {
+            key: OutputMode.Grid,
+            icon: <TableViewIcon />,
+            label: "Table",
+            disabled: !tableOutputAvailable,
+          },
+        ]}
+        selectedOption={mode}
+        onSelectOption={setOutputMode}
+      />
     ),
   };
 }
@@ -529,38 +587,38 @@ export const editorTabSpec: DatabaseTabSpec = {
   element: <QueryEditorView />,
 };
 
-function EditorTabIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM12.7071 4.70711C13.0976 4.31658 13.0976 3.68342 12.7071 3.29289C12.3166 2.90237 11.6834 2.90237 11.2929 3.29289L5.29289 9.29289C4.90237 9.68342 4.90237 10.3166 5.29289 10.7071C5.68342 11.0976 6.31658 11.0976 6.70711 10.7071L12.7071 4.70711ZM4 13C4.55228 13 5 12.5523 5 12C5 11.4477 4.55228 11 4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13Z"
-      />
-    </svg>
-  );
-}
+// function EditorTabIcon() {
+//   return (
+//     <svg
+//       width="16"
+//       height="16"
+//       viewBox="0 0 16 16"
+//       fill="none"
+//       xmlns="http://www.w3.org/2000/svg"
+//     >
+//       <path
+//         fillRule="evenodd"
+//         clipRule="evenodd"
+//         d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM12.7071 4.70711C13.0976 4.31658 13.0976 3.68342 12.7071 3.29289C12.3166 2.90237 11.6834 2.90237 11.2929 3.29289L5.29289 9.29289C4.90237 9.68342 4.90237 10.3166 5.29289 10.7071C5.68342 11.0976 6.31658 11.0976 6.70711 10.7071L12.7071 4.70711ZM4 13C4.55228 13 5 12.5523 5 12C5 11.4477 4.55228 11 4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13Z"
+//       />
+//     </svg>
+//   );
+// }
 
-function BuilderTabIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM3 4C3 3.44772 3.44772 3 4 3H9C9.55228 3 10 3.44772 10 4C10 4.55228 9.55228 5 9 5H4C3.44772 5 3 4.55228 3 4ZM3 8C3 7.44772 3.44772 7 4 7H12C12.5523 7 13 7.44772 13 8C13 8.55229 12.5523 9 12 9H4C3.44772 9 3 8.55229 3 8ZM4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13H10C10.5523 13 11 12.5523 11 12C11 11.4477 10.5523 11 10 11H4Z"
-      />
-    </svg>
-  );
-}
+// function BuilderTabIcon() {
+//   return (
+//     <svg
+//       width="16"
+//       height="16"
+//       viewBox="0 0 16 16"
+//       fill="none"
+//       xmlns="http://www.w3.org/2000/svg"
+//     >
+//       <path
+//         fillRule="evenodd"
+//         clipRule="evenodd"
+//         d="M1 0C0.447715 0 0 0.447715 0 1V15C0 15.5523 0.447715 16 1 16H15C15.5523 16 16 15.5523 16 15V1C16 0.447715 15.5523 0 15 0H1ZM3 4C3 3.44772 3.44772 3 4 3H9C9.55228 3 10 3.44772 10 4C10 4.55228 9.55228 5 9 5H4C3.44772 5 3 4.55228 3 4ZM3 8C3 7.44772 3.44772 7 4 7H12C12.5523 7 13 7.44772 13 8C13 8.55229 12.5523 9 12 9H4C3.44772 9 3 8.55229 3 8ZM4 11C3.44772 11 3 11.4477 3 12C3 12.5523 3.44772 13 4 13H10C10.5523 13 11 12.5523 11 12C11 11.4477 10.5523 11 10 11H4Z"
+//       />
+//     </svg>
+//   );
+// }

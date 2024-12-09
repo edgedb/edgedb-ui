@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "peerDependencies": {
-    "edgedb": "1.6.0-canary.20241126T162412",
+    "edgedb": "1.6.0-canary.20241206T104839",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
