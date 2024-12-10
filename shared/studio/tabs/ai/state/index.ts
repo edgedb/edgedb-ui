@@ -78,15 +78,6 @@ export class AIAdminState extends Model({
   playgroundChatHistory: prop<AIPlaygroundChatItem[]>(() => []),
   showConfigPanel: prop(false).withSetter(),
 }) {
-  @computed
-  get extEnabled() {
-    return (
-      dbCtx
-        .get(this)!
-        .schemaData?.extensions.some((ext) => ext.name === "ai") ?? null
-    );
-  }
-
   onAttachedToRootStore() {
     const configKey = `edgedbAIPlaygroundConfig-${instanceCtx.get(this)!
       .instanceId!}/${dbCtx.get(this)!.name}`;
