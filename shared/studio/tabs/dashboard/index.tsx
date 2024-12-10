@@ -173,7 +173,7 @@ const FirstRunDashboard = observer(function FirstRunDashboard() {
   const dbState = useDatabaseState();
   const {navigate} = useDBRouter();
 
-  const exampleDBExists = instanceState.databases?.includes("_example");
+  const exampleDBExists = instanceState.databaseNames?.includes("_example");
   const dbOrBranch = useMemo(() => {
     for (const func of dbState.schemaData?.functions.values() ?? []) {
       if (func.name === "sys::get_current_branch") return "branch";

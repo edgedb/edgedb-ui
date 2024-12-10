@@ -42,7 +42,7 @@ export default observer(function DatabasePageLoadingWrapper(
   const instanceState = useInstanceState();
   const {gotoInstancePage} = useDBRouter();
 
-  if (!instanceState.databases) {
+  if (!instanceState.databaseNames) {
     return (
       <div className={cn(styles.card, styles.loadingState)}>
         Fetching instance info...
@@ -50,7 +50,7 @@ export default observer(function DatabasePageLoadingWrapper(
     );
   }
 
-  if (!instanceState.databases.includes(props.databaseName)) {
+  if (!instanceState.databaseNames.includes(props.databaseName)) {
     return (
       <ErrorPage
         title="Database doesn't exist"
