@@ -91,25 +91,51 @@ export const BranchGraph = observer(function BranchGraph({
   instanceState,
   ...props
 }: BranchGraphProps) {
+  const fetching = useRef(false);
   const [refreshing, setRefreshing] = useState(true);
   const [layoutNodes, setLayoutNodes] = useState<LayoutNode[] | null>(null);
 
+  const manualRefresh =
+    instanceState instanceof InstanceState &&
+    !!instanceState.databases?.length &&
+    instanceState.databases[0].last_migration === undefined;
+
   useEffect(() => {
     if (
+      fetching.current ||
       !refreshing ||
       !instanceId ||
       !(instanceState instanceof InstanceState)
     ) {
       return;
     }
-    fetchMigrationsData(instanceId, instanceState).then((data) => {
-      if (!data) return;
+    fetching.current = true;
+    instanceState.fetchDatabaseInfo().then(() =>
+      fetchMigrationsData(instanceId, instanceState).then((data) => {
+        if (!data) return;
 
-      const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
-      setLayoutNodes(layoutNodes);
-      setRefreshing(false);
-    });
+        const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
+        setLayoutNodes(layoutNodes);
+        setRefreshing(false);
+        fetching.current = false;
+      })
+    );
   }, [refreshing, instanceId, instanceState]);
+
+  useEffect(() => {
+    if (!manualRefresh) {
+      const listener = () => {
+        if (document.visibilityState === "visible") {
+          setRefreshing(true);
+        }
+      };
+      document.addEventListener("visibilitychange", listener);
+
+      return () => {
+        document.removeEventListener("visibilitychange", listener);
+      };
+    }
+  }, [manualRefresh]);
 
   const fetchMigrations =
     instanceState instanceof Error
@@ -157,19 +183,25 @@ export const BranchGraph = observer(function BranchGraph({
           instanceState instanceof Error ? instanceState : layoutNodes
         }
         {...props}
-        TopButton={({className}) => (
-          <button
-            className={cn(className, {
-              [styles.refreshing]: refreshing,
-            })}
-            onClick={() => {
-              localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
-              setRefreshing(true);
-            }}
-          >
-            <SyncIcon />
-          </button>
-        )}
+        TopButton={
+          manualRefresh
+            ? ({className}) => (
+                <button
+                  className={cn(className, {
+                    [styles.refreshing]: refreshing,
+                  })}
+                  onClick={() => {
+                    localStorage.removeItem(
+                      `edgedb-branch-graph-${instanceId}`
+                    );
+                    setRefreshing(true);
+                  }}
+                >
+                  <SyncIcon />
+                </button>
+              )
+            : undefined
+        }
       />
     </BranchGraphContext.Provider>
   );

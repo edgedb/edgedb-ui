@@ -80,9 +80,9 @@ export async function handleSlashCommand(
     case "connect": {
       const dbName = args.join(" ");
       const instanceState = instanceCtx.get(repl)!;
-      await instanceState.fetchInstanceInfo();
+      await instanceState.fetchDatabaseInfo();
 
-      if (instanceState.databases!.includes(dbName)) {
+      if (instanceState.databaseNames!.includes(dbName)) {
         item.setCommandResult({kind: CommandOutputKind.none});
         repl.navigation?.(`${encodeURIComponent(dbName)}/repl`);
       } else {
@@ -182,7 +182,7 @@ async function handleListCommand(
   switch (type) {
     case "databases":
       {
-        await instanceState.fetchInstanceInfo();
+        await instanceState.fetchDatabaseInfo();
 
         item.setCommandResult({
           kind: CommandOutputKind.text,

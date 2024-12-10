@@ -72,35 +72,56 @@ export async function fetchMigrationsData(
     return null;
   }
 
-  const databases = new Set(instanceState.databases);
+  const databases = new Map(
+    instanceState.databases.map((db) => [db.name, db.last_migration])
+  );
 
   let migrationsData = _getBranchGraphDataFromCache(instanceId);
 
   if (
-    !migrationsData ||
-    migrationsData.length != databases.size ||
-    !migrationsData.every(({branch}) => databases.has(branch))
+    migrationsData &&
+    migrationsData.length == databases.size &&
+    migrationsData.every(
+      ({branch, migrations}) =>
+        databases.get(branch) ===
+        (migrations[migrations.length - 1]?.name ?? null)
+    )
   ) {
-    migrationsData = await Promise.all(
-      instanceState.databases.map(async (dbName) => {
-        const conn = instanceState.getConnection(dbName);
-        return {
-          branch: dbName,
-          migrations: sortMigrations(
-            ((
-              await conn.query(`
+    // all cached data is still valid
+    return migrationsData;
+  }
+
+  migrationsData = await Promise.all(
+    instanceState.databases.map(async ({name, last_migration}) => {
+      if (last_migration !== undefined) {
+        const cachedMigration = migrationsData?.find((d) => d.branch === name);
+        if (
+          cachedMigration &&
+          (cachedMigration.migrations[cachedMigration.migrations.length - 1]
+            ?.name ?? null) === last_migration
+        ) {
+          // return cached data for branch if still valid
+          return cachedMigration;
+        }
+      }
+
+      const conn = instanceState.getConnection(name);
+      return {
+        branch: name,
+        migrations: sortMigrations(
+          ((
+            await conn.query(`
               select schema::Migration {
                 id,
                 name,
                 parentId := assert_single(.parents.id)
               }`)
-            ).result as Migration[]) ?? []
-          ),
-        };
-      })
-    );
-    _storeBranchGraphDataInCache(instanceId, migrationsData);
-  }
+          ).result as Migration[]) ?? []
+        ),
+      };
+    })
+  );
+  _storeBranchGraphDataInCache(instanceId, migrationsData);
 
   return migrationsData;
 }

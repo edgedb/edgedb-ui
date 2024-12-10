@@ -52,7 +52,7 @@ export const DatabasePage = observer(function DatabasePage() {
       <HeaderTab headerKey="database">
         <HeaderNavMenu
           currentDB={params.databaseName}
-          databases={appState.instanceState.databases}
+          databases={appState.instanceState.databaseNames}
           instanceState={appState.instanceState}
         />
       </HeaderTab>
