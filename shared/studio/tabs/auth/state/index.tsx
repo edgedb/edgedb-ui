@@ -203,14 +203,6 @@ export class AuthAdminState extends Model({
   draftSMTPConfigs: prop(() => objectMap<DraftSMTPConfig>()),
 }) {
   @computed
-  get extEnabled() {
-    return (
-      dbCtx
-        .get(this)!
-        .schemaData?.extensions.some((ext) => ext.name === "auth") ?? null
-    );
-  }
-  @computed
   get newAppAuthSchema() {
     return (
       dbCtx.get(this)!.schemaData?.objectsByName.get("ext::auth::AuthConfig")

@@ -9,5 +9,5 @@ export {useDatabaseState};
 
 export function useTabState<T extends AnyModel>(stateClass: ModelClass<T>): T {
   const modelType = (getTypeInfo(stateClass) as ModelTypeInfo).modelType;
-  return useDatabaseState().tabStates.get(modelType) as T;
+  return useDatabaseState()._getTabState(modelType, stateClass) as T;
 }

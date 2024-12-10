@@ -1,37 +1,34 @@
-import {useEffect, useLayoutEffect} from "react";
-import {Observer, observer} from "mobx-react-lite";
+import {lazy, Suspense} from "react";
+import {observer} from "mobx-react-lite";
 
-import cn from "@edgedb/common/utils/classNames";
 import CodeBlock from "@edgedb/common/ui/codeBlock";
+import Spinner from "@edgedb/common/ui/spinner";
 
-import {useTabState} from "../../state";
-import {useDBRouter} from "../../hooks/dbRoute";
+import {useDatabaseState} from "../../state";
+
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {TabAIIcon} from "../../icons";
 
-import {AIAdminState} from "./state";
-import {ProvidersTab} from "./providers";
-import {PlaygroundTab} from "./playground";
-import {PromptsTab} from "./prompts";
+import styles from "../../components/lazyTabs/lazyTabs.module.scss";
 
-import styles from "./aiAdmin.module.scss";
-import {WarningIcon} from "@edgedb/common/newui";
+const AIAdminPage = lazy(() => import("./ai"));
 
-const AIAdminPage = observer(function AIAdminPage() {
-  const state = useTabState(AIAdminState);
+const AuthAdminLoader = observer(function AuthAdminLoader() {
+  const db = useDatabaseState();
 
-  useEffect(() => {
-    if (state.extEnabled) {
-      state.refreshConfig();
-    }
-  }, [state.extEnabled]);
+  const extEnabled =
+    db.schemaData?.extensions.some((ext) => ext.name === "ai") ?? null;
 
   return (
-    <div className={styles.aiAdmin}>
-      {state.extEnabled === null ? (
+    <div className={styles.tabWrapper}>
+      {extEnabled === null ? (
         <div className={styles.loadingSchema}>Loading schema...</div>
-      ) : state.extEnabled ? (
-        <AIAdminLayout />
+      ) : extEnabled ? (
+        <Suspense
+          fallback={<Spinner className={styles.fallbackSpinner} size={20} />}
+        >
+          <AIAdminPage />
+        </Suspense>
       ) : (
         <div className={styles.extDisabled}>
           <h2>The AI extension is not enabled</h2>
@@ -55,81 +52,6 @@ export const aiTabSpec: DatabaseTabSpec = {
   label: "AI",
   icon: (active) => <TabAIIcon active={active} />,
   usesSessionState: false,
-  element: <AIAdminPage />,
+  element: <AuthAdminLoader />,
   allowNested: true,
-  state: AIAdminState,
 };
-
-const aiAdminTabs = [
-  {
-    path: "",
-    label: "Playground",
-    element: <PlaygroundTab />,
-  },
-  {
-    path: "prompts",
-    label: "Prompts",
-    element: <PromptsTab />,
-  },
-  {
-    path: "providers",
-    label: "Providers",
-    element: <ProvidersTab />,
-    warning: (
-      <Observer
-        render={() => {
-          const state = useTabState(AIAdminState);
-          return state.indexesWithoutProviders?.length ? (
-            <WarningIcon />
-          ) : null;
-        }}
-      />
-    ),
-  },
-];
-
-function AIAdminLayout() {
-  const state = useTabState(AIAdminState);
-  const {navigate, currentPath} = useDBRouter();
-
-  const activePath = currentPath.slice(2).join("/");
-
-  useEffect(() => {
-    state.setLastSelectedTab(currentPath.slice(2).join("/"));
-  }, [currentPath]);
-
-  useLayoutEffect(() => {
-    if (currentPath.length == 2 && state.lastSelectedTab) {
-      navigate(`${currentPath.join("/")}/${state.lastSelectedTab}`, true);
-    }
-  }, []);
-
-  return (
-    <div className={styles.mainLayout}>
-      <div className={styles.tabs}>
-        {aiAdminTabs.map((tab) => (
-          <div
-            key={tab.path}
-            className={cn(styles.tab, {
-              [styles.active]: activePath === tab.path,
-            })}
-            onClick={() => {
-              navigate(
-                [...currentPath.slice(0, 2), tab.path]
-                  .join("/")
-                  .replace(/\/$/, "")
-              );
-            }}
-          >
-            {tab.label}
-            {tab.warning}
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.tabContent}>
-        {aiAdminTabs.find((tab) => tab.path === activePath)?.element}
-      </div>
-    </div>
-  );
-}

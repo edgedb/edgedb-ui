@@ -16,6 +16,7 @@ import {
   _async,
   _await,
   frozen,
+  modelAction,
 } from "mobx-keystone";
 
 import {
@@ -81,6 +82,19 @@ export class DatabaseState extends Model({
 }) {
   @observable
   currentRole: string | null = null;
+
+  _getTabState(modelType: string, stateClass: ModelClass<AnyModel>) {
+    if (!this.tabStates.has(modelType)) {
+      this._initTabState(stateClass);
+    }
+    return this.tabStates.get(modelType)!;
+  }
+
+  @modelAction
+  private _initTabState(stateClass: ModelClass<AnyModel>) {
+    const state = new stateClass({});
+    this.tabStates.set(state.$modelType, state);
+  }
 
   @observable
   loadingTabs = new Map<string, boolean>();

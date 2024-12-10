@@ -16,6 +16,7 @@ import {useTabState} from "../../state";
 import {AIAdminState, AIPromptDraft, PromptChatParticipantRole} from "./state";
 
 import textStyles from "@edgedb/common/newui/textInput/textInput.module.scss";
+import fieldHeaderStyles from "@edgedb/common/newui/fieldHeader/fieldHeader.module.scss";
 import styles from "./aiAdmin.module.scss";
 
 export const PromptsTab = observer(function PromptTab() {
@@ -210,7 +211,7 @@ const PromptMessageCard = observer(function PromptMessageCard({
         />
       </div>
       <label className={cn(textStyles.textField)}>
-        <div className={textStyles.fieldHeader}>
+        <div className={fieldHeaderStyles.fieldHeader}>
           Content{" "}
           <InfoTooltip
             message={
