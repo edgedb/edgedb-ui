@@ -291,7 +291,7 @@
   .fullData {
     display: grid;
     grid-template-columns: repeat(6, auto);
-    margin: 0 48px 0 12px;
+    margin: 0 48px 16px 12px;
     gap: 16px 24px;
     max-width: 880px;
 
@@ -350,7 +350,7 @@
 
   .analyseQueryButton {
     align-self: flex-end;
-    margin-top: -32px;
+    margin-top: -48px;
     margin-bottom: 16px;
     margin-right: 8px;
   }

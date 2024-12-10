@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import {observer} from "mobx-react-lite";
 
+import {sql, PostgreSQL} from "@codemirror/lang-sql";
+
 import cn from "@edgedb/common/utils/classNames";
 
 import {
@@ -18,6 +20,8 @@ import {useIsMobile} from "@edgedb/common/hooks/useMobile";
 import {OrderBy, PerfStatsState, QueryStats} from "./state";
 
 import styles from "./perfStats.module.scss";
+
+const sqlLang = sql({dialect: PostgreSQL}).language;
 
 export const StatsTable = observer(function StatsTable({
   state,
@@ -236,13 +240,15 @@ export const QueryStatsRow = observer(function QueryStatsRow({
               </div>
             </div>
 
-            <Button
-              className={styles.analyseQueryButton}
-              kind="outline"
-              onClick={() => state.setAnalyzeQuery(queryStats.query)}
-            >
-              Analyze Query
-            </Button>
+            {queryStats.query_type === "EdgeQL" ? (
+              <Button
+                className={styles.analyseQueryButton}
+                kind="outline"
+                onClick={() => state.setAnalyzeQuery(queryStats.query)}
+              >
+                Analyze Query
+              </Button>
+            ) : null}
 
             <div className={styles.fullQuery}>
               <CopyButton
@@ -250,7 +256,12 @@ export const QueryStatsRow = observer(function QueryStatsRow({
                 content={queryStats.query}
                 mini
               />
-              <CodeBlock code={queryStats.query} />
+              <CodeBlock
+                code={queryStats.query}
+                language={
+                  queryStats.query_type === "SQL" ? sqlLang : undefined
+                }
+              />
             </div>
           </div>
         ) : null}
