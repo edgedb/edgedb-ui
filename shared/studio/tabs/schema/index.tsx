@@ -55,7 +55,7 @@ export const SchemaView = observer(function SchemaView() {
         {isMobile ? (
           <LabelsSwitch
             className={styles.viewSwitch}
-            labels={["text", "graph"]}
+            labels={["Text", "Graph"]}
             value={isGraphView ? switchState.right : switchState.left}
             onChange={() =>
               schemaState.setViewType(

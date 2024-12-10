@@ -174,19 +174,21 @@ export const GridContent = observer(function GridContent({
   state,
   pinnedCells,
   cells,
+  bottomPadding,
 }: {
   className?: string;
   style?: React.CSSProperties;
   state: DataGridState;
   pinnedCells?: React.ReactNode;
   cells: React.ReactNode;
+  bottomPadding?: number;
 }) {
   return (
     <div
       className={cn(styles.gridContent, className)}
       style={{
         ...style,
-        height: state.gridContentHeight,
+        height: state.gridContentHeight + (bottomPadding ?? 0),
         width: state.gridContentWidth,
       }}
     >

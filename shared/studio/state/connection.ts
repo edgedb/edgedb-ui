@@ -6,6 +6,7 @@ import {
   prop,
   _async,
   _await,
+  Frozen,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -73,6 +74,7 @@ type QueryOpts = {
   ignoreSessionConfig?: boolean;
   implicitLimit?: bigint;
   ignoreForceDatabaseError?: boolean;
+  replQueryTag?: boolean;
 };
 
 type PendingQuery = {
@@ -102,10 +104,13 @@ export function createAuthenticatedFetch({
 }: ConnectConfig) {
   const databaseUrl = `${serverUrl}/db/${encodeURIComponent(database)}/`;
 
-  return (path: string, init: RequestInit) => {
-    const url = new URL(path, databaseUrl);
+  return (path: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(
+      path instanceof Request ? path.url : path,
+      databaseUrl
+    );
 
-    const headers = new Headers(init.headers);
+    const headers = new Headers(init?.headers);
     headers.append("X-EdgeDB-User", user);
     headers.append("Authorization", `Bearer ${authToken}`);
 
@@ -116,13 +121,26 @@ export function createAuthenticatedFetch({
   };
 }
 
+function setQueryTag(session: Session, tag: string) {
+  session = new Session({...session});
+  (session as any).annotations = new Map<string, string>(
+    (session as any).annotations
+  );
+  (session as any).annotations.set("tag", tag);
+  return session;
+}
+
 @model("Connection")
 export class Connection extends Model({
-  config: prop<ConnectConfig>(),
+  config: prop<Frozen<ConnectConfig>>(),
+  serverVersion: prop<Frozen<{major: number; minor: number} | null>>(),
 }) {
   conn = AdminUIFetchConnection.create(
-    createAuthenticatedFetch(this.config),
-    codecsRegistry
+    createAuthenticatedFetch(this.config.data),
+    codecsRegistry,
+    this.serverVersion.data
+      ? [this.serverVersion.data.major, this.serverVersion.data.minor]
+      : undefined
   );
 
   private _runningQuery = false;
@@ -154,7 +172,7 @@ export class Connection extends Model({
         }, {} as {[key: string]: any})
       );
     }
-    return state;
+    return setQueryTag(state, "gel/ui");
   }
 
   query(
@@ -265,10 +283,16 @@ export class Connection extends Model({
       let state = this._state;
 
       if (opts.ignoreSessionConfig) {
-        state = Session.defaults().withGlobals(state.globals);
+        state = setQueryTag(
+          Session.defaults().withGlobals(state.globals),
+          "gel/ui"
+        );
       }
       if (opts.ignoreForceDatabaseError) {
         state = state.withConfig({force_database_error: "false"});
+      }
+      if (opts.replQueryTag) {
+        state = setQueryTag(state, "gel/webrepl");
       }
 
       if (kind === "execute") {

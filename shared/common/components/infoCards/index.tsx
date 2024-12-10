@@ -27,7 +27,7 @@ export function InfoCards({
   className?: string;
   listClassName?: string;
   extraCards?: (InfoCardDef | null)[];
-  currentVersion?: {major: number; minor: number; stage: string} | null;
+  currentVersion?: {major: number; minor: number} | null;
 }) {
   const data = useLatestInfo();
 

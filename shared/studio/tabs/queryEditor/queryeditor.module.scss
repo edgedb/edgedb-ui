@@ -1,0 +1,625 @@
+@import "@edgedb/common/mixins.scss";
+
+$historyTransitionTime: 0.15s;
+
+.wrapper {
+  flex-grow: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  font-family: "Roboto Flex Variable", sans-serif;
+
+  &.showExtendedResult {
+    margin: 0 8px;
+
+    .historyPanelWrapper,
+    .mainPanel {
+      filter: brightness(0.95);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .history {
+      pointer-events: none;
+    }
+  }
+}
+
+.historyPanelWrapper {
+  position: relative;
+  width: 0;
+  flex-shrink: 0;
+  background: var(--header_background);
+  border-radius: 12px;
+  z-index: 10;
+  overflow: hidden;
+  transition: width $historyTransitionTime;
+
+  .showHistory & {
+    width: 194px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+
+    @include darkTheme {
+      box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+        0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  @include isMobile {
+    position: fixed;
+    width: 100vw !important;
+    height: 100dvh;
+    top: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+    transform: translateX(-100%);
+    transition: transform $historyTransitionTime;
+
+    .showHistory & {
+      transform: none;
+    }
+  }
+}
+
+.mainPanel {
+  flex-grow: 1;
+  min-width: 0;
+  background: var(--app_panel_background);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+  transition: margin $historyTransitionTime;
+
+  .showHistory & {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    border-radius: 0 12px 12px 0;
+  }
+
+  @include darkTheme {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  @include isMobile {
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+.header {
+  background: var(--header_background);
+  border-bottom: 1px solid var(--panel_border);
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.06);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr minmax(max-content, 50%);
+  grid-template-rows: 40px;
+  z-index: 5;
+
+  @include darkTheme {
+    border-bottom-color: var(--Grey25);
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.3);
+  }
+
+  .historyButton {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--Grey60);
+    align-self: center;
+    margin-left: 4px;
+    cursor: pointer;
+
+    .showHistory & {
+      opacity: 0;
+    }
+
+    &:hover {
+      background: var(--Grey93);
+    }
+
+    @include darkTheme {
+      color: var(--Grey45);
+
+      &:hover {
+        background: var(--Grey25);
+      }
+    }
+  }
+
+  .tabs {
+    display: flex;
+    gap: 12px;
+
+    .showHistory & {
+      pointer-events: none;
+    }
+
+    .tab {
+      position: relative;
+      color: var(--tertiary_text_color);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 550;
+      line-height: 20px;
+      padding: 10px 16px;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--Grey95);
+      }
+
+      &.selected {
+        color: var(--main_text_color);
+
+        &:after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          height: 2px;
+          border-radius: 1px;
+          background: #a565cd;
+        }
+      }
+
+      @include darkTheme {
+        &:hover {
+          background: var(--Grey25);
+        }
+      }
+    }
+  }
+
+  .controls {
+    grid-column: 4;
+    display: flex;
+    gap: 12px;
+    justify-self: end;
+    align-items: center;
+    padding: 0 4px 0 16px;
+
+    .runBtn,
+    .cancelBtn {
+      height: 32px;
+      padding: 0 8px;
+      border-radius: 8px;
+    }
+    .runBtn {
+      --buttonPrimaryBackground: var(--app-accent-green);
+    }
+  }
+
+  .outputModeTargetRef {
+    display: contents;
+  }
+
+  @include breakpoint(tablet) {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: 40px 41px;
+
+    .controls {
+      grid-column: 1 / span 3;
+      grid-row: 2;
+      justify-self: auto;
+      justify-content: end;
+      border-top: 1px solid var(--panel_border);
+    }
+  }
+
+  @include isMobile {
+    grid-template-rows: 40px;
+
+    .controls {
+      position: absolute;
+      bottom: 0;
+      border: 0;
+      left: 0;
+      right: 0;
+      padding: 8px;
+      background: linear-gradient(
+        transparent,
+        var(--app_panel_background) 32px
+      );
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+
+      .runBtn,
+      .cancelBtn {
+        justify-self: end;
+        height: 38px;
+        border-radius: 10px;
+      }
+    }
+
+    .outputModeTargetRef {
+      display: flex;
+    }
+
+    .splitViewToggle {
+      display: none;
+    }
+
+    .outputModeToggle {
+      background: var(--Grey93);
+
+      @include darkTheme {
+        background: var(--Grey10);
+        border-color: var(--Grey18);
+      }
+    }
+  }
+}
+
+.extendedViewerContainer {
+  position: absolute;
+  display: flex;
+  top: 12px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--app_panel_background);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  z-index: 1;
+  overflow: hidden;
+
+  @include darkTheme {
+    box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.2),
+      0px 0px 4px 0px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.queryResult {
+  flex-grow: 1;
+  min-width: 0;
+  font-family: "Roboto Mono Variable", monospace;
+  display: flex;
+  flex-direction: column;
+  background: var(--app_panel_background);
+}
+
+.resultOutdatedNote,
+.resultTimestampNote {
+  font-size: 13px;
+  color: var(--tertiary_text_color);
+  font-weight: 450;
+  margin-right: 16px;
+}
+
+.resultOutdatedNote {
+  font-style: italic;
+}
+
+.inspector {
+  @include hideScrollbar;
+}
+
+.queryError {
+  font-size: 14px;
+  line-height: 20px;
+  user-select: text;
+  padding: 16px;
+
+  .errorName {
+    font-weight: 600;
+  }
+
+  .errorHint {
+    font-style: italic;
+    opacity: 0.7;
+  }
+}
+
+.queryStatus {
+  padding: 16px;
+}
+
+.inspectorLoading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+}
+
+.history {
+  position: absolute;
+  width: 194px;
+  height: 100%;
+  opacity: 0;
+  transition: opacity $historyTransitionTime;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .closeHistoryMobile {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1;
+  }
+
+  @include isMobile {
+    width: 100%;
+  }
+}
+
+.closeHistory {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  --buttonTextColour: #fff;
+  --buttonBg: #acacac;
+
+  @include darkTheme {
+    --buttonTextColour: #141414;
+  }
+
+  @include breakpoint(mobile) {
+    display: none;
+  }
+}
+
+.historyListWrapper {
+  height: 100%;
+  mask-image: linear-gradient(
+    transparent 0px,
+    #000 18px,
+    #000 calc(100% - 50px),
+    transparent 100%
+  );
+
+  @include breakpoint(mobile) {
+    height: calc(100% - 30px);
+  }
+}
+
+.historyList {
+  @include hideScrollbar;
+
+  & > div {
+    padding-bottom: 70px;
+
+    @include breakpoint(mobile) {
+      padding-bottom: 130px;
+    }
+  }
+}
+
+.historyItem {
+  position: absolute;
+  background-color: var(--Grey97);
+  border: 1px solid var(--Grey90);
+  border-radius: 8px;
+  cursor: pointer;
+  height: 105px;
+  width: calc(100% - 32px);
+  margin: 16px;
+  transition: opacity 0.1s ease-in-out;
+
+  &:hover {
+    background-color: var(--Grey95);
+
+    .loadButton {
+      opacity: 1;
+    }
+  }
+
+  @include darkTheme {
+    background-color: var(--Grey25);
+    border-color: var(--Grey30);
+
+    &:hover {
+      background-color: var(--Grey30);
+    }
+  }
+
+  @include breakpoint(mobile) {
+    height: 168px;
+    background-color: var(--grey93);
+
+    @include darkTheme {
+      background-color: var(--grey18);
+    }
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  &.selected {
+    border-color: transparent;
+    outline: 2px solid var(--accentGreen);
+  }
+
+  &.hasDateHeader {
+    margin-top: 32px;
+  }
+
+  svg {
+    height: 100%;
+    width: 100%;
+    opacity: 0.5;
+
+    --syntax-base: #444;
+
+    @include darkTheme {
+      --syntax-base: #e5e5e5;
+    }
+  }
+
+  .timeLabel {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background-color: #fff;
+    border-radius: 16px;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 15px;
+    padding: 3px 8px;
+
+    @include darkTheme {
+      background-color: #333333;
+    }
+
+    @include breakpoint(mobile) {
+      background-color: var(--white);
+
+      @include darkTheme {
+        background-color: var(--grey8);
+      }
+    }
+  }
+
+  &.draft {
+    background-color: transparent;
+    border-width: 0;
+    background-image: dashedBorderBg(#aaa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+    color: var(--Grey40);
+
+    &:hover {
+      background-color: var(--Grey97);
+    }
+
+    &.selected {
+      outline: none;
+      background-image: dashedBorderBg(#2cb88e, 2px);
+    }
+
+    @include darkTheme {
+      background-image: dashedBorderBg(#666);
+
+      &:hover {
+        background-color: var(--Grey22);
+      }
+
+      &.selected {
+        background-image: dashedBorderBg(#279474, 2px);
+      }
+    }
+
+    @include isMobile {
+      margin-top: 24px;
+    }
+  }
+
+  .dateHeader {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    right: 0;
+    display: flex;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 16px;
+    height: 16px;
+    color: #aeaeae;
+    pointer-events: none;
+
+    &:before,
+    &:after {
+      content: "";
+      height: 8px;
+      flex-grow: 1;
+      border-bottom: 1px solid #d7d7d7;
+    }
+    &:before {
+      margin-right: 8px;
+    }
+    &:after {
+      margin-left: 8px;
+    }
+
+    @include darkTheme {
+      color: #808080;
+
+      &:after,
+      &:before {
+        border-bottom-color: #404040;
+      }
+    }
+  }
+
+  .loadButton {
+    --buttonBg: var(--accentGreen);
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    opacity: 0;
+    color: #fff;
+
+    @include breakpoint(mobile) {
+      div {
+        border-radius: 6px;
+        padding: 8px 18px;
+      }
+    }
+
+    @include darkTheme {
+      color: #242424;
+    }
+  }
+
+  .visible {
+    opacity: 1;
+  }
+}
+
+.historyLoading {
+  position: absolute;
+  display: flex;
+  width: 100%;
+  height: 80px;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+}
+
+.editorBlock {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  --code-editor-bg: var(--app_panel_background);
+
+  &.horizontalSplit {
+    flex-direction: row;
+  }
+
+  .editorBlockInner {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  .scrollWrapper {
+    min-width: 0;
+    display: flex;
+    width: 100%;
+  }
+
+  :global(.cm-scroller) {
+    @include hideScrollbar;
+  }
+
+  :global(.cm-line) {
+    padding-right: 12px;
+  }
+}

@@ -12,6 +12,7 @@ import {
   ModelCreationData,
   getTypeInfo,
   ModelTypeInfo,
+  frozen,
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
@@ -29,9 +30,11 @@ import {Connection, createAuthenticatedFetch} from "./connection";
 export const instanceCtx = createMobxContext<InstanceState>();
 
 export async function createInstanceState(
-  props: ModelCreationData<InstanceState>
+  props: ModelCreationData<InstanceState>,
+  serverVersion: {major: number; minor: number}
 ) {
   const instance = new InstanceState(props);
+  runInAction(() => (instance.serverVersion = serverVersion));
 
   await instance.fetchInstanceInfo();
 
@@ -41,9 +44,6 @@ export async function createInstanceState(
 export interface ServerVersion {
   major: number;
   minor: number;
-  stage: string;
-  stage_no: number;
-  local: string[];
 }
 
 @model("InstanceState")
@@ -56,8 +56,10 @@ export class InstanceState extends Model({
   databasePageStates: prop(() => objectMap<DatabaseState>()),
 }) {
   @observable instanceName: string | null = null;
-  @observable serverVersion: ServerVersion | null = null;
-  @observable databases: string[] | null = null;
+  @observable.ref serverVersion: ServerVersion | null = null;
+  @observable.ref databases:
+    | {name: string; last_migration?: string | null}[]
+    | null = null;
   @observable roles: string[] | null = null;
 
   @computed
@@ -65,44 +67,91 @@ export class InstanceState extends Model({
     return this._instanceId ?? this.instanceName;
   }
 
+  @computed
+  get databaseNames() {
+    return this.databases?.map((d) => d.name) ?? null;
+  }
+
   defaultConnection: Connection | null = null;
 
   _refreshAuthToken: (() => void) | null = null;
 
+  private async _sysConnFetch(query: string, cardinality: Cardinality) {
+    return (
+      await AdminUIFetchConnection.create(
+        createAuthenticatedFetch({
+          serverUrl: this.serverUrl,
+          database: "__edgedbsys__",
+          user: this.authUsername ?? "edgedb",
+          authToken: this.authToken!,
+        }),
+        codecsRegistry,
+        this.serverVersion
+          ? [this.serverVersion.major, this.serverVersion.minor]
+          : undefined
+      ).fetch(
+        query,
+        null,
+        OutputFormat.BINARY,
+        cardinality,
+        Session.defaults()
+      )
+    ).result;
+  }
+
+  private get databasesQuery() {
+    return `sys::Database {
+          name,
+          ${
+            !this.serverVersion || this.serverVersion?.major >= 6
+              ? `last_migration,`
+              : ""
+          }
+        }`;
+  }
+
   async fetchInstanceInfo() {
-    const client = AdminUIFetchConnection.create(
-      createAuthenticatedFetch({
-        serverUrl: this.serverUrl,
-        database: "__edgedbsys__",
-        user: this.authUsername ?? "edgedb",
-        authToken: this.authToken!,
-      }),
-      codecsRegistry
-    );
     try {
-      const data = (
-        await client.fetch(
-          `
+      const data = await this._sysConnFetch(
+        `
       select {
         instanceName := sys::get_instance_name(),
         version := sys::get_version(),
-        databases := sys::Database.name,
+        databases := ${this.databasesQuery},
         roles := sys::Role.name,
       }`,
-          null,
-          OutputFormat.BINARY,
-          Cardinality.ONE,
-          Session.defaults()
-        )
-      ).result;
+        Cardinality.ONE
+      );
 
       runInAction(() => {
         this.instanceName = data.instanceName ?? "_localdev";
-        (this.serverVersion = data.version), (this.databases = data.databases);
+        this.serverVersion = data.version;
+        this.databases = data.databases;
         this.roles = data.roles;
       });
 
-      cleanupOldSchemaDataForInstance(this.instanceId!, this.databases!);
+      cleanupOldSchemaDataForInstance(this.instanceId!, this.databaseNames!);
+    } catch (err) {
+      if (err instanceof AuthenticationError) {
+        this._refreshAuthToken?.();
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  async fetchDatabaseInfo() {
+    try {
+      const data = await this._sysConnFetch(
+        `select ${this.databasesQuery}`,
+        Cardinality.MANY
+      );
+
+      runInAction(() => {
+        this.databases = data;
+      });
+
+      cleanupOldSchemaDataForInstance(this.instanceId!, this.databaseNames!);
     } catch (err) {
       if (err instanceof AuthenticationError) {
         this._refreshAuthToken?.();
@@ -122,18 +171,25 @@ export class InstanceState extends Model({
         (this.databases?.length ?? 0) > 0,
       () => {
         this.defaultConnection = new Connection({
-          config: {
+          config: frozen({
             serverUrl: this.serverUrl,
             authToken: this.authToken!,
-            database: this.databases![0],
+            database: this.databases![0].name,
             user: this.authUsername ?? this.roles![0],
-          },
+          }),
+          serverVersion: frozen(this.serverVersion),
         });
       }
     );
 
     return reaction(
-      () => [this.serverUrl, this.authToken, this.authUsername, this.roles],
+      () => [
+        this.serverUrl,
+        this.authToken,
+        this.authUsername,
+        this.roles,
+        this.serverVersion,
+      ],
       () => (this._connections = new Map())
     );
   }
@@ -143,12 +199,13 @@ export class InstanceState extends Model({
     let conn = this._connections.get(dbName);
     if (!conn) {
       conn = new Connection({
-        config: {
+        config: frozen({
           serverUrl: this.serverUrl,
           authToken: this.authToken!,
           database: dbName,
           user: this.authUsername ?? this.roles![0],
-        },
+        }),
+        serverVersion: frozen(this.serverVersion),
       });
       this._connections.set(dbName, conn);
     }
@@ -195,12 +252,13 @@ export class InstanceState extends Model({
       const schemaScript = await exampleSchema;
       await this.defaultConnection!.execute(`create database _example`);
       const exampleConn = new Connection({
-        config: {
+        config: frozen({
           serverUrl: this.serverUrl,
           authToken: this.authToken!,
           database: "_example",
           user: this.authUsername ?? this.roles![0],
-        },
+        }),
+        serverVersion: frozen(this.serverVersion),
       });
       await exampleConn.execute(schemaScript);
       await this.fetchInstanceInfo();

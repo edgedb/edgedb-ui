@@ -113,9 +113,9 @@ export default function CreateBranchModal({
               label="From branch"
               items={[
                 {id: null, label: <i>Empty</i>},
-                ...(instanceState.databases ?? []).map((db) => ({
-                  id: db,
-                  label: db,
+                ...(instanceState.databases ?? []).map(({name}) => ({
+                  id: name,
+                  label: name,
                 })),
               ]}
               selectedItemId={watch("fromBranch")}

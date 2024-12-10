@@ -42,7 +42,7 @@ describe("clientSettings:", () => {
 
     const resultHiddenNote = await driver.wait(
       until.elementLocated(
-        ByUIClass("repl_queryResult", "inspector_resultsHidden")
+        ByUIClass("queryeditor_queryResult", "inspector_resultsHidden")
       )
     );
     expect(
@@ -51,7 +51,7 @@ describe("clientSettings:", () => {
 
     // check only 10 results returned
     const results = await driver.findElements(
-      ByUIClass("repl_queryResult", "inspector_scalar_number")
+      ByUIClass("queryeditor_queryResult", "inspector_scalar_number")
     );
     expect(results.length).toBe(10);
   });

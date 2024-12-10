@@ -315,9 +315,10 @@
 }
 
 .resultModeHeader {
-  display: flex;
-  justify-content: end;
-  padding-bottom: 8px;
+  padding: 4px;
+  margin-left: 8px;
+  margin-right: -8px;
+  z-index: 1;
 }
 
 .historyQuery {
@@ -382,6 +383,16 @@
     pointer-events: none;
     user-select: none;
     margin: 14px 12px 0 16px;
+  }
+
+  @include isMobile {
+    .historyPrompt,
+    .historyQueryCode {
+      padding-top: 14px;
+    }
+    .historyTime {
+      margin-top: 16px;
+    }
   }
 }
 
