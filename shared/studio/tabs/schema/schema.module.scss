@@ -190,8 +190,8 @@
 .viewSwitch {
   position: absolute;
   bottom: 8px;
-  left: calc(50% - 54.4px);
-  border-radius: 22px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .switcherLabel {

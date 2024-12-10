@@ -52,7 +52,12 @@ export const appCtx = createContext<App>();
 @model("App")
 export class App extends Model({
   instanceState: prop(
-    () => new InstanceState({serverUrl, authToken, authUsername})
+    () =>
+      new InstanceState({
+        serverUrl,
+        authToken,
+        authUsername,
+      })
   ),
 }) {
   onInit() {

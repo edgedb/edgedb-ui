@@ -8,7 +8,7 @@ test("select version query", async () => {
   );
   await editor.sendKeys("select sys::get_version_as_str()");
 
-  const runButton = driver.findElement(ByUIClass("repl_runBtn"));
+  const runButton = driver.findElement(ByUIClass("queryeditor_runBtn"));
   await runButton.click();
 
   const versionStrEl = await driver.wait(

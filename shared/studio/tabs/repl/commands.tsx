@@ -1,8 +1,9 @@
 import {CommandOutputKind, CommandResult} from "./state/commands";
 
 import styles from "./repl.module.scss";
+import {Repl} from "./state";
 
-export function renderCommandResult(result: CommandResult) {
+export function renderCommandResult(state: Repl, result: CommandResult) {
   const ctrlKey = navigator.platform.toLowerCase().includes("mac")
     ? "Cmd"
     : "Ctrl";
@@ -17,13 +18,17 @@ export function renderCommandResult(result: CommandResult) {
           <div className={styles.command}>{ctrlKey}+ArrowUp/ArrowDown</div>
           <div className={styles.info}>Navigate query history</div>
 
-          <div className={styles.heading}>Settings</div>
-          <div className={styles.command}>
-            \set language {"("}edgeql | sql{")"},
-            <br />
-            \edgeql, \sql
-          </div>
-          <div className={styles.info}>Set the query language</div>
+          {state.sqlModeSupported ? (
+            <>
+              <div className={styles.heading}>Settings</div>
+              <div className={styles.command}>
+                \set language {"("}edgeql | sql{")"},
+                <br />
+                \edgeql, \sql
+              </div>
+              <div className={styles.info}>Set the query language</div>
+            </>
+          ) : null}
 
           <div className={styles.heading}>Introspection</div>
           <div className={styles.subheading}>

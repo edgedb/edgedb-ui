@@ -116,8 +116,15 @@ export async function handleSlashCommand(
     }
     case "edgeql":
     case "sql": {
-      item.setCommandResult({kind: CommandOutputKind.none});
-      repl.setLanguage(command === "sql" ? ReplLang.SQL : ReplLang.EdgeQL);
+      if (command === "edgeql" || repl.sqlModeSupported) {
+        item.setCommandResult({kind: CommandOutputKind.none});
+        repl.setLanguage(command === "sql" ? ReplLang.SQL : ReplLang.EdgeQL);
+      } else {
+        item.setCommandResult({
+          kind: CommandOutputKind.error,
+          msg: `This version of Gel does not support SQL mode`,
+        });
+      }
       break;
     }
     case "clear": {
