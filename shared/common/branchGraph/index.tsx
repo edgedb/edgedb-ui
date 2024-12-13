@@ -80,6 +80,7 @@ export interface BranchGraphProps {
   className?: string;
   instanceId?: string;
   instanceState: InstanceState | Error | null;
+  disabled?: boolean;
   BranchLink: BranchLink;
   githubDetails?: BranchGraphGithubDetails;
   BottomButton?: (props: {className?: string}) => JSX.Element;
@@ -97,6 +98,9 @@ class MissingMigrationsError extends Error {}
 export const BranchGraph = observer(function BranchGraph({
   instanceId,
   instanceState,
+  disabled,
+  className,
+  BottomButton,
   ...props
 }: BranchGraphProps) {
   const fetching = useRef(false);
@@ -113,21 +117,26 @@ export const BranchGraph = observer(function BranchGraph({
       fetching.current ||
       !refreshing ||
       !instanceId ||
-      !(instanceState instanceof InstanceState)
+      (!disabled && !(instanceState instanceof InstanceState))
     ) {
       return;
     }
     fetching.current = true;
-    instanceState.fetchDatabaseInfo().then(() =>
-      fetchMigrationsData(instanceId, instanceState).then((data) => {
-        if (!data) return;
+    (async () => {
+      if (instanceState instanceof InstanceState) {
+        await instanceState.fetchDatabaseInfo();
+      }
+      const data = await fetchMigrationsData(
+        instanceId,
+        instanceState instanceof InstanceState ? instanceState : null
+      );
+      if (!data) return;
 
-        const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
-        setLayoutNodes(layoutNodes);
-        setRefreshing(false);
-        fetching.current = false;
-      })
-    );
+      const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
+      setLayoutNodes(layoutNodes);
+      setRefreshing(false);
+      fetching.current = false;
+    })();
   }, [refreshing, instanceId, instanceState]);
 
   useEffect(() => {
@@ -197,11 +206,15 @@ export const BranchGraph = observer(function BranchGraph({
     >
       <_BranchGraphRenderer
         layoutNodes={
-          instanceState instanceof Error ? instanceState : layoutNodes
+          !disabled && instanceState instanceof Error
+            ? instanceState
+            : layoutNodes
         }
+        className={cn(className, {[styles.disabled]: !!disabled})}
         {...props}
+        BottomButton={disabled ? undefined : BottomButton}
         TopButton={
-          manualRefresh
+          manualRefresh && instanceState instanceof InstanceState
             ? ({className}) => (
                 <button
                   className={cn(className, {
@@ -855,7 +868,7 @@ const MigrationsPanel = observer(function MigrationsPanel({
             const parentSdl = parentName
               ? missingItems[i + 1]?.name === parentName
                 ? scripts[i + 1].sdl
-                : migrationScripts.get(parentName)?.sdl ?? null
+                : (migrationScripts.get(parentName)?.sdl ?? null)
               : null;
             migrationScripts.set(missingItems[i].name, {
               script,
@@ -1213,15 +1226,15 @@ function SDLCodeDiff({
                 lastMarker === -1
                   ? styles.removed
                   : lastMarker === 1
-                  ? styles.added
-                  : undefined
+                    ? styles.added
+                    : undefined
               }
             >
               {(lastMarker === -1
                 ? "-\n"
                 : lastMarker === 1
-                ? "+\n"
-                : "\n"
+                  ? "+\n"
+                  : "\n"
               ).repeat(i - lastMarkerIndex)}
             </div>
           );
