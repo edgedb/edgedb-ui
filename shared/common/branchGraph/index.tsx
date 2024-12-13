@@ -76,6 +76,7 @@ export interface BranchGraphProps {
   className?: string;
   instanceId?: string;
   instanceState: InstanceState | Error | null;
+  disabled?: boolean;
   BranchLink: BranchLink;
   githubDetails?: BranchGraphGithubDetails;
   BottomButton?: (props: {className?: string}) => JSX.Element;
@@ -91,6 +92,9 @@ class MissingMigrationsError extends Error {}
 export const BranchGraph = observer(function BranchGraph({
   instanceId,
   instanceState,
+  disabled,
+  className,
+  BottomButton,
   ...props
 }: BranchGraphProps) {
   const [refreshing, setRefreshing] = useState(true);
@@ -100,11 +104,14 @@ export const BranchGraph = observer(function BranchGraph({
     if (
       !refreshing ||
       !instanceId ||
-      !(instanceState instanceof InstanceState)
+      (!disabled && !(instanceState instanceof InstanceState))
     ) {
       return;
     }
-    fetchMigrationsData(instanceId, instanceState).then((data) => {
+    fetchMigrationsData(
+      instanceId,
+      instanceState instanceof InstanceState ? instanceState : null
+    ).then((data) => {
       if (!data) return;
 
       const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
@@ -157,22 +164,32 @@ export const BranchGraph = observer(function BranchGraph({
     >
       <_BranchGraphRenderer
         layoutNodes={
-          instanceState instanceof Error ? instanceState : layoutNodes
+          !disabled && instanceState instanceof Error
+            ? instanceState
+            : layoutNodes
         }
+        className={cn(className, {[styles.disabled]: !!disabled})}
         {...props}
-        TopButton={({className}) => (
-          <button
-            className={cn(className, {
-              [styles.refreshing]: refreshing,
-            })}
-            onClick={() => {
-              localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
-              setRefreshing(true);
-            }}
-          >
-            <SyncIcon />
-          </button>
-        )}
+        BottomButton={disabled ? undefined : BottomButton}
+        TopButton={
+          instanceState instanceof InstanceState
+            ? ({className}) => (
+                <button
+                  className={cn(className, {
+                    [styles.refreshing]: refreshing,
+                  })}
+                  onClick={() => {
+                    localStorage.removeItem(
+                      `edgedb-branch-graph-${instanceId}`
+                    );
+                    setRefreshing(true);
+                  }}
+                >
+                  <SyncIcon />
+                </button>
+              )
+            : undefined
+        }
       />
     </BranchGraphContext.Provider>
   );

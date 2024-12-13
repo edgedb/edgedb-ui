@@ -66,15 +66,19 @@ export interface GraphItem {
 
 export async function fetchMigrationsData(
   instanceId: string,
-  instanceState: InstanceState
+  instanceState: InstanceState | null
 ): Promise<MigrationsData[] | null> {
-  if (instanceState.databases === null) {
+  if (instanceState && instanceState.databases === null) {
     return null;
   }
 
-  const databases = new Set(instanceState.databases);
-
   let migrationsData = _getBranchGraphDataFromCache(instanceId);
+
+  if (!instanceState) {
+    return migrationsData ?? [];
+  }
+
+  const databases = new Set(instanceState.databases);
 
   if (
     !migrationsData ||
@@ -82,7 +86,7 @@ export async function fetchMigrationsData(
     !migrationsData.every(({branch}) => databases.has(branch))
   ) {
     migrationsData = await Promise.all(
-      instanceState.databases.map(async (dbName) => {
+      instanceState.databases!.map(async (dbName) => {
         const conn = instanceState.getConnection(dbName);
         return {
           branch: dbName,
