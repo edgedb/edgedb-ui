@@ -19,6 +19,26 @@ export function ChevronDownIcon({className}: {className?: string}) {
   );
 }
 
+export function ErrorIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M12.5 14.9H12.5085M12.5 8.1V11.5M8.981 3H16.019L21 7.981V15.019L16.019 20H8.981L4 15.019V7.981L8.981 3Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function WarningIcon() {
   return (
     <svg
