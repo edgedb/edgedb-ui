@@ -602,6 +602,52 @@
   }
 }
 
+.sdlToggle {
+  display: flex;
+  background: var(--Grey97);
+  border: 1px solid var(--Grey93);
+  border-radius: 8px;
+  font-family: "Roboto Flex Variable", sans-serif;
+  line-height: 16px;
+  margin: 8px;
+  margin-bottom: 0;
+  align-self: end;
+
+  @include darkTheme {
+    background: var(--Grey16);
+    border-color: var(--Grey14);
+  }
+
+  .option {
+    position: relative;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 10px;
+    color: var(--secondary_text_color);
+    z-index: 0;
+
+    &.selected:before {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.16);
+      z-index: -1;
+
+      @include darkTheme {
+        background: var(--Grey30);
+        box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.4);
+      }
+    }
+  }
+}
+
 .migrationsPanelInner {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -728,6 +774,52 @@
     .codeWrapper {
       overflow: auto;
       width: 100%;
+
+      &.diffCode {
+        display: grid;
+
+        > * {
+          grid-area: 1 / 1;
+        }
+      }
+    }
+
+    pre,
+    .diffMarkers {
+      font-family: "Roboto Mono Variable";
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 450;
+      line-height: 22px;
+    }
+
+    .diffMarkers {
+      white-space: pre;
+      padding: 14px 0;
+      font-weight: 500;
+
+      > div {
+        padding-left: 8px;
+      }
+
+      .removed {
+        background: #fed9d9;
+        color: #af4b4b;
+
+        @include darkTheme {
+          background: #502f2f;
+          color: #f38b8b;
+        }
+      }
+      .added {
+        background: #d5edd7;
+        color: #46724a;
+
+        @include darkTheme {
+          background: #273a29;
+          color: #5d9662;
+        }
+      }
     }
 
     pre {
@@ -735,13 +827,13 @@
       padding-right: 44px;
       margin: 0;
       color: var(--main_text_color, #4d4d4d);
-      font-family: "Roboto Mono Variable";
-      font-size: 13px;
-      font-style: normal;
-      font-weight: 450;
-      line-height: 22px;
       width: max-content;
       user-select: text;
+
+      .collapsed {
+        user-select: none;
+        color: var(--syntax-comment);
+      }
     }
   }
 
