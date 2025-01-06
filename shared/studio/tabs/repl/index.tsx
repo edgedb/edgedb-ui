@@ -171,16 +171,22 @@ const ReplList = observer(function ReplList({
 
     setRenderHeader(scrollTop < headerHeight + 100);
 
+    const historyCount = replState.itemHeights.historyCount;
+
     const startIndex = Math.max(
       0,
       replState.itemHeights.getIndexAtHeight(
         Math.max(0, scrollTop - headerHeight)
-      ) - 2
+      ) +
+        historyCount -
+        2
     );
     const endIndex = Math.min(
       replState.itemHeights.getIndexAtHeight(
         Math.max(0, scrollTop - headerHeight + ref.current!.clientHeight)
-      ) + 2,
+      ) +
+        historyCount +
+        2,
       replState.queryHistory.length - 1
     );
 
@@ -191,7 +197,9 @@ const ReplList = observer(function ReplList({
             startIndex,
             endIndex,
             old[0] !== startIndex
-              ? replState.itemHeights.getHeightAtIndex(startIndex)
+              ? replState.itemHeights.getHeightAtIndex(
+                  startIndex - historyCount
+                )
               : old[2],
           ]
     );
@@ -217,6 +225,7 @@ const ReplList = observer(function ReplList({
 
   const items: JSX.Element[] = [];
   if (replState.queryHistory.length) {
+    const historyCount = replState.itemHeights.historyCount;
     let top = visibleBounds[2] + headerHeight;
     for (let i = visibleBounds[0]; i <= visibleBounds[1]; i++) {
       const item = replState.queryHistory[i];
@@ -224,7 +233,7 @@ const ReplList = observer(function ReplList({
         <ReplHistoryItem
           key={item.$modelId}
           state={replState}
-          index={i}
+          historyIndex={i - historyCount}
           item={item}
           styleTop={top}
           dbName={dbState.name}
@@ -589,13 +598,13 @@ const ResultGridWrapper = observer(function ResultGridWrapper({
 
 const ReplHistoryItem = observer(function ReplHistoryItem({
   state,
-  index,
+  historyIndex,
   item,
   styleTop,
   dbName,
 }: {
   state: Repl;
-  index: number;
+  historyIndex: number;
   item: ReplHistoryItemState;
   styleTop: number;
   dbName: string;
@@ -663,7 +672,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
           updateScroll.current = false;
         }
         item.renderHeight = paddedHeight;
-        state.itemHeights.updateItemHeight(index, paddedHeight);
+        state.itemHeights.updateItemHeight(historyIndex, paddedHeight);
       }
     },
     [item.showDateHeader]
