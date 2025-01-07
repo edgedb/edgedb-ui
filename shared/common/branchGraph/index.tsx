@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -28,6 +29,7 @@ import {
   MigrationsListIcon,
   WarningIcon,
   Button,
+  InfoIcon,
 } from "@edgedb/common/newui";
 import {CopyButton} from "../newui/copyButton";
 import {PopupArrow} from "../newui/icons/other";
@@ -46,6 +48,8 @@ import {
 import styles from "./branchGraph.module.scss";
 import Spinner from "../ui/spinner";
 import {useResize} from "../hooks/useResize";
+import {DiffResult, patienceDiff} from "./diff";
+import {tidyIndents} from "./utils";
 
 export interface BranchGraphGithubBranch {
   // branch_name: z.string(),
@@ -83,7 +87,9 @@ export interface BranchGraphProps {
 }
 
 export const BranchGraphContext = createContext<{
-  fetchMigrations: (graphItems: GraphItem[]) => Promise<string[]>;
+  fetchMigrations: (
+    graphItems: GraphItem[]
+  ) => Promise<{script: string; sdl: string | null}[]>;
 }>(null!);
 
 export const BranchGraph = observer(function BranchGraph({
@@ -91,25 +97,51 @@ export const BranchGraph = observer(function BranchGraph({
   instanceState,
   ...props
 }: BranchGraphProps) {
+  const fetching = useRef(false);
   const [refreshing, setRefreshing] = useState(true);
   const [layoutNodes, setLayoutNodes] = useState<LayoutNode[] | null>(null);
 
+  const manualRefresh =
+    instanceState instanceof InstanceState &&
+    !!instanceState.databases?.length &&
+    instanceState.databases[0].last_migration === undefined;
+
   useEffect(() => {
     if (
+      fetching.current ||
       !refreshing ||
       !instanceId ||
       !(instanceState instanceof InstanceState)
     ) {
       return;
     }
-    fetchMigrationsData(instanceId, instanceState).then((data) => {
-      if (!data) return;
+    fetching.current = true;
+    instanceState.fetchDatabaseInfo().then(() =>
+      fetchMigrationsData(instanceId, instanceState).then((data) => {
+        if (!data) return;
 
-      const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
-      setLayoutNodes(layoutNodes);
-      setRefreshing(false);
-    });
+        const layoutNodes = joinGraphLayouts(buildBranchGraph(data));
+        setLayoutNodes(layoutNodes);
+        setRefreshing(false);
+        fetching.current = false;
+      })
+    );
   }, [refreshing, instanceId, instanceState]);
+
+  useEffect(() => {
+    if (!manualRefresh) {
+      const listener = () => {
+        if (document.visibilityState === "visible") {
+          setRefreshing(true);
+        }
+      };
+      document.addEventListener("visibilitychange", listener);
+
+      return () => {
+        document.removeEventListener("visibilitychange", listener);
+      };
+    }
+  }, [manualRefresh]);
 
   const fetchMigrations =
     instanceState instanceof Error
@@ -123,13 +155,20 @@ export const BranchGraph = observer(function BranchGraph({
           const result = await conn.query(
             `select schema::Migration {
               name,
-              script
+              script,
+              ${!manualRefresh ? "sdl" : ""}
             }
             filter .name in array_unpack(<array<str>>$names)`,
             {names: graphItems.map((item) => item.name)}
           );
           const migrations = new Map(
-            result.result?.map((m) => [m.name, m.script])
+            result.result?.map((m) => [
+              m.name,
+              {
+                script: tidyIndents(m.script),
+                sdl: m.sdl != null ? tidyIndents(m.sdl) : null,
+              },
+            ])
           );
 
           const missingMigrations = graphItems
@@ -141,9 +180,10 @@ export const BranchGraph = observer(function BranchGraph({
               `Migrations not found for ${missingMigrations.join(", ")}`
             );
           }
-          return graphItems.map((item) =>
-            migrations.get(item.name)
-          ) as string[];
+          return graphItems.map((item) => migrations.get(item.name)) as {
+            script: string;
+            sdl: string | null;
+          }[];
         };
 
   return (
@@ -157,19 +197,26 @@ export const BranchGraph = observer(function BranchGraph({
           instanceState instanceof Error ? instanceState : layoutNodes
         }
         {...props}
-        TopButton={({className}) => (
-          <button
-            className={cn(className, {
-              [styles.refreshing]: refreshing,
-            })}
-            onClick={() => {
-              localStorage.removeItem(`edgedb-branch-graph-${instanceId}`);
-              setRefreshing(true);
-            }}
-          >
-            <SyncIcon />
-          </button>
-        )}
+        TopButton={
+          manualRefresh
+            ? ({className}) => (
+                <button
+                  className={cn(className, {
+                    [styles.refreshing]: refreshing,
+                  })}
+                  onClick={() => {
+                    localStorage.removeItem(
+                      `edgedb-branch-graph-${instanceId}`
+                    );
+                    setRefreshing(true);
+                  }}
+                >
+                  <SyncIcon />
+                </button>
+              )
+            : undefined
+        }
+        showSDLToggle={!manualRefresh}
       />
     </BranchGraphContext.Provider>
   );
@@ -189,12 +236,14 @@ export function _BranchGraphRenderer({
   layoutNodes,
   githubDetails,
   onPanelOpen,
+  showSDLToggle,
 }: Pick<
   BranchGraphProps,
   "className" | "BranchLink" | "BottomButton" | "githubDetails" | "onPanelOpen"
 > & {
   layoutNodes: LayoutNode[] | null | Error;
   TopButton?: (props: {className?: string}) => JSX.Element;
+  showSDLToggle: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -392,6 +441,7 @@ export function _BranchGraphRenderer({
               <MigrationsPanel
                 key={activeMigrationHistory.items[0].name}
                 history={activeMigrationHistory}
+                showSDLToggle={showSDLToggle}
                 setActiveMigrationItem={setActiveMigrationItem}
                 highlightedMigrationItem={highlightedMigrationItem}
                 setHighlightedMigrationItem={
@@ -402,16 +452,6 @@ export function _BranchGraphRenderer({
                   setPanelOpen(false);
                 }}
               />
-              <button
-                className={cn(styles.floatingButton, styles.closePanelButton)}
-                onClick={() => {
-                  setHighlightedMigrationItem(null);
-                  setPanelOpen(false);
-                }}
-              >
-                <CrossIcon />
-                Close migrations
-              </button>
             </>
           ) : null}
         </div>
@@ -739,7 +779,15 @@ function MigrationID({
   );
 }
 
-const migrationScripts = observable(new Map<string, string>());
+const migrationScripts = observable(
+  new Map<
+    string,
+    {script: string; sdl: string | null; sdlDiff: DiffResult | null}
+  >(),
+  {
+    deep: false,
+  }
+);
 
 const MigrationsPanel = observer(function MigrationsPanel({
   history,
@@ -747,12 +795,14 @@ const MigrationsPanel = observer(function MigrationsPanel({
   highlightedMigrationItem,
   setHighlightedMigrationItem,
   closePanel,
+  showSDLToggle,
 }: {
   history: MigrationHistoryData;
   setActiveMigrationItem: SetActiveMigrationItem;
   highlightedMigrationItem: GraphItem | null;
   setHighlightedMigrationItem: (item: GraphItem) => void;
   closePanel: () => void;
+  showSDLToggle: boolean;
 }) {
   const {fetchMigrations} = useContext(BranchGraphContext);
   const [fetching, setFetching] = useState(false);
@@ -769,6 +819,23 @@ const MigrationsPanel = observer(function MigrationsPanel({
   const [panelHeight, _setPanelHeight] = useState(0);
   useResize(scrollRef, ({height}) => _setPanelHeight(height));
 
+  const noSDLDiffs = useMemo(
+    () =>
+      history.items.every((item) => {
+        const data = migrationScripts.get(item.name);
+        return data != null && !(item.parent ? data.sdlDiff : data.sdl);
+      }),
+    [history, fetching]
+  );
+
+  const [sdlMode, setSdlMode] = useState(showSDLToggle);
+
+  useEffect(() => {
+    if (noSDLDiffs) {
+      setSdlMode(false);
+    }
+  }, [noSDLDiffs]);
+
   useEffect(() => {
     if (fetching) return;
 
@@ -780,7 +847,21 @@ const MigrationsPanel = observer(function MigrationsPanel({
       fetchMigrations(missingItems)
         .then((scripts) => {
           for (let i = 0; i < scripts.length; i++) {
-            migrationScripts.set(missingItems[i].name, scripts[i]);
+            const {script, sdl} = scripts[i];
+            const parentName = missingItems[i].parent?.name;
+            const parentSdl = parentName
+              ? missingItems[i + 1]?.name === parentName
+                ? scripts[i + 1].sdl
+                : migrationScripts.get(parentName)?.sdl ?? null
+              : null;
+            migrationScripts.set(missingItems[i].name, {
+              script,
+              sdl,
+              sdlDiff:
+                parentSdl && sdl
+                  ? patienceDiff(parentSdl.split("\n"), sdl.split("\n"))
+                  : null,
+            });
           }
         })
         .finally(() => setFetching(false));
@@ -864,14 +945,35 @@ const MigrationsPanel = observer(function MigrationsPanel({
 
   return (
     <div className={styles.migrationsPanel}>
-      <Button
-        className={styles.closeButton}
-        leftIcon={<CrossIcon />}
-        kind="outline"
-        onClick={closePanel}
-      >
-        Close migrations
-      </Button>
+      <div className={styles.panelHeader}>
+        {showSDLToggle ? (
+          <div className={styles.sdlToggle}>
+            <div
+              className={cn(styles.option, {[styles.selected]: !sdlMode})}
+              onClick={() => setSdlMode(false)}
+            >
+              DDL
+            </div>
+            <div
+              className={cn(styles.option, {
+                [styles.selected]: sdlMode,
+                [styles.disabled]: noSDLDiffs,
+              })}
+              onClick={() => setSdlMode(true)}
+            >
+              SDL
+            </div>
+          </div>
+        ) : null}
+
+        <Button
+          className={styles.closeButton}
+          leftIcon={<CrossIcon />}
+          kind="outline"
+          onClick={closePanel}
+        />
+      </div>
+
       <div ref={scrollRef} className={styles.migrationsPanelInner}>
         <div className={styles.panelScrollWrapper}>
           {history.children.length
@@ -903,7 +1005,10 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 </div>
               ))
             : null}
-          {history.items.map((item) => {
+          {history.items.map((item, i) => {
+            const itemData = migrationScripts.get(item.name);
+            const code = sdlMode ? itemData?.sdl! : itemData?.script;
+
             const body = (
               <div
                 ref={(el: HTMLDivElement | null) => {
@@ -937,7 +1042,7 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 )}
 
                 <div className={styles.header}>
-                  {item.parent == null ? line : null}
+                  {item.parent == null && i !== 0 ? line : null}
                   <svg
                     className={styles.dot}
                     xmlns="http://www.w3.org/2000/svg"
@@ -949,21 +1054,28 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 </div>
 
                 <div className={styles.script}>
-                  {migrationScripts.has(item.name) ? (
-                    <>
-                      <div className={styles.codeWrapper}>
-                        <CodeBlock code={migrationScripts.get(item.name)!} />
-                      </div>
-                      <div className={styles.copyButtonWrapper}>
-                        <div className={styles.copyButtonClip}>
-                          <CopyButton
-                            className={styles.copyButton}
-                            content={migrationScripts.get(item.name)!}
-                            mini
-                          />
+                  {itemData ? (
+                    sdlMode && (item.parent || !itemData.sdl) ? (
+                      <SDLCodeDiff
+                        sdl={itemData.sdl}
+                        diff={itemData.sdlDiff}
+                      />
+                    ) : (
+                      <>
+                        <div className={styles.codeWrapper}>
+                          <CodeBlock code={code!} />
                         </div>
-                      </div>
-                    </>
+                        <div className={styles.copyButtonWrapper}>
+                          <div className={styles.copyButtonClip}>
+                            <CopyButton
+                              className={styles.copyButton}
+                              content={code!}
+                              mini
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )
                   ) : (
                     <Spinner className={styles.loading} size={20} />
                   )}
@@ -997,6 +1109,151 @@ const MigrationsPanel = observer(function MigrationsPanel({
     </div>
   );
 });
+
+function SDLCodeDiff({
+  diff,
+  sdl,
+}: {
+  diff: DiffResult | null;
+  sdl: string | null;
+}) {
+  if (!diff) {
+    return (
+      <div className={styles.noSdlDiff}>
+        <div className={styles.message}>No SDL diff available</div>
+        <div className={styles.note}>
+          <InfoIcon />
+          <span>
+            Update the <code>store_migration_sdl</code> config to enable SDL
+            diffs
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  const {code, diffMarkers, ranges} = useMemo(() => {
+    const keptLinesMarkers = new Map<number, number>();
+    const depthIndexes: number[] = [];
+    for (let i = 0; i < diff.lines.length; i++) {
+      const line = diff.lines[i];
+      const depth = (line.line.match(/^ */)?.[0].length ?? 0) / 2;
+      const marker = line.aIndex === -1 ? 1 : line.bIndex === -1 ? -1 : 0;
+
+      if (marker !== -1) {
+        // deleted line doesn't affect depth tracking
+        if (depth === depthIndexes.length) {
+          // line is indented
+          depthIndexes.push(i);
+        } else {
+          depthIndexes.pop();
+          if (depth === depthIndexes.length - 1) {
+            // line is dedented
+            const depthStart = depthIndexes.pop()!;
+            if (keptLinesMarkers.has(depthStart)) {
+              keptLinesMarkers.set(i, marker);
+            }
+          }
+          // else line at same depth
+          // replace depthIndex
+          depthIndexes.push(i);
+        }
+      }
+
+      if (marker !== 0) {
+        keptLinesMarkers.set(i, marker);
+        for (const index of depthIndexes.slice(0, depth)) {
+          if (!keptLinesMarkers.has(index)) {
+            keptLinesMarkers.set(index, 0);
+          }
+        }
+      }
+    }
+
+    const lines: (string | number)[] = [];
+    const ranges: [number, number][] = [];
+    const markers: number[] = [];
+    let cursor = 0;
+    for (let i = 0; i < diff.lines.length; i++) {
+      const line = diff.lines[i].line;
+      if (keptLinesMarkers.has(i)) {
+        lines.push(line);
+        markers.push(keptLinesMarkers.get(i)!);
+        cursor += line.length + 1;
+      } else if (typeof lines[lines.length - 1] === "string") {
+        const indent = line.match(/^ */)?.[0].length ?? 0;
+        lines.push(indent);
+        markers.push(0);
+        ranges.push([cursor, cursor + indent + 4]);
+        cursor += indent + 4;
+      }
+    }
+
+    const diffMarkers: JSX.Element[] = [];
+    let lastMarker = 0;
+    let lastMarkerIndex = 0;
+    for (let i = 0; i <= markers.length; i++) {
+      const marker = markers[i];
+      if (lastMarker !== marker) {
+        if (lastMarkerIndex !== i) {
+          diffMarkers.push(
+            <div
+              key={i}
+              className={
+                lastMarker === -1
+                  ? styles.removed
+                  : lastMarker === 1
+                  ? styles.added
+                  : undefined
+              }
+            >
+              {(lastMarker === -1
+                ? "-\n"
+                : lastMarker === 1
+                ? "+\n"
+                : "\n"
+              ).repeat(i - lastMarkerIndex)}
+            </div>
+          );
+        }
+        lastMarker = marker;
+        lastMarkerIndex = i;
+      }
+    }
+
+    return {
+      code: lines
+        .map((line) =>
+          typeof line === "number" ? `${" ".repeat(line)}...` : line
+        )
+        .join("\n"),
+      diffMarkers,
+      ranges,
+    };
+  }, [diff]);
+
+  return (
+    <>
+      <div className={cn(styles.codeWrapper, styles.diffCode)}>
+        <div className={styles.diffMarkers}>{diffMarkers}</div>
+        <CodeBlock
+          code={code}
+          customRanges={ranges.map((range) => ({
+            range,
+            style: styles.collapsed,
+          }))}
+        />
+      </div>
+      {sdl ? (
+        <div className={styles.copyButtonWrapper}>
+          <div className={styles.copyButtonClip}>
+            <CopyButton className={styles.copyButton} content={sdl} mini />
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
 
 export const RelativeTime = observer(function RelativeTime({
   time,

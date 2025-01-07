@@ -102,7 +102,7 @@ export class DatabaseState extends Model({
         statuses.includes("DROP BRANCH") ||
         statuses.includes("ALTER BRANCH")
       ) {
-        instanceCtx.get(this)!.fetchInstanceInfo();
+        instanceCtx.get(this)!.fetchDatabaseInfo();
       } else {
         const dbState = dbCtx.get(this)!;
         dbState.fetchSchemaData();
