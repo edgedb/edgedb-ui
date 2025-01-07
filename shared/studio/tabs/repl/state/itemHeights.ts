@@ -10,6 +10,10 @@ export class ItemHeights {
     return this._totalHeight.get();
   }
 
+  get historyCount() {
+    return this._history._length;
+  }
+
   private _updateTotalHeight() {
     runInAction(() =>
       this._totalHeight.set(
@@ -30,11 +34,15 @@ export class ItemHeights {
     this._updateTotalHeight();
   }
 
+  // to ensure stable item indexes:
+  // positive indexes are current items starting at 0
+  // negative indexes are history items starting at -1
+
   updateItemHeight(index: number, height: number) {
-    if (index < this._history._length) {
-      this._history.updateHeight(this._history._length - index - 1, height);
+    if (index < 0) {
+      this._history.updateHeight(-1 - index, height);
     } else {
-      this._current.updateHeight(index - this._history._length, height);
+      this._current.updateHeight(index, height);
     }
     this._updateTotalHeight();
   }
@@ -42,29 +50,22 @@ export class ItemHeights {
   getIndexAtHeight(height: number) {
     if (height < this._history._root.total) {
       return (
-        this._history._length -
-        this._history.getIndexAtHeight(this._history._root.total - height) -
-        1
+        -this._history.getIndexAtHeight(this._history._root.total - height) - 1
       );
     } else {
-      return (
-        this._current.getIndexAtHeight(height - this._history._root.total) +
-        this._history._length
+      return this._current.getIndexAtHeight(
+        height - this._history._root.total
       );
     }
   }
 
   getHeightAtIndex(index: number) {
-    if (index < this._history._length) {
-      return index
-        ? this._history._root.total -
-            this._history.getHeightAtIndex(this._history._length - index)
-        : 0;
+    if (index < 0) {
+      return -index >= this._history._length
+        ? 0
+        : this._history._root.total - this._history.getHeightAtIndex(-index);
     } else {
-      return (
-        this._history._root.total +
-        this._current.getHeightAtIndex(index - this._history._length)
-      );
+      return this._history._root.total + this._current.getHeightAtIndex(index);
     }
   }
 }
