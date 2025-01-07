@@ -586,32 +586,40 @@
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.12), 0px 0px 2px rgba(0, 0, 0, 0.06);
   z-index: 2;
 
-  .closeButton {
-    display: none;
-  }
-
   @include isMobile {
     width: 100%;
+  }
+}
 
-    .closeButton {
-      display: flex;
-      align-self: flex-end;
-      margin: 12px;
-      margin-bottom: 6px;
+.panelHeader {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 8px;
+  padding-bottom: 0;
+
+  .closeButton {
+    grid-column: 3;
+    padding: 5px;
+    border: 0;
+    color: var(--tertiary_text_color);
+    justify-self: end;
+
+    span {
+      display: none;
     }
   }
 }
 
 .sdlToggle {
+  grid-column: 2;
   display: flex;
   background: var(--Grey97);
   border: 1px solid var(--Grey93);
   border-radius: 8px;
   font-family: "Roboto Flex Variable", sans-serif;
   line-height: 16px;
-  margin: 8px;
-  margin-bottom: 0;
-  align-self: end;
+  align-self: flex-start;
+  margin: 0 auto;
 
   @include darkTheme {
     background: var(--Grey16);
@@ -644,6 +652,11 @@
         background: var(--Grey30);
         box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.4);
       }
+    }
+
+    &.disabled {
+      opacity: 0.3;
+      pointer-events: none;
     }
   }
 }
@@ -878,6 +891,46 @@
 
     .dot {
       top: 16px;
+    }
+  }
+
+  .noSdlDiff {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    padding: 12px;
+    gap: 12px;
+    color: var(--secondary_text_color);
+
+    .message {
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .note {
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: var(--tertiary_text_color);
+
+      svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      code {
+        font-family: "Roboto Mono Variable", monospace;
+        font-size: 12px;
+        font-weight: 450;
+        background: var(--Grey93);
+        border-radius: 4px;
+        padding: 2px 4px;
+
+        @include darkTheme {
+          background: var(--Grey20);
+        }
+      }
     }
   }
 

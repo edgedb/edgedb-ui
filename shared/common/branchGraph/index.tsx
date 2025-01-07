@@ -29,6 +29,7 @@ import {
   MigrationsListIcon,
   WarningIcon,
   Button,
+  InfoIcon,
 } from "@edgedb/common/newui";
 import {CopyButton} from "../newui/copyButton";
 import {PopupArrow} from "../newui/icons/other";
@@ -451,16 +452,6 @@ export function _BranchGraphRenderer({
                   setPanelOpen(false);
                 }}
               />
-              <button
-                className={cn(styles.floatingButton, styles.closePanelButton)}
-                onClick={() => {
-                  setHighlightedMigrationItem(null);
-                  setPanelOpen(false);
-                }}
-              >
-                <CrossIcon />
-                Close migrations
-              </button>
             </>
           ) : null}
         </div>
@@ -816,8 +807,6 @@ const MigrationsPanel = observer(function MigrationsPanel({
   const {fetchMigrations} = useContext(BranchGraphContext);
   const [fetching, setFetching] = useState(false);
 
-  const [sdlMode, setSdlMode] = useState(true);
-
   const scrollRef = useRef<HTMLDivElement>(null);
   const migrationRefs = useRef({
     items: new Map<GraphItem, HTMLDivElement>(),
@@ -829,6 +818,23 @@ const MigrationsPanel = observer(function MigrationsPanel({
 
   const [panelHeight, _setPanelHeight] = useState(0);
   useResize(scrollRef, ({height}) => _setPanelHeight(height));
+
+  const noSDLDiffs = useMemo(
+    () =>
+      history.items.every((item) => {
+        const data = migrationScripts.get(item.name);
+        return data != null && !(item.parent ? data.sdlDiff : data.sdl);
+      }),
+    [history, fetching]
+  );
+
+  const [sdlMode, setSdlMode] = useState(showSDLToggle);
+
+  useEffect(() => {
+    if (noSDLDiffs) {
+      setSdlMode(false);
+    }
+  }, [noSDLDiffs]);
 
   useEffect(() => {
     if (fetching) return;
@@ -844,7 +850,7 @@ const MigrationsPanel = observer(function MigrationsPanel({
             const {script, sdl} = scripts[i];
             const parentName = missingItems[i].parent?.name;
             const parentSdl = parentName
-              ? missingItems[i + 1].name === parentName
+              ? missingItems[i + 1]?.name === parentName
                 ? scripts[i + 1].sdl
                 : migrationScripts.get(parentName)?.sdl ?? null
               : null;
@@ -939,31 +945,35 @@ const MigrationsPanel = observer(function MigrationsPanel({
 
   return (
     <div className={styles.migrationsPanel}>
-      {showSDLToggle ? (
-        <div className={styles.sdlToggle}>
-          <div
-            className={cn(styles.option, {[styles.selected]: !sdlMode})}
-            onClick={() => setSdlMode(false)}
-          >
-            DDL
+      <div className={styles.panelHeader}>
+        {showSDLToggle ? (
+          <div className={styles.sdlToggle}>
+            <div
+              className={cn(styles.option, {[styles.selected]: !sdlMode})}
+              onClick={() => setSdlMode(false)}
+            >
+              DDL
+            </div>
+            <div
+              className={cn(styles.option, {
+                [styles.selected]: sdlMode,
+                [styles.disabled]: noSDLDiffs,
+              })}
+              onClick={() => setSdlMode(true)}
+            >
+              SDL
+            </div>
           </div>
-          <div
-            className={cn(styles.option, {[styles.selected]: sdlMode})}
-            onClick={() => setSdlMode(true)}
-          >
-            SDL
-          </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      <Button
-        className={styles.closeButton}
-        leftIcon={<CrossIcon />}
-        kind="outline"
-        onClick={closePanel}
-      >
-        Close migrations
-      </Button>
+        <Button
+          className={styles.closeButton}
+          leftIcon={<CrossIcon />}
+          kind="outline"
+          onClick={closePanel}
+        />
+      </div>
+
       <div ref={scrollRef} className={styles.migrationsPanelInner}>
         <div className={styles.panelScrollWrapper}>
           {history.children.length
@@ -995,10 +1005,9 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 </div>
               ))
             : null}
-          {history.items.map((item) => {
-            const code = sdlMode
-              ? migrationScripts.get(item.name)?.sdl
-              : migrationScripts.get(item.name)?.script;
+          {history.items.map((item, i) => {
+            const itemData = migrationScripts.get(item.name);
+            const code = sdlMode ? itemData?.sdl! : itemData?.script;
 
             const body = (
               <div
@@ -1033,7 +1042,7 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 )}
 
                 <div className={styles.header}>
-                  {item.parent == null ? line : null}
+                  {item.parent == null && i !== 0 ? line : null}
                   <svg
                     className={styles.dot}
                     xmlns="http://www.w3.org/2000/svg"
@@ -1045,28 +1054,26 @@ const MigrationsPanel = observer(function MigrationsPanel({
                 </div>
 
                 <div className={styles.script}>
-                  {migrationScripts.has(item.name) ? (
-                    sdlMode && item.parent ? (
+                  {itemData ? (
+                    sdlMode && (item.parent || !itemData.sdl) ? (
                       <SDLCodeDiff
-                        sdl={code ?? null}
-                        diff={migrationScripts.get(item.name)!.sdlDiff}
+                        sdl={itemData.sdl}
+                        diff={itemData.sdlDiff}
                       />
                     ) : (
                       <>
                         <div className={styles.codeWrapper}>
-                          <CodeBlock code={code ?? "# no sdl"} />
+                          <CodeBlock code={code!} />
                         </div>
-                        {code ? (
-                          <div className={styles.copyButtonWrapper}>
-                            <div className={styles.copyButtonClip}>
-                              <CopyButton
-                                className={styles.copyButton}
-                                content={code}
-                                mini
-                              />
-                            </div>
+                        <div className={styles.copyButtonWrapper}>
+                          <div className={styles.copyButtonClip}>
+                            <CopyButton
+                              className={styles.copyButton}
+                              content={code!}
+                              mini
+                            />
                           </div>
-                        ) : null}
+                        </div>
                       </>
                     )
                   ) : (
@@ -1111,7 +1118,18 @@ function SDLCodeDiff({
   sdl: string | null;
 }) {
   if (!diff) {
-    return null;
+    return (
+      <div className={styles.noSdlDiff}>
+        <div className={styles.message}>No SDL diff available</div>
+        <div className={styles.note}>
+          <InfoIcon />
+          <span>
+            Update the <code>store_migration_sdl</code> config to enable SDL
+            diffs
+          </span>
+        </div>
+      </div>
+    );
   }
 
   const {code, diffMarkers, ranges} = useMemo(() => {
