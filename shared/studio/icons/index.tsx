@@ -245,6 +245,37 @@ export function TabDataExplorerIcon(props: ActiveItem) {
   );
 }
 
+export function TabQueryStats(props: ActiveItem) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M17.3 3.3C17.7 2.9 18.3 2.9 18.7 3.3L21.7 6.3C22.1 6.7 22.1 7.3 21.7 7.7 21.3 8.1 20.7 8.1 20.3 7.7L17.3 4.7C16.9 4.3 16.9 3.7 17.3 3.3ZM12 4C12.6 4 13 4.4 13 5V7C13 7.6 12.6 8 12 8 11.4 8 11 7.6 11 7V5C11 4.4 11.4 4 12 4Z"
+        fill={props.active ? activeColor3 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M19.7 5.3C20.1 5.7 20.1 6.3 19.7 6.7L17.7 8.7C17.4 9.1 16.7 9.1 16.3 8.7 15.9 8.4 15.9 7.7 16.3 7.3L18.3 5.3C18.7 4.9 19.3 4.9 19.7 5.3ZM9.3 11.3C9.7 10.9 10.3 10.9 10.7 11.3L12.7 13.3C13.1 13.7 13.1 14.3 12.7 14.7 12.3 15.1 11.7 15.1 11.3 14.7L9.3 12.7C8.9 12.3 8.9 11.7 9.3 11.3Z"
+        fill={props.active ? activeColor3 : undefined}
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 20C15.3137 20 18 17.3137 18 14C18 10.6863 15.3137 8 12 8C8.68629 8 6 10.6863 6 14C6 17.3137 8.68629 20 12 20ZM12 22C16.4183 22 20 18.4183 20 14C20 9.58172 16.4183 6 12 6C7.58172 6 4 9.58172 4 14C4 18.4183 7.58172 22 12 22Z"
+        fill={props.active ? activeColor1 : undefined}
+      />
+    </svg>
+  );
+}
+
 export function TabTeamsIcon(props: ActiveItem) {
   return (
     <svg

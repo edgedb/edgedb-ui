@@ -28,6 +28,7 @@ import {schemaTabSpec} from "@edgedb/studio/tabs/schema";
 import {dataviewTabSpec} from "@edgedb/studio/tabs/dataview";
 import {authAdminTabSpec} from "@edgedb/studio/tabs/auth";
 import {aiTabSpec} from "@edgedb/studio/tabs/ai";
+import {perfStatsTabSpec} from "@edgedb/studio/tabs/perfStats";
 
 import {useAppState} from "../../state/providers";
 
@@ -39,6 +40,7 @@ const tabs: DatabaseTabSpec[] = [
   dataviewTabSpec,
   authAdminTabSpec,
   aiTabSpec,
+  perfStatsTabSpec,
 ];
 
 export const DatabasePage = observer(function DatabasePage() {

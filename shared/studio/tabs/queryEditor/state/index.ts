@@ -295,6 +295,11 @@ export class QueryEditor extends Model({
     this.historyCursor = -1;
   }
 
+  @action
+  setEdgeQLString(query: string) {
+    this.currentQueryData[EditorKind.EdgeQL] = Text.of(query.split("\n"));
+  }
+
   @computed
   get currentQueryText() {
     if (this.selectedEditor === EditorKind.VisualBuilder) return null;
@@ -791,6 +796,7 @@ export class QueryEditor extends Model({
             {
               implicitLimit:
                 implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+              replQueryTag: true,
             },
             this.runningQueryAbort?.signal,
             this.selectedEditor === EditorKind.SQL
