@@ -1,7 +1,7 @@
 export * from "./state/query";
 export * from "./state/interfaces";
 
-export {Schema} from "./state";
+export {Schema, type SchemaState} from "./state";
 
 export {schemaContext} from "./state/provider";
 

@@ -167,11 +167,14 @@ export class SchemaTextView extends Model({
       () => this.listRef?.scrollTo(0)
     );
 
-    const schemaState = getParent<Schema>(this)!.schemaState;
+    const parentState = getParent<Schema>(this)!;
     const disposeSelectedGraphObject = reaction(
-      () => schemaState.selectedObjectName,
+      () => parentState.schemaState?.selectedObjectName,
       (selectedObjName) => {
-        if (selectedObjName !== (this.highlightedItem ?? "")) {
+        if (
+          selectedObjName &&
+          selectedObjName !== (this.highlightedItem ?? "")
+        ) {
           const schemaType = dbCtx
             .get(this)!
             .schemaData?.objectsByName.get(selectedObjName);
@@ -206,7 +209,7 @@ export class SchemaTextView extends Model({
     this.highlightedItem = name;
     const schemaState = getParent<Schema>(this)!.schemaState;
 
-    schemaState.selectObject(name ?? "", true);
+    schemaState?.selectObject(name ?? "", true);
   }
 
   @action
@@ -238,7 +241,7 @@ export class SchemaTextView extends Model({
       if (updateGraph) {
         const schemaState = getParent<Schema>(this)!.schemaState;
 
-        schemaState.selectObject(
+        schemaState?.selectObject(
           item.schemaType === "Object" && !item.builtin ? item.name : "",
           true
         );

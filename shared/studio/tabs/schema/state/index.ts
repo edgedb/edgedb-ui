@@ -1,7 +1,7 @@
-import {autorun} from "mobx";
+import {autorun, observable} from "mobx";
 import {model, Model, prop} from "mobx-keystone";
 
-import {Schema as SchemaState} from "@edgedb/schema-graph";
+import {type SchemaState} from "@edgedb/schema-graph";
 
 import {dbCtx} from "../../../state/database";
 
@@ -22,12 +22,13 @@ export class Schema extends Model({
   splitView: prop(() => new SplitViewState({sizes: [50, 50]})),
   textViewState: prop(() => new SchemaTextView({})),
 }) {
-  schemaState = SchemaState.create();
+  @observable.ref
+  schemaState: SchemaState | null = null;
 
   onAttachedToRootStore() {
     const updateSchemaDisposer = autorun(() => {
       const schemaData = dbCtx.get(this)!.schemaData;
-      if (schemaData) {
+      if (this.schemaState && schemaData) {
         this.schemaState.updateSchema(
           this.textViewState.moduleGroupItems
             .filter((type) => type.schemaType === "Object")
