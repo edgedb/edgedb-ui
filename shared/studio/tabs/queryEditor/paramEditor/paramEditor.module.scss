@@ -1,21 +1,70 @@
 @import "@edgedb/common/mixins.scss";
 
 .paramEditorPanel {
-  background: #ededed;
-  overflow: auto;
-  max-height: 100%;
+  position: relative;
+  background: var(--header_background);
+  max-height: 80%;
   min-height: 88px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.12);
 
-  @include hideScrollbar;
-
-  @include darkTheme {
-    background: #363636;
+  &.horizontal {
+    max-height: none;
+    min-height: 0;
+    max-width: 50%;
+    min-width: 360px;
   }
 }
 
 .scrollWrapper {
-  flex-shrink: 0;
-  max-height: 80%;
+  width: 100%;
+  height: 100%;
+}
+
+.panelInner {
+  overflow: auto;
+  height: 100%;
+
+  @include hideScrollbar;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  cursor: ns-resize;
+  z-index: 2;
+
+  &:after {
+    content: "";
+    position: absolute;
+    width: 32px;
+    height: 2px;
+    border-radius: 2px;
+    background: #c6c6c6;
+    top: 7px;
+    left: calc(50% - 16px);
+
+    @include darkTheme {
+      background: #656565;
+    }
+  }
+
+  .horizontal & {
+    right: auto;
+    height: 100%;
+    bottom: 0;
+    width: 16px;
+    cursor: ew-resize;
+
+    &:after {
+      width: 2px;
+      height: 32px;
+      left: 7px;
+      top: calc(50% - 16px);
+    }
+  }
 }
 
 .header {
@@ -23,41 +72,13 @@
   font-size: 11px;
   line-height: 13px;
   text-transform: uppercase;
-  color: #9b9b9b;
+  color: var(--tertiary_text_color);
   padding: 13px 16px;
   position: sticky;
   top: 0;
   left: 0;
-  background: #ededed;
+  background: var(--header_background);
   z-index: 1;
-
-  @include darkTheme {
-    background: #363636;
-  }
-
-  .dragHandle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 16px;
-    cursor: ns-resize;
-
-    &:after {
-      content: "";
-      position: absolute;
-      width: 32px;
-      height: 2px;
-      border-radius: 2px;
-      background: #c6c6c6;
-      top: 7px;
-      left: calc(50% - 16px);
-
-      @include darkTheme {
-        background: #656565;
-      }
-    }
-  }
 }
 
 .paramsList {

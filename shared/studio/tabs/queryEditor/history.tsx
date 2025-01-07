@@ -18,7 +18,7 @@ import {QueryEditor, QueryHistoryItem} from "./state";
 import {renderThumbnail} from "./state/thumbnailGen";
 import {RelativeTime} from "@edgedb/common/utils/relativeTime";
 
-import styles from "./repl.module.scss";
+import styles from "./queryeditor.module.scss";
 import {useResize} from "@edgedb/common/hooks/useResize";
 import Spinner from "@edgedb/common/ui/spinner";
 import {useIsMobile} from "@edgedb/common/hooks/useMobile";
@@ -161,9 +161,10 @@ const HistoryList = observer(function HistoryList({
         width="100%"
         estimatedItemSize={estimatedItemSize}
         itemSize={(index) =>
-          historyList[index - 1]?.showDateHeader
+          (isMobile && index == 0 ? 24 : 0) +
+          (historyList[index - 1]?.showDateHeader
             ? estimatedItemSize + 16
-            : estimatedItemSize
+            : estimatedItemSize)
         }
       >
         {({index, style}) => (

@@ -1,0 +1,93 @@
+@import "@edgedb/common/mixins.scss";
+
+.iconToggle {
+  display: flex;
+  background: var(--Grey95);
+  border: 1px solid var(--Grey90);
+  border-radius: 8px;
+  font-family: "Roboto Flex Variable", sans-serif;
+  line-height: 16px;
+
+  &.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  @include darkTheme {
+    background: var(--Grey16);
+    border-color: var(--Grey14);
+  }
+
+  @include isMobile {
+    border-radius: 10px;
+  }
+}
+
+.option {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  svg {
+    color: var(--Grey55);
+    z-index: 1;
+
+    @include darkTheme {
+      color: var(--Grey65);
+    }
+  }
+
+  &.selected:before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.16);
+
+    @include darkTheme {
+      background: var(--Grey30);
+      box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  &.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .label {
+    position: absolute;
+    top: calc(100% + 2px);
+    white-space: nowrap;
+    background: var(--panel_background);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: var(--secondary_text_color);
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid var(--panel_border);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s linear;
+  }
+
+  &:hover .label {
+    opacity: 1;
+    transition-delay: 0.4s;
+  }
+
+  @include isMobile {
+    width: 38px;
+    height: 38px;
+
+    &.selected:before {
+      border-radius: 8px;
+    }
+  }
+}

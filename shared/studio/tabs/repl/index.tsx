@@ -762,7 +762,7 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
       output = <div className={styles.queryStatus}>OK: {item.status}</div>;
     }
   } else if (item.commandResult) {
-    output = renderCommandResult(item.commandResult.data);
+    output = renderCommandResult(state, item.commandResult.data);
   } else {
     output = (
       <>
@@ -886,11 +886,11 @@ const ReplHistoryItem = observer(function ReplHistoryItem({
               ) : null}
             </div>
           </CustomScrollbars>
+          {headerExtra}
           <div className={styles.historyTime}>
             {new Date(item.timestamp).toLocaleTimeString()}
           </div>
         </div>
-        {headerExtra}
       </div>
       {output ? (
         !hasScroll ? (

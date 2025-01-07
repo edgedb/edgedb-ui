@@ -102,41 +102,52 @@
 
 .labelsSwitch {
   display: flex;
-  padding: 4px;
-  background: #999;
-  border-radius: 22px;
-  align-items: center;
-  height: 32px;
+  padding: 2px;
+  background: var(--Grey93);
+  border-radius: 10px;
+  border: 1px solid var(--Grey90);
+  height: 34px;
 
   .radio {
+    display: flex;
+
     input {
       display: none;
     }
 
     .label {
-      color: #fff;
-      font-family: Roboto;
-      font-size: 12px;
+      display: flex;
+      align-items: center;
+      color: var(--Grey50);
+      font-family: "Roboto Flex Variable", sans-serif;
+      font-size: 14px;
       font-weight: 500;
       line-height: 16px;
-      text-transform: uppercase;
-      border-radius: 16px;
-      padding: 8px 10px;
+      border-radius: 8px;
+      padding: 0 10px;
+      cursor: pointer;
     }
 
     .checked {
       background: #fff;
-      color: #666;
+      box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.16);
+      color: var(--Grey45);
     }
+  }
 
-    @include darkTheme {
+  @include darkTheme {
+    background: var(--Grey10);
+    border-color: var(--Grey18);
+
+    .radio {
       .label {
-        color: #242424;
+        color: var(--Grey65);
       }
 
       .checked {
-        background: #141414;
-        color: #999;
+        background: var(--Grey30);
+        box-shadow: 0px 0px 3px 0px rgba(0, 0, 0, 0.4);
+        color: var(--Grey70);
       }
     }
   }

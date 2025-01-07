@@ -63,18 +63,20 @@ export const RelativeTime = observer(function RelativeTime({
     return <>Just now</>;
   }
   if (diff < 60) {
+    const sec = Math.floor(diff);
     return (
       <>
-        {Math.floor(diff)}
-        {fullNames ? " seconds" : "s"} ago
+        {sec}
+        {fullNames ? (sec != 1 ? " seconds" : " second") : "s"} ago
       </>
     );
   }
   if (diff < 3600) {
+    const min = Math.floor(diff / 60);
     return (
       <>
-        {Math.floor(diff / 60)}
-        {fullNames ? " minutes" : "m"} ago
+        {min}
+        {fullNames ? (min != 1 ? " minutes" : " minute") : "m"} ago
       </>
     );
   }

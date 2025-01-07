@@ -40,7 +40,10 @@ import {dbCtx} from "../../../state";
 import {connCtx} from "../../../state/connection";
 import {instanceCtx} from "../../../state/instance";
 
-import {SplitViewState} from "@edgedb/common/ui/splitView/model";
+import {
+  SplitViewDirection,
+  SplitViewState,
+} from "@edgedb/common/ui/splitView/model";
 import {
   paramsQueryCtx,
   QueryParamsEditor,
@@ -180,9 +183,7 @@ export class QueryEditor extends Model({
   ),
   _sqlParamsEditor: prop(() => new QueryParamsEditor({lang: Language.SQL})),
 
-  splitView: prop(() => new SplitViewState({})),
-
-  selectedEditor: prop<EditorKind>(EditorKind.EdgeQL).withSetter(),
+  selectedEditor: prop<EditorKind>(EditorKind.EdgeQL),
 
   showHistory: prop(false),
   queryHistory: prop<QueryHistoryItem[]>(() => [null as any]),
@@ -193,6 +194,20 @@ export class QueryEditor extends Model({
 
   @computed get queryRunning() {
     return this.runningQueryAbort != null;
+  }
+
+  @computed
+  get sqlModeSupported(): boolean {
+    const serverVersion = instanceCtx.get(this)!.serverVersion;
+    return !serverVersion || serverVersion.major >= 6;
+  }
+
+  @modelAction
+  setSelectedEditor(kind: EditorKind) {
+    if (kind === EditorKind.SQL && !this.sqlModeSupported) {
+      return;
+    }
+    this.selectedEditor = kind;
   }
 
   @observable.shallow
@@ -208,6 +223,24 @@ export class QueryEditor extends Model({
     [EditorKind.SQL]: false,
     [EditorKind.VisualBuilder]: false,
   };
+
+  @computed
+  get currentQueryEdited() {
+    return this.queryIsEdited[this.selectedEditor];
+  }
+
+  _splitViews: {[key in EditorKind]: SplitViewState} = {
+    [EditorKind.EdgeQL]: new SplitViewState({}),
+    [EditorKind.SQL]: new SplitViewState({
+      direction: SplitViewDirection.vertical,
+    }),
+    [EditorKind.VisualBuilder]: new SplitViewState({}),
+  };
+
+  @computed
+  get splitView() {
+    return this._splitViews[this.selectedEditor];
+  }
 
   @computed
   get paramsEditor() {
@@ -287,6 +320,7 @@ export class QueryEditor extends Model({
   get canRunQuery() {
     return (
       !this.queryRunning &&
+      !this.showHistory &&
       (this.selectedEditor === EditorKind.EdgeQL ||
       this.selectedEditor === EditorKind.SQL
         ? !this.paramsEditor!.hasErrors &&
