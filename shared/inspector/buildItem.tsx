@@ -4,6 +4,7 @@ import {_ICodec} from "edgedb";
 import {CodecKind} from "edgedb/dist/codecs/ifaces";
 import {ObjectCodec} from "edgedb/dist/codecs/object";
 import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
+import {RecordCodec} from "edgedb/dist/codecs/record";
 
 import {buildScalarItem} from "./buildScalar";
 
@@ -16,6 +17,7 @@ export enum ItemType {
   Object,
   Tuple,
   NamedTuple,
+  Record,
   Scalar,
   Other,
 }
@@ -40,7 +42,7 @@ export interface ArrayLikeItem extends _BaseItem {
 }
 
 export interface ObjectLikeItem extends _BaseItem {
-  type: ItemType.Object | ItemType.NamedTuple;
+  type: ItemType.Object | ItemType.NamedTuple | ItemType.Record;
   data: {[key: string]: any};
   closingBracket: Item;
 }
@@ -299,12 +301,16 @@ export function expandItem(
       }
       break;
     case ItemType.NamedTuple:
+    case ItemType.Record:
       {
-        const fieldNames = (item.codec as NamedTupleCodec).getNames();
+        const fieldNames = (
+          item.codec as NamedTupleCodec | RecordCodec
+        ).getNames();
+        const isRecord = item.type === ItemType.Record;
         const subCodecs = item.codec.getSubcodecs();
 
         childItems = fieldNames.flatMap((fieldName, i) => {
-          const data = item.data[fieldName];
+          const data = item.data[isRecord ? i : fieldName];
 
           const id = `${item.id}.${i}`;
 
@@ -317,13 +323,13 @@ export function expandItem(
               label: (
                 <>
                   {fieldName}
-                  <span> := </span>
+                  <span>{isRecord ? ": " : " := "}</span>
                 </>
               ),
               fieldName: fieldName,
             },
             data,
-            fieldName,
+            isRecord ? i : fieldName,
             state.noMultiline,
             i < item.data.length - 1
           );
@@ -363,6 +369,7 @@ const itemTypes: {
   object: {type: ItemType.Object, brackets: "{}"},
   tuple: {type: ItemType.Tuple, brackets: "()"},
   namedtuple: {type: ItemType.NamedTuple, brackets: "()"},
+  record: {type: ItemType.Record, brackets: "()"},
   scalar: {type: ItemType.Scalar, brackets: ""},
 };
 

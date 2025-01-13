@@ -10,7 +10,7 @@ import {
 } from "mobx-keystone";
 
 import {AuthenticationError} from "edgedb";
-import {Session} from "edgedb/dist/options";
+import {Options} from "edgedb/dist/options";
 import LRU from "edgedb/dist/primitives/lru";
 import {Capabilities} from "edgedb/dist/baseConn";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
@@ -28,6 +28,7 @@ import {
   EdgeDBSet,
   QueryParams,
   codecsRegistry,
+  baseOptions,
 } from "../utils/decodeRawBuffer";
 import {instanceCtx} from "./instance";
 import {sessionStateCtx} from "./sessionState";
@@ -121,13 +122,12 @@ export function createAuthenticatedFetch({
   };
 }
 
-function setQueryTag(session: Session, tag: string) {
-  session = new Session({...session});
-  (session as any).annotations = new Map<string, string>(
-    (session as any).annotations
-  );
-  (session as any).annotations.set("tag", tag);
-  return session;
+function setQueryTag(options: Options, tag: string) {
+  const annos = new Map((options as any).annotations as Map<string, string>);
+  annos.set("tag", tag);
+  const clone = (options as any)._cloneWith({});
+  clone.annotations = annos;
+  return clone as Options;
 }
 
 @model("Connection")
@@ -154,7 +154,7 @@ export class Connection extends Model({
   get _state() {
     const sessionState = sessionStateCtx.get(this);
 
-    let state = Session.defaults();
+    let state = baseOptions;
 
     if (sessionState?.activeState.globals.length) {
       state = state.withGlobals(
@@ -283,10 +283,7 @@ export class Connection extends Model({
       let state = this._state;
 
       if (opts.ignoreSessionConfig) {
-        state = setQueryTag(
-          Session.defaults().withGlobals(state.globals),
-          "gel/ui"
-        );
+        state = setQueryTag(baseOptions.withGlobals(state.globals), "gel/ui");
       }
       if (opts.ignoreForceDatabaseError) {
         state = state.withConfig({force_database_error: "false"});
@@ -408,6 +405,7 @@ export class Connection extends Model({
         result: decode(
           outCodecBuf,
           resultBuf,
+          state,
           this.conn.protocolVersion,
           opts.newCodec
         ),

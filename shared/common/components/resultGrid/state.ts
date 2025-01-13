@@ -4,6 +4,7 @@ import {SetCodec} from "edgedb/dist/codecs/set";
 import {DataGridState} from "../dataGrid/state";
 import {assertNever} from "../../utils/assertNever";
 import {NamedTupleCodec} from "edgedb/dist/codecs/namedtuple";
+import {RecordCodec} from "edgedb/dist/codecs/record";
 
 export function createResultGridState(codec: ICodec, data: any[]) {
   return new ResultGridState(codec, data);
@@ -15,6 +16,7 @@ export interface GridHeader {
   id: string;
   parent: GridHeader | null;
   name: string | null;
+  key: string | number | null;
   multi: boolean;
   codec: ICodec;
   typename: string;
@@ -76,7 +78,7 @@ export class ResultGridState {
       ? tops.findIndex((top) => top > offsetRowIndex) - 1
       : offsetRowIndex;
     return {
-      data: parentData[dataIndex]?.[header.parent.name!] ?? [],
+      data: parentData[dataIndex]?.[header.parent.key!] ?? [],
       indexOffset: indexOffset + (tops ? tops[dataIndex] : dataIndex),
       endIndex: indexOffset + (tops ? tops[dataIndex + 1] : dataIndex + 1),
     };
@@ -97,8 +99,8 @@ function _getRowTops(
       if (!header.multi) continue;
       const colHeight =
         header.subHeaders && header.subHeaders[0].name !== null
-          ? _getRowTops(topsMap, item[header.name!], header.subHeaders)
-          : item[header.name!].length;
+          ? _getRowTops(topsMap, item[header.key!], header.subHeaders)
+          : item[header.key!].length;
       if (colHeight > height) {
         height = colHeight;
       }
@@ -139,6 +141,7 @@ function _getHeaders(
           id: parent ? `${parent.id}.${field.name}` : field.name,
           parent,
           name: field.name,
+          key: field.name,
           multi,
           codec: subcodec,
           typename: getTypename(subcodec),
@@ -165,6 +168,7 @@ function _getHeaders(
                 id: `${header.id}.__multi__`,
                 parent: header,
                 name: null,
+                key: null,
                 multi: false,
                 codec: subcodec,
                 typename: getTypename(subcodec),
@@ -180,6 +184,31 @@ function _getHeaders(
       }
     }
     return {headers, colCount};
+  } else if (codec instanceof RecordCodec) {
+    const subcodecs = codec.getSubcodecs();
+    const headers: GridHeader[] = [];
+    let i = 0;
+    const names = codec.getNames();
+    for (const name of names) {
+      const subcodec = subcodecs[i];
+      const startIndex = indexStart + i;
+      const header: GridHeader = {
+        id: name,
+        parent,
+        name: name,
+        key: i,
+        multi: false,
+        codec: subcodec,
+        typename: getTypename(subcodec),
+        depth,
+        startIndex,
+        span: 1,
+        subHeaders: null,
+      };
+      headers.push(header);
+      i++;
+    }
+    return {headers, colCount: headers.length};
   }
   throw new Error(`unexpected codec kind: ${codec.getKind()}`);
 }
@@ -197,6 +226,7 @@ function getTypename(codec: ICodec): string {
     case "scalar":
     case "object":
     case "sparse_object":
+    case "record":
       return codec.getKnownTypeName();
     case "array":
     case "range":

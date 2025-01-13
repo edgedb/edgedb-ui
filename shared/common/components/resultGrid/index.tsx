@@ -164,7 +164,11 @@ export const ResultGridContent = observer(function ResultGridContent({
               indexOffset -
               rowIndex
             }
-            data={header.name ? data[dataIndex][header.name] : data[dataIndex]}
+            data={
+              header.key != null
+                ? data[dataIndex][header.key]
+                : data[dataIndex]
+            }
           />
         );
         dataIndex += 1;
