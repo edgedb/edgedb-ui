@@ -30,7 +30,7 @@ import {
   QueryResultData,
 } from "../../../idbStore";
 
-import {EdgeDBSet, decode} from "../../../utils/decodeRawBuffer";
+import {EdgeDBSet, baseOptions, decode} from "../../../utils/decodeRawBuffer";
 import {
   ErrorDetails,
   extractErrorDetails,
@@ -416,6 +416,7 @@ export class QueryEditor extends Model({
           ? decode(
               resultData.outCodecBuf,
               resultData.resultBuf,
+              baseOptions,
               resultData.protoVer ?? [1, 0]
             )
           : null

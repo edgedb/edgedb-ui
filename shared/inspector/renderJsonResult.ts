@@ -90,7 +90,8 @@ export function _renderToJson(
         .join(",\n")}\n${depth}]`;
     }
     case "object":
-    case "namedtuple": {
+    case "namedtuple":
+    case "record": {
       const subcodecs = codec.getSubcodecs();
       const explicitNum =
         codecKind === "object"
@@ -114,7 +115,7 @@ export function _renderToJson(
                 depth +
                   `  "${fieldName}": ` +
                   _renderToJson(
-                    val[fieldName],
+                    codecKind === "record" ? val[i] : val[fieldName],
                     subcodecs[i],
                     depth + "  ",
                     implicitLimit

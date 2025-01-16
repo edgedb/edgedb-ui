@@ -17,7 +17,7 @@ import {
 
 import {AuthenticationError} from "edgedb";
 
-import {Session} from "edgedb/dist/options";
+import {Options} from "edgedb/dist/options";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
 import {OutputFormat, Cardinality} from "edgedb/dist/ifaces";
 import {codecsRegistry} from "../utils/decodeRawBuffer";
@@ -94,7 +94,7 @@ export class InstanceState extends Model({
         null,
         OutputFormat.BINARY,
         cardinality,
-        Session.defaults()
+        Options.defaults()
       )
     ).result;
   }

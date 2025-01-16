@@ -69,6 +69,7 @@ import {ICodec} from "edgedb/dist/codecs/ifaces";
 import {SplitViewDirection} from "@edgedb/common/ui/splitView/model";
 import {createPortal} from "react-dom";
 import {RelativeTime} from "@edgedb/common/utils/relativeTime";
+import {RecordCodec} from "edgedb/dist/codecs/record";
 
 export const QueryEditorView = observer(function QueryEditorView() {
   const editorState = useTabState(QueryEditor);
@@ -550,7 +551,8 @@ export function outputModeToggle(
   outputMode: OutputMode,
   setOutputMode: (mode: OutputMode) => void
 ) {
-  const tableOutputAvailable = codec instanceof ObjectCodec;
+  const tableOutputAvailable =
+    codec instanceof ObjectCodec || codec instanceof RecordCodec;
   const mode = tableOutputAvailable ? outputMode : OutputMode.Tree;
 
   return {

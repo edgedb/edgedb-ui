@@ -22,7 +22,7 @@ import {
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
 import {InspectorState, Item} from "@edgedb/inspector/state";
-import {decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
+import {baseOptions, decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
 import {
   clearReplHistory,
@@ -326,6 +326,7 @@ export class Repl extends Model({
             ? decode(
                 resultData.outCodecBuf,
                 resultData.resultBuf,
+                baseOptions,
                 resultData.protoVer ?? [1, 0]
               )
             : null
