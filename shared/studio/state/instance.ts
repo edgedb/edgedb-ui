@@ -15,7 +15,7 @@ import {
   frozen,
 } from "mobx-keystone";
 
-import {AuthenticationError} from "edgedb";
+import {AuthenticationError, DuplicateDatabaseDefinitionError} from "edgedb";
 
 import {Options} from "edgedb/dist/options";
 import {AdminUIFetchConnection} from "edgedb/dist/fetchConn";
@@ -250,18 +250,24 @@ export class InstanceState extends Model({
     runInAction(() => (this.creatingExampleDB = true));
     try {
       const schemaScript = await exampleSchema;
-      await this.defaultConnection!.execute(`create database _example`);
-      const exampleConn = new Connection({
-        config: frozen({
-          serverUrl: this.serverUrl,
-          authToken: this.authToken!,
-          database: "_example",
-          user: this.authUsername ?? this.roles![0],
-        }),
-        serverVersion: frozen(this.serverVersion),
-      });
-      await exampleConn.execute(schemaScript);
-      await this.fetchInstanceInfo();
+      try {
+        await this.defaultConnection!.execute(`create database _example`);
+        const exampleConn = new Connection({
+          config: frozen({
+            serverUrl: this.serverUrl,
+            authToken: this.authToken!,
+            database: "_example",
+            user: this.authUsername ?? this.roles![0],
+          }),
+          serverVersion: frozen(this.serverVersion),
+        });
+        await exampleConn.execute(schemaScript);
+      } catch (err) {
+        if (!(err instanceof DuplicateDatabaseDefinitionError)) {
+          throw err;
+        }
+      }
+      await this.fetchDatabaseInfo();
     } finally {
       runInAction(() => (this.creatingExampleDB = false));
     }
