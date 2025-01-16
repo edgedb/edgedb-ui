@@ -92,6 +92,8 @@ export const BranchGraphContext = createContext<{
   ) => Promise<{script: string; sdl: string | null}[]>;
 }>(null!);
 
+class MissingMigrationsError extends Error {}
+
 export const BranchGraph = observer(function BranchGraph({
   instanceId,
   instanceState,
@@ -176,7 +178,8 @@ export const BranchGraph = observer(function BranchGraph({
             .filter((name) => !migrations.has(name));
 
           if (missingMigrations.length) {
-            throw new Error(
+            setRefreshing(true);
+            throw new MissingMigrationsError(
               `Migrations not found for ${missingMigrations.join(", ")}`
             );
           }
@@ -862,6 +865,13 @@ const MigrationsPanel = observer(function MigrationsPanel({
                   ? patienceDiff(parentSdl.split("\n"), sdl.split("\n"))
                   : null,
             });
+          }
+        })
+        .catch((err) => {
+          if (err instanceof MissingMigrationsError) {
+            closePanel();
+          } else {
+            throw err;
           }
         })
         .finally(() => setFetching(false));
