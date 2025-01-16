@@ -86,6 +86,8 @@ export const BranchGraphContext = createContext<{
   fetchMigrations: (graphItems: GraphItem[]) => Promise<string[]>;
 }>(null!);
 
+class MissingMigrationsError extends Error {}
+
 export const BranchGraph = observer(function BranchGraph({
   instanceId,
   instanceState,
@@ -137,7 +139,8 @@ export const BranchGraph = observer(function BranchGraph({
             .filter((name) => !migrations.has(name));
 
           if (missingMigrations.length) {
-            throw new Error(
+            setRefreshing(true);
+            throw new MissingMigrationsError(
               `Migrations not found for ${missingMigrations.join(", ")}`
             );
           }
@@ -781,6 +784,13 @@ const MigrationsPanel = observer(function MigrationsPanel({
         .then((scripts) => {
           for (let i = 0; i < scripts.length; i++) {
             migrationScripts.set(missingItems[i].name, scripts[i]);
+          }
+        })
+        .catch((err) => {
+          if (err instanceof MissingMigrationsError) {
+            closePanel();
+          } else {
+            throw err;
           }
         })
         .finally(() => setFetching(false));

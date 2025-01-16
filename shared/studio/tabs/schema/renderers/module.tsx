@@ -26,7 +26,10 @@ export function ModuleRenderer({
     if (isSticky) {
       const observer = new IntersectionObserver(
         ([e]) => {
-          if (e.boundingClientRect.top < e.rootBounds!.height / 2) {
+          if (
+            e.rootBounds &&
+            e.boundingClientRect.top < e.rootBounds.height / 2
+          ) {
             setIsStuck(e.intersectionRatio < 1);
           }
         },

@@ -1,4 +1,4 @@
-import {openDB, DBSchema} from "idb";
+import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {StoredSchemaData} from "../state/database";
 import {StoredSessionStateData} from "../state/sessionState";
 
@@ -66,53 +66,83 @@ interface IDBStore extends DBSchema {
   };
 }
 
-const db = openDB<IDBStore>("EdgeDBStudio", 4, {
-  upgrade(db, oldVersion) {
-    switch (oldVersion) {
-      // @ts-ignore fallthrough
-      case 0: {
-        db.createObjectStore("schemaData").createIndex(
-          "byInstanceId",
-          "instanceId"
-        );
-      }
-      // @ts-ignore fallthrough
-      case 1: {
-        db.createObjectStore("queryHistory", {
-          keyPath: ["instanceId", "dbName", "timestamp"],
-        }).createIndex("byInstanceId", "instanceId");
-        db.createObjectStore("replHistory", {
-          keyPath: ["instanceId", "dbName", "timestamp"],
-        }).createIndex("byInstanceId", "instanceId");
+function _initDB() {
+  return openDB<IDBStore>("EdgeDBStudio", 4, {
+    upgrade(db, oldVersion) {
+      switch (oldVersion) {
+        // @ts-ignore fallthrough
+        case 0: {
+          db.createObjectStore("schemaData").createIndex(
+            "byInstanceId",
+            "instanceId"
+          );
+        }
+        // @ts-ignore fallthrough
+        case 1: {
+          db.createObjectStore("queryHistory", {
+            keyPath: ["instanceId", "dbName", "timestamp"],
+          }).createIndex("byInstanceId", "instanceId");
+          db.createObjectStore("replHistory", {
+            keyPath: ["instanceId", "dbName", "timestamp"],
+          }).createIndex("byInstanceId", "instanceId");
 
-        db.createObjectStore("queryResultData");
+          db.createObjectStore("queryResultData");
+        }
+        // @ts-ignore fallthrough
+        case 2: {
+          db.createObjectStore("sessionState", {
+            keyPath: ["instanceId", "dbName"],
+          });
+        }
+        // @ts-ignore fallthrough
+        case 3: {
+          db.createObjectStore("aiPlaygroundChatHistory", {
+            keyPath: ["instanceId", "dbName", "timestamp"],
+          }).createIndex("byInstanceId", "instanceId");
+        }
       }
-      // @ts-ignore fallthrough
-      case 2: {
-        db.createObjectStore("sessionState", {
-          keyPath: ["instanceId", "dbName"],
-        });
-      }
-      // @ts-ignore fallthrough
-      case 3: {
-        db.createObjectStore("aiPlaygroundChatHistory", {
-          keyPath: ["instanceId", "dbName", "timestamp"],
-        }).createIndex("byInstanceId", "instanceId");
-      }
+    },
+  });
+}
+
+let _db: IDBPDatabase<IDBStore> | null = null;
+async function retryingIDBRequest<T>(
+  request: (db: IDBPDatabase<IDBStore>) => Promise<T>
+): Promise<T> {
+  let i = 3;
+  while (true) {
+    i--;
+    if (!_db) {
+      _db = await _initDB();
     }
-  },
-});
+    try {
+      return await request(_db);
+    } catch (err) {
+      if (
+        i === 0 ||
+        !(
+          err instanceof DOMException &&
+          (err.message.includes("closing") || err.message.includes("closed"))
+        )
+      ) {
+        throw err;
+      }
+      _db = null;
+    }
+  }
+}
 
 // session state
 
 export async function fetchSessionState(instanceId: string, dbName: string) {
-  return (
-    (await (await db).get("sessionState", [instanceId, dbName]))?.data ?? null
+  return retryingIDBRequest(
+    async (db) =>
+      (await db.get("sessionState", [instanceId, dbName]))?.data ?? null
   );
 }
 
 export async function storeSessionState(data: SessionStateData) {
-  await (await db).put("sessionState", data);
+  await retryingIDBRequest((db) => db.put("sessionState", data));
 }
 
 // query / repl history
@@ -123,15 +153,17 @@ async function _storeHistoryItem(
   item: QueryHistoryItem,
   resultData?: QueryResultData
 ) {
-  const tx = (await db).transaction([storeId, "queryResultData"], "readwrite");
+  return retryingIDBRequest(async (db) => {
+    const tx = db.transaction([storeId, "queryResultData"], "readwrite");
 
-  return Promise.all([
-    tx.objectStore(storeId).add(item),
-    resultData
-      ? tx.objectStore("queryResultData").add(resultData, itemId)
-      : null,
-    tx.done,
-  ]);
+    return Promise.all([
+      tx.objectStore(storeId).add(item),
+      resultData
+        ? tx.objectStore("queryResultData").add(resultData, itemId)
+        : null,
+      tx.done,
+    ]);
+  });
 }
 
 export function storeQueryHistoryItem(
@@ -157,24 +189,26 @@ async function _fetchHistory(
   fromTimestamp: number,
   count = 50
 ) {
-  const tx = (await db).transaction(storeId, "readonly");
-  let cursor = await tx.store.openCursor(
-    IDBKeyRange.bound(
-      [instanceId, dbName, -Infinity],
-      [instanceId, dbName, fromTimestamp],
-      true,
-      true
-    ),
-    "prev"
-  );
-  const items: QueryHistoryItem[] = [];
-  let i = 0;
-  while (cursor && i < count) {
-    items.push(cursor.value);
-    i++;
-    cursor = await cursor.continue();
-  }
-  return items;
+  return retryingIDBRequest(async (db) => {
+    const tx = db.transaction(storeId, "readonly");
+    let cursor = await tx.store.openCursor(
+      IDBKeyRange.bound(
+        [instanceId, dbName, -Infinity],
+        [instanceId, dbName, fromTimestamp],
+        true,
+        true
+      ),
+      "prev"
+    );
+    const items: QueryHistoryItem[] = [];
+    let i = 0;
+    while (cursor && i < count) {
+      items.push(cursor.value);
+      i++;
+      cursor = await cursor.continue();
+    }
+    return items;
+  });
 }
 
 export function fetchQueryHistory(
@@ -208,7 +242,7 @@ export function fetchReplHistory(
 }
 
 export async function fetchResultData(itemId: string) {
-  return (await db).get("queryResultData", itemId);
+  return retryingIDBRequest((db) => db.get("queryResultData", itemId));
 }
 
 // schema data
@@ -218,14 +252,16 @@ export async function storeSchemaData(
   instanceId: string,
   data: StoredSchemaData
 ) {
-  await (
-    await db
-  ).put("schemaData", {instanceId, data}, `${instanceId}/${dbName}`);
+  await retryingIDBRequest((db) =>
+    db.put("schemaData", {instanceId, data}, `${instanceId}/${dbName}`)
+  );
 }
 
 export async function fetchSchemaData(dbName: string, instanceId: string) {
-  const result = await (await db).get("schemaData", `${instanceId}/${dbName}`);
-  return result?.data;
+  return retryingIDBRequest(async (db) => {
+    const result = await db.get("schemaData", `${instanceId}/${dbName}`);
+    return result?.data;
+  });
 }
 
 export async function cleanupOldSchemaDataForInstance(
@@ -235,20 +271,22 @@ export async function cleanupOldSchemaDataForInstance(
   const currentDbKeys = new Set(
     currentDbNames.map((dbName) => `${instanceId}/${dbName}`)
   );
-  const tx = (await db).transaction("schemaData", "readwrite");
-  const dbKeys = await tx.store.index("byInstanceId").getAllKeys(instanceId);
-  await Promise.all([
-    ...dbKeys
-      .filter((dbKey) => !currentDbKeys.has(dbKey))
-      .map((dbKey) => tx.store.delete(dbKey)),
-    tx.done,
-  ]);
+  await retryingIDBRequest(async (db) => {
+    const tx = db.transaction("schemaData", "readwrite");
+    const dbKeys = await tx.store.index("byInstanceId").getAllKeys(instanceId);
+    return Promise.all([
+      ...dbKeys
+        .filter((dbKey) => !currentDbKeys.has(dbKey))
+        .map((dbKey) => tx.store.delete(dbKey)),
+      tx.done,
+    ]);
+  });
 }
 
 // ai playground chat
 
 export async function storeAIPlaygroundChatItem(item: AIPlaygroundChatItem) {
-  await (await db).add("aiPlaygroundChatHistory", item);
+  await retryingIDBRequest((db) => db.add("aiPlaygroundChatHistory", item));
 }
 
 export async function fetchAIPlaygroundChatHistory(
@@ -257,22 +295,24 @@ export async function fetchAIPlaygroundChatHistory(
   fromTimestamp: number,
   count = 50
 ) {
-  const tx = (await db).transaction("aiPlaygroundChatHistory", "readonly");
-  let cursor = await tx.store.openCursor(
-    IDBKeyRange.bound(
-      [instanceId, dbName, -Infinity],
-      [instanceId, dbName, fromTimestamp],
-      true,
-      true
-    ),
-    "prev"
-  );
-  const items: AIPlaygroundChatItem[] = [];
-  let i = 0;
-  while (cursor && i < count) {
-    items.push(cursor.value);
-    i++;
-    cursor = await cursor.continue();
-  }
-  return items;
+  return retryingIDBRequest(async (db) => {
+    const tx = db.transaction("aiPlaygroundChatHistory", "readonly");
+    let cursor = await tx.store.openCursor(
+      IDBKeyRange.bound(
+        [instanceId, dbName, -Infinity],
+        [instanceId, dbName, fromTimestamp],
+        true,
+        true
+      ),
+      "prev"
+    );
+    const items: AIPlaygroundChatItem[] = [];
+    let i = 0;
+    while (cursor && i < count) {
+      items.push(cursor.value);
+      i++;
+      cursor = await cursor.continue();
+    }
+    return items;
+  });
 }
