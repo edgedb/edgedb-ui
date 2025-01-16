@@ -948,9 +948,12 @@ export class DataInspector extends Model({
       return;
     }
 
-    const dbState = dbCtx.get(this)!;
-
     this.runningDataFetch?.abortController.abort();
+
+    const dbState = dbCtx.get(this);
+    if (!dbState) {
+      return;
+    }
 
     this.runningDataFetch = {abortController: new AbortController(), offset};
     dbState.setLoadingTab(DataView, true);
