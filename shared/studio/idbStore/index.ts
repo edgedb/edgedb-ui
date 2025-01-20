@@ -2,6 +2,7 @@ import {openDB, DBSchema, IDBPDatabase} from "idb";
 import {ProtocolVersion} from "edgedb/dist/ifaces";
 import {StoredSchemaData} from "../state/database";
 import {StoredSessionStateData} from "../state/sessionState";
+import {rewriteTypedesc} from "../utils/rewriteTypedesc";
 
 export interface QueryHistoryItem {
   instanceId: string;
@@ -283,7 +284,16 @@ export function clearReplHistory(
 }
 
 export async function fetchResultData(itemId: string) {
-  return retryingIDBRequest((db) => db.get("queryResultData", itemId));
+  return retryingIDBRequest(async (db) => {
+    const res = await db.get("queryResultData", itemId);
+    return res && !res.protoVer
+      ? {
+          ...res,
+          outCodecBuf: rewriteTypedesc(res.outCodecBuf),
+          protoVer: [2, 0] as ProtocolVersion,
+        }
+      : res;
+  });
 }
 
 // schema data
