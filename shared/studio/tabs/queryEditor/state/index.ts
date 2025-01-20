@@ -21,7 +21,7 @@ import {
 
 import {Text} from "@codemirror/state";
 
-import {InspectorState, Item} from "@edgedb/inspector/state";
+import {createInspector, InspectorState, Item} from "@edgedb/inspector/state";
 
 import {
   storeQueryHistoryItem,
@@ -110,7 +110,7 @@ export const explainStateCache = new ObservableLRU<string, ExplainState>(10);
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   status: prop<string>(),
   hasResult: prop<boolean>(),
-  implicitLimit: prop<number>(),
+  implicitLimit: prop<number | null>(),
 }) {
   get queryEditor() {
     return queryEditorCtx.get(this)!;
@@ -121,8 +121,11 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
 
     let state = resultInspectorCache.get(this.$modelId);
     if (!state) {
-      state = createInspector(data, this.implicitLimit, (item) =>
-        queryEditor.setExtendedViewerItem(item)
+      state = createInspector(
+        data,
+        this.implicitLimit,
+        extendedViewerIds,
+        (item) => queryEditor.setExtendedViewerItem(item)
       );
       resultInspectorCache.set(this.$modelId, state);
     }
@@ -155,18 +158,6 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
 export class QueryHistoryErrorItem extends ExtendedModel(QueryHistoryItem, {
   error: prop<Frozen<ErrorDetails>>(),
 }) {}
-
-function createInspector(
-  result: EdgeDBSet,
-  implicitLimit: number,
-  openExtendedView: (item: Item) => void
-) {
-  const inspector = new InspectorState({implicitLimit, noMultiline: true});
-  inspector.extendedViewIds = extendedViewerIds;
-  inspector.openExtendedView = openExtendedView;
-  inspector.initData({data: result, codec: result._codec});
-  return inspector;
-}
 
 type QueryData = {
   [EditorKind.EdgeQL]: Text;
@@ -641,7 +632,7 @@ export class QueryEditor extends Model({
         resultBuf: Uint8Array;
         protoVer: ProtocolVersion;
         status: string;
-        implicitLimit: number;
+        implicitLimit: number | null;
       }
     | {
         error: ErrorDetails;
@@ -781,9 +772,10 @@ export class QueryEditor extends Model({
           };
     const timestamp = Date.now();
     const thumbnailData = getThumbnailData({query});
-    const implicitLimit = sessionStateCtx
+    const implicitLimitConfig = sessionStateCtx
       .get(this)!
-      .activeState.options.find((opt) => opt.name === "Implicit Limit")?.value;
+      .activeState.options.find((opt) => opt.name === "Implicit Limit")
+      ?.value as bigint | undefined;
 
     try {
       const {result, outCodecBuf, resultBuf, protoVer, capabilities, status} =
@@ -796,7 +788,9 @@ export class QueryEditor extends Model({
               : undefined,
             {
               implicitLimit:
-                implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+                implicitLimitConfig != null
+                  ? implicitLimitConfig + BigInt(1)
+                  : undefined,
               replQueryTag: true,
             },
             this.runningQueryAbort?.signal,
@@ -806,6 +800,8 @@ export class QueryEditor extends Model({
           )
         );
 
+      const implicitLimit =
+        implicitLimitConfig != null ? Number(implicitLimitConfig) : null;
       this.addHistoryCell({
         queryData,
         timestamp,
@@ -815,7 +811,7 @@ export class QueryEditor extends Model({
         resultBuf,
         protoVer,
         status,
-        implicitLimit: Number(implicitLimit),
+        implicitLimit,
       });
       return {success: true, capabilities, status};
     } catch (e: any) {

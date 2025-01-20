@@ -21,7 +21,7 @@ import {
   ErrorDetails,
   extractErrorDetails,
 } from "../../../utils/extractErrorDetails";
-import {InspectorState, Item} from "@edgedb/inspector/state";
+import {createInspector, InspectorState, Item} from "@edgedb/inspector/state";
 import {baseOptions, decode, EdgeDBSet} from "../../../utils/decodeRawBuffer";
 import {CommandResult, handleSlashCommand} from "./commands";
 import {
@@ -53,18 +53,6 @@ import {OutputMode} from "../../queryEditor/state";
 import {Language} from "edgedb/dist/ifaces";
 
 export const defaultItemHeight = 85;
-
-function createInspector(
-  result: EdgeDBSet,
-  implicitLimit: number | null,
-  openExtendedView: (item: Item) => void
-) {
-  const inspector = new InspectorState({implicitLimit, noMultiline: true});
-  inspector.extendedViewIds = extendedViewerIds;
-  inspector.openExtendedView = openExtendedView;
-  inspector.initData({data: result, codec: result._codec});
-  return inspector;
-}
 
 export enum ReplLang {
   EdgeQL,
@@ -150,11 +138,15 @@ export class ReplHistoryItem extends Model({
     const cache = cachesCtx.get(this)!.inspector;
     let state = cache.get(this.$modelId);
     if (!state) {
-      state = createInspector(data, this.implicitLimit, (item) =>
-        findParent<Repl>(
-          this,
-          (p) => p instanceof Repl
-        )!.setExtendedViewerItem(item)
+      state = createInspector(
+        data,
+        this.implicitLimit,
+        extendedViewerIds,
+        (item) =>
+          findParent<Repl>(
+            this,
+            (p) => p instanceof Repl
+          )!.setExtendedViewerItem(item)
       );
       cache.set(this.$modelId, state);
     }
@@ -486,9 +478,8 @@ export class Repl extends Model({
       } else {
         const implicitLimitConfig = sessionStateCtx
           .get(this)!
-          .activeState.options.find(
-            (opt) => opt.name === "Implicit Limit"
-          )?.value;
+          .activeState.options.find((opt) => opt.name === "Implicit Limit")
+          ?.value as bigint | undefined;
 
         const {
           result,
@@ -534,8 +525,11 @@ export class Repl extends Model({
           } else {
             this.resultInspectorCache.set(
               historyItem.$modelId,
-              createInspector(result, implicitLimit, (item) =>
-                this.setExtendedViewerItem(item)
+              createInspector(
+                result,
+                implicitLimit,
+                extendedViewerIds,
+                (item) => this.setExtendedViewerItem(item)
               )
             );
           }
