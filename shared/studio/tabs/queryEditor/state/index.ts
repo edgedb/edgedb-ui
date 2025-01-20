@@ -21,7 +21,7 @@ import {
 
 import {Text} from "@codemirror/state";
 
-import {InspectorState, Item} from "@edgedb/inspector/state";
+import {createInspector, InspectorState, Item} from "@edgedb/inspector/state";
 
 import {
   storeQueryHistoryItem,
@@ -90,7 +90,7 @@ const explainStateCache = new ObservableLRU<string, ExplainState>(10);
 export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
   status: prop<string>(),
   hasResult: prop<boolean>(),
-  implicitLimit: prop<number>(),
+  implicitLimit: prop<number | null>(),
 }) {
   get inspectorState() {
     const queryEditor = queryEditorCtx.get(this)!;
@@ -122,18 +122,6 @@ export class QueryHistoryResultItem extends ExtendedModel(QueryHistoryItem, {
 export class QueryHistoryErrorItem extends ExtendedModel(QueryHistoryItem, {
   error: prop<Frozen<ErrorDetails>>(),
 }) {}
-
-function createInspector(
-  result: EdgeDBSet,
-  implicitLimit: number,
-  openExtendedView: (item: Item) => void
-) {
-  const inspector = new InspectorState({implicitLimit, noMultiline: true});
-  inspector.extendedViewIds = extendedViewerIds;
-  inspector.openExtendedView = openExtendedView;
-  inspector.initData({data: result, codec: result._codec});
-  return inspector;
-}
 
 type QueryData = {
   [EditorKind.EdgeQL]: Text;
@@ -289,12 +277,13 @@ export class QueryEditor extends Model({
     this.extendedViewerItem = item;
   }
 
-  async fetchResultData(itemId: string, implicitLimit: number) {
+  async fetchResultData(itemId: string, implicitLimit: number | null) {
     const resultData = await fetchResultData(itemId);
     if (resultData) {
       const inspector = createInspector(
         decode(resultData.outCodecBuf, resultData.resultBuf)!,
         implicitLimit,
+        extendedViewerIds,
         (item) => this.setExtendedViewerItem(item)
       );
       this.resultInspectorCache.set(itemId, inspector);
@@ -491,7 +480,7 @@ export class QueryEditor extends Model({
         outCodecBuf: Uint8Array;
         resultBuf: Uint8Array;
         status: string;
-        implicitLimit: number;
+        implicitLimit: number | null;
       }
     | {
         error: ErrorDetails;
@@ -531,8 +520,11 @@ export class QueryEditor extends Model({
         } else {
           this.resultInspectorCache.set(
             historyItem.$modelId,
-            createInspector(data.result, data.implicitLimit, (item) =>
-              this.setExtendedViewerItem(item)
+            createInspector(
+              data.result,
+              data.implicitLimit,
+              extendedViewerIds,
+              (item) => this.setExtendedViewerItem(item)
             )
           );
         }
@@ -587,8 +579,8 @@ export class QueryEditor extends Model({
       kind === EditorKind.EdgeQL
         ? draftQuery[EditorKind.EdgeQL].query.toString().trim()
         : kind === EditorKind.VisualBuilder
-        ? draftQuery[EditorKind.VisualBuilder].state.query
-        : null;
+          ? draftQuery[EditorKind.VisualBuilder].state.query
+          : null;
 
     switch (kind) {
       case EditorKind.EdgeQL: {
@@ -640,9 +632,10 @@ export class QueryEditor extends Model({
           };
     const timestamp = Date.now();
     const thumbnailData = getThumbnailData({query});
-    const implicitLimit = sessionStateCtx
+    const implicitLimitConfig = sessionStateCtx
       .get(this)!
-      .activeState.options.find((opt) => opt.name === "Implicit Limit")?.value;
+      .activeState.options.find((opt) => opt.name === "Implicit Limit")
+      ?.value as bigint | undefined;
 
     try {
       const {result, outCodecBuf, resultBuf, capabilities, status} =
@@ -654,12 +647,16 @@ export class QueryEditor extends Model({
               : undefined,
             {
               implicitLimit:
-                implicitLimit != null ? implicitLimit + BigInt(1) : undefined,
+                implicitLimitConfig != null
+                  ? implicitLimitConfig + BigInt(1)
+                  : undefined,
             },
             this.runningQueryAbort?.signal
           )
         );
 
+      const implicitLimit =
+        implicitLimitConfig != null ? Number(implicitLimitConfig) : null;
       this.addHistoryCell({
         queryData,
         timestamp,
@@ -668,7 +665,7 @@ export class QueryEditor extends Model({
         outCodecBuf,
         resultBuf,
         status,
-        implicitLimit: Number(implicitLimit),
+        implicitLimit,
       });
       return {success: true, capabilities, status};
     } catch (e: any) {
@@ -694,8 +691,8 @@ export class QueryEditor extends Model({
       selectedEditor === EditorKind.EdgeQL
         ? this.currentQueryData[EditorKind.EdgeQL].toString().trim()
         : selectedEditor === EditorKind.VisualBuilder
-        ? this.currentQueryData[EditorKind.VisualBuilder].query
-        : null;
+          ? this.currentQueryData[EditorKind.VisualBuilder].query
+          : null;
     if (!query) return;
 
     this.runningQueryAbort = new AbortController();

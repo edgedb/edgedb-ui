@@ -34,6 +34,25 @@ export type NestedDataGetter = (
   fieldName: string
 ) => Promise<{data: any; codec: _ICodec}>;
 
+export function createInspector(
+  result: any[] & {_codec: _ICodec},
+  implicitLimit: number | null,
+  extendedViewerIds: Set<string>,
+  openExtendedView: (item: Item) => void
+) {
+  const inspector = new InspectorState({
+    implicitLimit:
+      implicitLimit != null && !Number.isNaN(implicitLimit)
+        ? implicitLimit
+        : null,
+    noMultiline: true,
+  });
+  inspector.extendedViewIds = extendedViewerIds;
+  inspector.openExtendedView = openExtendedView;
+  inspector.initData({data: result, codec: result._codec});
+  return inspector;
+}
+
 @model("edb/Inspector")
 export class InspectorState extends Model({
   $modelId: idProp,
