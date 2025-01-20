@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "license": "UNLICENSED",
   "peerDependencies": {
-    "edgedb": "1.6.0-canary.20250111T054901",
+    "edgedb": "1.6.0-canary.20250120T111308",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },

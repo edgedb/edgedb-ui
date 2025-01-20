@@ -1007,7 +1007,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@edgedb/common@workspace:shared/common"
   peerDependencies:
-    edgedb: 1.6.0-canary.20250111T054901
+    edgedb: 1.6.0-canary.20250120T111308
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1024,7 +1024,7 @@ __metadata:
     mobx-react-lite: ^4.0.0
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20250111T054901
+    edgedb: 1.6.0-canary.20250120T111308
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1053,7 +1053,7 @@ __metadata:
     react-transition-group: ^4.4.1
     webcola: ^3.4.0
   peerDependencies:
-    edgedb: 1.6.0-canary.20250111T054901
+    edgedb: 1.6.0-canary.20250120T111308
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -1088,7 +1088,7 @@ __metadata:
     react-markdown: ^9.0.1
     react-window: ^1.8.10
   peerDependencies:
-    edgedb: 1.6.0-canary.20250111T054901
+    edgedb: 1.6.0-canary.20250120T111308
     react: ^18.0.0
     react-dom: ^18.0.0
   languageName: unknown
@@ -3993,9 +3993,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"edgedb@npm:1.6.0-canary.20250111T054901":
-  version: 1.6.0-canary.20250111T054901
-  resolution: "edgedb@npm:1.6.0-canary.20250111T054901"
+"edgedb@npm:1.6.0-canary.20250120T111308":
+  version: 1.6.0-canary.20250120T111308
+  resolution: "edgedb@npm:1.6.0-canary.20250120T111308"
   dependencies:
     "@petamoriken/float16": ^3.8.7
     debug: ^4.3.4
@@ -4005,7 +4005,7 @@ __metadata:
     which: ^4.0.0
   bin:
     edgedb: dist/cli.mjs
-  checksum: 1bee18e8be0bbdd2712ba7b4f1532bea58d0755e79a061b8723864bd86bc6821189d4f9fc177b889087046de1f6088957a481ae26ddcaf1e01d2a6eaf010d76b
+  checksum: 014a5daf756b9f4ed1a917c0bdb3563ac1d2522939b8a9b214819962ac09531c056f4003f7c2af763ece1d72ba928aa5a82192305c4cc59863eca81209ea57b5
   languageName: node
   linkType: hard
 
@@ -8430,7 +8430,7 @@ __metadata:
     "@types/jest": ^27.0.1
     "@types/selenium-webdriver": ^4.1.27
     "@vitejs/plugin-react-swc": ^3.5.0
-    edgedb: 1.6.0-canary.20250111T054901
+    edgedb: 1.6.0-canary.20250120T111308
     eslint: ^9.13.0
     eslint-plugin-react-hooks: ^5.0.0
     eslint-plugin-react-refresh: ^0.4.14
