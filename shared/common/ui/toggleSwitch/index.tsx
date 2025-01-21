@@ -17,8 +17,9 @@ export function ToggleSwitch({
       className={cn(styles.toggleSwitch, className, {
         [styles.checked]: checked,
       })}
+      onClick={() => onChange(!checked)}
     >
-      <div className={styles.track} onClick={() => onChange(!checked)}>
+      <div className={styles.track}>
         <div className={styles.switch} />
       </div>
     </div>
