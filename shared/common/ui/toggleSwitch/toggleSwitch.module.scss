@@ -2,31 +2,44 @@
 
 .toggleSwitch {
   cursor: pointer;
+  padding: 8px;
 }
 
 .track {
   display: flex;
-  width: calc(var(--switchSize, 18px) * 2 - 4px);
+  width: calc(var(--switchSize, 18px) * 2 - 8px);
   height: var(--switchSize, 18px);
   border-radius: var(--switchSize, 18px);
-  background-color: var(--fullscreenOverlayBg);
-  transition: background-color 0.2s;
+  background-color: var(--Grey95);
+  border: 1px solid var(--Grey90);
+  overflow: hidden;
+
+  .checked & {
+    background-color: var(--Grey97);
+  }
+
+  @include darkTheme {
+    background-color: var(--Grey12);
+    border-color: var(--Grey25);
+  }
 }
 
 .switch {
-  width: calc(var(--switchSize, 18px) - 4px);
-  height: calc(var(--switchSize, 18px) - 4px);
+  width: calc(var(--switchSize, 18px) - 2px);
+  height: calc(var(--switchSize, 18px) - 2px);
   border-radius: var(--switchSize, 18px);
-  margin: 2px;
-  background: #b3b3b3;
+  margin: 1px;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.18);
   transition: transform 0.2s, background-color 0.2s;
 
   @include darkTheme {
-    background: #333;
+    background: var(--Grey50);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
   }
 
   .checked & {
-    transform: translateX(calc(var(--switchSize, 18px) - 4px));
-    background: var(--accentGreen);
+    transform: translateX(calc(var(--switchSize, 18px) - 8px));
+    background: #a565cd;
   }
 }

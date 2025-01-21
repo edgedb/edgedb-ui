@@ -1,4 +1,3 @@
-@import "@edgedb/common/styles.scss";
 @import "@edgedb/common/mixins.scss";
 
 .sessionState {
@@ -32,12 +31,12 @@
 
   .tabArrow {
     position: absolute;
-    fill: var(--grey97);
+    fill: var(--app_panel_background);
     left: calc(50% - 15px);
     top: calc(100% + 3px);
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0s 0.1s, fill 0.2s;
+    transition: opacity 0s 0.1s;
 
     @include darkTheme {
       fill: #2e2e2e;
@@ -79,11 +78,8 @@
   }
 
   &.panelOpen .tabArrow {
-    fill: #f5f5f5;
-
-    @include darkTheme {
-      fill: #242424;
-    }
+    fill: var(--app_panel_background);
+    z-index: 200;
   }
 
   .iconMobile {
@@ -110,8 +106,8 @@
     left: 0;
     width: 100%;
     height: 0;
-    background-color: var(--grey97);
-    border-radius: 8px;
+    background-color: var(--app_panel_background);
+    border-radius: 12px;
     transition: height 0.2s;
 
     .barOpen & {
@@ -126,31 +122,30 @@
 
 .panelBg {
   position: absolute;
-  height: calc(100% - 16px);
-  left: 16px;
-  right: 16px;
+  height: calc(100% - 8px);
+  left: 8px;
+  right: 8px;
   top: 0;
-  border-radius: 8px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04), 0 0 4px rgba(0, 0, 0, 0.06);
   pointer-events: none;
   opacity: 0;
   z-index: 0;
   transition: height 0.2s, left 0.2s, z-index 0s 0.2s, opacity 0s 0.2s;
 
   @include breakpoint(mobile) {
-    left: 0;
-    right: 0;
+    height: 100%;
+    inset: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .panelOpen & {
     opacity: 1;
-    background-color: var(--grey97);
+    background-color: var(--app_panel_background);
     pointer-events: auto;
     z-index: 101;
     transition-delay: 0s;
-  }
-
-  @include darkTheme {
-    background-color: var(--grey12);
   }
 }
 
@@ -178,11 +173,11 @@
   }
 
   .chips {
-    margin: 8px 0 0 8px;
+    padding: 8px 0 0 8px;
     display: flex;
     flex-wrap: wrap;
     min-height: 34px;
-    max-height: 68px;
+    max-height: 82px;
     flex-grow: 1;
     overflow: hidden;
   }
@@ -214,13 +209,14 @@
 }
 
 .panelButton {
-  background-color: var(--accentGreen);
-  color: #fff;
+  color: #a565cd;
+  background-color: #fff;
+  border: 1px solid var(--Grey90);
   height: 26px;
   padding: 0 7px;
   display: flex;
   align-items: center;
-  border-radius: 13px;
+  border-radius: 16px;
   cursor: pointer;
 
   span {
@@ -235,40 +231,46 @@
   }
 
   @include darkTheme {
-    color: #141414;
+    background-color: var(--Grey14);
+    border-color: var(--Grey25);
+    color: #d19cf1;
   }
 }
 
 .chip {
   display: flex;
-  background-color: var(--grey90);
+  background-color: var(--header_background);
+  border: 1px solid var(--Grey90);
   padding-right: 10px;
-  border-radius: 6px;
-  line-height: 26px;
-  font-family: "Roboto Mono", monospace;
+  border-radius: 8px;
+  line-height: 28px;
+  font-family: "Roboto Mono Variable", monospace;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 450;
   margin-right: 8px;
   margin-bottom: 8px;
   color: #808080;
   white-space: nowrap;
   overflow: hidden;
+  cursor: pointer;
 
   .chipKind {
-    width: 22px;
-    background-color: #d3d3d3;
+    width: 25px;
+    background: var(--Grey97);
+    border-right: 1px solid var(--Grey93);
     display: flex;
     justify-content: center;
-    font-weight: 700;
-    font-size: 11px;
-    color: #848484;
+    font-weight: 800;
+    font-size: 12px;
+    color: var(--Grey50);
     text-transform: uppercase;
     padding-left: 2px;
     margin-right: 8px;
 
     @include darkTheme {
-      background-color: #1b1b1b;
-      color: #5d5d5d;
+      background-color: var(--Grey20);
+      border-right-color: var(--Grey25);
+      color: var(--Grey60);
     }
   }
 
@@ -281,17 +283,16 @@
   }
 
   @include darkTheme {
-    background-color: #242424;
+    background-color: var(--Grey22);
+    border-color: var(--Grey25);
     color: #bfbfbf;
   }
 }
 
 .editorPanel {
   position: absolute;
+  inset: 8px;
   top: 0;
-  left: 16px;
-  right: 16px;
-  bottom: 0;
   display: flex;
   opacity: 0;
   z-index: 0;
@@ -300,14 +301,7 @@
 
   @include breakpoint(mobile) {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--grey90);
-
-    @include darkTheme {
-      background-color: var(--grey20);
-    }
+    inset: 0;
   }
 
   &.panelVisible {
@@ -322,13 +316,26 @@
   flex-direction: column;
   flex-grow: 1;
   pointer-events: auto;
+  font-family: "Roboto Flex Variable", sans-serif;
 
   .closePanel {
     @extend .panelButton;
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 2px;
+    right: 2px;
     margin: 8px;
+    background-color: #a565cd;
+    color: #fff;
+    border: 0;
+
+    svg {
+      margin-top: 0;
+    }
+
+    @include darkTheme {
+      color: #fff;
+      background-color: #a565cd;
+    }
 
     @include breakpoint(mobile) {
       display: none;
@@ -345,8 +352,8 @@
     @include breakpoint(mobile) {
       flex-direction: column;
       height: auto;
-      margin-bottom: 2px;
-      background-color: var(--fullscreenOverlayBg);
+      background-color: var(--header_background);
+      border-bottom: 1px solid var(--panel_border);
     }
 
     .title {
@@ -354,7 +361,6 @@
 
       @include breakpoint(mobile) {
         display: block;
-        font-family: Roboto;
         font-size: 20px;
         font-style: normal;
         font-weight: 700;
@@ -368,44 +374,33 @@
       margin-bottom: 4px;
       display: flex;
       align-items: center;
+      width: 400px;
 
       svg {
         position: absolute;
         stroke: #acacac;
-        left: 8px;
+        left: 14px;
         pointer-events: none;
       }
 
       input {
-        background-color: var(--app-card-bg);
-        border: 0;
-        border-radius: 16px;
+        background-color: var(--panel_background);
+        border: 1px solid var(--panel_border);
+        border-radius: 20px;
         outline: 0;
         color: inherit;
-        font-family: "Inter", sans-serif;
-        line-height: 32px;
+        font-family: "Roboto Flex Variable", sans-serif;
+        font-size: 14px;
+        font-weight: 450;
+        line-height: 38px;
         padding: 0 10px;
-        padding-left: 32px;
+        padding-left: 40px;
         flex-grow: 1;
-
-        @include breakpoint(mobile) {
-          border-radius: 6px;
-          height: 40px;
-          background-color: var(--grey95);
-
-          @include darkTheme {
-            background-color: var(--grey20);
-          }
-        }
       }
 
       @include breakpoint(mobile) {
         width: calc(100vw - 32px);
         margin: 0 0 16px 0;
-
-        svg {
-          stroke: #7c7c7c;
-        }
       }
     }
   }
@@ -417,11 +412,14 @@
     padding: 0 8px;
     padding-bottom: 4px;
     min-height: 0;
+    max-width: 1400px;
+    margin: 0 auto;
 
     @include breakpoint(mobile) {
       display: flex;
       flex-direction: column;
       padding: 0;
+      margin: 0;
       min-height: unset;
       overflow: auto;
     }
@@ -438,9 +436,9 @@
     }
 
     @include breakpoint(mobile) {
-      margin-bottom: 2px;
+      border-bottom: 1px solid var(--panel_border);
+      padding-top: 12px;
       min-height: unset;
-      background-color: var(--fullscreenOverlayBg);
 
       &:first-child {
         margin-left: unset;
@@ -449,6 +447,7 @@
       &:last-child {
         padding-bottom: 74px;
         flex-grow: 1;
+        border-bottom: 0;
       }
     }
 
@@ -501,11 +500,12 @@
   }
 
   .item {
-    background-color: var(--grey90);
+    background-color: var(--panel_background);
+    border: 1px solid var(--panel_border);
     margin-bottom: 8px;
-    padding: 8px;
-    border-radius: 6px;
-    font-family: "Roboto Mono", monospace;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: "Roboto Mono Variable", monospace;
     display: grid;
     grid-template-areas: "toggle header" "toggle value";
     grid-template-columns: auto 1fr;
@@ -518,12 +518,20 @@
       .itemValue {
         opacity: 0.6;
         pointer-events: none;
-        font-weight: 500;
+        font-weight: 450;
+        border: 1px solid var(--panel_border);
+        margin: -1px;
+        padding: 0 10px;
+        border-radius: 6px;
+
+        b {
+          font-weight: 500;
+        }
       }
     }
 
     &.highlighted {
-      outline-color: #39d1a5;
+      outline-color: #be8ddc;
       transition-duration: 0s;
     }
 
@@ -532,18 +540,16 @@
     }
 
     @include breakpoint(mobile) {
-      padding: 16px 16px 16px 16px;
-      background-color: var(--grey95);
-
-      @include darkTheme {
-        background-color: var(--grey20);
-      }
+      padding: 16px;
     }
   }
 
   .activeToggle {
     grid-area: toggle;
-    margin-right: 8px;
+    margin: -8px;
+    margin-right: 0;
+    align-self: start;
+    --switchSize: 20px;
   }
 
   .itemHeader {
@@ -563,30 +569,35 @@
   }
 
   .itemDesc {
-    font-style: italic;
-    margin-top: 6px;
+    font-family: "Roboto Flex Variable", sans-serif;
+    margin-top: 8px;
     font-size: 14px;
     line-height: 16px;
-    opacity: 0.5;
+    opacity: 0.6;
   }
 
   .itemName {
-    font-weight: 500;
+    font-weight: 450;
+    margin-right: 8px;
+
     span {
       opacity: 0.8;
     }
 
     .nameMatch {
       opacity: 1;
-      background-color: var(--accentGreen);
+      background-color: #d8acf3;
       border-radius: 2px;
+
+      @include darkTheme {
+        background-color: #772fa3;
+      }
     }
   }
 
   .itemType {
     font-size: 14px;
-    font-weight: 500;
-    margin-left: 8px;
+    font-weight: 450;
     opacity: 0.5;
 
     @include breakpoint(mobile) {
@@ -600,7 +611,7 @@
     text-transform: uppercase;
     font-size: 13px;
     font-weight: 500;
-    font-family: "Inter", sans-serif;
+    font-family: "Roboto Flex Variable", sans-serif;
 
     &.disabled {
       opacity: 0.5;

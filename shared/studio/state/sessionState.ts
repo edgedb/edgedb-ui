@@ -361,7 +361,9 @@ export class SessionState extends Model({
             this.draftState!.config[configName],
             "value",
             frozen(
-              valueToEditorValue(value, config.type.data as PrimitiveType)
+              value != null
+                ? valueToEditorValue(value, config.type.data as PrimitiveType)
+                : newPrimitiveValue(config.type.data as PrimitiveType)[0]
             )
           );
         }
@@ -427,11 +429,13 @@ export class SessionState extends Model({
     const instanceState = instanceCtx.get(this)!;
     const dbState = dbCtx.get(this)!;
 
+    if (!this.draftState) return;
+
     storeSessionState({
       instanceId: instanceState.instanceId!,
       dbName: dbState.name,
       data: {
-        globals: Object.entries(this.draftState!.globals).reduce(
+        globals: Object.entries(this.draftState.globals).reduce(
           (data, [name, global]) => {
             data[name] = {
               typeId: global.type.data.id,
@@ -442,7 +446,7 @@ export class SessionState extends Model({
           },
           {} as StoredSessionStateData["globals"]
         ),
-        config: Object.entries(this.draftState!.config).reduce(
+        config: Object.entries(this.draftState.config).reduce(
           (data, [name, config]) => {
             if (config.value != null) {
               data[name] = {
@@ -454,7 +458,7 @@ export class SessionState extends Model({
           },
           {} as StoredSessionStateData["config"]
         ),
-        options: Object.entries(this.draftState!.options).reduce(
+        options: Object.entries(this.draftState.options).reduce(
           (data, [name, opt]) => {
             data[name] = {
               active: opt.active,
