@@ -109,6 +109,9 @@ const emptyDataSource: geojson.FeatureCollection = {
   features: [],
 };
 
+const BASE_COLOUR = "#007cbf";
+const SELECTED_COLOUR = "#a565cd";
+
 @model("PostgisEditor")
 export class PostgisEditor extends Model({
   readonly: prop<boolean>(),
@@ -224,6 +227,10 @@ export class PostgisEditor extends Model({
 
   @computed
   get layers(): maplibregl.LayerSpecification[] {
+    const BG_COLOUR = this.theme === Theme.dark ? "#0c0c0c" : "#ffffff";
+    const INACTIVE_COLOUR = this.theme === Theme.dark ? "#5a5a5a" : "#9c9c9c";
+    const MAIN_COLOUR = this.editingGeom ? INACTIVE_COLOUR : BASE_COLOUR;
+
     return [
       ...(this.theme === Theme.dark ? darkLayers : lightLayers),
       {
@@ -235,8 +242,8 @@ export class PostgisEditor extends Model({
           "fill-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#ffbc3d",
-            "#007cbf",
+            SELECTED_COLOUR,
+            MAIN_COLOUR,
           ],
           "fill-opacity": [
             "case",
@@ -255,8 +262,8 @@ export class PostgisEditor extends Model({
           "line-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#ffbc3d",
-            "#007cbf",
+            SELECTED_COLOUR,
+            MAIN_COLOUR,
           ],
           "line-width": 1.5,
           "line-opacity": [
@@ -298,15 +305,15 @@ export class PostgisEditor extends Model({
           "circle-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#007cbf",
-            "#ffffff",
+            SELECTED_COLOUR,
+            BG_COLOUR,
           ],
           "circle-stroke-width": 1.5,
           "circle-stroke-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#ffffff",
-            "#007cbf",
+            BG_COLOUR,
+            MAIN_COLOUR,
           ],
           "circle-opacity": [
             "case",
@@ -328,7 +335,7 @@ export class PostgisEditor extends Model({
         type: "line",
         filter: ["get", "isBoxType"],
         paint: {
-          "line-color": "#007cbf",
+          "line-color": BASE_COLOUR,
           "line-width": 1.5,
           "line-opacity": 0.6,
           "line-dasharray": [4, 2],
@@ -344,8 +351,8 @@ export class PostgisEditor extends Model({
           "fill-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "purple",
-            "green",
+            SELECTED_COLOUR,
+            BASE_COLOUR,
           ],
           "fill-opacity": 0.4,
         },
@@ -359,8 +366,8 @@ export class PostgisEditor extends Model({
           "line-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "purple",
-            "green",
+            SELECTED_COLOUR,
+            BASE_COLOUR,
           ],
           "line-width": 1.5,
           "line-opacity": 0.6,
@@ -382,7 +389,7 @@ export class PostgisEditor extends Model({
         type: "line",
         filter: ["get", "pendingLine"],
         paint: {
-          "line-color": "purple",
+          "line-color": SELECTED_COLOUR,
           "line-width": 1.5,
           "line-opacity": 0.6,
           "line-dasharray": [2, 1],
@@ -412,15 +419,15 @@ export class PostgisEditor extends Model({
           "circle-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "blue",
-            "#ffffff",
+            SELECTED_COLOUR,
+            BG_COLOUR,
           ],
           "circle-stroke-width": 1.5,
           "circle-stroke-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#ffffff",
-            "blue",
+            BG_COLOUR,
+            BASE_COLOUR,
           ],
         },
       },
@@ -431,7 +438,7 @@ export class PostgisEditor extends Model({
         type: "line",
         filter: ["get", "selectionBoundingBox"],
         paint: {
-          "line-color": "#007cbf",
+          "line-color": SELECTED_COLOUR,
           "line-width": 1,
           "line-opacity": 0.6,
           "line-dasharray": [4, 2],
@@ -981,6 +988,13 @@ export class PostgisEditor extends Model({
         const geom = this._getEventGeom(ev);
 
         if (geom) {
+          if (
+            this.editingGeom &&
+            !this.editingGeom.featureIds.includes(geom.id)
+          ) {
+            return;
+          }
+
           mouseState = {
             geom,
             editSource,

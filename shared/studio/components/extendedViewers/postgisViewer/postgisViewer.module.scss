@@ -11,6 +11,22 @@
   :global(.maplibregl-ctrl-bottom-right) {
     right: 12px;
   }
+
+  :global(.maplibregl-ctrl-attrib) {
+    @include darkTheme {
+      background-color: var(--Grey30);
+      color: var(--Grey85);
+
+      a {
+        color: inherit;
+      }
+
+      summary {
+        background-color: transparent;
+        background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' fill='%23ccc' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");
+      }
+    }
+  }
 }
 
 .map {
@@ -51,9 +67,13 @@
     &:after {
       content: "";
       width: 2px;
-      height: 32px;
+      height: 38px;
       border-radius: 3px;
       background: var(--Grey85);
+
+      @include darkTheme {
+        background: var(--Grey40);
+      }
     }
   }
 }
@@ -158,8 +178,8 @@
   overflow: auto;
   overscroll-behavior-x: none;
 
-  --selectedBorderColor: #83c0ef;
-  --selectedBackgroundColor: #e9f5ff;
+  --selectedBorderColor: #a565cd;
+  --selectedBackgroundColor: #f8f2fc;
 
   @include hideScrollbar;
 
@@ -173,6 +193,10 @@
     position: relative;
     grid-column: 1;
     pointer-events: none;
+  }
+
+  @include darkTheme {
+    --selectedBackgroundColor: #3b2d45;
   }
 }
 
@@ -218,6 +242,10 @@
       .overflowMenu {
         opacity: 1;
       }
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.08);
+      }
     }
   }
 
@@ -261,6 +289,20 @@
     border-bottom: 0;
     left: calc(var(--selectedParentDepth, 0) * 16px);
   }
+
+  &.inactive {
+    .expandToggle,
+    .name {
+      opacity: 0.5;
+    }
+    .inner:hover {
+      background: rgba(0, 0, 0, 0.02);
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.04);
+      }
+    }
+  }
 }
 
 .endBracket {
@@ -289,6 +331,10 @@
     border-radius: 0;
     border-bottom: 0;
     left: calc(var(--selectedParentDepth, 0) * 16px);
+  }
+
+  &.inactive {
+    opacity: 0.5;
   }
 }
 
@@ -338,7 +384,16 @@
 
       &:hover {
         background: var(--Grey95);
+
+        @include darkTheme {
+          background: var(--Grey30);
+        }
       }
+    }
+
+    @include darkTheme {
+      background: var(--Grey25);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.2), 0 0 8px rgba(0, 0, 0, 0.1);
     }
   }
 }
@@ -430,15 +485,27 @@
       &:hover {
         background: rgba(0, 0, 0, 0.04);
       }
-
       &:focus {
         background: rgba(0, 0, 0, 0.06);
+      }
+
+      @include darkTheme {
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        &:focus {
+          background: rgba(255, 255, 255, 0.12);
+        }
       }
     }
 
     &:focus-within,
     &:hover {
       background: rgba(0, 0, 0, 0.04);
+
+      @include darkTheme {
+        background: rgba(255, 255, 255, 0.08);
+      }
     }
   }
 
@@ -473,6 +540,10 @@
       border-top: 1px solid var(--selectedBorderColor);
       border-bottom: 1px solid var(--selectedBorderColor);
     }
+  }
+
+  &.inactive {
+    opacity: 0.5;
   }
 }
 

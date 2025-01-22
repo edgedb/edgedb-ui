@@ -718,7 +718,7 @@ export class Polygon implements BaseGeometry, EditableGeom {
   }
 
   get listItems(): ListItem[] {
-    console.log("calculating polygon list items");
+    // console.log("calculating polygon list items");
     return this.listItemExpanded
       ? [
           this,
@@ -810,7 +810,7 @@ export class CurvePolygon implements BaseGeometry {
   }
 
   get listItems(): ListItem[] {
-    console.log("calculating curvepolygon list items");
+    // console.log("calculating curvepolygon list items");
     return this.listItemExpanded
       ? [
           this,

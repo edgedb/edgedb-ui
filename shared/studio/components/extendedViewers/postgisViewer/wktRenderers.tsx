@@ -70,6 +70,7 @@ const PointRenderer = observer(function _PointRenderer({
   const point = geom instanceof Point ? geom : geom.geom;
   const selectedParentDepth = getSelectedParentDepth(state, geom);
   const selfSelected = state.selectedGeoms.has(point);
+  const inactive = isInactive(state, point);
 
   return (
     <div
@@ -79,6 +80,7 @@ const PointRenderer = observer(function _PointRenderer({
           selfSelected &&
           (geom.parent instanceof LineString ||
             geom.parent?.kind === "MultiPoint"),
+        [styles.inactive]: inactive,
       })}
       style={
         {"--selectedDepth": selectedParentDepth ?? point.listDepth} as any
@@ -137,6 +139,20 @@ function getSelectedParentDepth(
   return null;
 }
 
+function isInactive(state: PostgisEditor, geom: Geometry | Box): boolean {
+  if (!state.editingGeom || geom instanceof Box) {
+    return false;
+  }
+  let currentGeom: Geometry | null = geom;
+  while (currentGeom) {
+    if (state.editingGeom === currentGeom) {
+      return false;
+    }
+    currentGeom = currentGeom.parent;
+  }
+  return true;
+}
+
 const StickyHeader = observer(function StickyHeader({
   state,
   geom,
@@ -150,6 +166,7 @@ const StickyHeader = observer(function StickyHeader({
   isEmpty?: boolean;
 }>) {
   const selectedParentDepth = getSelectedParentDepth(state, geom);
+  const inactive = isInactive(state, geom);
 
   return (
     <div
@@ -157,6 +174,7 @@ const StickyHeader = observer(function StickyHeader({
         [styles.selected]: state.selectedGeoms.has(geom),
         [styles.expanded]: !noExpand && !isEmpty && geom.listItemExpanded,
         [styles.parentSelected]: selectedParentDepth !== null,
+        [styles.inactive]: inactive,
       })}
       style={{"--selectedParentDepth": selectedParentDepth} as any}
     >
@@ -328,6 +346,7 @@ const EndPlaceholderRenderer = observer(function _EndPlaceholderRenderer({
       className={cn(styles.endBracket, {
         [styles.startSelected]: state.selectedGeoms.has(item.geom),
         [styles.parentSelected]: selectedParentDepth !== null,
+        [styles.inactive]: isInactive(state, item.geom),
       })}
       style={{"--selectedParentDepth": selectedParentDepth} as any}
     >
