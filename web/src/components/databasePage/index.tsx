@@ -10,6 +10,7 @@ import {HeaderTab} from "@edgedb/studio/components/headerNav";
 import {
   HeaderNav,
   HeaderNavCol,
+  HeaderNavColProps,
 } from "@edgedb/studio/components/headerNav/elements";
 import {HeaderDatabaseIcon} from "@edgedb/studio/icons";
 
@@ -92,7 +93,7 @@ function HeaderNavMenu({
       setDropdownOpen={setDropdownOpen}
     >
       <HeaderNavCol<{to: string}>
-        Link={Link}
+        Link={Link as HeaderNavColProps<{to: string}>["Link"]}
         closeDropdown={() => setDropdownOpen(false)}
         itemGroups={[
           {

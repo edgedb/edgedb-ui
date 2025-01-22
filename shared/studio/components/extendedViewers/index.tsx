@@ -13,7 +13,7 @@ export {ExtendedViewerContext};
 const PostgisViewer = lazy(() => import("./postgisViewer"));
 const HexViewer = lazy(() => import("./hexViewer"));
 
-type Renderer = (props: {data: any}) => JSX.Element | null;
+type Renderer = (props: {data: any}) => React.ReactNode;
 
 export const extendedViewerRenderers: {
   [key: string]: Renderer;
