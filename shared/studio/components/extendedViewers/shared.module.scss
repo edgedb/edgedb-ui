@@ -1,53 +1,74 @@
 @import "@edgedb/common/mixins.scss";
 
-.actionsBar {
+.lazyLoading {
+  margin: auto;
+  color: var(--secondary_text_color);
+}
+
+.headerBar {
   display: flex;
-  font-family: "Roboto", sans-serif;
-  min-height: 32px;
-  padding-left: 8px;
+  align-items: center;
+  height: 40px;
+  border-bottom: 1px solid var(--Grey93, #ededed);
+  background: var(--Grey99, #fcfcfc);
+  box-shadow: 0px 0px 12px 0px rgba(0, 0, 0, 0.08);
+  font-family: "Roboto Flex Variable", sans-serif;
+  flex-shrink: 0;
+  z-index: 1;
+
+  @include darkTheme {
+    border-bottom: 1px solid var(--Grey22, #363636);
+    background: var(--Grey18, #2e2e2e);
+    box-shadow: 0px 0px 12px 0px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.closeButton {
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--secondary_text_color);
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  margin-right: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--Grey93);
+
+    @include darkTheme {
+      background: var(--Grey25);
+    }
+  }
 }
 
 .actions {
   display: flex;
   flex-grow: 1;
-  margin-right: 8px;
+  margin: 0 16px 0 4px;
+  gap: 8px;
+
+  > button {
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+  }
 }
 
-.actionButton {
-  font-weight: 500;
-  font-size: 11px;
-  line-height: 20px;
-  color: #808080;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  padding: 6px 8px;
-  cursor: pointer;
-
+.toggleButton {
   svg {
-    fill: currentColor;
-    margin-left: 6px;
-    opacity: 0.8;
+    color: var(--tertiary_text_color);
+    margin-left: -6px;
   }
 
   &.active {
     svg {
-      opacity: 1;
-      fill: #0ccb93;
+      color: #0ccb93;
     }
-  }
-}
-
-.closeAction {
-  width: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.5;
-
-  &:hover {
-    opacity: 0.7;
   }
 }
 

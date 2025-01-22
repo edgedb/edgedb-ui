@@ -1,10 +1,13 @@
 import {
+  Box2D,
+  Box3D,
   ConfigMemory,
   Duration,
   Float16Array,
   LocalDate,
   LocalDateTime,
   LocalTime,
+  parseWKT,
   SparseVector,
 } from "edgedb";
 
@@ -308,6 +311,18 @@ export const parsers: {
 
     return new SparseVector(length, map);
   },
+  "ext::postgis::geometry": (val: string) => {
+    return parseWKT(val);
+  },
+  "ext::postgis::geography": (val: string) => {
+    return parseWKT(val);
+  },
+  "ext::postgis::box2d": (val: string) => {
+    return _parseBox(val, false);
+  },
+  "ext::postgis::box3d": (val: string) => {
+    return _parseBox(val, true);
+  },
 };
 
 function _parseFloatArray(val: string, typeArgs: string[] | null): number[] {
@@ -330,4 +345,29 @@ function _parseFloatArray(val: string, typeArgs: string[] | null): number[] {
   }
 
   return vec;
+}
+
+const _num = "-?[0-9]+(?:\\.[0-9]+)?";
+const box2dRegex = new RegExp(
+  `^box\\(\\s*(${_num})\\s+(${_num})\\s*,\\s*(${_num})\\s+(${_num})\\s*\\)$`,
+  "i"
+);
+const box3dRegex = new RegExp(
+  `^box3d\\(\\s*(${_num})\\s+(${_num})\\s+(${_num})\\s*,\\s*(${_num})\\s+(${_num})\\s+(${_num})\\s*\\)$`,
+  "i"
+);
+function _parseBox(val: string, box3d: boolean): Box2D | Box3D {
+  const m = val.trim().match(box3d ? box3dRegex : box2dRegex);
+  if (!m) {
+    throw new Error(`invalid ${box3d ? "box3d" : "box2d"}`);
+  }
+  return box3d
+    ? new Box3D(
+        [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])],
+        [parseFloat(m[4]), parseFloat(m[5]), parseFloat(m[6])]
+      )
+    : new Box2D(
+        [parseFloat(m[1]), parseFloat(m[2])],
+        [parseFloat(m[3]), parseFloat(m[4])]
+      );
 }

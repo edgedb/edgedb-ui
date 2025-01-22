@@ -134,18 +134,18 @@ describe("queryEditor:", () => {
 
       // linewrap / show whitespace
       const actionButtons = await viewWindow.findElements(
-        ByUIClass("shared_actionButton")
+        ByUIClass("shared_toggleButton")
       );
 
       expect(await actionButtons.length).toBe(2);
       expect(await actionButtons[0].getAttribute("innerText")).toBe(
-        "LINEWRAP"
+        "Linewrap"
       );
       expect(await actionButtons[1].getAttribute("innerText")).toBe(
-        "SHOW WHITESPACE"
+        "Show Whitespace"
       );
 
-      (await viewWindow.findElement(ByUIClass("shared_closeAction"))).click();
+      (await viewWindow.findElement(ByUIClass("shared_closeButton"))).click();
 
       await waitUntilElementNotLocated(
         ByUIClass("queryeditor_extendedViewerContainer")

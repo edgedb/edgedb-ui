@@ -53,7 +53,12 @@ export function getInputComponent<AllowNull extends boolean = false>(
 
     if (type.enum_values) {
       Input = EnumEditor;
-    } else if (typeName === "std::str" || typeName === "std::json") {
+    } else if (
+      typeName === "std::str" ||
+      typeName === "std::json" ||
+      typeName === "ext::postgis::geometry" ||
+      typeName === "ext::postgis::geography"
+    ) {
       Input = ExpandingTextbox;
     } else if (parsers[typeName]) {
       Input = Textbox;
@@ -549,6 +554,13 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
         setErr("Invalid JSON value");
         onChange(value, true);
       }
+    } else if (!_placeholder && baseTypeName !== "std::str") {
+      try {
+        parsers[baseTypeName](value, type.arg_values);
+      } catch (e) {
+        setErr((e as Error).message);
+        onChange(value, true);
+      }
     }
   }, [_placeholder]);
 
@@ -572,6 +584,12 @@ const ExpandingTextbox = forwardRef(function ExpandingTextbox(
               JSON.parse(e.target.value);
             } catch {
               err = "Invalid JSON value";
+            }
+          } else if (baseTypeName !== "std::str") {
+            try {
+              parsers[baseTypeName](e.target.value, type.arg_values);
+            } catch (e) {
+              err = (e as Error).message;
             }
           }
           setErr(err);
