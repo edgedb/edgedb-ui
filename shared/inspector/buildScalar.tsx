@@ -330,6 +330,9 @@ export function scalarItemToString(item: any, typename: string): string {
       return prettyPrintJSON(item);
     case "std::datetime":
       return formatDatetime(item);
+    case "ext::postgis::geometry":
+    case "ext::postgis::geography":
+      return (item as Geometry).toWKT(2);
     default:
       return item.toString();
   }

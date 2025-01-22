@@ -22,7 +22,9 @@ export const extendedViewerRenderers: {
   "std::bytes": HexViewer,
   "std::json": JsonViewer,
   "ext::postgis::geometry": PostgisViewer,
+  "ext::postgis::geography": PostgisViewer,
   "ext::postgis::box2d": PostgisViewer,
+  "ext::postgis::box3d": PostgisViewer,
 };
 
 export const extendedViewerIds = new Set(Object.keys(extendedViewerRenderers));
