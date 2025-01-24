@@ -619,7 +619,9 @@ export class AuthAdminState extends Model({
       } else {
         this._removeDraftUIConfig();
       }
-      this.emailProviders = emailProviders.map((provider: any) => ({
+      this.emailProviders = (
+        Array.isArray(emailProviders) ? emailProviders : [emailProviders]
+      ).map((provider: any) => ({
         ...provider,
         port: provider.port?.toString(),
         timeout_per_email: provider.timeout_per_email_seconds,
@@ -709,8 +711,8 @@ export class DraftCoreConfig
     return key === ""
       ? "Signing key is required"
       : key.length < 32
-      ? "Signing key too short"
-      : null;
+        ? "Signing key too short"
+        : null;
   }
 
   @computed
@@ -1416,8 +1418,8 @@ export class DraftProviderConfig extends Model({
           ? this.webauthnRelyingOrigin != null &&
               !this.webauthnRelyingOriginError
           : this.selectedProviderType === "ext::auth::MagicLinkProviderConfig"
-          ? !this.tokenTimeToLiveError
-          : true;
+            ? !this.tokenTimeToLiveError
+            : true;
     }
   }
 
