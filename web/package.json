@@ -19,7 +19,6 @@
     "@fontsource-variable/roboto-flex": "^5.1.0",
     "@fontsource-variable/roboto-mono": "^5.1.0",
     "edgedb": "1.6.0-canary.20250120T111308",
-    "hash.js": "^1.1.7",
     "mobx": "^6.5.0",
     "mobx-keystone": "^1.11.0",
     "mobx-react-lite": "^4.0.0",

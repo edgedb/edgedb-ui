@@ -5,57 +5,41 @@
   flex-grow: 1;
   justify-content: center;
   align-items: center;
+  padding: 32px;
 }
 
-.title {
+.logo {
   position: absolute;
   top: 16px;
   left: 24px;
 }
 
-.loginForm {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 280px;
+.loginPanel {
+  border-color: var(--Grey85);
+  box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.12),
+    0px 2px 2px 0px rgba(0, 0, 0, 0.04);
 
   @include darkTheme {
-    input {
-      background: #282828;
-    }
+    box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
+      0px 2px 4px 0px rgba(0, 0, 0, 0.2);
   }
 
-  .loginButton {
-    --buttonBg: var(--app-accent-green);
-    --buttonTextColour: #fff;
-    align-self: flex-end;
-    padding: 0;
+  code {
+    background: var(--Grey93);
+    font-family: "Roboto Mono Variable", monospace;
+    padding: 2px 4px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--secondary_text_color);
 
-    & > div {
-      padding: 6px 16px;
-      border-radius: 18px;
-      font-weight: 600;
-    }
-
-    .loginButtonIcon {
-      stroke: currentColor;
-      height: 14px;
+    @include darkTheme {
+      background: var(--Grey25);
     }
   }
 }
 
-.loginError {
-  color: #db5246;
-  background: rgba(219, 82, 70, 0.1);
-  padding: 12px 16px;
-  border-radius: 6px;
-  position: absolute;
-  top: 100%;
-  margin-top: 16px;
-  left: 0;
-  right: 0;
-
-  span {
-    font-weight: 600;
-  }
+.formContent {
+  width: 320px;
+  padding-bottom: 32px;
 }
