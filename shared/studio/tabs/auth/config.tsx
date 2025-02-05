@@ -369,14 +369,18 @@ const AuthUrls = observer(function AuthUrls({
   const databaseState = useDatabaseState();
 
   const url = new URL(instanceState.serverUrl);
-  url.pathname = `db/${encodeURIComponent(databaseState.name)}/ext/auth`;
+  const urlWithPort = new URL(
+    instanceState.serverUrlWithPort ?? instanceState.serverUrl
+  );
+  url.pathname =
+    urlWithPort.pathname = `db/${encodeURIComponent(databaseState.name)}/ext/auth`;
 
   const baseUrl = url.toString();
 
   return (
     <div className={styles.authUrls}>
       <div className={styles.label}>OAuth callback endpoint:</div>
-      <CopyUrl url={`${baseUrl}/callback`} />
+      <CopyUrl url={`${urlWithPort.toString()}/callback`} />
       <div
         className={cn({[styles.disabled]: !builtinUIEnabled})}
         style={{display: "contents"}}

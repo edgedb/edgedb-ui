@@ -50,6 +50,7 @@ export interface ServerVersion {
 export class InstanceState extends Model({
   _instanceId: prop<string | null>(null),
   serverUrl: prop<string>(),
+  serverUrlWithPort: prop<string | null>(null),
   authUsername: prop<string | null>(null),
   authToken: prop<string | null>(),
 
