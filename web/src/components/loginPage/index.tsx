@@ -79,12 +79,12 @@ export default function LoginPage() {
           {isLocalhost ? (
             <div className={styles.loginInfo}>
               <InfoIcon />
-              <span>
-                It looks like you're running Gel locally. If you created this
-                instance using the Gel CLI, the easiest way to login is by
-                running the <code>gel ui</code> command from your project
-                directory.
-              </span>
+              <div>
+                <span>It looks like you're running Gel locally.</span>
+                <br /> If you created this instance using the Gel CLI, the
+                easiest way to login is by running the <code>gel ui</code>{" "}
+                command from your project directory.
+              </div>
             </div>
           ) : null}
           <TextInput

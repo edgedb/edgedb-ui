@@ -32,7 +32,7 @@
 
 .loginInfo {
   display: flex;
-  background: #d6e5ed;
+  background: #dce9ef;
   padding: 12px 16px 12px 12px;
   margin: 0 -8px;
   margin-bottom: 8px;
@@ -45,6 +45,12 @@
   svg {
     flex-shrink: 0;
     color: #1a6e9a;
+  }
+
+  span {
+    color: #134c6b;
+    font-weight: 475;
+    line-height: 24px;
   }
 
   code {
@@ -62,6 +68,10 @@
 
     svg {
       color: #65a8cb;
+    }
+
+    span {
+      color: #83bbd8;
     }
 
     code {
