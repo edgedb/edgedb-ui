@@ -65,12 +65,11 @@ export function ModalPanel({
               <div className={styles.subheading}>{subheading}</div>
             ) : null}
           </div>
-          <div
-            className={styles.closeButton}
-            onClick={onClose && (() => onClose())}
-          >
-            <CrossIcon />
-          </div>
+          {onClose ? (
+            <div className={styles.closeButton} onClick={onClose}>
+              <CrossIcon />
+            </div>
+          ) : null}
         </div>
       ) : null}
       {children}
