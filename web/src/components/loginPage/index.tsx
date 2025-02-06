@@ -10,6 +10,7 @@ import {
   ModalContent,
   TextInput,
   SubmitButton,
+  InfoIcon,
 } from "@edgedb/common/newui";
 
 import {serverUrl, setAuthToken} from "../../state/models/app";
@@ -61,15 +62,6 @@ export default function LoginPage() {
       <ModalPanel
         className={styles.loginPanel}
         title="Welcome to Gel UI"
-        subheading={
-          isLocalhost ? (
-            <>
-              It looks like you're running Gel locally. You can also try
-              logging in by running the <code>gel ui</code> command from your
-              project directory.
-            </>
-          ) : undefined
-        }
         onSubmit={onSubmit}
         formError={error}
         footerButtons={
@@ -84,6 +76,17 @@ export default function LoginPage() {
         }
       >
         <ModalContent className={styles.formContent}>
+          {isLocalhost ? (
+            <div className={styles.loginInfo}>
+              <InfoIcon />
+              <span>
+                It looks like you're running Gel locally. If you created this
+                instance using the Gel CLI, the easiest way to login is by
+                running the <code>gel ui</code> command from your project
+                directory.
+              </span>
+            </div>
+          ) : null}
           <TextInput
             label="Username"
             {...register("username", {

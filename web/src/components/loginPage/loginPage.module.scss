@@ -23,23 +23,49 @@
     box-shadow: 0px 4px 16px 0px rgba(0, 0, 0, 0.4),
       0px 2px 4px 0px rgba(0, 0, 0, 0.2);
   }
+}
+
+.formContent {
+  width: 380px;
+  padding-bottom: 32px;
+}
+
+.loginInfo {
+  display: flex;
+  background: #d6e5ed;
+  padding: 12px 16px 12px 12px;
+  margin: 0 -8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  gap: 8px;
+  line-height: 20px;
+  font-weight: 425;
+  color: var(--secondary_text_color);
+
+  svg {
+    flex-shrink: 0;
+    color: #1a6e9a;
+  }
 
   code {
-    background: var(--Grey93);
+    background: rgba(0, 0, 0, 0.05);
     font-family: "Roboto Mono Variable", monospace;
     padding: 2px 4px;
     border-radius: 6px;
     font-weight: 500;
     font-size: 13px;
-    color: var(--secondary_text_color);
+    white-space: nowrap;
+  }
 
-    @include darkTheme {
-      background: var(--Grey25);
+  @include darkTheme {
+    background: #233945;
+
+    svg {
+      color: #65a8cb;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.1);
     }
   }
-}
-
-.formContent {
-  width: 320px;
-  padding-bottom: 32px;
 }
