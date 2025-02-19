@@ -11,7 +11,7 @@ import {
   SparseVector,
 } from "edgedb";
 
-export const parsers: {
+const parsers: {
   [typename: string]: (val: string, typeArgs: string[] | null) => any;
 } = {
   "std::str": (val: string) => val,
@@ -324,6 +324,11 @@ export const parsers: {
     return _parseBox(val, true);
   },
 };
+parsers["std::cal::local_time"] = parsers["cal::local_time"];
+parsers["std::cal::local_date"] = parsers["cal::local_date"];
+parsers["std::cal::local_datetime"] = parsers["cal::local_datetime"];
+
+export {parsers};
 
 function _parseFloatArray(val: string, typeArgs: string[] | null): number[] {
   const vec = val
