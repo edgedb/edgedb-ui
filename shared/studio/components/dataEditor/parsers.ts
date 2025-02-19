@@ -2,12 +2,14 @@ import {
   Box2D,
   Box3D,
   ConfigMemory,
+  DateDuration,
   Duration,
   Float16Array,
   LocalDate,
   LocalDateTime,
   LocalTime,
   parseWKT,
+  RelativeDuration,
   SparseVector,
 } from "edgedb";
 
@@ -222,6 +224,51 @@ const parsers: {
     }
     return duration;
   },
+  "cal::relative_duration": (val: string) => {
+    let d: Duration;
+    try {
+      d = Duration.from(val.toLowerCase().includes("t") ? val : `${val}T0S`);
+    } catch {
+      throw new Error("Invalid relative duration");
+    }
+    for (const field of ["nanoseconds"]) {
+      if ((d as any)[field] !== 0) {
+        throw new Error(`relative duration cannot contain ${field}`);
+      }
+    }
+    return new RelativeDuration(
+      d.years,
+      d.months,
+      d.weeks,
+      d.days,
+      d.hours,
+      d.minutes,
+      d.seconds,
+      d.milliseconds,
+      d.microseconds
+    );
+  },
+  "cal::date_duration": (val: string) => {
+    let d: Duration;
+    try {
+      d = Duration.from(val.toLowerCase().includes("t") ? val : `${val}T0S`);
+    } catch {
+      throw new Error("Invalid date duration");
+    }
+    for (const field of [
+      "hours",
+      "minutes",
+      "seconds",
+      "milliseconds",
+      "microseconds",
+      "nanoseconds",
+    ]) {
+      if ((d as any)[field] !== 0) {
+        throw new Error(`date duration cannot contain ${field}`);
+      }
+    }
+    return new DateDuration(d.years, d.months, d.weeks, d.days);
+  },
   "cfg::memory": (val: string) => {
     const [_match, size, unit] = val.match(/^(\d+)(B|[KMGTP]iB)$/) ?? [];
     if (!_match) {
@@ -327,6 +374,8 @@ const parsers: {
 parsers["std::cal::local_time"] = parsers["cal::local_time"];
 parsers["std::cal::local_date"] = parsers["cal::local_date"];
 parsers["std::cal::local_datetime"] = parsers["cal::local_datetime"];
+parsers["std::cal::relative_duration"] = parsers["cal::relative_duration"];
+parsers["std::cal::date_duration"] = parsers["cal::date_duration"];
 
 export {parsers};
 
