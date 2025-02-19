@@ -1,3 +1,4 @@
+import {useEffect} from "react";
 import {observer} from "mobx-react-lite";
 import {AnyModel, getTypeInfo, ModelClass, ModelTypeInfo} from "mobx-keystone";
 import {ErrorBoundary, FallbackProps} from "react-error-boundary";
@@ -108,6 +109,8 @@ const DatabasePageContent = observer(function DatabasePageContent({
   const instanceState = useInstanceState();
 
   const dbState = instanceState.getDatabasePageState(databaseName, tabs);
+
+  useEffect(() => dbState.watchForSchemaChanges(), [dbState]);
 
   const {currentPath, navigate} = useDBRouter();
   const isMobile = useIsMobile();

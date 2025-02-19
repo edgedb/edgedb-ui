@@ -52,6 +52,7 @@ const SCHEMA_DATA_VERSION = 8;
 export interface StoredSchemaData {
   version: number;
   schemaId: string | null;
+  schemaLastMigration: string | null | undefined;
   data: RawIntrospectionResult;
 }
 
@@ -126,6 +127,8 @@ export class DatabaseState extends Model({
 
   @observable
   schemaId: string | null = null;
+  @observable
+  schemaLastMigration: string | null = null;
   @observable.ref
   schemaData: SchemaData | null = null;
   @observable
@@ -182,6 +185,39 @@ export class DatabaseState extends Model({
     };
   }
 
+  watchForSchemaChanges() {
+    let fetchingDbInfo: Promise<void> | null = null;
+    const listener = async () => {
+      if (window.document.visibilityState === "visible") {
+        const instanceState = instanceCtx.get(this);
+        if (!instanceState || !this.schemaId || fetchingDbInfo !== null)
+          return;
+
+        fetchingDbInfo = instanceState.fetchDatabaseInfo();
+        await fetchingDbInfo;
+        fetchingDbInfo = null;
+
+        const dbInfo = instanceState.databases?.find(
+          (db) => db.name === this.name
+        );
+
+        if (dbInfo && dbInfo.last_migration != this.schemaLastMigration) {
+          this.fetchSchemaData();
+        }
+      }
+    };
+
+    listener();
+
+    window.addEventListener("visibilitychange", listener);
+    window.addEventListener("focus", listener);
+
+    return () => {
+      window.removeEventListener("visibilitychange", listener);
+      window.removeEventListener("focus", listener);
+    };
+  }
+
   async updateObjectCount() {
     const {result} = await this.connection.query(
       `select count(std::Object)`,
@@ -212,11 +248,11 @@ export class DatabaseState extends Model({
           conn
             .query(
               `SELECT {
-                migrationId := (
-                  (SELECT schema::Migration {
+                migration := (SELECT (
+                  SELECT schema::Migration {
                     children := .<parents[IS schema::Migration]
-                  } FILTER NOT EXISTS .children).id
-                ),
+                  } FILTER NOT EXISTS .children
+                ) {id, name}),
                 version := sys::get_version(),
                 versionStr := sys::get_version_as_str(),
               }`,
@@ -225,8 +261,9 @@ export class DatabaseState extends Model({
             )
             .then(({result}) => ({
               schemaId: `${result![0].versionStr}__${
-                result![0].migrationId[0] ?? "empty"
+                result![0].migration[0]?.id ?? "empty"
               }`,
+              schemaMigration: result![0].migration[0]?.name ?? null,
               version: result![0].version as {
                 major: number;
                 minor: number;
@@ -275,6 +312,7 @@ export class DatabaseState extends Model({
         storeSchemaData(this.name, instanceState.instanceId!, {
           version: SCHEMA_DATA_VERSION,
           schemaId: schemaInfo.schemaId,
+          schemaLastMigration: schemaInfo.schemaMigration,
           data: rawData,
         });
       } else {
@@ -338,6 +376,7 @@ export class DatabaseState extends Model({
       };
 
       this.schemaId = schemaInfo.schemaId;
+      this.schemaLastMigration = schemaInfo.schemaMigration;
       this.schemaData = schemaData;
     } finally {
       this.fetchingSchemaData = false;
