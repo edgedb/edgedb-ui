@@ -8,12 +8,7 @@ import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {
-  DocsQuickstartIcon,
-  DocsTutorialIcon,
-  DocsEasyEdgeDBIcon,
-  DocsIcon,
-} from "../../icons/docs";
+import {DocsQuickstartIcon, DocsIcon} from "../../icons/docs";
 
 import {ArrowRightIcon, Button} from "@edgedb/common/newui";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
@@ -127,25 +122,12 @@ export const DatabaseDashboard = observer(function DatabaseDashboard() {
           </div>
 
           <div className={styles.docButtons}>
-            <a
-              href="https://www.edgedb.com/docs/guides/quickstart"
-              target="_blank"
-            >
+            <a href="https://www.geldata.com/p/quickstart-docs">
               <DocsQuickstartIcon />
               <span>5-min Quickstart</span>
             </a>
 
-            <a href="https://www.edgedb.com/tutorial" target="_blank">
-              <DocsTutorialIcon />
-              <span>Interactive Tutorial</span>
-            </a>
-
-            <a href="https://www.edgedb.com/easy-edgedb" target="_blank">
-              <DocsEasyEdgeDBIcon />
-              <span>Easy EdgeDB</span>
-            </a>
-
-            <a href="https://www.edgedb.com/docs/" target="_blank">
+            <a href="https://docs.geldata.com" target="_blank">
               <DocsIcon />
               <span>Documentation</span>
             </a>

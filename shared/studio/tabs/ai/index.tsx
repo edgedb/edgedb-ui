@@ -36,7 +36,7 @@ const AuthAdminLoader = observer(function AuthAdminLoader() {
           <CodeBlock code="using extension ai;" />
           <p>
             For more information check out the{" "}
-            <a href="https://www.edgedb.com/p/ai-ext-docs" target="_blank">
+            <a href="https://www.geldata.com/p/ai-ext-docs" target="_blank">
               AI extension docs
             </a>
             .
