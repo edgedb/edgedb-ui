@@ -33,7 +33,7 @@ export const ConfigTab = observer(function ConfigTab() {
           <b>Need help integrating Gel Auth into your app?</b>
           <br />
           Check out the{" "}
-          <a href="https://www.edgedb.com/p/auth-ext-docs" target="_blank">
+          <a href="https://www.geldata.com/p/auth-ext-docs" target="_blank">
             auth extension docs
           </a>
           , also here are some useful URLs:
@@ -372,8 +372,9 @@ const AuthUrls = observer(function AuthUrls({
   const urlWithPort = new URL(
     instanceState.serverUrlWithPort ?? instanceState.serverUrl
   );
-  url.pathname =
-    urlWithPort.pathname = `db/${encodeURIComponent(databaseState.name)}/ext/auth`;
+  url.pathname = urlWithPort.pathname = `db/${encodeURIComponent(
+    databaseState.name
+  )}/ext/auth`;
 
   const baseUrl = url.toString();
 

@@ -120,7 +120,7 @@ const QuerybuilderRoot = observer(function QuerybuilderRoot({
               The query builder UI requires a database with a non-empty schema.
               Check out the{" "}
               <a
-                href="https://www.edgedb.com/docs/intro/quickstart"
+                href="https://www.geldata.com/p/quickstart-docs"
                 target="_blank"
               >
                 Getting Started

@@ -38,7 +38,7 @@ export function InfoCards({
         <InfoCard
           title="Learn Gel"
           icon={<DocsIcon />}
-          link="https://docs.edgedb.com"
+          link="https://docs.geldata.com"
         >
           Check out our docs for to learn everything you need to know about
           Gel, from helpful guides to full API reference docs.
@@ -77,7 +77,7 @@ export function InfoCards({
             <InfoCard
               title={`Gel ${data.latestEdgeDBVersion.major}.${data.latestEdgeDBVersion.minor} is available`}
               icon={<UpgradeIcon />}
-              link={`https://docs.edgedb.com/changelog/${data.latestEdgeDBVersion.major}_x`}
+              link={`https://www.geldata.com/p/changelog/${data.latestEdgeDBVersion.major}_x`}
             >
               This instance is ready to update to the latest version of Gel.{" "}
               <u>Find out what's new in the changelog.</u>
