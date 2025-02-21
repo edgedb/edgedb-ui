@@ -311,8 +311,10 @@ const ReplInput = observer(function ReplInput() {
   const ref = useRef<CodeEditorRef>();
 
   useEffect(() => {
-    ref.current?.focus();
-  }, []);
+    if (!replState.queryRunning) {
+      ref.current?.focus();
+    }
+  }, [replState.queryRunning]);
 
   useEffect(() => {
     if (replState._runningQuery instanceof AbortController) {
