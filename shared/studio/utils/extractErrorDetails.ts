@@ -1,4 +1,5 @@
 import {EdgeDBError} from "edgedb";
+import {Language} from "edgedb/dist/ifaces";
 import {utf8Decoder} from "edgedb/dist/primitives/buffer";
 
 enum ErrorField {
@@ -33,7 +34,12 @@ function tryParseInt(val: any) {
   return null;
 }
 
-export function extractErrorDetails(err: any, query?: string): ErrorDetails {
+export function extractErrorDetails(
+  err: any,
+  query?: string,
+  lang?: Language,
+  getObjectTypeNames?: () => string[]
+): ErrorDetails {
   if (!(err instanceof Error)) {
     throw new Error(`Fatal Error: cannot handle non error as error: ${err}`);
   }
@@ -84,6 +90,39 @@ export function extractErrorDetails(err: any, query?: string): ErrorDetails {
       const endPos = endLinesLength + colEnd;
 
       errDetails.range = [startPos, endPos];
+    }
+  }
+
+  if (lang === Language.SQL && !errDetails.hint && getObjectTypeNames) {
+    const match = errDetails.msg.match(/unknown table `(.*)`/);
+    if (match) {
+      const name = match[1];
+      const typeNames = getObjectTypeNames();
+      if (
+        name.startsWith('"') &&
+        name.endsWith('"') &&
+        typeNames.includes(name.slice(1, -1))
+      ) {
+        errDetails.hint = `Try specifying the module name using SQL syntax: ${name
+          .slice(1, -1)
+          .split("::")
+          .map((part) => (part.toLowerCase() === part ? part : `"${part}"`))
+          .join(".")}`;
+      } else {
+        const colonised = name.replace(".", "::");
+        for (const typeName of typeNames) {
+          const stripped = typeName.replace(/^default::/, "");
+          if (stripped.toLowerCase() === colonised) {
+            errDetails.hint = `Try quoting the table name: ${stripped
+              .split("::")
+              .map((part) =>
+                part.toLowerCase() === part ? part : `"${part}"`
+              )
+              .join(".")}`;
+            break;
+          }
+        }
+      }
     }
   }
 
