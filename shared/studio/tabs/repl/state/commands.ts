@@ -187,7 +187,7 @@ async function handleListCommand(
         item.setCommandResult({
           kind: CommandOutputKind.text,
           content: `List of databases:\n${instanceState
-            .databases!.map((name) => `  ${name}`)
+            .databaseNames!.map((name) => `  ${name}`)
             .join("\n")}`,
         });
       }
