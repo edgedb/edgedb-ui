@@ -75,19 +75,16 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(-20px);
-  transition:
-    opacity 0.15s,
-    transform 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
   background-color: var(--grey25);
   color: var(--grey85);
   border-radius: 6px;
   overflow: hidden;
   min-height: 240px;
   max-width: calc(100% - 24px);
-  box-shadow:
-    0px 32px 20px -24px rgba(0, 0, 0, 0.12),
+  box-shadow: 0px 32px 20px -24px rgba(0, 0, 0, 0.12),
     0px 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  z-index: 110;
 
   @include darkTheme {
     background-color: var(--grey70);
