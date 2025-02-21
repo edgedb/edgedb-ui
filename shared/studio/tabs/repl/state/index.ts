@@ -468,6 +468,8 @@ export class Repl extends Model({
 
     dbState.setLoadingTab(Repl, true);
 
+    const lang =
+      this.language === ReplLang.SQL ? Language.SQL : Language.EDGEQL;
     let resultData: QueryResultData | undefined = undefined;
     let skipStoreHistoryItem = false;
     try {
@@ -500,7 +502,7 @@ export class Repl extends Model({
               replQueryTag: true,
             },
             (this._runningQuery as AbortController).signal,
-            this.language === ReplLang.SQL ? Language.SQL : Language.EDGEQL
+            lang
           )
         );
 
@@ -542,7 +544,11 @@ export class Repl extends Model({
         }
       }
     } catch (err: any) {
-      historyItem.setError(extractErrorDetails(err, query));
+      historyItem.setError(
+        extractErrorDetails(err, query, lang, () => [
+          ...(dbCtx.get(this)?.schemaData?.objectsByName.keys() ?? []),
+        ])
+      );
     }
 
     if (!skipStoreHistoryItem) {

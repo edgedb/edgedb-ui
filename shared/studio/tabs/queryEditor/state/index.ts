@@ -777,6 +777,8 @@ export class QueryEditor extends Model({
       .activeState.options.find((opt) => opt.name === "Implicit Limit")
       ?.value as bigint | undefined;
 
+    const lang =
+      this.selectedEditor === EditorKind.SQL ? Language.SQL : Language.EDGEQL;
     try {
       const {result, outCodecBuf, resultBuf, protoVer, capabilities, status} =
         yield* _await(
@@ -794,9 +796,7 @@ export class QueryEditor extends Model({
               replQueryTag: true,
             },
             this.runningQueryAbort?.signal,
-            this.selectedEditor === EditorKind.SQL
-              ? Language.SQL
-              : Language.EDGEQL
+            lang
           )
         );
 
@@ -819,7 +819,9 @@ export class QueryEditor extends Model({
         queryData,
         timestamp,
         thumbnailData,
-        error: extractErrorDetails(e, query),
+        error: extractErrorDetails(e, query, lang, () => [
+          ...(dbCtx.get(this)?.schemaData?.objectsByName.keys() ?? []),
+        ]),
       });
     }
     return {success: false};
