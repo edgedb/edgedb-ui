@@ -8,12 +8,7 @@ import {useDatabaseState} from "../../state/database";
 import {DatabaseTabSpec} from "../../components/databasePage";
 import {useDBRouter} from "../../hooks/dbRoute";
 
-import {
-  DocsQuickstartIcon,
-  DocsTutorialIcon,
-  DocsEasyEdgeDBIcon,
-  DocsIcon,
-} from "../../icons/docs";
+import {DocsQuickstartIcon, DocsIcon} from "../../icons/docs";
 
 import {ArrowRightIcon, Button} from "@edgedb/common/newui";
 import {CustomScrollbars} from "@edgedb/common/ui/customScrollbar";
