@@ -229,6 +229,7 @@ const ReplList = observer(function ReplList({
     let top = visibleBounds[2] + headerHeight;
     for (let i = visibleBounds[0]; i <= visibleBounds[1]; i++) {
       const item = replState.queryHistory[i];
+      if (!item) break;
       items.push(
         <ReplHistoryItem
           key={item.$modelId}
@@ -311,8 +312,10 @@ const ReplInput = observer(function ReplInput() {
   const ref = useRef<CodeEditorRef>();
 
   useEffect(() => {
-    ref.current?.focus();
-  }, []);
+    if (!replState.queryRunning) {
+      ref.current?.focus();
+    }
+  }, [replState.queryRunning]);
 
   useEffect(() => {
     if (replState._runningQuery instanceof AbortController) {

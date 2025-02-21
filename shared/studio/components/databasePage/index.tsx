@@ -70,7 +70,7 @@ export default observer(function DatabasePageLoadingWrapper(
     );
   }
 
-  return <DatabasePageContent {...props} />;
+  return <DatabasePageContent key={props.databaseName} {...props} />;
 });
 
 function ErrorFallback({error}: FallbackProps) {
