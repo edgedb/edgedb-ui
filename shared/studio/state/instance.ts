@@ -49,6 +49,7 @@ export interface ServerVersion {
 @model("InstanceState")
 export class InstanceState extends Model({
   _instanceId: prop<string | null>(null),
+  isCloud: prop<boolean>(false),
   serverUrl: prop<string>(),
   serverUrlWithPort: prop<string | null>(null),
   authUsername: prop<string | null>(null),

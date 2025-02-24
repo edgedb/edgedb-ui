@@ -3,6 +3,7 @@ import {observer} from "mobx-react-lite";
 import {useTabState} from "../../state";
 import {
   AuthAdminState,
+  CLOUD_SMTP_PROVIDER_NAME,
   DraftSMTPConfig,
   EmailProviderConfig,
   smtpSecurity,
@@ -42,61 +43,64 @@ export const SMTPConfigTab = observer(function SMTPConfigTab() {
     content = state.emailProviders ? (
       <>
         {state.emailProviders.length ? (
-          <>
-            {state.emailProviderWarnings.verificationNoSmtp ? (
-              <EmailProviderWarning>
-                You have auth providers requiring email verification enabled.
-                Select a provider below to enable sending verification emails,
-                or{" "}
-                <span
-                  className={styles.link}
-                  onClick={() => state.setSelectedTab("webhooks")}
-                >
-                  create a webhook
-                </span>{" "}
-                for handling email verification.
-              </EmailProviderWarning>
-            ) : state.emailProviderWarnings.passwordNoReset ? (
-              <EmailProviderWarning>
-                You have the 'Email + Password' auth provider enabled. Select a
-                provider below to enable sending password reset emails, or{" "}
-                <span
-                  className={styles.link}
-                  onClick={() => state.setSelectedTab("webhooks")}
-                >
-                  create a webhook
-                </span>{" "}
-                for handling password resets.
-              </EmailProviderWarning>
-            ) : state.emailProviderWarnings.magicLinkNoMethods ? (
-              <EmailProviderWarning>
-                You have the 'Magic Link' auth provider enabled. Select a
-                provider below to enable sending magic links via email, or{" "}
-                <span
-                  className={styles.link}
-                  onClick={() => state.setSelectedTab("webhooks")}
-                >
-                  create a webhook
-                </span>{" "}
-                for handling magic links.
-              </EmailProviderWarning>
-            ) : null}
-
-            <div
-              className={cn(styles.cardList, {
-                [styles.emailProvidersUpdating]: state.updatingEmailProviders,
-              })}
-            >
-              {state.emailProviders.map((provider) => (
-                <EmailProviderCard
-                  key={provider.name}
-                  state={state}
-                  provider={provider}
-                />
-              ))}
-            </div>
-          </>
+          state.emailProviderWarnings.verificationNoSmtp ? (
+            <EmailProviderWarning>
+              You have auth providers requiring email verification enabled.
+              Select a provider below to enable sending verification emails, or{" "}
+              <span
+                className={styles.link}
+                onClick={() => state.setSelectedTab("webhooks")}
+              >
+                create a webhook
+              </span>{" "}
+              for handling email verification.
+            </EmailProviderWarning>
+          ) : state.emailProviderWarnings.passwordNoReset ? (
+            <EmailProviderWarning>
+              You have the 'Email + Password' auth provider enabled. Select a
+              provider below to enable sending password reset emails, or{" "}
+              <span
+                className={styles.link}
+                onClick={() => state.setSelectedTab("webhooks")}
+              >
+                create a webhook
+              </span>{" "}
+              for handling password resets.
+            </EmailProviderWarning>
+          ) : state.emailProviderWarnings.magicLinkNoMethods ? (
+            <EmailProviderWarning>
+              You have the 'Magic Link' auth provider enabled. Select a
+              provider below to enable sending magic links via email, or{" "}
+              <span
+                className={styles.link}
+                onClick={() => state.setSelectedTab("webhooks")}
+              >
+                create a webhook
+              </span>{" "}
+              for handling magic links.
+            </EmailProviderWarning>
+          ) : null
         ) : null}
+
+        <div
+          className={cn(styles.cardList, {
+            [styles.emailProvidersUpdating]: state.updatingEmailProviders,
+          })}
+        >
+          {state.hasCloudSMTP ? (
+            <EmailProviderCard
+              state={state}
+              provider={CLOUD_SMTP_PROVIDER_NAME}
+            />
+          ) : null}
+          {state.emailProviders.map((provider) => (
+            <EmailProviderCard
+              key={provider.name}
+              state={state}
+              provider={provider}
+            />
+          ))}
+        </div>
 
         {newDraftState ? (
           <div className={styles.addDraft}>
@@ -150,7 +154,7 @@ export const SMTPConfigTab = observer(function SMTPConfigTab() {
 function ResetCurrentProviderButton({state}: {state: AuthAdminState}) {
   const [loading, setLoading] = useState(false);
 
-  return state.currentEmailProvider === null ? null : (
+  return state.currentEmailProvider === null || state.hasCloudSMTP ? null : (
     <Button
       kind="outline"
       loading={loading}
@@ -173,15 +177,24 @@ const EmailProviderCard = observer(function EmailProviderCard({
   provider,
 }: {
   state: AuthAdminState;
-  provider: EmailProviderConfig;
+  provider: EmailProviderConfig | typeof CLOUD_SMTP_PROVIDER_NAME;
 }) {
   const [updating, setUpdating] = useState(false);
 
-  const isSelectedProvider = state.currentEmailProvider === provider.name;
-  const draftState = state.draftSMTPConfigs.get(provider.name);
+  const isSelectedProvider =
+    state.currentEmailProvider ===
+    (provider === CLOUD_SMTP_PROVIDER_NAME ? provider : provider.name);
+  const draftState =
+    provider !== CLOUD_SMTP_PROVIDER_NAME
+      ? state.draftSMTPConfigs.get(provider.name)
+      : null;
 
   return (
-    <div className={cn(styles.card, styles.emailProviderCard)}>
+    <div
+      className={cn(styles.card, styles.emailProviderCard, {
+        [styles.isCloudProvider]: provider === CLOUD_SMTP_PROVIDER_NAME,
+      })}
+    >
       <div className={styles.cardMain}>
         {updating ? (
           <Spinner
@@ -199,7 +212,7 @@ const EmailProviderCard = observer(function EmailProviderCard({
             fill="none"
             onClick={() => {
               setUpdating(true);
-              (isSelectedProvider
+              (isSelectedProvider || provider === CLOUD_SMTP_PROVIDER_NAME
                 ? state.resetCurrentEmailProvider()
                 : state.setCurrentEmailProvider(provider.name)
               ).finally(() => setUpdating(false));
@@ -218,36 +231,55 @@ const EmailProviderCard = observer(function EmailProviderCard({
           </svg>
         )}
         <div className={styles.details}>
-          <div className={styles.name}>{provider.name}</div>
-          {provider._typename === "cfg::SMTPProviderConfig" ? (
-            <div className={styles.senderhost}>
-              {provider.sender} <span>•</span> {provider.host || "localhost"}:
-              {provider.port ||
-                (provider.security === "PlainText"
-                  ? "25"
-                  : provider.security === "TLS"
-                  ? "465"
-                  : provider.security === "STARTTLS"
-                  ? "587"
-                  : "587/25")}
-            </div>
-          ) : null}
+          {provider === CLOUD_SMTP_PROVIDER_NAME ? (
+            <>
+              <div className={styles.name}>Cloud SMTP</div>
+              <div className={styles.cloudSmtpDesc}>
+                Auto configured SMTP provided by Gel Cloud for development use.
+              </div>
+              <div className={styles.cloudSmtpNote}>
+                Note: This provider is rate limited and the sender address is
+                non customizable, so for your production app you should
+                configure your own SMTP provider below.
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.name}>{provider.name}</div>
+              {provider._typename === "cfg::SMTPProviderConfig" ? (
+                <div className={styles.senderhost}>
+                  {provider.sender} <span>•</span>{" "}
+                  {provider.host || "localhost"}:
+                  {provider.port ||
+                    (provider.security === "PlainText"
+                      ? "25"
+                      : provider.security === "TLS"
+                      ? "465"
+                      : provider.security === "STARTTLS"
+                      ? "587"
+                      : "587/25")}
+                </div>
+              ) : null}
+            </>
+          )}
         </div>
-        <div
-          className={cn(styles.expandButton, {
-            [styles.expanded]: draftState?.expanded ?? false,
-          })}
-          onClick={() =>
-            draftState
-              ? draftState.toggleExpanded()
-              : state.addDraftSMTPProvider(provider)
-          }
-        >
-          <ChevronDownIcon />
-        </div>
+        {provider !== CLOUD_SMTP_PROVIDER_NAME ? (
+          <div
+            className={cn(styles.expandButton, {
+              [styles.expanded]: draftState?.expanded ?? false,
+            })}
+            onClick={() =>
+              draftState
+                ? draftState.toggleExpanded()
+                : state.addDraftSMTPProvider(provider)
+            }
+          >
+            <ChevronDownIcon />
+          </div>
+        ) : null}
       </div>
 
-      {draftState?.expanded ? (
+      {provider !== CLOUD_SMTP_PROVIDER_NAME && draftState?.expanded ? (
         <>
           <div className={styles.expandedEmailProviderConfig}>
             <SMTPConfigForm smtp={draftState} loaded hasName />

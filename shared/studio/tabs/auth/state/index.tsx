@@ -11,6 +11,7 @@ import {
 } from "mobx-keystone";
 import {parsers} from "../../../components/dataEditor/parsers";
 import {connCtx, dbCtx} from "../../../state";
+import {instanceCtx} from "../../../state/instance";
 import {
   AppleIcon,
   AzureIcon,
@@ -19,6 +20,8 @@ import {
   GoogleIcon,
   SlackIcon,
 } from "../icons";
+
+export const CLOUD_SMTP_PROVIDER_NAME = "cloud";
 
 interface AuthAppData {
   app_name: string | null;
@@ -352,6 +355,11 @@ export class AuthAdminState extends Model({
   @observable
   updatingEmailProviders = false;
 
+  @computed
+  get hasCloudSMTP() {
+    return instanceCtx.get(this)?.isCloud ?? false;
+  }
+
   @action
   async removeEmailProvider(name: string) {
     this.updatingEmailProviders = true;
@@ -431,9 +439,11 @@ export class AuthAdminState extends Model({
       wh.events.includes("EmailVerificationRequested")
     );
 
-    const smtpConfigured = this.emailProviders?.some(
-      (provider) => provider.name === this.currentEmailProvider
-    );
+    const smtpConfigured =
+      this.hasCloudSMTP ||
+      this.emailProviders?.some(
+        (provider) => provider.name === this.currentEmailProvider
+      );
 
     return {
       verificationNoSmtp:
@@ -711,8 +721,8 @@ export class DraftCoreConfig
     return key === ""
       ? "Signing key is required"
       : key.length < 32
-        ? "Signing key too short"
-        : null;
+      ? "Signing key too short"
+      : null;
   }
 
   @computed
@@ -1061,9 +1071,10 @@ export class DraftSMTPConfig
     }
     if (
       val !== this.currentConfig?.name &&
-      this.parentState.emailProviders?.some(
-        (provider) => provider.name === val
-      )
+      ((this.parentState.hasCloudSMTP && val === CLOUD_SMTP_PROVIDER_NAME) ||
+        this.parentState.emailProviders?.some(
+          (provider) => provider.name === val
+        ))
     ) {
       return "Name already exists";
     }
@@ -1418,8 +1429,8 @@ export class DraftProviderConfig extends Model({
           ? this.webauthnRelyingOrigin != null &&
               !this.webauthnRelyingOriginError
           : this.selectedProviderType === "ext::auth::MagicLinkProviderConfig"
-            ? !this.tokenTimeToLiveError
-            : true;
+          ? !this.tokenTimeToLiveError
+          : true;
     }
   }
 
