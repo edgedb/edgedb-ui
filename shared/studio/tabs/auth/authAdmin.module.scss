@@ -481,6 +481,21 @@
         opacity: 0.5;
       }
     }
+
+    .cloudSmtpDesc {
+      color: var(--secondary_text_color);
+    }
+    .cloudSmtpNote {
+      color: var(--secondary_text_color);
+      font-style: italic;
+      margin-top: 8px;
+    }
+  }
+
+  .selectCurrentProvider,
+  .updatingSpinner {
+    align-self: flex-start;
+    margin-top: 6px;
   }
 
   .selectCurrentProvider {
@@ -504,6 +519,8 @@
   .updatingSpinner {
     color: var(--Grey50);
     width: 32px;
+    height: 22px;
+    margin-top: 11px;
     flex-shrink: 0;
   }
 
@@ -513,6 +530,10 @@
     justify-content: flex-end;
     flex-direction: row;
     padding: 4px 16px 16px 16px;
+  }
+
+  &.isCloudProvider {
+    margin-bottom: 16px;
   }
 }
 
