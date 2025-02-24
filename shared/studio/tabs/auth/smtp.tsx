@@ -238,9 +238,9 @@ const EmailProviderCard = observer(function EmailProviderCard({
                 Auto configured SMTP provided by Gel Cloud for development use.
               </div>
               <div className={styles.cloudSmtpNote}>
-                Note: This provider is limited to 100 emails per day, and for
-                your production app you should configure your own SMTP provider
-                below.
+                Note: This provider is rate limited and the sender address is
+                non customizable, so for your production app you should
+                configure your own SMTP provider below.
               </div>
             </>
           ) : (
