@@ -316,6 +316,7 @@ interface InspectorRowProps {
   toggleExpanded: () => void;
   disableCopy?: boolean;
   style?: React.CSSProperties;
+  overflowEllipsis?: boolean;
 }
 
 export const InspectorRow = observer(function InspectorRow({
@@ -326,6 +327,7 @@ export const InspectorRow = observer(function InspectorRow({
   isExpanded,
   toggleExpanded,
   disableCopy = false,
+  overflowEllipsis = false,
   style,
 }: InspectorRowProps) {
   const expandableItem =
@@ -341,6 +343,7 @@ export const InspectorRow = observer(function InspectorRow({
         [styles.highlightBody]: state.hoverId === item.id,
         [styles.highlightAll]:
           state.hoverId !== item.id && item.id.startsWith(state.hoverId!),
+        [styles.overflowEllipsis]: overflowEllipsis,
       })}
       style={{
         ...style,

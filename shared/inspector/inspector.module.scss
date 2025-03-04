@@ -140,6 +140,22 @@
       }
     }
   }
+
+  &.overflowEllipsis {
+    &,
+    .itemContent,
+    .itemBody,
+    .scalar_string,
+    .scalar_tag {
+      min-width: 0;
+    }
+
+    .scalar_string,
+    .scalar_tag {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }
 
 .comma {

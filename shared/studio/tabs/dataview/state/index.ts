@@ -1361,6 +1361,7 @@ class ExpandedInspector extends Model({
         autoExpandDepth: 3,
         countPrefix: "__count_",
         ignorePrefix: "__",
+        noMultiline: true,
       })
   ),
 }) {
