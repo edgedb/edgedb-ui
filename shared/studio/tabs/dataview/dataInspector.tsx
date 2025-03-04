@@ -939,6 +939,7 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
                 ? rowData.state.rowsCount * 40 -
                   (rowData.state.itemsLength * 28 + 7)
                 : 0,
+              width: state.grid.gridContainerSize.width - 16,
             }}
           >
             {item ? (
@@ -951,6 +952,7 @@ const ExpandedDataInspector = observer(function ExpandedDataInspector({
                     rowData.state.toggleExpanded(index);
                   }}
                   disableCopy
+                  overflowEllipsis
                 />
                 {item.level === 2 &&
                 rowData.state.linkFields.has(item.fieldName as string) ? (
