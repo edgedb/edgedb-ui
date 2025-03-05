@@ -77,8 +77,9 @@ export class ResultGridState {
     const dataIndex = tops
       ? tops.findIndex((top) => top > offsetRowIndex) - 1
       : offsetRowIndex;
+    const data = parentData[dataIndex]?.[header.parent.key!];
     return {
-      data: parentData[dataIndex]?.[header.parent.key!] ?? [],
+      data: data ? (header.parent.multi ? data : [data]) : [],
       indexOffset: indexOffset + (tops ? tops[dataIndex] : dataIndex),
       endIndex: indexOffset + (tops ? tops[dataIndex + 1] : dataIndex + 1),
     };
